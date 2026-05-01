@@ -1,0 +1,29 @@
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local       
+
+# Backend
+backend/target/           
+backend/.env               
+backend/*.class
+backend/*.jar                
+
+# OS Files
+.DS_Store                  
+Thumbs.db           
+desktop.ini  
+
+# IDE Files
+.vscode/settings.json
+.idea/
+*.iml
+
+# Logs
+*.log
+logs/
+
+# Secrets
+.env                      
+*.env   
