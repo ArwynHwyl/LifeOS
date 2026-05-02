@@ -6,6 +6,7 @@ frontend/.env.local
 
 # Backend
 backend/target/           
+backend/**/target/
 backend/.env               
 backend/*.class
 backend/*.jar                
