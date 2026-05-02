@@ -1,0 +1,13 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "LifeOS Dev DB",
+      "Group": "Servers",
+      "Host": "db",
+      "Port": 5432,
+      "MaintenanceDB": "lifeos",
+      "Username": "postgres",
+      "SSLMode": "prefer"
+    }
+  }
+}
