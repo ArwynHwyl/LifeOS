@@ -1,19 +1,22 @@
 services:
   frontend:
-    build: ./frontend
+    image: node:22-alpine
+    working_dir: /app
     ports:
       - "5173:5173"
     volumes:
-      - ./frontend/src:/app/src      
-      - /app/node_modules            
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
     environment:
       - VITE_API_URL=http://localhost:8080/api
+      - CHOKIDAR_USEPOLLING=true
     depends_on:
       - backend
-    command: npm run dev -- --host   
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0 --port 5173 --strictPort"
 
   backend:
-    build: ./backend
+    image: maven:3.9.9-eclipse-temurin-17
+    working_dir: /app
     ports:
       - "8080:8080"
     environment:
@@ -22,10 +25,13 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - SPRING_PROFILES_ACTIVE=dev
       - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - SERVER_PORT=8080
     volumes:
-      - ./backend/src:/app/src       
+      - ./backend/demo:/app
+      - maven_cache:/root/.m2
     depends_on:
       - db
+    command: mvn spring-boot:run
 
   db:
     image: postgres:16
@@ -39,4 +45,6 @@ services:
       - "5432:5432"
 
 volumes:
+  frontend_node_modules:
   postgres_data:
+  maven_cache:
