@@ -57,15 +57,28 @@
     <main class="login-main">
       <div class="login-card">
         <header class="login-card__header">
-          <h2 class="login-card__title">Welcome back</h2>
-          <p class="login-card__subtitle">Sign in to continue your learning journey</p>
+          <h2 class="login-card__title">Create your account</h2>
+          <p class="login-card__subtitle">Fill in your details to get started.</p>
         </header>
 
         <form class="login-form" @submit.prevent>
           <div class="login-field">
-            <label class="login-label" for="login-email">Email</label>
+            <label class="login-label" for="register-username">Username</label>
             <input
-              id="login-email"
+              id="register-username"
+              v-model="username"
+              class="login-input"
+              type="text"
+              name="username"
+              autocomplete="username"
+              placeholder=""
+            />
+          </div>
+
+          <div class="login-field">
+            <label class="login-label" for="register-email">Email address</label>
+            <input
+              id="register-email"
               v-model="email"
               class="login-input"
               type="email"
@@ -75,29 +88,60 @@
             />
           </div>
 
-          <div class="login-field">
-            <label class="login-label" for="login-password">Password</label>
-            <input
-              id="login-password"
-              v-model="password"
-              class="login-input"
-              type="password"
-              name="password"
-              autocomplete="current-password"
-              placeholder=""
-            />
+          <div class="login-field login-field--with-icon">
+            <label class="login-label" for="register-password">Password</label>
+            <div class="login-input-wrapper">
+              <input
+                id="register-password"
+                v-model="password"
+                class="login-input login-input--with-icon"
+                :type="showPassword ? 'text' : 'password'"
+                name="new-password"
+                autocomplete="new-password"
+                placeholder=""
+              />
+              <button
+                type="button"
+                class="input-eye"
+                @click="showPassword = !showPassword"
+                :aria-pressed="showPassword"
+              >
+                <span class="sr-only">Toggle password visibility</span>
+                👁
+              </button>
+            </div>
           </div>
 
-          <div class="login-row">
-            <a class="login-link login-link--solo" href="#" @click.prevent>Forgot password?</a>
+          <div class="login-field login-field--with-icon">
+            <label class="login-label" for="register-confirm">Confirm Password</label>
+            <div class="login-input-wrapper">
+              <input
+                id="register-confirm"
+                v-model="confirmPassword"
+                class="login-input login-input--with-icon"
+                :type="showConfirm ? 'text' : 'password'"
+                name="new-password"
+                autocomplete="new-password"
+                placeholder=""
+              />
+              <button
+                type="button"
+                class="input-eye"
+                @click="showConfirm = !showConfirm"
+                :aria-pressed="showConfirm"
+              >
+                <span class="sr-only">Toggle confirm password visibility</span>
+                👁
+              </button>
+            </div>
           </div>
 
-          <button class="login-submit" type="submit">Login</button>
+          <button class="login-submit" type="submit">Create Account</button>
         </form>
 
         <p class="login-footer">
-          New user?
-          <RouterLink class="login-link" to="/register">Sign Up</RouterLink>
+          Already have an account?
+          <RouterLink class="login-link" to="/login">Sign In</RouterLink>
         </p>
       </div>
     </main>
@@ -107,13 +151,17 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
+const username = ref('')
 const email = ref('')
 const password = ref('')
+const confirmPassword = ref('')
+const showPassword = ref(false)
+const showConfirm = ref(false)
 </script>
 
 <style scoped>
 .login-page {
-  /* tuned to match the reference screenshot */
+  /* same base styles as LoginView */
   --login-navy: #1c1b47;
   --login-accent: #4f4ee8;
   --login-accent-2: #4b4be1;
@@ -295,7 +343,7 @@ const password = ref('')
 
 .login-card__title {
   font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-  font-size: 2.15rem;
+  font-size: 2.05rem;
   font-weight: 600;
   margin: 0;
   color: #000;
@@ -303,7 +351,7 @@ const password = ref('')
 }
 
 .login-card__subtitle {
-  margin: 10px 0 0;
+  margin: 8px 0 0;
   font-size: 0.95rem;
   color: #a1a7b3;
   line-height: 1.45;
@@ -472,5 +520,45 @@ const password = ref('')
   .login-features {
     grid-template-columns: 1fr;
   }
+}
+
+/* register-only tweaks */
+.login-field--with-icon .login-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.login-input--with-icon {
+  padding-right: 42px;
+}
+
+.input-eye {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: #9aa1ae;
+}
+
+.input-eye:hover {
+  color: #6b5cf7;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
 }
 </style>
