@@ -5,9 +5,9 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      component: () => import('@/features/auth/views/LoginView.vue')
-    }
-  ]
+      component: () => import('@/features/courses/views/CourseManagementView.vue'),
+    },
+  ],
 })
 
 export default router
