@@ -61,7 +61,9 @@
           <p class="login-card__subtitle">Fill in your details to get started.</p>
         </header>
 
-        <form class="login-form" @submit.prevent>
+        <form class="login-form" @submit.prevent="handleRegister">
+          <p v-if="formError" class="login-alert" role="alert">{{ formError }}</p>
+
           <div class="login-field">
             <label class="login-label" for="register-username">Username</label>
             <input
@@ -72,6 +74,8 @@
               name="username"
               autocomplete="username"
               placeholder=""
+              required
+              minlength="3"
             />
           </div>
 
@@ -85,6 +89,7 @@
               name="email"
               autocomplete="email"
               placeholder=""
+              required
             />
           </div>
 
@@ -99,6 +104,8 @@
                 name="new-password"
                 autocomplete="new-password"
                 placeholder=""
+                required
+                minlength="8"
               />
               <button
                 type="button"
@@ -123,6 +130,8 @@
                 name="new-password"
                 autocomplete="new-password"
                 placeholder=""
+                required
+                minlength="8"
               />
               <button
                 type="button"
@@ -136,7 +145,9 @@
             </div>
           </div>
 
-          <button class="login-submit" type="submit">Create Account</button>
+          <button class="login-submit" type="submit" :disabled="isSubmitting">
+            {{ isSubmitting ? 'Creating account...' : 'Create Account' }}
+          </button>
         </form>
 
         <p class="login-footer">
@@ -150,6 +161,9 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { AxiosError } from 'axios'
+import { useRouter } from 'vue-router'
+import { register } from '@/features/auth/services/auth'
 
 const username = ref('')
 const email = ref('')
@@ -157,6 +171,42 @@ const password = ref('')
 const confirmPassword = ref('')
 const showPassword = ref(false)
 const showConfirm = ref(false)
+const formError = ref('')
+const isSubmitting = ref(false)
+const router = useRouter()
+
+function getErrorMessage(error: unknown) {
+  if (error instanceof AxiosError) {
+    const data = error.response?.data as { error?: string; errors?: Record<string, string> } | undefined
+    if (data?.error) return data.error
+    if (data?.errors) return Object.values(data.errors)[0] || 'Please check your account details.'
+  }
+  return 'Unable to create your account. Please try again.'
+}
+
+async function handleRegister() {
+  formError.value = ''
+
+  if (password.value !== confirmPassword.value) {
+    formError.value = 'Passwords do not match.'
+    return
+  }
+
+  isSubmitting.value = true
+
+  try {
+    await register({
+      username: username.value.trim(),
+      email: email.value.trim(),
+      password: password.value
+    })
+    await router.push('/')
+  } catch (error) {
+    formError.value = getErrorMessage(error)
+  } finally {
+    isSubmitting.value = false
+  }
+}
 </script>
 
 <style scoped>
@@ -363,6 +413,17 @@ const showConfirm = ref(false)
   gap: 18px;
 }
 
+.login-alert {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
 .login-field {
   display: flex;
   flex-direction: column;
@@ -447,6 +508,12 @@ const showConfirm = ref(false)
 .login-submit:hover {
   background: #4a49e0;
   box-shadow: 0 12px 26px rgba(79, 78, 232, 0.32);
+}
+
+.login-submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.68;
+  box-shadow: none;
 }
 
 .login-submit:active {

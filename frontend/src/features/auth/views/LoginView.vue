@@ -61,7 +61,9 @@
           <p class="login-card__subtitle">Sign in to continue your learning journey</p>
         </header>
 
-        <form class="login-form" @submit.prevent>
+        <form class="login-form" @submit.prevent="handleLogin">
+          <p v-if="formError" class="login-alert" role="alert">{{ formError }}</p>
+
           <div class="login-field">
             <label class="login-label" for="login-email">Email</label>
             <input
@@ -72,6 +74,7 @@
               name="email"
               autocomplete="email"
               placeholder=""
+              required
             />
           </div>
 
@@ -85,6 +88,7 @@
               name="password"
               autocomplete="current-password"
               placeholder=""
+              required
             />
           </div>
 
@@ -92,7 +96,9 @@
             <a class="login-link login-link--solo" href="#" @click.prevent>Forgot password?</a>
           </div>
 
-          <button class="login-submit" type="submit">Login</button>
+          <button class="login-submit" type="submit" :disabled="isSubmitting">
+            {{ isSubmitting ? 'Logging in...' : 'Login' }}
+          </button>
         </form>
 
         <p class="login-footer">
@@ -106,9 +112,41 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { AxiosError } from 'axios'
+import { useRouter } from 'vue-router'
+import { login } from '@/features/auth/services/auth'
 
 const email = ref('')
 const password = ref('')
+const formError = ref('')
+const isSubmitting = ref(false)
+const router = useRouter()
+
+function getErrorMessage(error: unknown) {
+  if (error instanceof AxiosError) {
+    const data = error.response?.data as { error?: string; errors?: Record<string, string> } | undefined
+    if (data?.error) return data.error
+    if (data?.errors) return Object.values(data.errors)[0] || 'Please check your login details.'
+  }
+  return 'Unable to log in. Please try again.'
+}
+
+async function handleLogin() {
+  formError.value = ''
+  isSubmitting.value = true
+
+  try {
+    await login({
+      email: email.value.trim(),
+      password: password.value
+    })
+    await router.push('/')
+  } catch (error) {
+    formError.value = getErrorMessage(error)
+  } finally {
+    isSubmitting.value = false
+  }
+}
 </script>
 
 <style scoped>
@@ -315,6 +353,17 @@ const password = ref('')
   gap: 18px;
 }
 
+.login-alert {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
 .login-field {
   display: flex;
   flex-direction: column;
@@ -399,6 +448,12 @@ const password = ref('')
 .login-submit:hover {
   background: #4a49e0;
   box-shadow: 0 12px 26px rgba(79, 78, 232, 0.32);
+}
+
+.login-submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.68;
+  box-shadow: none;
 }
 
 .login-submit:active {
