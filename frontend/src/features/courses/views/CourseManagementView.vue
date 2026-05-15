@@ -1,21 +1,34 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import CourseManagementNavbar from '@/components/BackHourseNavbar.vue'
 import CourseCard from '@/components/CourseCard.vue'
+import AddCourseModal from '@/features/courses/components/AddCoursePopUp.vue'
+import EditCourseModal from '@/features/courses/components/EditCoursePopUp.vue'
+import type { EditableCourse } from '@/features/courses/components/EditCoursePopUp.vue'
+import { DEFAULT_COVER_ID } from '@/features/courses/constants/courseCoverPresets'
 import type { CourseStatus } from '@/types/types'
+
+const showAddCourseModal = ref(false)
+const showEditCourseModal = ref(false)
+const editingCourse = ref<EditableCourse | null>(null)
 
 type MockCourse = {
   id: string
   title: string
+  description: string
+  coverId: string
   status: CourseStatus
   moduleCount: number
   lastEdited: string
   createdBy: string
 }
 
-const mockCourses: MockCourse[] = [
+const courses = ref<MockCourse[]>([
   {
     id: '1',
     title: 'Quadratic Functions',
+    description: 'Explore parabolas, vertex form, and real-world quadratic models.',
+    coverId: 'integral',
     status: 'published',
     moduleCount: 4,
     lastEdited: '2 days ago',
@@ -24,6 +37,8 @@ const mockCourses: MockCourse[] = [
   {
     id: '2',
     title: 'Intro to Linear Algebra',
+    description: 'Vectors, matrices, and systems of linear equations.',
+    coverId: 'sigma',
     status: 'published',
     moduleCount: 6,
     lastEdited: '1 week ago',
@@ -32,6 +47,8 @@ const mockCourses: MockCourse[] = [
   {
     id: '3',
     title: 'Probability Basics',
+    description: 'Foundations of probability, events, and distributions.',
+    coverId: 'pi',
     status: 'draft',
     moduleCount: 3,
     lastEdited: 'today',
@@ -40,12 +57,40 @@ const mockCourses: MockCourse[] = [
   {
     id: '4',
     title: 'Calculus I: Limits',
+    description: 'Limits, continuity, and introductory differential calculus.',
+    coverId: 'fx',
     status: 'published',
     moduleCount: 8,
     lastEdited: '3 days ago',
     createdBy: 'Admin',
   },
-]
+])
+
+function openEditCourse(course: MockCourse) {
+  editingCourse.value = {
+    id: course.id,
+    title: course.title,
+    description: course.description,
+    coverId: course.coverId,
+  }
+  showEditCourseModal.value = true
+}
+
+function closeEditCourseModal() {
+  showEditCourseModal.value = false
+  editingCourse.value = null
+}
+
+function onSaveCourse(updated: EditableCourse) {
+  const index = courses.value.findIndex((c) => c.id === updated.id)
+  if (index === -1) return
+  courses.value[index] = {
+    ...courses.value[index],
+    title: updated.title,
+    description: updated.description,
+    coverId: updated.coverId || DEFAULT_COVER_ID,
+  }
+}
 </script>
 
 <template>
@@ -99,6 +144,7 @@ const mockCourses: MockCourse[] = [
             <button
               type="button"
               class="inline-flex items-center justify-center gap-2 rounded-full bg-[#5b4cfa] px-6 py-3 text-sm font-semibold text-white shadow-md shadow-[#5b4cfa]/25 transition hover:bg-[#4d3ee0]"
+              @click="showAddCourseModal = true"
             >
               <span class="text-lg leading-none">+</span>
               New Course
@@ -109,15 +155,25 @@ const mockCourses: MockCourse[] = [
 
       <main class="flex-1 space-y-4 px-6 py-8 sm:px-10">
         <CourseCard
-          v-for="course in mockCourses"
+          v-for="course in courses"
           :key="course.id"
           :title="course.title"
+          :cover-id="course.coverId"
           :status="course.status"
           :module-count="course.moduleCount"
           :last-edited="course.lastEdited"
           :created-by="course.createdBy"
+          @edit="openEditCourse(course)"
         />
       </main>
     </div>
+
+    <AddCourseModal :open="showAddCourseModal" @close="showAddCourseModal = false" />
+    <EditCourseModal
+      :open="showEditCourseModal"
+      :course="editingCourse"
+      @close="closeEditCourseModal"
+      @save="onSaveCourse"
+    />
   </div>
 </template>

@@ -1,13 +1,22 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { getCoverPreset } from '@/features/courses/constants/courseCoverPresets'
 import type { CourseStatus } from '@/types/types'
 
-defineProps<{
+const props = defineProps<{
   title: string
   status: CourseStatus
   moduleCount: number
   lastEdited: string
   createdBy: string
+  coverId: string
 }>()
+
+const emit = defineEmits<{
+  edit: []
+}>()
+
+const cover = computed(() => getCoverPreset(props.coverId))
 </script>
 
 <template>
@@ -15,10 +24,11 @@ defineProps<{
     class="flex flex-col gap-4 rounded-2xl border border-slate-100/80 bg-white p-5 shadow-[0_4px_24px_-4px_rgba(15,23,42,0.08)] sm:flex-row sm:items-center sm:gap-6 sm:p-6"
   >
     <div
-      class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[#ede9fe] text-xl font-serif font-semibold text-[#5b21b6]"
+      class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-xl font-serif font-semibold"
+      :class="[cover.bgClass, cover.textClass]"
       aria-hidden="true"
     >
-      ∫
+      {{ cover.symbol }}
     </div>
 
     <div class="min-w-0 flex-1">
@@ -49,6 +59,7 @@ defineProps<{
       <button
         type="button"
         class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+        @click="emit('edit')"
       >
         <svg class="h-4 w-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
