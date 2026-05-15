@@ -14,6 +14,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   edit: []
+  open: []
 }>()
 
 const cover = computed(() => getCoverPreset(props.coverId))
@@ -33,7 +34,13 @@ const cover = computed(() => getCoverPreset(props.coverId))
 
     <div class="min-w-0 flex-1">
       <div class="flex flex-wrap items-center gap-2">
-        <h2 class="text-lg font-semibold tracking-tight text-slate-800">{{ title }}</h2>
+        <button
+          type="button"
+          class="text-left text-lg font-semibold tracking-tight text-slate-800 transition hover:text-[#5b4cfa]"
+          @click="emit('open')"
+        >
+          {{ title }}
+        </button>
         <span
           v-if="status === 'published'"
           class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-inset ring-emerald-600/15"

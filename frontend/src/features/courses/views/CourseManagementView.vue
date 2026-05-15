@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import CourseManagementNavbar from '@/components/BackHourseNavbar.vue'
 import CourseCard from '@/components/CourseCard.vue'
 import AddCourseModal from '@/features/courses/components/AddCoursePopUp.vue'
@@ -7,6 +8,8 @@ import EditCourseModal from '@/features/courses/components/EditCoursePopUp.vue'
 import type { EditableCourse } from '@/features/courses/components/EditCoursePopUp.vue'
 import { DEFAULT_COVER_ID } from '@/features/courses/constants/courseCoverPresets'
 import type { CourseStatus } from '@/types/types'
+
+const router = useRouter()
 
 const showAddCourseModal = ref(false)
 const showEditCourseModal = ref(false)
@@ -79,6 +82,10 @@ function openEditCourse(course: MockCourse) {
 function closeEditCourseModal() {
   showEditCourseModal.value = false
   editingCourse.value = null
+}
+
+function openCourseDetail(courseId: string) {
+  router.push(`/courses/${courseId}`)
 }
 
 function onSaveCourse(updated: EditableCourse) {
@@ -163,6 +170,7 @@ function onSaveCourse(updated: EditableCourse) {
           :module-count="course.moduleCount"
           :last-edited="course.lastEdited"
           :created-by="course.createdBy"
+          @open="openCourseDetail(course.id)"
           @edit="openEditCourse(course)"
         />
       </main>
