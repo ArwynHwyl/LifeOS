@@ -1,0 +1,268 @@
+<script setup lang="ts">
+import { computed, ref, watch } from 'vue'
+import {
+  COVER_SYMBOLS,
+  COVER_COLOR_THEMES,
+  buildCoverId,
+  getCoverPreset,
+  DEFAULT_COVER_ID,
+  parseCoverId,
+} from '@/features/courses/constants/courseCoverPresets'
+
+const props = defineProps<{
+  open: boolean
+}>()
+
+const emit = defineEmits<{
+  close: []
+}>()
+
+const title = ref('')
+const description = ref('')
+const aiEnabled = ref(false)
+const prompt = ref('')
+const pdfFile = ref<File | null>(null)
+const pdfInputRef = ref<HTMLInputElement | null>(null)
+const symbolSearch = ref('')
+
+const { symbolId: defaultSymbolId, colorId: defaultColorId } = parseCoverId(DEFAULT_COVER_ID)
+const selectedSymbolId = ref(defaultSymbolId)
+const selectedColorId = ref(defaultColorId)
+
+const selectedCoverId = computed(() => buildCoverId(selectedSymbolId.value, selectedColorId.value))
+const selectedPreview = computed(() => getCoverPreset(selectedCoverId.value))
+
+const filteredSymbols = computed(() => {
+  const q = symbolSearch.value.trim().toLowerCase()
+  if (!q) return COVER_SYMBOLS
+  return COVER_SYMBOLS.filter(
+    (s) =>
+      s.label.toLowerCase().includes(q) ||
+      s.category.toLowerCase().includes(q) ||
+      s.symbol.toLowerCase().includes(q),
+  )
+})
+
+const pdfFileName = computed(() => pdfFile.value?.name ?? '')
+
+function reset() {
+  title.value = ''
+  description.value = ''
+  selectedSymbolId.value = defaultSymbolId
+  selectedColorId.value = defaultColorId
+  symbolSearch.value = ''
+  aiEnabled.value = false
+  prompt.value = ''
+  pdfFile.value = null
+  if (pdfInputRef.value) pdfInputRef.value.value = ''
+}
+
+function close() { emit('close') }
+
+function onPdfChange(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0] ?? null
+  if (file && file.type !== 'application/pdf') { input.value = ''; pdfFile.value = null; return }
+  pdfFile.value = file
+}
+
+function removePdf() {
+  pdfFile.value = null
+  if (pdfInputRef.value) pdfInputRef.value.value = ''
+}
+
+function onSubmit() { close() }
+function onKeydown(e: KeyboardEvent) { if (e.key === 'Escape') close() }
+
+watch(() => props.open, (open) => { if (!open) reset() })
+</script>
+
+<template>
+  <Teleport to="body">
+    <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100"
+      leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
+      <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown="onKeydown">
+        <div class="absolute inset-0 bg-slate-950/50 backdrop-blur-sm" aria-hidden="true" @click="close" />
+
+        <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 scale-95 translate-y-2"
+          enter-to-class="opacity-100 scale-100 translate-y-0" leave-active-class="transition duration-150 ease-in"
+          leave-from-class="opacity-100 scale-100 translate-y-0" leave-to-class="opacity-0 scale-95 translate-y-2">
+          <div v-if="open" role="dialog" aria-modal="true" aria-labelledby="add-course-title"
+            class="relative z-10 flex max-h-[min(90vh,760px)] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl shadow-slate-900/20 ring-1 ring-slate-900/[0.06]"
+            @click.stop>
+
+            <!-- Header -->
+            <header class="shrink-0 border-b border-slate-100 px-6 py-5">
+              <div class="flex items-start justify-between gap-4">
+                <div class="flex items-center gap-3">
+                  <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#5b4cfa]/10">
+                    <svg class="h-4 w-4 text-[#5b4cfa]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 id="add-course-title" class="text-[15px] font-bold text-slate-900">New Course</h2>
+                    <p class="text-[11px] text-slate-400">Fill in the details below.</p>
+                  </div>
+                </div>
+                <button type="button"
+                  class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                  aria-label="Close" @click="close">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6 6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </header>
+
+            <form class="flex min-h-0 flex-1 flex-col" @submit.prevent="onSubmit">
+              <div class="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
+
+                <!-- Title -->
+                <div>
+                  <label for="new-course-title" class="mb-1.5 block text-[12px] font-semibold text-slate-600">Course title</label>
+                  <input id="new-course-title" v-model="title" type="text" required placeholder="e.g. Quadratic Functions"
+                    class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-[13px] text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-[#5b4cfa]/50 focus:bg-white focus:ring-2 focus:ring-[#5b4cfa]/10" />
+                </div>
+
+                <!-- Description -->
+                <div>
+                  <label for="new-course-desc" class="mb-1.5 block text-[12px] font-semibold text-slate-600">Description</label>
+                  <textarea id="new-course-desc" v-model="description" rows="3" placeholder="Brief overview of what students will learn…"
+                    class="w-full resize-none rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-[13px] text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-[#5b4cfa]/50 focus:bg-white focus:ring-2 focus:ring-[#5b4cfa]/10" />
+                </div>
+
+                <!-- Cover picker -->
+                <fieldset>
+                  <legend class="mb-3 text-[12px] font-semibold text-slate-600">Cover</legend>
+
+                  <!-- Preview + color row -->
+                  <div class="mb-3 flex items-start gap-4">
+                    <!-- Live preview -->
+                    <div
+                      class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl font-serif text-2xl font-bold shadow-sm transition-all duration-150"
+                      :class="[selectedPreview.bgClass, selectedPreview.textClass]"
+                    >
+                      {{ selectedPreview.symbol }}
+                    </div>
+
+                    <!-- Color swatches -->
+                    <div class="flex-1">
+                      <p class="mb-2 text-[11px] font-semibold text-slate-500">Color</p>
+                      <div class="flex flex-wrap gap-1.5">
+                        <button
+                          v-for="color in COVER_COLOR_THEMES"
+                          :key="color.id"
+                          type="button"
+                          class="h-5 w-5 rounded-full transition-transform duration-100 hover:scale-110"
+                          :class="selectedColorId === color.id ? 'ring-2 ring-[#5b4cfa] ring-offset-2' : ''"
+                          :style="{ backgroundColor: color.swatch }"
+                          :title="color.name"
+                          @click="selectedColorId = color.id"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Symbol search -->
+                  <div class="relative mb-2">
+                    <svg class="pointer-events-none absolute left-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-slate-400"
+                      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+                    </svg>
+                    <input
+                      v-model="symbolSearch"
+                      type="search"
+                      placeholder="Search symbols…"
+                      class="w-full rounded-lg border border-slate-200 bg-slate-50/50 py-1.5 pl-7 pr-3 text-[12px] text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#5b4cfa]/40 focus:bg-white focus:ring-2 focus:ring-[#5b4cfa]/10"
+                    />
+                  </div>
+
+                  <!-- Symbol grid -->
+                  <div class="max-h-[152px] overflow-y-auto rounded-xl border border-slate-200 bg-slate-50/40 p-2">
+                    <div v-if="filteredSymbols.length > 0" class="grid grid-cols-8 gap-1">
+                      <button
+                        v-for="sym in filteredSymbols"
+                        :key="sym.id"
+                        type="button"
+                        class="flex aspect-square items-center justify-center rounded-lg text-[13px] font-bold leading-none transition-all duration-100"
+                        :class="
+                          selectedSymbolId === sym.id
+                            ? 'bg-[#5b4cfa] text-white shadow-md shadow-[#5b4cfa]/30'
+                            : 'text-slate-600 hover:bg-white hover:shadow-sm hover:text-slate-900'
+                        "
+                        :title="`${sym.label} · ${sym.category}`"
+                        @click="selectedSymbolId = sym.id"
+                      >
+                        {{ sym.symbol }}
+                      </button>
+                    </div>
+                    <p v-else class="py-4 text-center text-[11px] text-slate-400">No symbols found</p>
+                  </div>
+                </fieldset>
+
+                <!-- AI toggle -->
+                <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 transition hover:border-slate-300">
+                  <input v-model="aiEnabled" type="checkbox" class="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-slate-300 text-[#5b4cfa] focus:ring-[#5b4cfa]/30" />
+                  <span>
+                    <span class="block text-[13px] font-semibold text-slate-800">Enable AI generation</span>
+                    <span class="mt-0.5 block text-[11px] text-slate-400">Provide a prompt and optional PDF to generate course content.</span>
+                  </span>
+                </label>
+
+                <!-- AI fields -->
+                <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 -translate-y-1"
+                  enter-to-class="opacity-100 translate-y-0" leave-active-class="transition duration-150 ease-in"
+                  leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 -translate-y-1">
+                  <div v-if="aiEnabled" class="space-y-4">
+                    <div>
+                      <label for="ai-prompt" class="mb-1.5 block text-[12px] font-semibold text-slate-600">Prompt</label>
+                      <textarea id="ai-prompt" v-model="prompt" rows="4" placeholder="Describe structure, tone, difficulty level…"
+                        class="w-full resize-none rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-[13px] text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-[#5b4cfa]/50 focus:bg-white focus:ring-2 focus:ring-[#5b4cfa]/10" />
+                    </div>
+                    <div>
+                      <span class="mb-1.5 block text-[12px] font-semibold text-slate-600">PDF source</span>
+                      <input ref="pdfInputRef" type="file" accept="application/pdf,.pdf" class="sr-only" @change="onPdfChange" />
+                      <button v-if="!pdfFile" type="button"
+                        class="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-slate-200 bg-white py-7 text-center transition hover:border-[#5b4cfa]/40 hover:bg-[#5b4cfa]/[0.02]"
+                        @click="pdfInputRef?.click()">
+                        <svg class="h-7 w-7 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                          <polyline points="14 2 14 8 20 8" />
+                          <line x1="12" y1="18" x2="12" y2="12" /><line x1="9" y1="15" x2="15" y2="15" />
+                        </svg>
+                        <span class="text-[13px] font-medium text-slate-500">Click to upload PDF</span>
+                        <span class="text-[11px] text-slate-400">PDF files only</span>
+                      </button>
+                      <div v-else class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
+                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-500">
+                          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                          </svg>
+                        </div>
+                        <p class="min-w-0 flex-1 truncate text-[13px] font-medium text-slate-700">{{ pdfFileName }}</p>
+                        <button type="button" class="shrink-0 text-[12px] font-semibold text-red-500 transition hover:text-red-600" @click="removePdf">Remove</button>
+                      </div>
+                    </div>
+                  </div>
+                </Transition>
+              </div>
+
+              <footer class="flex shrink-0 gap-2.5 border-t border-slate-100 px-6 py-4">
+                <button type="button"
+                  class="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[13px] font-semibold text-slate-600 transition hover:bg-slate-50"
+                  @click="close">Cancel</button>
+                <button type="submit"
+                  class="flex-1 rounded-xl bg-[#5b4cfa] px-4 py-2.5 text-[13px] font-semibold text-white shadow-md shadow-[#5b4cfa]/25 transition hover:bg-[#4d3ee0]">
+                  Create course
+                </button>
+              </footer>
+            </form>
+          </div>
+        </Transition>
+      </div>
+    </Transition>
+  </Teleport>
+</template>
