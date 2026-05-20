@@ -3,6 +3,7 @@ package com.example.demo.config;
 import com.example.demo.entity.AppMeta;
 import com.example.demo.entity.User;
 import com.example.demo.entity.UserRole;
+import com.example.demo.entity.UserStatus;
 import com.example.demo.repository.AppMetaRepository;
 import com.example.demo.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
@@ -32,7 +33,8 @@ public class DevSeedConfig {
                         passwordEncoder.encode("Admin12345!"),
                         "Admin",
                         "User",
-                        UserRole.ROLE_ADMIN
+                        UserRole.ROLE_ADMIN,
+                        UserStatus.VERIFY
                 ));
             }
         };

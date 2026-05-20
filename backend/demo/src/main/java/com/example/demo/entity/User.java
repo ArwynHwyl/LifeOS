@@ -51,15 +51,18 @@ public class User {
     protected User() {
     }
 
-    public User(String email, String username, String passwordHash, String firstName, String lastName, UserRole role) {
+    public User(String email, String username, String passwordHash, String firstName, String lastName, UserRole role, UserStatus status) {
         this.userId = UUID.randomUUID();
         this.email = email;
         this.username = username;
         this.passwordHash = passwordHash;
         this.firstName = firstName;
         this.lastName = lastName;
-        this.status = UserStatus.PENDING_VERIFY;
+        this.status = status;
         this.role = role;
+    }
+    public User(String email, String username, String passwordHash, String firstName, String lastName, UserRole role) {
+        this(email, username, passwordHash, firstName, lastName, role, UserStatus.PENDING_VERIFY);
     }
 
     @PrePersist
