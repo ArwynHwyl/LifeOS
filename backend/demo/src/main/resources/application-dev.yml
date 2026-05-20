@@ -10,3 +10,6 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  mail:
+    host: ${SPRING_MAIL_HOST:mailpit}
+    port: ${SPRING_MAIL_PORT:1025}
