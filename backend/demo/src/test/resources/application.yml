@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:lifeos-test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+
+app:
+  jwt:
+    secret: change-me-change-me-change-me-change-me-change-me
+    access-token-ttl-minutes: 15
+    refresh-token-ttl-days: 30

@@ -18,7 +18,7 @@ public class AppMeta {
     @Column(nullable = false, unique = true, length = 100)
     private String name;
 
-    @Column(nullable = false, length = 255)
+    @Column(name = "meta_value", nullable = false, length = 255)
     private String value;
 
     protected AppMeta() {
