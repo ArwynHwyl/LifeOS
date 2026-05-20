@@ -33,6 +33,28 @@ const router = createRouter({
       path: '/reset-password',
       component: () => import('@/features/auth/views/ResetPasswordView.vue'),
       meta: { guestOnly: true }
+    },
+    // Admin course routes
+    {
+      path: '/courses',
+      component: () => import('@/features/courses/views/AdminCourseManagementView.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/courses/:id',
+      component: () => import('@/features/courses/views/AdminCourseDetailView.vue'),
+      meta: { requiresAuth: true }
+    },
+    // Teacher course routes
+    {
+      path: '/teacher/courses',
+      component: () => import('@/features/courses/views/TeacherCourseManagementView.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/teacher/courses/:id',
+      component: () => import('@/features/courses/views/TeacherCourseDetailView.vue'),
+      meta: { requiresAuth: true }
     }
   ]
 })

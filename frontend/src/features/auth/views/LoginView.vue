@@ -138,11 +138,17 @@ async function handleLogin() {
   isSubmitting.value = true
 
   try {
-    await login({
+    const data = await login({
       email: email.value.trim(),
       password: password.value
     })
-    await router.push('/')
+    if (data.user.role === 'ROLE_ADMIN') {
+      await router.push('/courses')
+    } else if (data.user.role === 'ROLE_INSTRUCTOR') {
+      await router.push('/teacher/courses')
+    } else {
+      await router.push('/')
+    }
   } catch (error) {
     formError.value = getErrorMessage(error)
   } finally {
