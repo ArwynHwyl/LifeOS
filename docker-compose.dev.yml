@@ -24,13 +24,21 @@ services:
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - SPRING_PROFILES_ACTIVE=dev
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_ACCESS_TOKEN_TTL_MINUTES=${JWT_ACCESS_TOKEN_TTL_MINUTES:-15}
+      - JWT_REFRESH_TOKEN_TTL_DAYS=${JWT_REFRESH_TOKEN_TTL_DAYS:-30}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - SERVER_PORT=8080
+      - APP_FRONTEND_URL=http://localhost:5173
+      - APP_MAIL_FROM=no-reply@lifeos.local
+      - SPRING_MAIL_HOST=mailpit
+      - SPRING_MAIL_PORT=1025
     volumes:
       - ./backend/demo:/app
       - maven_cache:/root/.m2
     depends_on:
       - db
+      - mailpit
     command: mvn spring-boot:run
 
   db:
@@ -55,6 +63,11 @@ services:
       - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
     depends_on:
       - db
+  mailpit:
+    image: axllent/mailpit
+    ports:
+      - "8025:8025"
+      - "1025:1025"
 volumes:
   frontend_node_modules:
   postgres_data:

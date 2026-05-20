@@ -57,17 +57,34 @@
     <main class="login-main">
       <div class="login-card">
         <header class="login-card__header">
-          <h2 class="login-card__title">Welcome back</h2>
-          <p class="login-card__subtitle">Sign in to continue your learning journey</p>
+          <h2 class="login-card__title">Create your account</h2>
+          <p class="login-card__subtitle">
+            {{ successMessage || 'Fill in your details to get started.' }}
+          </p>
         </header>
 
-        <form class="login-form" @submit.prevent="handleLogin">
+        <form v-if="!successMessage" class="login-form" @submit.prevent="handleRegister">
           <p v-if="formError" class="login-alert" role="alert">{{ formError }}</p>
 
           <div class="login-field">
-            <label class="login-label" for="login-email">Email</label>
+            <label class="login-label" for="register-username">Username</label>
             <input
-              id="login-email"
+              id="register-username"
+              v-model="username"
+              class="login-input"
+              type="text"
+              name="username"
+              autocomplete="username"
+              placeholder=""
+              required
+              minlength="3"
+            />
+          </div>
+
+          <div class="login-field">
+            <label class="login-label" for="register-email">Email address</label>
+            <input
+              id="register-email"
               v-model="email"
               class="login-input"
               type="email"
@@ -78,34 +95,66 @@
             />
           </div>
 
-          <div class="login-field">
-            <label class="login-label" for="login-password">Password</label>
-            <input
-              id="login-password"
-              v-model="password"
-              class="login-input"
-              type="password"
-              name="password"
-              autocomplete="current-password"
-              placeholder=""
-              required
-            />
+          <div class="login-field login-field--with-icon">
+            <label class="login-label" for="register-password">Password</label>
+            <div class="login-input-wrapper">
+              <input
+                id="register-password"
+                v-model="password"
+                class="login-input login-input--with-icon"
+                :type="showPassword ? 'text' : 'password'"
+                name="new-password"
+                autocomplete="new-password"
+                placeholder=""
+                required
+                minlength="8"
+              />
+              <button
+                type="button"
+                class="input-eye"
+                @click="showPassword = !showPassword"
+                :aria-pressed="showPassword"
+              >
+                <span class="sr-only">Toggle password visibility</span>
+                👁
+              </button>
+            </div>
           </div>
 
-          <div class="login-row">
-            <RouterLink class="login-link login-link--solo" to="/forgot-password">
-              Forgot password?
-            </RouterLink>
+          <div class="login-field login-field--with-icon">
+            <label class="login-label" for="register-confirm">Confirm Password</label>
+            <div class="login-input-wrapper">
+              <input
+                id="register-confirm"
+                v-model="confirmPassword"
+                class="login-input login-input--with-icon"
+                :type="showConfirm ? 'text' : 'password'"
+                name="new-password"
+                autocomplete="new-password"
+                placeholder=""
+                required
+                minlength="8"
+              />
+              <button
+                type="button"
+                class="input-eye"
+                @click="showConfirm = !showConfirm"
+                :aria-pressed="showConfirm"
+              >
+                <span class="sr-only">Toggle confirm password visibility</span>
+                👁
+              </button>
+            </div>
           </div>
 
           <button class="login-submit" type="submit" :disabled="isSubmitting">
-            {{ isSubmitting ? 'Logging in...' : 'Login' }}
+            {{ isSubmitting ? 'Creating account...' : 'Create Account' }}
           </button>
         </form>
 
         <p class="login-footer">
-          New user?
-          <RouterLink class="login-link" to="/register">Sign Up</RouterLink>
+          Already have an account?
+          <RouterLink class="login-link" to="/login">Sign In</RouterLink>
         </p>
       </div>
     </main>
@@ -115,34 +164,44 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { AxiosError } from 'axios'
-import { useRouter } from 'vue-router'
-import { login } from '@/features/auth/services/auth'
+import { register } from '@/features/auth/services/auth'
 
+const username = ref('')
 const email = ref('')
 const password = ref('')
+const confirmPassword = ref('')
+const showPassword = ref(false)
+const showConfirm = ref(false)
 const formError = ref('')
 const isSubmitting = ref(false)
-const router = useRouter()
+const successMessage = ref('')
 
 function getErrorMessage(error: unknown) {
   if (error instanceof AxiosError) {
     const data = error.response?.data as { error?: string; errors?: Record<string, string> } | undefined
     if (data?.error) return data.error
-    if (data?.errors) return Object.values(data.errors)[0] || 'Please check your login details.'
+    if (data?.errors) return Object.values(data.errors)[0] || 'Please check your account details.'
   }
-  return 'Unable to log in. Please try again.'
+  return 'Unable to create your account. Please try again.'
 }
 
-async function handleLogin() {
+async function handleRegister() {
   formError.value = ''
+
+  if (password.value !== confirmPassword.value) {
+    formError.value = 'Passwords do not match.'
+    return
+  }
+
   isSubmitting.value = true
 
   try {
-    await login({
+    await register({
+      username: username.value.trim(),
       email: email.value.trim(),
       password: password.value
     })
-    await router.push('/')
+    successMessage.value = 'Check your email to verify your account before signing in.'
   } catch (error) {
     formError.value = getErrorMessage(error)
   } finally {
@@ -153,7 +212,7 @@ async function handleLogin() {
 
 <style scoped>
 .login-page {
-  /* tuned to match the reference screenshot */
+  /* same base styles as LoginView */
   --login-navy: #1c1b47;
   --login-accent: #4f4ee8;
   --login-accent-2: #4b4be1;
@@ -335,7 +394,7 @@ async function handleLogin() {
 
 .login-card__title {
   font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-  font-size: 2.15rem;
+  font-size: 2.05rem;
   font-weight: 600;
   margin: 0;
   color: #000;
@@ -343,7 +402,7 @@ async function handleLogin() {
 }
 
 .login-card__subtitle {
-  margin: 10px 0 0;
+  margin: 8px 0 0;
   font-size: 0.95rem;
   color: #a1a7b3;
   line-height: 1.45;
@@ -529,5 +588,45 @@ async function handleLogin() {
   .login-features {
     grid-template-columns: 1fr;
   }
+}
+
+/* register-only tweaks */
+.login-field--with-icon .login-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.login-input--with-icon {
+  padding-right: 42px;
+}
+
+.input-eye {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: #9aa1ae;
+}
+
+.input-eye:hover {
+  color: #6b5cf7;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
 }
 </style>
