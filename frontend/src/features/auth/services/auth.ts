@@ -20,6 +20,10 @@ export interface AuthResponse {
   user: AuthUser
 }
 
+export interface MessageResponse {
+  message: string
+}
+
 export interface LoginPayload {
   email: string
   password: string
@@ -49,7 +53,29 @@ export async function login(payload: LoginPayload) {
 }
 
 export async function register(payload: RegisterPayload) {
-  const { data } = await api.post<AuthResponse>('/v1/auth/register', payload)
-  saveAuthSession(data)
+  const { data } = await api.post<MessageResponse>('/v1/auth/register', payload)
+  return data
+}
+
+export async function requestEmailConfirmation(email: string) {
+  const { data } = await api.post<MessageResponse>('/v1/auth/request-email-confirmation', { email })
+  return data
+}
+
+export async function verifyEmail(token: string) {
+  const { data } = await api.post<MessageResponse>('/v1/auth/verify-email', { token })
+  return data
+}
+
+export async function forgotPassword(email: string) {
+  const { data } = await api.post<MessageResponse>('/v1/auth/forgot-password', { email })
+  return data
+}
+
+export async function resetPassword(token: string, newPassword: string) {
+  const { data } = await api.post<MessageResponse>('/v1/auth/reset-password', {
+    token,
+    newPassword
+  })
   return data
 }

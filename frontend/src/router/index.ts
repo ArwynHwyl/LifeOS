@@ -17,6 +17,21 @@ const router = createRouter({
       path: '/register',
       component: () => import('@/features/auth/views/RegisterView.vue'),
       meta: { guestOnly: true }
+    },
+    {
+      path: '/verify-email',
+      component: () => import('@/features/auth/views/VerifyEmailView.vue'),
+      meta: { guestOnly: true }
+    },
+    {
+      path: '/forgot-password',
+      component: () => import('@/features/auth/views/ForgotPasswordView.vue'),
+      meta: { guestOnly: true }
+    },
+    {
+      path: '/reset-password',
+      component: () => import('@/features/auth/views/ResetPasswordView.vue'),
+      meta: { guestOnly: true }
     }
   ]
 })

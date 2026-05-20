@@ -58,10 +58,12 @@
       <div class="login-card">
         <header class="login-card__header">
           <h2 class="login-card__title">Create your account</h2>
-          <p class="login-card__subtitle">Fill in your details to get started.</p>
+          <p class="login-card__subtitle">
+            {{ successMessage || 'Fill in your details to get started.' }}
+          </p>
         </header>
 
-        <form class="login-form" @submit.prevent="handleRegister">
+        <form v-if="!successMessage" class="login-form" @submit.prevent="handleRegister">
           <p v-if="formError" class="login-alert" role="alert">{{ formError }}</p>
 
           <div class="login-field">
@@ -162,7 +164,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { AxiosError } from 'axios'
-import { useRouter } from 'vue-router'
 import { register } from '@/features/auth/services/auth'
 
 const username = ref('')
@@ -173,7 +174,7 @@ const showPassword = ref(false)
 const showConfirm = ref(false)
 const formError = ref('')
 const isSubmitting = ref(false)
-const router = useRouter()
+const successMessage = ref('')
 
 function getErrorMessage(error: unknown) {
   if (error instanceof AxiosError) {
@@ -200,7 +201,7 @@ async function handleRegister() {
       email: email.value.trim(),
       password: password.value
     })
-    await router.push('/')
+    successMessage.value = 'Check your email to verify your account before signing in.'
   } catch (error) {
     formError.value = getErrorMessage(error)
   } finally {

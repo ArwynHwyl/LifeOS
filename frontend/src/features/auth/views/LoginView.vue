@@ -93,7 +93,9 @@
           </div>
 
           <div class="login-row">
-            <a class="login-link login-link--solo" href="#" @click.prevent>Forgot password?</a>
+            <RouterLink class="login-link login-link--solo" to="/forgot-password">
+              Forgot password?
+            </RouterLink>
           </div>
 
           <button class="login-submit" type="submit" :disabled="isSubmitting">
