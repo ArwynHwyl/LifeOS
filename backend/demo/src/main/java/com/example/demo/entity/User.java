@@ -102,6 +102,14 @@ public class User {
         return status;
     }
 
+    public void verifyEmail() {
+        this.status = UserStatus.VERIFY;
+    }
+
+    public void updatePasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
     public Instant getCreateAt() {
         return createAt;
     }
