@@ -147,7 +147,7 @@ async function handleLogin() {
     } else if (data.user.role === 'ROLE_INSTRUCTOR') {
       await router.push('/teacher/courses')
     } else {
-      await router.push('/')
+      await router.push('/learn/courses')
     }
   } catch (error) {
     formError.value = getErrorMessage(error)

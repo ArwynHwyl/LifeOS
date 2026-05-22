@@ -62,7 +62,7 @@ defineProps<{
           </li>
         </ul>
       </div>
-
+      
       <div>
         <p class="mb-1 px-2.5 text-[9px] font-bold uppercase tracking-[0.14em] text-white/20">Systems</p>
         <ul class="space-y-0.5">
