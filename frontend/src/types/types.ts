@@ -1,1 +1,1 @@
-export type CourseStatus = 'published' | 'draft'
+export type CourseStatus = 'published' | 'draft' | 'pending' | 'revision'

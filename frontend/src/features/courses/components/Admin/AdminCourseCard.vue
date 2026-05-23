@@ -10,6 +10,7 @@ const props = defineProps<{
   moduleCount: number
   lastEdited: string
   coverId: string
+  createdBy: string
 }>()
 
 const emit = defineEmits<{
@@ -19,93 +20,86 @@ const emit = defineEmits<{
 }>()
 
 const cover = computed(() => getCoverPreset(props.coverId))
+
+const statusInfo = computed(() => {
+  if (props.status === 'published') {
+    return { label: 'Published', classes: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20', dot: 'bg-emerald-500' }
+  }
+  if (props.status === 'pending') {
+    return { label: 'Pending Review', classes: 'bg-violet-50 text-violet-700 ring-violet-600/20', dot: 'bg-violet-500' }
+  }
+  if (props.status === 'revision') {
+    return { label: 'Needs Revision', classes: 'bg-red-50 text-red-700 ring-red-600/20', dot: 'bg-red-500' }
+  }
+  return { label: 'Draft', classes: 'bg-slate-100 text-slate-600 ring-slate-300', dot: 'bg-slate-400' }
+})
+
+const completion = computed(() => {
+  if (props.status === 'published') return 78
+  if (props.status === 'pending') return 46
+  if (props.status === 'revision') return 28
+  return Math.min(65, Math.max(12, props.moduleCount * 18))
+})
 </script>
 
 <template>
   <article
-    class="group flex cursor-pointer flex-col overflow-hidden rounded-2xl bg-white ring-1 ring-slate-900/[0.06] shadow-sm
-           transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:ring-[#5b4cfa]/25"
+    class="group grid cursor-pointer grid-cols-[auto_minmax(0,1fr)_160px_112px_auto] items-center gap-5 rounded-xl border border-white bg-white px-5 py-4 shadow-sm shadow-slate-200/60 ring-1 ring-slate-900/[0.04] transition hover:border-[#c8c2ff] hover:shadow-md"
+    :class="status === 'pending' ? 'ring-[#a895ff]/35' : status === 'revision' ? 'ring-red-200' : ''"
     @click="emit('open')"
   >
-    <!-- Full-width colored top band -->
-    <div
-      class="relative flex h-[140px] shrink-0 items-center justify-center overflow-hidden"
-      :class="cover.bgClass"
-    >
-      <!-- Ghost symbol for depth -->
-      <span
-        class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 select-none font-serif text-[110px] font-bold leading-none opacity-[0.15]"
-        :class="cover.textClass"
-      >
-        {{ cover.symbol }}
-      </span>
-      <!-- Main symbol -->
-      <span class="relative z-10 font-serif text-[42px] font-bold leading-none" :class="cover.textClass">
-        {{ cover.symbol }}
-      </span>
+    <div class="flex h-11 w-11 items-center justify-center rounded-lg font-serif text-[22px] font-bold" :class="[cover.bgClass, cover.textClass]">
+      {{ cover.symbol }}
     </div>
 
-    <!-- Card body -->
-    <div class="flex flex-1 flex-col p-4">
-      <!-- Title + status -->
-      <div class="flex items-start justify-between gap-2">
-        <h3 class="flex-1 text-[13.5px] font-bold leading-snug text-slate-900 transition-colors group-hover:text-[#5b4cfa]">
-          {{ title }}
-        </h3>
-        <span
-          v-if="status === 'published'"
-          class="shrink-0 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-600/20"
-        >
-          <span class="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-          Published
-        </span>
-        <span
-          v-else
-          class="shrink-0 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 ring-1 ring-inset ring-amber-500/20"
-        >
-          <span class="h-1.5 w-1.5 rounded-full bg-amber-400" />
-          Draft
+    <div class="min-w-0">
+      <div class="flex min-w-0 items-center gap-2">
+        <h3 class="truncate text-[14px] font-bold text-slate-800 transition group-hover:text-[#5748e8]">{{ title }}</h3>
+        <span class="inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ring-inset" :class="statusInfo.classes">
+          <span class="h-1.5 w-1.5 rounded-full" :class="statusInfo.dot" />
+          {{ statusInfo.label }}
         </span>
       </div>
-
-      <!-- Description -->
-      <p class="mt-2 line-clamp-2 flex-1 text-[11.5px] leading-relaxed text-slate-400">
-        {{ description }}
+      <p class="mt-1 truncate text-[11px] font-medium text-slate-400">
+        {{ moduleCount }} module{{ moduleCount === 1 ? '' : 's' }} · {{ lastEdited }} · Created by {{ createdBy }}
       </p>
-
-      <!-- Footer -->
-      <div class="mt-3.5 flex items-center justify-between border-t border-slate-100 pt-3">
-        <span class="text-[11px] text-slate-400">{{ moduleCount }} modules · {{ lastEdited }}</span>
-
-        <!-- Hover actions -->
-        <div
-          class="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100"
-          @click.stop
-        >
-          <button
-            type="button"
-            class="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
-            title="Edit"
-            @click.stop="emit('edit')"
-          >
-            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-            </svg>
-          </button>
-          <button
-            type="button"
-            class="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-500"
-            title="Delete"
-            @click.stop="emit('delete')"
-          >
-            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M3 6h18" />
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-            </svg>
-          </button>
-        </div>
-      </div>
+      <p v-if="description" class="mt-1 truncate text-[11px] text-slate-400">{{ description }}</p>
     </div>
+
+    <div class="hidden md:block">
+      <div v-if="status !== 'draft'" class="flex items-center justify-between text-[10px] font-semibold text-slate-400">
+        <span>Completion</span>
+        <span>{{ completion }}%</span>
+      </div>
+      <div v-if="status !== 'draft'" class="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
+        <div class="h-full rounded-full bg-[#5b4cfa]" :style="{ width: `${completion}%` }" />
+      </div>
+      <p v-else class="text-center text-[12px] font-semibold text-slate-300">-</p>
+    </div>
+
+    <button
+      type="button"
+      class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[12px] font-bold text-slate-600 transition hover:border-[#cbc4ff] hover:bg-white hover:text-[#5748e8]"
+      @click.stop="emit('edit')"
+    >
+      <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 20h9" />
+        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+      </svg>
+      Edit
+    </button>
+
+    <button
+      type="button"
+      class="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-500"
+      title="Delete"
+      @click.stop="emit('delete')"
+    >
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="1" />
+        <circle cx="19" cy="12" r="1" />
+        <circle cx="5" cy="12" r="1" />
+      </svg>
+    </button>
   </article>
 </template>
