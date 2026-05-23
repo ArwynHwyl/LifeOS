@@ -17,3 +17,14 @@ app:
     secret: ${JWT_SECRET}
     access-token-ttl-minutes: ${JWT_ACCESS_TOKEN_TTL_MINUTES:15}
     refresh-token-ttl-days: ${JWT_REFRESH_TOKEN_TTL_DAYS:30}
+  storage:
+    s3:
+      endpoint: ${AWS_S3_ENDPOINT:}
+      region: ${AWS_S3_REGION:us-east-1}
+      bucket: ${AWS_S3_BUCKET:}
+      access-key: ${AWS_S3_ACCESS_KEY:}
+      secret-key: ${AWS_S3_SECRET_KEY:}
+  ai:
+    gemini:
+      api-key: ${GEMINI_API_KEY:}
+      model: ${GEMINI_MODEL:gemini-2.5-flash}
