@@ -1,6 +1,6 @@
 import api from '@/services/api'
 
-export type UserRole = 'ROLE_ADMIN' | 'ROLE_INSTRUCTOR' | 'ROLE_LEARNER'
+export type UserRole = 'ROLE_ADMIN' | 'ROLE_TEACHER' | 'ROLE_LEARNER'
 export type UserStatus = 'VERIFY' | 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
 
 export interface AuthUser {

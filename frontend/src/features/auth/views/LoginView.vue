@@ -144,7 +144,7 @@ async function handleLogin() {
     })
     if (data.user.role === 'ROLE_ADMIN') {
       await router.push('/courses')
-    } else if (data.user.role === 'ROLE_INSTRUCTOR') {
+    } else if (data.user.role === 'ROLE_TEACHER') {
       await router.push('/teacher/courses')
     } else {
       await router.push('/')
