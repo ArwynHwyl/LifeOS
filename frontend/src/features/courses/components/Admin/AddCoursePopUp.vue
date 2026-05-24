@@ -8,13 +8,24 @@ import {
   DEFAULT_COVER_ID,
   parseCoverId,
 } from '@/features/courses/constants/courseCoverPresets'
+import { DEFAULT_AI_COURSE_OUTLINE_PROMPT } from '@/features/courses/services/adminCourses'
 
 const props = defineProps<{
   open: boolean
+  submitting?: boolean
+  errorMessage?: string
 }>()
 
 const emit = defineEmits<{
   close: []
+  create: [payload: {
+    title: string
+    description: string
+    coverId: string
+    pdfFile: File | null
+    aiEnabled: boolean
+    prompt: string
+  }]
 }>()
 
 const title = ref('')
@@ -22,6 +33,7 @@ const description = ref('')
 const aiEnabled = ref(false)
 const prompt = ref('')
 const pdfFile = ref<File | null>(null)
+const pdfError = ref('')
 const pdfInputRef = ref<HTMLInputElement | null>(null)
 const symbolSearch = ref('')
 
@@ -54,6 +66,7 @@ function reset() {
   aiEnabled.value = false
   prompt.value = ''
   pdfFile.value = null
+  pdfError.value = ''
   if (pdfInputRef.value) pdfInputRef.value.value = ''
 }
 
@@ -62,19 +75,52 @@ function close() { emit('close') }
 function onPdfChange(e: Event) {
   const input = e.target as HTMLInputElement
   const file = input.files?.[0] ?? null
-  if (file && file.type !== 'application/pdf') { input.value = ''; pdfFile.value = null; return }
+  pdfError.value = ''
+  if (file && file.type !== 'application/pdf') {
+    input.value = ''
+    pdfFile.value = null
+    pdfError.value = 'Only PDF files can be uploaded.'
+    return
+  }
+  if (file && file.size > 250 * 1024 * 1024) {
+    input.value = ''
+    pdfFile.value = null
+    pdfError.value = 'PDF files must be 250MB or smaller.'
+    return
+  }
   pdfFile.value = file
 }
 
 function removePdf() {
   pdfFile.value = null
+  pdfError.value = ''
   if (pdfInputRef.value) pdfInputRef.value.value = ''
 }
 
-function onSubmit() { close() }
+function onSubmit() {
+  if (props.submitting) return
+  pdfError.value = ''
+  if (aiEnabled.value && !pdfFile.value) {
+    pdfError.value = 'AI generation requires a PDF source.'
+    return
+  }
+  emit('create', {
+    title: title.value.trim(),
+    description: description.value.trim(),
+    coverId: selectedCoverId.value,
+    pdfFile: pdfFile.value,
+    aiEnabled: aiEnabled.value,
+    prompt: prompt.value.trim(),
+  })
+}
 function onKeydown(e: KeyboardEvent) { if (e.key === 'Escape') close() }
 
 watch(() => props.open, (open) => { if (!open) reset() })
+watch(aiEnabled, (enabled) => {
+  if (enabled && !prompt.value.trim()) {
+    prompt.value = DEFAULT_AI_COURSE_OUTLINE_PROMPT
+  }
+})
 </script>
 
 <template>
@@ -207,7 +253,7 @@ watch(() => props.open, (open) => { if (!open) reset() })
                   <input v-model="aiEnabled" type="checkbox" class="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-slate-300 text-[#5b4cfa] focus:ring-[#5b4cfa]/30" />
                   <span>
                     <span class="block text-[13px] font-semibold text-slate-800">Enable AI generation</span>
-                    <span class="mt-0.5 block text-[11px] text-slate-400">Provide a prompt and optional PDF to generate course content.</span>
+                    <span class="mt-0.5 block text-[11px] text-slate-400">Provide a PDF and prompt to generate a draft course outline.</span>
                   </span>
                 </label>
 
@@ -218,7 +264,7 @@ watch(() => props.open, (open) => { if (!open) reset() })
                   <div v-if="aiEnabled" class="space-y-4">
                     <div>
                       <label for="ai-prompt" class="mb-1.5 block text-[12px] font-semibold text-slate-600">Prompt</label>
-                      <textarea id="ai-prompt" v-model="prompt" rows="4" placeholder="Describe structure, tone, difficulty level…"
+                      <textarea id="ai-prompt" v-model="prompt" rows="7" required placeholder="Describe structure, tone, difficulty level…"
                         class="w-full resize-none rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-[13px] text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-[#5b4cfa]/50 focus:bg-white focus:ring-2 focus:ring-[#5b4cfa]/10" />
                     </div>
                     <div>
@@ -245,18 +291,26 @@ watch(() => props.open, (open) => { if (!open) reset() })
                         <p class="min-w-0 flex-1 truncate text-[13px] font-medium text-slate-700">{{ pdfFileName }}</p>
                         <button type="button" class="shrink-0 text-[12px] font-semibold text-red-500 transition hover:text-red-600" @click="removePdf">Remove</button>
                       </div>
+                      <p v-if="pdfError" class="mt-2 text-[12px] font-medium text-red-600">{{ pdfError }}</p>
                     </div>
                   </div>
                 </Transition>
               </div>
 
               <footer class="flex shrink-0 gap-2.5 border-t border-slate-100 px-6 py-4">
+                <p
+                  v-if="errorMessage"
+                  class="absolute bottom-[70px] left-6 right-6 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[12px] font-medium text-red-700"
+                >
+                  {{ errorMessage }}
+                </p>
                 <button type="button"
                   class="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[13px] font-semibold text-slate-600 transition hover:bg-slate-50"
+                  :disabled="submitting"
                   @click="close">Cancel</button>
                 <button type="submit"
-                  class="flex-1 rounded-xl bg-[#5b4cfa] px-4 py-2.5 text-[13px] font-semibold text-white shadow-md shadow-[#5b4cfa]/25 transition hover:bg-[#4d3ee0]">
-                  Create course
+                  class="flex-1 rounded-xl bg-[#5b4cfa] px-4 py-2.5 text-[13px] font-semibold text-white shadow-md shadow-[#5b4cfa]/25 transition hover:bg-[#4d3ee0] disabled:cursor-not-allowed disabled:opacity-60">
+                  {{ submitting ? 'Creating...' : 'Create course' }}
                 </button>
               </footer>
             </form>
