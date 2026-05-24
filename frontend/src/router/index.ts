@@ -55,7 +55,40 @@ const router = createRouter({
       path: '/teacher/courses/:id',
       component: () => import('@/features/courses/views/TeacherCourseDetailView.vue'),
       meta: { requiresAuth: true }
-    }
+    },
+    // Learner routes
+    {
+      path: '/learn',
+      component: () => import('@/features/learning/views/LearnerLayout.vue'),
+      meta: { requiresAuth: true },
+      children: [
+        { path: '', redirect: 'courses' },
+        {
+          path: 'courses',
+          component: () => import('@/features/learning/views/CoursesView.vue'),
+        },
+        {
+          path: 'lesson/:courseId',
+          component: () => import('@/features/learning/views/LessonView.vue'),
+        },
+        {
+          path: 'flashcards',
+          component: () => import('@/features/learning/views/FlashcardsView.vue'),
+        },
+        {
+          path: 'flashcards/srs',
+          component: () => import('@/features/learning/views/FlashcardsSRSView.vue'),
+        },
+        {
+          path: 'flashcards/set/:deckId',
+          component: () => import('@/features/learning/views/FlashcardsSetView.vue'),
+        },
+        {
+          path: 'dashboard',
+          component: () => import('@/features/learning/views/DashboardView.vue'),
+        },
+      ],
+    },
   ]
 })
 

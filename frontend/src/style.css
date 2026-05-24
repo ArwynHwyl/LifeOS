@@ -1,5 +1,57 @@
 @import 'tailwindcss';
 
+/* ── Learning Module Design Tokens ─────────────────────────────────────── */
+@theme {
+  /* Colors */
+  --color-lm-bg: #fbf7ef;
+  --color-lm-bg-soft: #f3eee2;
+  --color-lm-surface: #ffffff;
+  --color-lm-ink: #1a1814;
+  --color-lm-ink-2: #5b544a;
+  --color-lm-ink-3: #8a8276;
+  --color-lm-line: #1a1814;
+  --color-lm-line-soft: #e3ddce;
+  --color-lm-yellow: #ffd333;
+  --color-lm-yellow-soft: #fff0a8;
+  --color-lm-rust: #c44a1a;
+  --color-lm-rust-soft: #ffd7c1;
+  --color-lm-blue: #3b6cb5;
+  --color-lm-blue-soft: #cfe0ff;
+  --color-lm-green: #3a7d44;
+  --color-lm-green-soft: #d3edc9;
+  --color-lm-red: #d64545;
+  --color-lm-red-soft: #ffd5d0;
+  --color-lm-purple: #6b4ec1;
+  --color-lm-purple-soft: #e3d8ff;
+  --color-lm-alg: #ffe169;
+  --color-lm-geo: #cfe3ff;
+  --color-lm-tri: #d9f0c8;
+  --color-lm-sta: #ffd9d9;
+  --color-lm-cal: #e3d4ff;
+  --color-lm-lin: #fff0a8;
+
+  /* Offset (stamp) shadows */
+  --shadow-stamp-sm: 2px 3px 0 #1a1814;
+  --shadow-stamp-md: 3px 4px 0 #1a1814;
+  --shadow-stamp-lg: 4px 6px 0 #1a1814;
+
+  /* Fonts */
+  --font-display: "Bricolage Grotesque", "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-math: "Iowan Old Style", "Cambria", "Times New Roman", serif;
+}
+
+@layer utilities {
+  .bg-dot-grid {
+    background-image: radial-gradient(circle, #e3ddce 1px, transparent 1px);
+    background-size: 18px 18px;
+  }
+  .bg-chalk-dots {
+    background-image: radial-gradient(circle, rgba(251, 247, 239, 0.06) 1px, transparent 1px);
+    background-size: 12px 12px;
+  }
+}
+
 :root {
   --font-sans: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
   --font-serif: 'Lora', Georgia, 'Times New Roman', serif;
@@ -166,9 +218,10 @@ code {
   box-sizing: border-box;
 }
 
-/* Full-width app shell (course management, auth placeholders, etc.) */
+/* Full-width app shell (course management, auth placeholders, learning app, etc.) */
 #app:has(.course-app),
-#app:has(.app-fullwidth) {
+#app:has(.app-fullwidth),
+#app:has(.learning-app) {
   width: 100%;
   max-width: none;
   margin: 0;
