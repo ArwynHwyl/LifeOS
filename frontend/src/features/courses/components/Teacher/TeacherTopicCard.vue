@@ -77,11 +77,12 @@ function cancelEdit() {
   editText.value = ''
 }
 
+const AVATAR_PALETTE = ['bg-violet-500', 'bg-blue-500', 'bg-teal-500', 'bg-amber-500', 'bg-rose-500', 'bg-indigo-500']
+
 function avatarBg(name: string): string {
-  const palette = ['bg-violet-500', 'bg-blue-500', 'bg-teal-500', 'bg-amber-500', 'bg-rose-500', 'bg-indigo-500']
   let h = 0
   for (const c of name) h = (h * 31 + c.charCodeAt(0)) & 0xffff
-  return palette[h % palette.length]
+  return AVATAR_PALETTE[h % AVATAR_PALETTE.length]
 }
 
 function initials(name: string): string {
@@ -90,30 +91,30 @@ function initials(name: string): string {
 </script>
 
 <template>
-  <div class="overflow-hidden rounded-2xl bg-white ring-1 ring-slate-900/[0.06] shadow-sm transition-all duration-200 hover:shadow-md">
+  <div class="overflow-hidden rounded-[18px] border-2 border-lm-line bg-lm-surface shadow-stamp-sm transition-all duration-200 hover:shadow-stamp-md">
 
     <!-- Accordion header -->
     <div
       class="group flex cursor-pointer select-none items-center gap-4 px-5 py-4"
       @click="expanded = !expanded"
     >
-      <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#5b4cfa]/10 text-[12px] font-bold text-[#5b4cfa]">
+      <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] border-2 border-lm-line bg-lm-yellow font-display text-[12px] font-bold text-lm-ink shadow-stamp-sm">
         {{ index }}
       </div>
-      <span class="flex-1 text-[13.5px] font-semibold leading-snug text-slate-800">{{ name }}</span>
+      <span class="flex-1 text-[13.5px] font-semibold leading-snug text-lm-ink">{{ name }}</span>
 
       <!-- Active discussion indicator -->
       <span
         v-if="discussionOpen"
-        class="inline-flex items-center gap-1 rounded-full bg-[#5b4cfa]/10 px-2 py-0.5 text-[10px] font-semibold text-[#5b4cfa]"
+        class="inline-flex items-center gap-1 rounded-full border border-lm-line-soft bg-lm-yellow/30 px-2 py-0.5 font-mono text-[10px] font-semibold text-lm-ink"
       >
-        <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-[#5b4cfa]" />
+        <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-lm-ink" />
         Discussion open
       </span>
 
       <svg
-        class="h-4 w-4 shrink-0 text-slate-300 transition-transform duration-200"
-        :class="expanded ? 'rotate-180 text-[#5b4cfa]' : ''"
+        class="h-4 w-4 shrink-0 text-lm-line-soft transition-transform duration-200"
+        :class="expanded ? 'rotate-180 text-lm-ink' : ''"
         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
       >
         <polyline points="6 9 12 15 18 9" />
@@ -132,14 +133,14 @@ function initials(name: string): string {
       <div v-if="expanded">
 
         <!-- Topic content -->
-        <div class="border-t border-slate-100 bg-slate-50/50 px-5 py-4">
-          <div class="topic-preview text-[12.5px] leading-relaxed text-slate-600" v-html="renderedContent" />
+        <div class="border-t-2 border-lm-line-soft bg-lm-bg px-5 py-4">
+          <div class="topic-preview text-[12.5px] leading-relaxed text-lm-ink-2" v-html="renderedContent" />
 
           <!-- Open Discussion button (only when discussion is closed) -->
           <button
             v-if="!discussionOpen"
             type="button"
-            class="mt-4 flex items-center gap-2 rounded-xl border border-dashed border-slate-200 px-4 py-2.5 text-[12px] font-semibold text-slate-500 transition hover:border-[#5b4cfa]/50 hover:bg-[#5b4cfa]/[0.03] hover:text-[#5b4cfa]"
+            class="mt-4 flex items-center gap-2 rounded-[12px] border-2 border-dashed border-lm-line-soft px-4 py-2.5 text-[12px] font-semibold text-lm-ink-3 transition-all duration-200 hover:border-lm-line hover:bg-lm-surface hover:text-lm-ink"
             @click.stop="openDiscussion"
           >
             <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -151,24 +152,24 @@ function initials(name: string): string {
 
         <!-- Discussion panel -->
         <Transition
-          enter-active-class="transition-all duration-250 ease-out"
+          enter-active-class="transition-all duration-200 ease-out"
           enter-from-class="opacity-0 -translate-y-2"
           enter-to-class="opacity-100 translate-y-0"
           leave-active-class="transition-all duration-150 ease-in"
           leave-from-class="opacity-100 translate-y-0"
           leave-to-class="opacity-0 -translate-y-2"
         >
-          <div v-if="discussionOpen" class="border-t border-[#5b4cfa]/15 bg-[#5b4cfa]/[0.02]" @click.stop>
+          <div v-if="discussionOpen" class="border-t-2 border-lm-line-soft bg-lm-bg-soft" @click.stop>
 
             <!-- Discussion header -->
             <div class="flex items-center justify-between px-5 py-3">
               <div class="flex items-center gap-2">
-                <svg class="h-3.5 w-3.5 text-[#5b4cfa]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg class="h-3.5 w-3.5 text-lm-ink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                 </svg>
-                <span class="text-[11px] font-bold uppercase tracking-[0.12em] text-[#5b4cfa]">Discussion</span>
+                <span class="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-lm-ink">Discussion</span>
                 <span v-if="comments.length > 0"
-                  class="rounded-full bg-[#5b4cfa]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[#5b4cfa]">
+                  class="rounded-full border border-lm-line-soft bg-lm-yellow/30 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-lm-ink">
                   {{ comments.length }}
                 </span>
               </div>
@@ -177,7 +178,7 @@ function initials(name: string): string {
               <button
                 v-if="!confirmEnd"
                 type="button"
-                class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold text-slate-400 transition hover:bg-red-50 hover:text-red-500"
+                class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold text-lm-ink-3 transition hover:bg-lm-red-soft hover:text-lm-red"
                 @click="confirmEnd = true"
               >
                 <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -188,17 +189,17 @@ function initials(name: string): string {
 
               <!-- Inline confirmation -->
               <div v-else class="flex items-center gap-2">
-                <span class="text-[11px] text-slate-500">Clear all comments?</span>
+                <span class="text-[11px] text-lm-ink-2">Clear all comments?</span>
                 <button
                   type="button"
-                  class="rounded-lg bg-red-500 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-red-600"
+                  class="rounded-lg border-2 border-lm-red bg-lm-red px-2.5 py-1 text-[11px] font-semibold text-lm-bg transition hover:opacity-90"
                   @click="onEndDiscussion"
                 >
                   End it
                 </button>
                 <button
                   type="button"
-                  class="rounded-lg border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-600 transition hover:bg-slate-50"
+                  class="rounded-lg border-2 border-lm-line bg-lm-surface px-2.5 py-1 text-[11px] font-semibold text-lm-ink transition hover:bg-lm-bg"
                   @click="confirmEnd = false"
                 >
                   Cancel
@@ -209,11 +210,11 @@ function initials(name: string): string {
             <!-- Comments list -->
             <div class="px-5">
               <!-- Empty state -->
-              <div v-if="comments.length === 0" class="mb-4 flex flex-col items-center gap-1 rounded-xl border border-dashed border-slate-200 py-6 text-center">
-                <svg class="h-6 w-6 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <div v-if="comments.length === 0" class="mb-4 flex flex-col items-center gap-1 rounded-[12px] border-2 border-dashed border-lm-line-soft py-6 text-center">
+                <svg class="h-6 w-6 text-lm-line-soft" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                 </svg>
-                <p class="text-[12px] text-slate-400">No comments yet. Start the discussion.</p>
+                <p class="text-[12px] text-lm-ink-3">No comments yet. Start the discussion.</p>
               </div>
 
               <!-- Comment items -->
@@ -228,14 +229,14 @@ function initials(name: string): string {
 
                   <div class="group/c flex-1 min-w-0">
                     <div class="mb-1 flex items-center gap-2">
-                      <span class="text-[12px] font-semibold text-slate-700">{{ comment.authorName }}</span>
-                      <span class="text-[11px] text-slate-400">· {{ comment.createdAt }}</span>
+                      <span class="text-[12px] font-semibold text-lm-ink">{{ comment.authorName }}</span>
+                      <span class="text-[11px] text-lm-ink-3">· {{ comment.createdAt }}</span>
                       <div
                         v-if="comment.authorId === currentUserId && editingId !== comment.id"
                         class="ml-auto flex items-center gap-0.5 opacity-0 transition-opacity group-hover/c:opacity-100"
                       >
                         <button type="button"
-                          class="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                          class="flex h-6 w-6 items-center justify-center rounded-md text-lm-ink-3 transition hover:bg-lm-bg hover:text-lm-ink"
                           title="Edit"
                           @click="startEdit(comment)">
                           <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -244,7 +245,7 @@ function initials(name: string): string {
                           </svg>
                         </button>
                         <button type="button"
-                          class="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 transition hover:bg-red-50 hover:text-red-500"
+                          class="flex h-6 w-6 items-center justify-center rounded-md text-lm-ink-3 transition hover:bg-lm-red-soft hover:text-lm-red"
                           title="Delete"
                           @click="emit('delete-comment', comment.id)">
                           <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -255,7 +256,7 @@ function initials(name: string): string {
                     </div>
 
                     <!-- Text -->
-                    <p v-if="editingId !== comment.id" class="text-[12.5px] leading-relaxed text-slate-600">
+                    <p v-if="editingId !== comment.id" class="text-[12.5px] leading-relaxed text-lm-ink-2">
                       {{ comment.text }}
                     </p>
 
@@ -264,16 +265,16 @@ function initials(name: string): string {
                       <textarea
                         v-model="editText"
                         rows="2"
-                        class="w-full resize-none rounded-lg border border-[#5b4cfa]/40 bg-white px-3 py-2 text-[12.5px] leading-relaxed text-slate-700 outline-none ring-2 ring-[#5b4cfa]/10"
+                        class="w-full resize-none rounded-[10px] border-2 border-lm-line bg-lm-surface px-3 py-2 text-[12.5px] leading-relaxed text-lm-ink outline-none ring-2 ring-lm-yellow/20"
                         @keydown.enter.ctrl="saveEdit"
                         @keydown.escape="cancelEdit"
                       />
                       <div class="mt-1.5 flex gap-2">
                         <button type="button"
-                          class="rounded-lg bg-[#5b4cfa] px-3 py-1 text-[11px] font-semibold text-white transition hover:bg-[#4d3ee0]"
+                          class="rounded-lg border-2 border-lm-ink bg-lm-ink px-3 py-1 text-[11px] font-semibold text-lm-bg transition hover:opacity-90"
                           @click="saveEdit">Save</button>
                         <button type="button"
-                          class="rounded-lg border border-slate-200 px-3 py-1 text-[11px] font-semibold text-slate-600 transition hover:bg-slate-50"
+                          class="rounded-lg border-2 border-lm-line bg-lm-surface px-3 py-1 text-[11px] font-semibold text-lm-ink transition hover:bg-lm-bg"
                           @click="cancelEdit">Cancel</button>
                       </div>
                     </div>
@@ -283,8 +284,8 @@ function initials(name: string): string {
             </div>
 
             <!-- Add comment form -->
-            <div class="flex items-start gap-3 border-t border-[#5b4cfa]/10 px-5 py-4">
-              <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#06b6d4] to-[#3b82f6] text-[10px] font-bold text-white">
+            <div class="flex items-start gap-3 border-t-2 border-lm-line-soft px-5 py-4">
+              <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-lm-line bg-lm-yellow font-display text-[10px] font-bold text-lm-ink shadow-stamp-sm">
                 TC
               </div>
               <div class="flex flex-1 items-end gap-2">
@@ -292,12 +293,12 @@ function initials(name: string): string {
                   v-model="newComment"
                   rows="1"
                   placeholder="Add a comment…"
-                  class="flex-1 resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12.5px] leading-relaxed text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#5b4cfa]/40 focus:ring-2 focus:ring-[#5b4cfa]/10"
+                  class="flex-1 resize-none rounded-[10px] border-2 border-lm-line-soft bg-lm-surface px-3 py-2 text-[12.5px] leading-relaxed text-lm-ink outline-none transition placeholder:text-lm-ink-3 focus:border-lm-line focus:ring-2 focus:ring-lm-yellow/40"
                   @keydown.enter.prevent="submitComment"
                 />
                 <button
                   type="button"
-                  class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#5b4cfa] text-white shadow-sm shadow-[#5b4cfa]/30 transition hover:bg-[#4d3ee0] disabled:opacity-40"
+                  class="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] border-2 border-lm-ink bg-lm-ink text-lm-bg shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md disabled:opacity-40"
                   :disabled="!newComment.trim()"
                   @click="submitComment"
                 >
@@ -317,9 +318,9 @@ function initials(name: string): string {
 </template>
 
 <style scoped>
-.topic-preview :deep(h1) { font-size: 1.25rem; font-weight: 700; color: #1e293b; margin: 0.75rem 0 0.375rem; }
-.topic-preview :deep(h2) { font-size: 1.1rem; font-weight: 700; color: #1e293b; margin: 0.5rem 0 0.25rem; }
-.topic-preview :deep(h3) { font-size: 1rem; font-weight: 600; color: #334155; margin: 0.375rem 0 0.125rem; }
+.topic-preview :deep(h1) { font-size: 1.25rem; font-weight: 700; color: #1a1814; margin: 0.75rem 0 0.375rem; }
+.topic-preview :deep(h2) { font-size: 1.1rem; font-weight: 700; color: #1a1814; margin: 0.5rem 0 0.25rem; }
+.topic-preview :deep(h3) { font-size: 1rem; font-weight: 600; color: #1a1814; margin: 0.375rem 0 0.125rem; }
 .topic-preview :deep(ul) { list-style-type: disc; padding-left: 1.25rem; margin: 0.375rem 0; }
 .topic-preview :deep(ol) { list-style-type: decimal; padding-left: 1.25rem; margin: 0.375rem 0; }
 .topic-preview :deep(li) { margin-bottom: 0.125rem; }

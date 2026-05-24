@@ -7,33 +7,30 @@ defineProps<{
 </script>
 
 <template>
-  <aside class="flex w-[220px] shrink-0 flex-col bg-[#1a1a40]" aria-label="Main navigation">
+  <aside class="relative flex w-[220px] shrink-0 flex-col overflow-hidden bg-lm-ink" aria-label="Main navigation">
+    <!-- Subtle dot-grid texture -->
+    <div class="pointer-events-none absolute inset-0 bg-chalk-dots" />
+
     <!-- Logo -->
-    <div class="flex h-14 shrink-0 items-center gap-3 px-5">
-      <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#3b5bfd] shadow-md shadow-[#3b5bfd]/40">
-        <svg class="h-3.5 w-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path d="M12 2L2 7l10 5 10-5-10-5z" />
-          <path d="M2 17l10 5 10-5" />
-          <path d="M2 12l10 5 10-5" />
-        </svg>
+    <div class="relative z-10 flex h-20 shrink-0 items-center gap-3 px-5">
+      <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-lm-yellow border-2 border-lm-bg shadow-stamp-sm font-math italic font-bold text-[22px] text-lm-ink">
+        π
       </div>
-      <span class="text-[13px] font-semibold tracking-tight text-white/90">LifeOS</span>
+      <span class="font-display text-[20px] font-bold tracking-tight text-lm-bg">LifeOS</span>
     </div>
 
-    <div class="mx-4 border-t border-white/[0.06]" />
-
     <!-- Nav -->
-    <nav class="flex flex-1 flex-col gap-5 overflow-y-auto px-3 py-4">
+    <nav class="relative z-10 flex flex-1 flex-col gap-6 overflow-y-auto px-4 py-2">
       <div>
-        <p class="mb-1 px-2.5 text-[9px] font-bold uppercase tracking-[0.14em] text-white/20">Main</p>
-        <ul class="space-y-0.5">
+        <p class="mb-2 px-2.5 font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-lm-bg/35">Main Menu</p>
+        <ul class="space-y-1">
           <li>
             <RouterLink
-              to="/teacher"
-              class="relative flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[12.5px] font-medium transition-colors"
+              to="/teacher/courses"
+              class="relative flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-semibold transition-all duration-200"
               :class="activeItem === 'courses'
-                ? 'bg-white/[0.09] text-white before:absolute before:left-0 before:top-1/2 before:h-[18px] before:w-[3px] before:-translate-y-1/2 before:rounded-r-full before:bg-[#5b4cfa] before:content-[\'\']'
-                : 'text-white/40 hover:bg-white/[0.05] hover:text-white/65'"
+                ? 'bg-lm-yellow text-lm-ink shadow-stamp-sm border-2 border-lm-bg/30'
+                : 'text-lm-bg/50 hover:bg-lm-bg/10 hover:text-lm-bg/80'"
             >
               <svg class="h-[15px] w-[15px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
@@ -43,9 +40,14 @@ defineProps<{
             </RouterLink>
           </li>
           <li>
-            <a href="#" class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[12.5px] font-medium transition-colors"
-              :class="activeItem === 'dashboard' ? 'bg-white/[0.09] text-white' : 'text-white/40 hover:bg-white/[0.05] hover:text-white/65'"
-              @click.prevent>
+            <a
+              href="#"
+              class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-semibold transition-all duration-200"
+              :class="activeItem === 'dashboard'
+                ? 'bg-lm-yellow text-lm-ink shadow-stamp-sm border-2 border-lm-bg/30'
+                : 'text-lm-bg/50 hover:bg-lm-bg/10 hover:text-lm-bg/80'"
+              @click.prevent
+            >
               <svg class="h-[15px] w-[15px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="3" y="3" width="7" height="9" rx="1" />
                 <rect x="14" y="3" width="7" height="5" rx="1" />
@@ -59,12 +61,17 @@ defineProps<{
       </div>
 
       <div>
-        <p class="mb-1 px-2.5 text-[9px] font-bold uppercase tracking-[0.14em] text-white/20">Systems</p>
-        <ul class="space-y-0.5">
+        <p class="mb-2 px-2.5 font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-lm-bg/35">Systems</p>
+        <ul class="space-y-1">
           <li>
-            <a href="#" class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[12.5px] font-medium transition-colors"
-              :class="activeItem === 'help' ? 'bg-white/[0.09] text-white' : 'text-white/40 hover:bg-white/[0.05] hover:text-white/65'"
-              @click.prevent>
+            <a
+              href="#"
+              class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-semibold transition-all duration-200"
+              :class="activeItem === 'help'
+                ? 'bg-lm-yellow text-lm-ink shadow-stamp-sm border-2 border-lm-bg/30'
+                : 'text-lm-bg/50 hover:bg-lm-bg/10 hover:text-lm-bg/80'"
+              @click.prevent
+            >
               <svg class="h-[15px] w-[15px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10" />
                 <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
@@ -77,19 +84,21 @@ defineProps<{
       </div>
     </nav>
 
-    <!-- Teacher user -->
-    <div class="shrink-0 border-t border-white/[0.06] px-3 py-3">
-      <div class="flex items-center gap-2.5 rounded-xl bg-white/[0.05] px-3 py-2.5">
-        <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#06b6d4] to-[#3b82f6] text-[10px] font-bold text-white">
+    <!-- Teacher user card -->
+    <div class="relative z-10 shrink-0 px-4 py-5">
+      <div class="flex items-center gap-2.5 rounded-xl border-2 border-lm-bg/20 bg-lm-bg/10 px-3 py-3">
+        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-lm-blue-soft border-2 border-lm-bg/30 font-display text-[13px] font-bold text-lm-ink">
           TC
         </div>
         <div class="min-w-0 flex-1">
-          <p class="truncate text-[12px] font-semibold text-white/80">Teacher</p>
-          <p class="text-[10px] text-white/35">Review access</p>
+          <p class="font-display truncate text-[13px] font-bold text-lm-bg">Teacher</p>
+          <p class="font-mono text-[10px] text-lm-bg/50">Review access</p>
         </div>
-        <button type="button"
-          class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-white/25 transition hover:bg-white/10 hover:text-white/50"
-          aria-label="Sign out">
+        <button
+          type="button"
+          class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-lm-bg/30 transition hover:bg-lm-bg/10 hover:text-lm-bg/60"
+          aria-label="Sign out"
+        >
           <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
             <polyline points="16 17 21 12 16 7" />
