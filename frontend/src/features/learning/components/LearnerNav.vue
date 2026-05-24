@@ -39,7 +39,7 @@ function navigate(id: 'courses' | 'flashcards' | 'dashboard') {
       <div class="w-10 h-10 flex items-center justify-center bg-lm-yellow border-2 border-lm-ink rounded-[12px] shadow-stamp-sm font-math italic font-bold text-[22px] text-lm-ink shrink-0">
         π
       </div>
-      <span class="font-display text-[20px] font-bold tracking-tight text-lm-ink">Mathic</span>
+      <span class="font-display text-[20px] font-bold tracking-tight text-lm-ink">LifeOS</span>
     </div>
 
     <!-- Tabs -->
