@@ -1,133 +1,127 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { AxiosError } from 'axios'
 import { useRoute, useRouter } from 'vue-router'
 import TeacherNavbar from '@/features/courses/components/Teacher/TeacherNavbar.vue'
-import TeacherTopicCard from '@/features/courses/components/Teacher/TeacherTopicCard.vue'
-import type { Comment } from '@/features/courses/components/Teacher/TeacherTopicCard.vue'
-import { getCoverPreset } from '@/features/courses/constants/courseCoverPresets'
+import TeacherTopicCard, { type Comment } from '@/features/courses/components/Teacher/TeacherTopicCard.vue'
+import { DEFAULT_COVER_ID, getCoverPreset } from '@/features/courses/constants/courseCoverPresets'
+import {
+  getTeacherCourse,
+  approveTeacherCourse,
+  rejectTeacherCourse,
+} from '@/features/courses/services/teacherCourses'
+import type { AdminCourseDetailDto } from '@/features/courses/services/adminCourses'
 import type { CourseStatus } from '@/types/types'
 
-const CURRENT_TEACHER = { id: 'teacher-1', name: 'Ms. Johnson' }
-
-type Topic = { id: string; name: string; content: string }
-
-type MockCourse = {
-  id: string
-  title: string
-  description: string
-  coverId: string
-  status: CourseStatus
-  topics: Topic[]
-}
-
-const MOCK_COURSES: MockCourse[] = [
-  {
-    id: '1',
-    title: 'Quadratic Functions',
-    description: 'Explore parabolas, vertex form, factoring, and real-world quadratic models.',
-    coverId: 'integral',
-    status: 'published',
-    topics: [
-      {
-        id: 't1',
-        name: 'Introduction to Parabolas',
-        content: 'A quadratic function graphs as a parabola. The coefficient of x² determines whether it opens upward or downward.\n\nKey vocabulary: vertex, axis of symmetry, roots, maximum/minimum value.',
-      },
-      {
-        id: 't2',
-        name: 'Vertex Form & Transformations',
-        content: 'Vertex form: f(x) = a(x - h)² + k.\n\nThe point (h, k) is the vertex. Changing h shifts horizontally; changing k shifts vertically.',
-      },
-    ],
-  },
-  {
-    id: '2',
-    title: 'Intro to Linear Algebra',
-    description: 'Vectors, matrices, and systems of linear equations.',
-    coverId: 'sigma',
-    status: 'published',
-    topics: [
-      { id: 't3', name: 'Vectors in R²', content: 'Vectors can be represented as arrows with magnitude and direction, or as ordered pairs (x, y).' },
-    ],
-  },
-  {
-    id: '3',
-    title: 'Probability Basics',
-    description: 'Foundations of probability, events, and distributions.',
-    coverId: 'pi',
-    status: 'draft',
-    topics: [],
-  },
-  {
-    id: '4',
-    title: 'Calculus I: Limits',
-    description: 'Limits, continuity, and introductory differential calculus.',
-    coverId: 'fx',
-    status: 'published',
-    topics: [],
-  },
-]
+const COURSE_COVER_STORAGE_KEY = 'lifeosCourseCovers'
 
 const route = useRoute()
 const router = useRouter()
 
 const courseId = computed(() => String(route.params.id ?? ''))
-const course = computed(() => MOCK_COURSES.find((c) => c.id === courseId.value) ?? null)
-const cover = computed(() => course.value ? getCoverPreset(course.value.coverId) : null)
-const topics = ref<Topic[]>([])
+const course = ref<AdminCourseDetailDto | null>(null)
+const loading = ref(false)
+const loadError = ref('')
+const approving = ref(false)
+const rejecting = ref(false)
 
-const commentsMap = ref<Record<string, Comment[]>>({
-  t1: [
-    {
-      id: 'c1',
-      authorId: 'teacher-1',
-      authorName: 'Ms. Johnson',
-      text: 'Great introduction! Students might benefit from a visual diagram of the parabola here.',
-      createdAt: '2 hours ago',
-    },
-    {
-      id: 'c2',
-      authorId: 'teacher-2',
-      authorName: 'Mr. Reyes',
-      text: 'I agree. Also worth connecting this to projectile motion early on.',
-      createdAt: '1 day ago',
-    },
-  ],
-  t2: [],
-  t3: [],
+const currentUser = computed(() => {
+  const raw = localStorage.getItem('authUser')
+  if (!raw) return { userId: 'teacher', username: 'Teacher' }
+  try { return JSON.parse(raw) as { userId: string; username: string } } catch { return { userId: 'teacher', username: 'Teacher' } }
 })
 
-watch(course, (c) => { topics.value = c ? [...c.topics] : [] }, { immediate: true })
+const coverPreset = computed(() => {
+  if (!course.value) return getCoverPreset(DEFAULT_COVER_ID)
+  const raw = localStorage.getItem(COURSE_COVER_STORAGE_KEY)
+  let covers: Record<string, string> = {}
+  if (raw) { try { covers = JSON.parse(raw) as Record<string, string> } catch { /* empty */ } }
+  const coverId = covers[String(course.value.id)] ?? DEFAULT_COVER_ID
+  return getCoverPreset(coverId)
+})
 
-function getComments(topicId: string): Comment[] {
-  return commentsMap.value[topicId] ?? []
+const modules = computed(() => course.value?.modules ?? [])
+
+const commentsMap = ref<Record<string, Comment[]>>({})
+
+const courseStatus = computed<CourseStatus>(() => {
+  if (!course.value) return 'draft'
+  const s = course.value.status
+  if (s === 'PUBLISHED' || s === 'APPROVED') return 'published'
+  if (s === 'PENDING_REVIEW') return 'pending'
+  if (s === 'NEED_REVISION') return 'revision'
+  return 'draft'
+})
+
+onMounted(loadCourse)
+
+async function loadCourse() {
+  loading.value = true
+  loadError.value = ''
+  try {
+    course.value = await getTeacherCourse(courseId.value)
+  } catch (error) {
+    loadError.value = getErrorMessage(error, 'Unable to load course.')
+  } finally {
+    loading.value = false
+  }
 }
 
-function addComment(topicId: string, text: string) {
-  if (!commentsMap.value[topicId]) commentsMap.value[topicId] = []
-  commentsMap.value[topicId].push({
+async function handleApprove() {
+  if (!course.value || approving.value) return
+  approving.value = true
+  try {
+    await approveTeacherCourse(course.value.id)
+    router.push('/teacher/courses')
+  } catch {
+    approving.value = false
+  }
+}
+
+async function handleReject() {
+  if (!course.value || rejecting.value) return
+  rejecting.value = true
+  try {
+    await rejectTeacherCourse(course.value.id)
+    router.push('/teacher/courses')
+  } catch {
+    rejecting.value = false
+  }
+}
+
+function addComment(modId: string, text: string) {
+  if (!commentsMap.value[modId]) commentsMap.value[modId] = []
+  commentsMap.value[modId].push({
     id: `c-${Date.now()}`,
-    authorId: CURRENT_TEACHER.id,
-    authorName: CURRENT_TEACHER.name,
+    authorId: currentUser.value.userId,
+    authorName: currentUser.value.username,
     text,
     createdAt: 'just now',
   })
 }
 
-function editComment(topicId: string, payload: { id: string; text: string }) {
-  const list = commentsMap.value[topicId]
+function editComment(modId: string, payload: { id: string; text: string }) {
+  const list = commentsMap.value[modId]
   if (!list) return
   const i = list.findIndex((c) => c.id === payload.id)
   if (i !== -1) list[i] = { ...list[i], text: payload.text }
 }
 
-function deleteComment(topicId: string, commentId: string) {
-  if (!commentsMap.value[topicId]) return
-  commentsMap.value[topicId] = commentsMap.value[topicId].filter((c) => c.id !== commentId)
+function deleteComment(modId: string, commentId: string) {
+  if (!commentsMap.value[modId]) return
+  commentsMap.value[modId] = commentsMap.value[modId].filter((c) => c.id !== commentId)
 }
 
-function endDiscussion(topicId: string) {
-  commentsMap.value[topicId] = []
+function endDiscussion(modId: string) {
+  commentsMap.value[modId] = []
+}
+
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof AxiosError) {
+    const data = error.response?.data as { error?: string; message?: string } | undefined
+    return data?.error ?? data?.message ?? fallback
+  }
+  return fallback
 }
 </script>
 
@@ -151,7 +145,7 @@ function endDiscussion(topicId: string) {
             <polyline points="9 18 15 12 9 6" />
           </svg>
           <span class="max-w-[260px] truncate font-bold text-lm-ink">
-            {{ course?.title ?? 'Not found' }}
+            {{ course?.title ?? 'Course' }}
           </span>
         </div>
 
@@ -159,21 +153,25 @@ function endDiscussion(topicId: string) {
         <div v-if="course" class="flex items-center gap-2">
           <button
             type="button"
-            class="inline-flex items-center gap-1.5 rounded-lg border-2 border-lm-green bg-lm-green-soft px-3 py-1.5 text-[12px] font-semibold text-lm-green shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
+            class="inline-flex items-center gap-1.5 rounded-lg border-2 border-lm-green bg-lm-green-soft px-3 py-1.5 text-[12px] font-semibold text-lm-green shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md disabled:cursor-not-allowed disabled:opacity-50"
+            :disabled="approving || rejecting"
+            @click="handleApprove"
           >
             <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <polyline points="20 6 9 17 4 12" />
             </svg>
-            Approve
+            {{ approving ? 'Approving…' : 'Approve' }}
           </button>
           <button
             type="button"
-            class="inline-flex items-center gap-1.5 rounded-lg border-2 border-lm-red bg-lm-red-soft px-3 py-1.5 text-[12px] font-semibold text-lm-red shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
+            class="inline-flex items-center gap-1.5 rounded-lg border-2 border-lm-red bg-lm-red-soft px-3 py-1.5 text-[12px] font-semibold text-lm-red shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md disabled:cursor-not-allowed disabled:opacity-50"
+            :disabled="approving || rejecting"
+            @click="handleReject"
           >
             <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M18 6 6 18M6 6l12 12" />
             </svg>
-            Reject
+            {{ rejecting ? 'Sending…' : 'Request Revision' }}
           </button>
         </div>
       </div>
@@ -183,30 +181,29 @@ function endDiscussion(topicId: string) {
         <div class="absolute inset-0 bg-dot-grid opacity-40 pointer-events-none" />
 
         <div class="relative">
-          <!-- Course not found -->
+          <!-- Error banner -->
           <div
-            v-if="!course"
-            class="flex flex-col items-center justify-center rounded-[18px] border-2 border-dashed border-lm-line-soft bg-lm-surface py-20 text-center"
+            v-if="loadError"
+            class="mb-4 flex items-center justify-between rounded-xl border-2 border-lm-red bg-lm-red-soft px-4 py-3 text-[13px] font-medium text-lm-red"
           >
-            <p class="text-[13px] text-lm-ink-3">This course does not exist or has been removed.</p>
-            <button
-              type="button"
-              class="mt-4 rounded-full bg-lm-yellow border-2 border-lm-line px-5 py-2.5 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
-              @click="router.push('/teacher/courses')"
-            >
-              Go to Courses
-            </button>
+            <span>{{ loadError }}</span>
+            <button type="button" class="font-bold hover:opacity-70" @click="loadCourse">Retry</button>
           </div>
 
-          <template v-else-if="cover">
+          <!-- Loading -->
+          <div v-if="loading" class="rounded-[18px] border-2 border-lm-line bg-lm-surface px-5 py-4 text-[13px] text-lm-ink-3 shadow-stamp-sm">
+            Loading course...
+          </div>
+
+          <template v-else-if="course">
             <!-- Course summary card -->
             <div class="mb-6 rounded-[18px] bg-lm-surface border-2 border-lm-line px-6 py-5 shadow-stamp-sm">
               <div class="flex items-center gap-5">
                 <div
                   class="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-[18px] border-2 border-lm-line font-display text-[32px] font-bold shadow-stamp-md"
-                  :class="[cover.bgClass, cover.textClass]"
+                  :class="[coverPreset.bgClass, coverPreset.textClass]"
                 >
-                  {{ cover.symbol }}
+                  {{ coverPreset.symbol }}
                 </div>
                 <h1 class="font-display text-[17px] font-bold tracking-tight text-lm-ink">{{ course.title }}</h1>
               </div>
@@ -218,50 +215,65 @@ function endDiscussion(topicId: string) {
                       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                       <polyline points="14 2 14 8 20 8" />
                     </svg>
-                    {{ topics.length }} topic{{ topics.length === 1 ? '' : 's' }}
+                    {{ modules.length }} module{{ modules.length === 1 ? '' : 's' }}
                   </span>
                   <span
-                    v-if="course.status === 'published'"
+                    v-if="courseStatus === 'published'"
                     class="inline-flex items-center gap-1 rounded-full border-2 border-lm-line bg-lm-green-soft px-2 py-0.5 font-mono text-[10px] font-bold text-lm-green shadow-stamp-sm"
                   >
                     <span class="h-1.5 w-1.5 rounded-full bg-lm-green" />
                     Published
                   </span>
                   <span
-                    v-else
+                    v-else-if="courseStatus === 'pending'"
                     class="inline-flex items-center gap-1 rounded-full border-2 border-lm-line bg-lm-yellow px-2 py-0.5 font-mono text-[10px] font-bold text-lm-ink shadow-stamp-sm"
                   >
                     <span class="h-1.5 w-1.5 rounded-full bg-lm-ink" />
                     Pending Review
                   </span>
+                  <span
+                    v-else-if="courseStatus === 'revision'"
+                    class="inline-flex items-center gap-1 rounded-full border-2 border-lm-line bg-lm-red-soft px-2 py-0.5 font-mono text-[10px] font-bold text-lm-red shadow-stamp-sm"
+                  >
+                    <span class="h-1.5 w-1.5 rounded-full bg-lm-red" />
+                    Needs Revision
+                  </span>
+                  <span
+                    v-else
+                    class="inline-flex items-center gap-1 rounded-full border-2 border-lm-line-soft bg-lm-bg-soft px-2 py-0.5 font-mono text-[10px] font-bold text-lm-ink-3"
+                  >
+                    <span class="h-1.5 w-1.5 rounded-full bg-lm-ink-3" />
+                    Draft
+                  </span>
                 </div>
               </div>
             </div>
 
-            <!-- Topics section label -->
+            <!-- Modules section label -->
             <div class="mb-3 flex items-center justify-between px-0.5">
-              <p class="font-mono text-[10px] font-bold uppercase tracking-[0.13em] text-lm-ink-3">Topics</p>
-              <span class="font-mono text-[11px] text-lm-ink-3">{{ topics.length }}</span>
+              <p class="font-mono text-[10px] font-bold uppercase tracking-[0.13em] text-lm-ink-3">Modules</p>
+              <span class="font-mono text-[11px] text-lm-ink-3">{{ modules.length }}</span>
             </div>
 
-            <!-- Topics list -->
-            <div v-if="topics.length > 0" class="flex flex-col gap-3">
+            <!-- Modules list -->
+            <div v-if="modules.length > 0" class="flex flex-col gap-3">
               <TeacherTopicCard
-                v-for="(topic, index) in topics"
-                :key="topic.id"
+                v-for="(mod, index) in modules"
+                :key="mod.id"
                 :index="index + 1"
-                :name="topic.name"
-                :content="topic.content"
-                :comments="getComments(topic.id)"
-                :current-user-id="CURRENT_TEACHER.id"
-                @add-comment="addComment(topic.id, $event)"
-                @edit-comment="editComment(topic.id, $event)"
-                @delete-comment="deleteComment(topic.id, $event)"
-                @end-discussion="endDiscussion(topic.id)"
+                :name="mod.title"
+                :content="''"
+                :sub-topics="mod.subTopics"
+                :comments="commentsMap[String(mod.id)] ?? []"
+                :current-user-id="currentUser.userId"
+                @add-comment="addComment(String(mod.id), $event)"
+                @edit-comment="editComment(String(mod.id), $event)"
+                @delete-comment="deleteComment(String(mod.id), $event)"
+                @end-discussion="endDiscussion(String(mod.id))"
               />
             </div>
 
-            <!-- Empty topics -->
+            <!-- Empty modules -->
             <div
               v-else
               class="flex flex-col items-center justify-center rounded-[18px] border-2 border-dashed border-lm-line-soft bg-lm-surface py-20 text-center"
@@ -272,10 +284,25 @@ function endDiscussion(topicId: string) {
                   <polyline points="14 2 14 8 20 8" />
                 </svg>
               </div>
-              <p class="mt-4 font-display text-[15px] font-semibold text-lm-ink">No topics yet</p>
-              <p class="mt-1 text-[12px] text-lm-ink-3">This course has no topics to review.</p>
+              <p class="mt-4 font-display text-[15px] font-semibold text-lm-ink">No modules yet</p>
+              <p class="mt-1 text-[12px] text-lm-ink-3">This course has no modules to review.</p>
             </div>
           </template>
+
+          <!-- Course not found -->
+          <div
+            v-else-if="!loading && !loadError"
+            class="flex flex-col items-center justify-center rounded-[18px] border-2 border-dashed border-lm-line-soft bg-lm-surface py-20 text-center"
+          >
+            <p class="text-[13px] text-lm-ink-3">This course does not exist or has been removed.</p>
+            <button
+              type="button"
+              class="mt-4 rounded-full bg-lm-yellow border-2 border-lm-line px-5 py-2.5 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
+              @click="router.push('/teacher/courses')"
+            >
+              Go to Courses
+            </button>
+          </div>
         </div>
       </main>
     </div>

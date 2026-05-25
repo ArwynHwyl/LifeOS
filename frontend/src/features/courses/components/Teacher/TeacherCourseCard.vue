@@ -42,24 +42,36 @@ const cover = computed(() => getCoverPreset(props.coverId))
 
     <!-- Card body -->
     <div class="flex flex-1 flex-col p-4">
-      <!-- Title + status -->
-      <div class="flex items-start justify-between gap-2">
-        <h3 class="flex-1 text-[13.5px] font-bold leading-snug text-lm-ink">
-          {{ title }}
-        </h3>
+      <!-- Title + badge inline -->
+      <div class="flex flex-wrap items-center gap-2">
+        <h3 class="text-[13.5px] font-bold leading-snug text-lm-ink">{{ title }}</h3>
         <span
           v-if="status === 'published'"
-          class="shrink-0 inline-flex items-center gap-1 rounded-full border-2 border-lm-line bg-lm-green-soft px-2 py-0.5 font-mono text-[10px] font-semibold text-lm-green shadow-stamp-sm"
+          class="inline-flex items-center gap-1 rounded-full border border-lm-line-soft bg-lm-green-soft px-2 py-0.5 font-mono text-[10px] font-semibold text-lm-green"
         >
           <span class="h-1.5 w-1.5 rounded-full bg-lm-green" />
           Published
         </span>
         <span
-          v-else
-          class="shrink-0 inline-flex items-center gap-1 rounded-full border-2 border-lm-line bg-lm-yellow px-2 py-0.5 font-mono text-[10px] font-semibold text-lm-ink shadow-stamp-sm"
+          v-else-if="status === 'pending'"
+          class="inline-flex items-center gap-1 rounded-full border border-lm-line-soft bg-lm-yellow/60 px-2 py-0.5 font-mono text-[10px] font-semibold text-lm-ink"
         >
           <span class="h-1.5 w-1.5 rounded-full bg-lm-ink" />
-          Pending
+          Pending Review
+        </span>
+        <span
+          v-else-if="status === 'revision'"
+          class="inline-flex items-center gap-1 rounded-full border border-lm-line-soft bg-lm-red-soft px-2 py-0.5 font-mono text-[10px] font-semibold text-lm-red"
+        >
+          <span class="h-1.5 w-1.5 rounded-full bg-lm-red" />
+          Needs Revision
+        </span>
+        <span
+          v-else
+          class="inline-flex items-center gap-1 rounded-full border border-lm-line-soft bg-lm-bg-soft px-2 py-0.5 font-mono text-[10px] font-semibold text-lm-ink-3"
+        >
+          <span class="h-1.5 w-1.5 rounded-full bg-lm-ink-3" />
+          Draft
         </span>
       </div>
 
@@ -72,7 +84,7 @@ const cover = computed(() => getCoverPreset(props.coverId))
       <div class="mt-3.5 flex items-center justify-between border-t-2 border-lm-line-soft pt-3">
         <span class="font-mono text-[11px] text-lm-ink-3">{{ moduleCount }} modules · {{ lastEdited }}</span>
 
-        <!-- Approve / Reject on hover -->
+        <!-- Approve on hover (reject requires opening the course for feedback) -->
         <div
           class="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100"
           @click.stop
@@ -87,17 +99,6 @@ const cover = computed(() => getCoverPreset(props.coverId))
               <polyline points="20 6 9 17 4 12" />
             </svg>
             Approve
-          </button>
-          <button
-            type="button"
-            class="flex h-7 items-center gap-1 rounded-lg px-2 text-[11px] font-semibold text-lm-red transition hover:bg-lm-red-soft"
-            title="Reject course"
-            @click.stop="emit('reject')"
-          >
-            <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M18 6 6 18M6 6l12 12" />
-            </svg>
-            Reject
           </button>
         </div>
       </div>

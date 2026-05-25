@@ -36,12 +36,12 @@ const router = createRouter({
     },
     // Admin course routes
     {
-      path: '/courses',
+      path: '/admin/courses',
       component: () => import('@/features/courses/views/AdminCourseManagementView.vue'),
       meta: { requiresAuth: true }
     },
     {
-      path: '/courses/:id',
+      path: '/admin/courses/:id',
       component: () => import('@/features/courses/views/AdminCourseDetailView.vue'),
       meta: { requiresAuth: true }
     },

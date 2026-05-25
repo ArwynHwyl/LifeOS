@@ -370,6 +370,24 @@ Prioritize concepts that help software engineering learners reason about program
 
 For each module and subtopic, suggest interactive or visual learning ideas where useful. Use interactionType values from NONE, THREE_JS, GRAPH_2D, FORMULA_EXPLORER, QUIZ, or OTHER, and include an implementation-oriented interactionPrompt when interactionType is not NONE.`
 
+export async function deleteAdminSubTopic(subTopicId: number | string) {
+  await api.delete(`/v1/admin/subtopics/${subTopicId}`)
+}
+
+export async function submitAdminCourseForReview(courseId: number | string) {
+  const { data } = await api.post<AdminCourseDetailDto>(`/v1/admin/courses/${courseId}/submit-review`)
+  return data
+}
+
+export async function updateAdminCourse(courseId: number | string, payload: { title: string; description?: string | null; coverId?: string }) {
+  const { data } = await api.put<AdminCourseSummaryDto>(`/v1/admin/courses/${courseId}`, {
+    title: payload.title,
+    description: payload.description?.trim() || null,
+  })
+  if (payload.coverId) saveCourseCover(Number(courseId), payload.coverId)
+  return data
+}
+
 export function toAdminCourseCard(course: AdminCourseSummaryDto | AdminCourseDetailDto): AdminCourseCardModel {
   return {
     id: String(course.id),

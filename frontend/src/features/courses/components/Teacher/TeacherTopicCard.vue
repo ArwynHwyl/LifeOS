@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import type { AdminSubTopicDto } from '@/features/courses/services/adminCourses'
 
 export type Comment = {
   id: string
@@ -15,6 +16,7 @@ const props = defineProps<{
   content: string
   comments: Comment[]
   currentUserId: string
+  subTopics?: AdminSubTopicDto[]
 }>()
 
 const emit = defineEmits<{
@@ -88,6 +90,16 @@ function avatarBg(name: string): string {
 function initials(name: string): string {
   return name.split(' ').map((w) => w[0] ?? '').slice(0, 2).join('').toUpperCase()
 }
+
+function lessonHtml(subTopic: AdminSubTopicDto): string {
+  if (subTopic.contentHtml) return subTopic.contentHtml
+  return subTopic.content ? subTopic.content.split(/\n{2,}/).map(p => p.trim()).filter(Boolean).map(p => `<p>${p.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}</p>`).join('') : ''
+}
+
+function formatInteractionType(value: string | null | undefined): string {
+  if (!value || value === 'NONE') return ''
+  return value.toLowerCase().split('_').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ')
+}
 </script>
 
 <template>
@@ -134,7 +146,35 @@ function initials(name: string): string {
 
         <!-- Topic content -->
         <div class="border-t-2 border-lm-line-soft bg-lm-bg px-5 py-4">
-          <div class="topic-preview text-[12.5px] leading-relaxed text-lm-ink-2" v-html="renderedContent" />
+          <!-- Subtopics view when subTopics prop is provided -->
+          <template v-if="subTopics !== undefined">
+            <div v-if="subTopics.length > 0" class="space-y-2">
+              <div
+                v-for="(subTopic, subTopicIndex) in [...subTopics].sort((a, b) => a.sortOrder - b.sortOrder)"
+                :key="subTopic.id"
+                class="rounded-lg border border-lm-line-soft bg-lm-bg-soft px-3 py-2"
+              >
+                <div class="grid grid-cols-[auto_minmax(0,1fr)] gap-3">
+                  <span class="mt-0.5 font-mono text-[11px] font-bold text-lm-ink-3">{{ index }}.{{ subTopicIndex + 1 }}</span>
+                  <div class="min-w-0">
+                    <p class="truncate font-display text-[12px] font-bold text-lm-ink">{{ subTopic.title }}</p>
+                    <div class="lesson-preview mt-2 line-clamp-6 text-[12px] leading-relaxed text-lm-ink-2" v-html="lessonHtml(subTopic)" />
+                    <div v-if="subTopic.interactionType !== 'NONE' || subTopic.interactionPrompt" class="mt-2 flex flex-wrap items-start gap-2">
+                      <span v-if="subTopic.interactionType !== 'NONE'" class="rounded-full border border-lm-line-soft bg-lm-surface px-2 py-0.5 font-mono text-[10px] font-bold text-lm-purple">{{ formatInteractionType(subTopic.interactionType) }}</span>
+                      <span v-if="subTopic.interactionPrompt" class="min-w-0 flex-1 text-[10px] font-medium leading-relaxed text-lm-purple">{{ subTopic.interactionPrompt }}</span>
+                    </div>
+                    <p v-if="subTopic.pageStart && subTopic.pageEnd" class="mt-1 font-mono text-[10px] font-bold uppercase tracking-[0.1em] text-lm-ink-3">
+                      Pages {{ subTopic.pageStart }}–{{ subTopic.pageEnd }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <p v-else class="font-mono text-[12px] text-lm-ink-3">No subtopics yet.</p>
+          </template>
+
+          <!-- Fallback: rendered HTML content when subTopics prop is not provided -->
+          <div v-else class="topic-preview text-[12.5px] leading-relaxed text-lm-ink-2" v-html="renderedContent" />
 
           <!-- Open Discussion button (only when discussion is closed) -->
           <button

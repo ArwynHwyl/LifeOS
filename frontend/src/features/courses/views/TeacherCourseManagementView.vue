@@ -1,99 +1,77 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { AxiosError } from 'axios'
 import { useRouter } from 'vue-router'
 import TeacherNavbar from '@/features/courses/components/Teacher/TeacherNavbar.vue'
 import TeacherCourseCard from '@/features/courses/components/Teacher/TeacherCourseCard.vue'
-import type { CourseStatus } from '@/types/types'
-
+import {
+  listTeacherCourses,
+  toTeacherCourseCard,
+  approveTeacherCourse,
+  rejectTeacherCourse,
+  type TeacherCourseCardModel,
+} from '@/features/courses/services/teacherCourses'
 const router = useRouter()
 
 const searchQuery = ref('')
-const statusFilter = ref<'all' | CourseStatus>('all')
-const showStatusMenu = ref(false)
+const loadingCourses = ref(false)
+const loadError = ref('')
 
-type MockCourse = {
-  id: string
-  title: string
-  description: string
-  coverId: string
-  status: CourseStatus
-  moduleCount: number
-  lastEdited: string
-}
-
-const courses = ref<MockCourse[]>([
-  {
-    id: '1',
-    title: 'Quadratic Functions',
-    description: 'Explore parabolas, vertex form, and real-world quadratic models.',
-    coverId: 'integral',
-    status: 'published',
-    moduleCount: 4,
-    lastEdited: '2 days ago',
-  },
-  {
-    id: '2',
-    title: 'Intro to Linear Algebra',
-    description: 'Vectors, matrices, and systems of linear equations.',
-    coverId: 'sigma',
-    status: 'published',
-    moduleCount: 6,
-    lastEdited: '1 week ago',
-  },
-  {
-    id: '3',
-    title: 'Probability Basics',
-    description: 'Foundations of probability, events, and distributions.',
-    coverId: 'pi',
-    status: 'draft',
-    moduleCount: 3,
-    lastEdited: 'today',
-  },
-  {
-    id: '4',
-    title: 'Calculus I: Limits',
-    description: 'Limits, continuity, and introductory differential calculus.',
-    coverId: 'fx',
-    status: 'published',
-    moduleCount: 8,
-    lastEdited: '3 days ago',
-  },
-])
+const courses = ref<TeacherCourseCardModel[]>([])
 
 const stats = computed(() => ({
   total: courses.value.length,
   published: courses.value.filter((c) => c.status === 'published').length,
-  pending: courses.value.filter((c) => c.status === 'draft').length,
+  pending: courses.value.filter((c) => c.status === 'pending').length,
+  revision: courses.value.filter((c) => c.status === 'revision').length,
 }))
 
 const filteredCourses = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
-  return courses.value.filter((c) => {
-    const matchesSearch = !q || c.title.toLowerCase().includes(q) || c.description.toLowerCase().includes(q)
-    const matchesStatus = statusFilter.value === 'all' || c.status === statusFilter.value
-    return matchesSearch && matchesStatus
-  })
+  return courses.value.filter((c) =>
+    !q || c.title.toLowerCase().includes(q) || c.description.toLowerCase().includes(q)
+  )
 })
 
-const statusLabel = computed(() => {
-  if (statusFilter.value === 'published') return 'Published'
-  if (statusFilter.value === 'draft') return 'Pending'
-  return 'All'
-})
+onMounted(loadCourses)
 
-function approveCourse(id: string) {
-  const c = courses.value.find((c) => c.id === id)
-  if (c) c.status = 'published'
+async function loadCourses() {
+  loadingCourses.value = true
+  loadError.value = ''
+  try {
+    const data = await listTeacherCourses()
+    courses.value = data.map(toTeacherCourseCard)
+  } catch (error) {
+    loadError.value = getErrorMessage(error, 'Unable to load courses.')
+  } finally {
+    loadingCourses.value = false
+  }
 }
 
-function rejectCourse(id: string) {
-  const c = courses.value.find((c) => c.id === id)
-  if (c) c.status = 'draft'
+async function approveCourse(id: string) {
+  try {
+    await approveTeacherCourse(id)
+    await loadCourses()
+  } catch {
+    // silently ignore — user can retry
+  }
 }
 
-function setStatus(val: 'all' | CourseStatus) {
-  statusFilter.value = val
-  showStatusMenu.value = false
+async function rejectCourse(id: string) {
+  try {
+    await rejectTeacherCourse(id)
+    await loadCourses()
+  } catch {
+    // silently ignore — user can retry
+  }
+}
+
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof AxiosError) {
+    const data = error.response?.data as { error?: string; message?: string } | undefined
+    return data?.error ?? data?.message ?? fallback
+  }
+  return fallback
 }
 </script>
 
@@ -117,6 +95,10 @@ function setStatus(val: 'all' | CourseStatus) {
             <span class="h-1.5 w-1.5 rounded-full bg-lm-ink" />
             {{ stats.pending }} pending
           </span>
+          <span class="inline-flex items-center gap-1.5 rounded-full border-2 border-lm-line bg-lm-red-soft px-2.5 py-1 font-mono text-[11px] font-semibold text-lm-red shadow-stamp-sm">
+            <span class="h-1.5 w-1.5 rounded-full bg-lm-red" />
+            {{ stats.revision }} revision
+          </span>
         </div>
 
         <!-- Controls -->
@@ -135,33 +117,6 @@ function setStatus(val: 'all' | CourseStatus) {
             />
           </div>
 
-          <!-- Status filter -->
-          <div class="relative">
-            <button
-              type="button"
-              class="inline-flex items-center gap-1.5 rounded-lg border-2 border-lm-line-soft bg-lm-surface px-3 py-1.5 text-[12px] font-semibold text-lm-ink transition hover:border-lm-line hover:bg-lm-bg-soft"
-              @click="showStatusMenu = !showStatusMenu"
-            >
-              <span v-if="statusFilter !== 'all'" class="h-1.5 w-1.5 rounded-full"
-                :class="statusFilter === 'published' ? 'bg-lm-green' : 'bg-lm-ink'" />
-              {{ statusLabel }}
-              <svg class="h-3 w-3 text-lm-ink-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </button>
-            <div v-if="showStatusMenu"
-              class="absolute right-0 top-full z-20 mt-1.5 w-36 overflow-hidden rounded-xl border-2 border-lm-line bg-lm-surface shadow-stamp-md">
-              <button v-for="[val, label] in [['all','All'],['published','Published'],['draft','Pending']]" :key="val"
-                type="button"
-                class="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-[12px] transition hover:bg-lm-bg-soft"
-                :class="statusFilter === val ? 'font-bold text-lm-ink bg-lm-yellow/40' : 'text-lm-ink-2'"
-                @click="setStatus(val as 'all' | 'published' | 'draft')">
-                <span class="h-1.5 w-1.5 rounded-full"
-                  :class="val === 'published' ? 'bg-lm-green' : val === 'draft' ? 'bg-lm-ink' : 'bg-lm-line-soft'" />
-                {{ label }}
-              </button>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -170,8 +125,23 @@ function setStatus(val: 'all' | CourseStatus) {
         <div class="absolute inset-0 bg-dot-grid opacity-40 pointer-events-none" />
 
         <div class="relative">
+          <!-- Error banner -->
           <div
-            v-if="filteredCourses.length > 0"
+            v-if="loadError"
+            class="mb-4 flex items-center justify-between rounded-xl border-2 border-lm-red bg-lm-red-soft px-4 py-3 text-[13px] font-medium text-lm-red"
+          >
+            <span>{{ loadError }}</span>
+            <button type="button" class="font-bold hover:opacity-70" @click="loadCourses">Retry</button>
+          </div>
+
+          <!-- Loading skeletons -->
+          <div v-if="loadingCourses" class="grid gap-[22px] sm:grid-cols-3 xl:grid-cols-4">
+            <div v-for="index in 8" :key="index" class="h-[260px] animate-pulse rounded-[18px] bg-lm-surface border-2 border-lm-line-soft" />
+          </div>
+
+          <!-- Course grid -->
+          <div
+            v-else-if="filteredCourses.length > 0"
             class="grid gap-[22px] sm:grid-cols-3 xl:grid-cols-4"
           >
             <TeacherCourseCard
@@ -200,13 +170,16 @@ function setStatus(val: 'all' | CourseStatus) {
                 <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
               </svg>
             </div>
-            <p class="mt-4 font-display text-[15px] font-semibold text-lm-ink">No courses found</p>
-            <p class="mt-1 text-[12px] text-lm-ink-3">Try a different search term or filter.</p>
+            <p class="mt-4 font-display text-[15px] font-semibold text-lm-ink">
+              {{ searchQuery ? 'No courses found' : 'No courses yet' }}
+            </p>
+            <p class="mt-1 text-[12px] text-lm-ink-3">
+              {{ searchQuery ? 'Try a different search term or filter.' : 'No courses have been assigned to you yet.' }}
+            </p>
           </div>
         </div>
       </main>
     </div>
 
-    <div v-if="showStatusMenu" class="fixed inset-0 z-10" aria-hidden="true" @click="showStatusMenu = false" />
   </div>
 </template>

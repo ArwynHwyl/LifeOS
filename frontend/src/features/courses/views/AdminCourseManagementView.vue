@@ -5,10 +5,13 @@ import { useRouter } from 'vue-router'
 import AppSidebar from '@/features/courses/components/Admin/AdminNavbar.vue'
 import CourseCard from '@/features/courses/components/Admin/AdminCourseCard.vue'
 import AddCourseModal from '@/features/courses/components/Admin/AddCoursePopUp.vue'
+import CourseEditPopUp from '@/features/courses/components/Admin/CourseEditPopUp.vue'
 import {
   createAdminCourse,
   listAdminCourses,
+  submitAdminCourseForReview,
   toAdminCourseCard,
+  updateAdminCourse,
   type AdminCourseCardModel,
   type CourseCreatePayload,
 } from '@/features/courses/services/adminCourses'
@@ -24,6 +27,11 @@ const loadingCourses = ref(false)
 const loadError = ref('')
 const creatingCourse = ref(false)
 const createError = ref('')
+
+const showEditModal = ref(false)
+const editingCourse = ref<AdminCourseCardModel | null>(null)
+const updatingCourse = ref(false)
+const updateError = ref('')
 
 const courses = ref<AdminCourseCardModel[]>([])
 
@@ -102,6 +110,46 @@ function setStatus(val: 'all' | CourseStatus) {
   showStatusMenu.value = false
 }
 
+function openEditModal(course: AdminCourseCardModel) {
+  editingCourse.value = course
+  updateError.value = ''
+  showEditModal.value = true
+}
+
+function closeEditModal() {
+  if (updatingCourse.value) return
+  showEditModal.value = false
+  editingCourse.value = null
+  updateError.value = ''
+}
+
+async function handleUpdateCourse(payload: { title: string; description: string; coverId: string }) {
+  if (!editingCourse.value) return
+  updatingCourse.value = true
+  updateError.value = ''
+  try {
+    const updated = await updateAdminCourse(editingCourse.value.id, payload)
+    const idx = courses.value.findIndex((c) => c.id === editingCourse.value!.id)
+    if (idx !== -1) courses.value[idx] = toAdminCourseCard(updated)
+    showEditModal.value = false
+    editingCourse.value = null
+  } catch (error) {
+    updateError.value = getErrorMessage(error, 'Unable to update course.')
+  } finally {
+    updatingCourse.value = false
+  }
+}
+
+async function submitCourseForReview(courseId: string) {
+  try {
+    const updated = await submitAdminCourseForReview(courseId)
+    const idx = courses.value.findIndex((c) => c.id === courseId)
+    if (idx !== -1) courses.value[idx] = toAdminCourseCard(updated)
+  } catch (error) {
+    loadError.value = getErrorMessage(error, 'Unable to submit course for review.')
+  }
+}
+
 function getErrorMessage(error: unknown, fallback: string) {
   if (error instanceof AxiosError) {
     const data = error.response?.data as { error?: string; message?: string } | undefined
@@ -124,59 +172,62 @@ function getErrorMessage(error: unknown, fallback: string) {
             <p class="mt-0.5 font-mono text-[12px] font-medium text-lm-ink-3">Manage, publish and track all learning content</p>
           </div>
 
-          <!-- Search -->
-          <div class="relative">
-            <svg class="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-lm-ink-3"
-              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
-            </svg>
-            <input
-              v-model="searchQuery"
-              type="search"
-              placeholder="Search courses..."
-              class="h-11 w-72 rounded-xl border-2 border-lm-line-soft bg-lm-bg-soft py-2 pl-10 pr-3 text-[12px] font-semibold text-lm-ink outline-none transition placeholder:text-lm-ink-3 focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
-            />
-          </div>
+          <!-- Controls group -->
+          <div class="flex items-center gap-3">
+            <!-- Search -->
+            <div class="relative">
+              <svg class="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-lm-ink-3"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+              </svg>
+              <input
+                v-model="searchQuery"
+                type="search"
+                placeholder="Search courses..."
+                class="h-11 w-72 rounded-xl border-2 border-lm-line-soft bg-lm-bg-soft py-2 pl-10 pr-3 text-[12px] font-semibold text-lm-ink outline-none transition placeholder:text-lm-ink-3 focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
+              />
+            </div>
 
-          <!-- Status filter -->
-          <div class="relative">
+            <!-- Status filter -->
+            <div class="relative">
+              <button
+                type="button"
+                class="inline-flex h-11 min-w-32 items-center justify-between gap-2 rounded-xl border-2 border-lm-line-soft bg-lm-bg-soft px-4 text-[12px] font-bold text-lm-ink-2 transition hover:border-lm-line hover:bg-lm-surface"
+                @click="showStatusMenu = !showStatusMenu"
+              >
+                <span v-if="statusFilter !== 'all'" class="h-1.5 w-1.5 rounded-full"
+                  :class="statusFilter === 'published' ? 'bg-lm-green' : statusFilter === 'pending' ? 'bg-lm-purple' : statusFilter === 'revision' ? 'bg-lm-red' : 'bg-lm-ink-3'" />
+                {{ statusLabel }}
+                <svg class="h-3 w-3 text-lm-ink-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+              <div v-if="showStatusMenu"
+                class="absolute right-0 top-full z-20 mt-1.5 w-40 overflow-hidden rounded-xl border-2 border-lm-line bg-lm-surface shadow-stamp-md">
+                <button v-for="[val, label] in [['all','All status'],['published','Published'],['pending','Pending Review'],['revision','Needs Revision'],['draft','Draft']]" :key="val"
+                  type="button"
+                  class="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-[12px] transition hover:bg-lm-bg-soft"
+                  :class="statusFilter === val ? 'font-bold text-lm-ink bg-lm-yellow/40' : 'text-lm-ink-2'"
+                  @click="setStatus(val as 'all' | CourseStatus)">
+                  <span class="h-1.5 w-1.5 rounded-full"
+                    :class="val === 'published' ? 'bg-lm-green' : val === 'pending' ? 'bg-lm-purple' : val === 'revision' ? 'bg-lm-red' : val === 'draft' ? 'bg-lm-ink-3' : 'bg-lm-line-soft'" />
+                  {{ label }}
+                </button>
+              </div>
+            </div>
+
+            <!-- New Course CTA -->
             <button
               type="button"
-              class="inline-flex h-11 min-w-32 items-center justify-between gap-2 rounded-xl border-2 border-lm-line-soft bg-lm-bg-soft px-4 text-[12px] font-bold text-lm-ink-2 transition hover:border-lm-line hover:bg-lm-surface"
-              @click="showStatusMenu = !showStatusMenu"
+              class="inline-flex h-11 items-center gap-2 rounded-full bg-lm-yellow border-2 border-lm-line px-5 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md active:scale-[0.98]"
+              @click="openAddModal"
             >
-              <span v-if="statusFilter !== 'all'" class="h-1.5 w-1.5 rounded-full"
-                :class="statusFilter === 'published' ? 'bg-lm-green' : statusFilter === 'pending' ? 'bg-lm-purple' : statusFilter === 'revision' ? 'bg-lm-red' : 'bg-lm-ink-3'" />
-              {{ statusLabel }}
-              <svg class="h-3 w-3 text-lm-ink-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6 9 12 15 18 9" />
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
               </svg>
+              New Course
             </button>
-            <div v-if="showStatusMenu"
-              class="absolute right-0 top-full z-20 mt-1.5 w-40 overflow-hidden rounded-xl border-2 border-lm-line bg-lm-surface shadow-stamp-md">
-              <button v-for="[val, label] in [['all','All status'],['published','Published'],['pending','Pending Review'],['revision','Needs Revision'],['draft','Draft']]" :key="val"
-                type="button"
-                class="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-[12px] transition hover:bg-lm-bg-soft"
-                :class="statusFilter === val ? 'font-bold text-lm-ink bg-lm-yellow/40' : 'text-lm-ink-2'"
-                @click="setStatus(val as 'all' | CourseStatus)">
-                <span class="h-1.5 w-1.5 rounded-full"
-                  :class="val === 'published' ? 'bg-lm-green' : val === 'pending' ? 'bg-lm-purple' : val === 'revision' ? 'bg-lm-red' : val === 'draft' ? 'bg-lm-ink-3' : 'bg-lm-line-soft'" />
-                {{ label }}
-              </button>
-            </div>
           </div>
-
-          <!-- New Course CTA -->
-          <button
-            type="button"
-            class="inline-flex h-11 items-center gap-2 rounded-full bg-lm-yellow border-2 border-lm-line px-5 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md active:scale-[0.98]"
-            @click="openAddModal"
-          >
-            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            New Course
-          </button>
         </div>
       </header>
 
@@ -231,6 +282,13 @@ function getErrorMessage(error: unknown, fallback: string) {
             </div>
           </section>
 
+          <!-- Section separator -->
+          <div class="mb-4 flex items-center gap-3">
+            <p class="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-lm-ink-3">Courses</p>
+            <div class="flex-1 border-t-2 border-lm-line-soft" />
+            <span class="font-mono text-[11px] font-semibold text-lm-ink-3">{{ filteredCourses.length }}</span>
+          </div>
+
           <!-- Error banner -->
           <div
             v-if="loadError"
@@ -258,8 +316,9 @@ function getErrorMessage(error: unknown, fallback: string) {
               :last-edited="course.lastEdited"
               :created-by="course.createdBy"
               @open="router.push(`/courses/${course.id}`)"
-              @edit="router.push(`/courses/${course.id}`)"
+              @edit="openEditModal(course)"
               @delete="deleteCourse(course.id)"
+              @submit="submitCourseForReview(course.id)"
             />
           </div>
 
@@ -301,6 +360,15 @@ function getErrorMessage(error: unknown, fallback: string) {
       :error-message="createError"
       @close="closeAddModal"
       @create="createCourse"
+    />
+
+    <CourseEditPopUp
+      :open="showEditModal"
+      :course="editingCourse"
+      :submitting="updatingCourse"
+      :error-message="updateError"
+      @close="closeEditModal"
+      @save="handleUpdateCourse"
     />
   </div>
 </template>

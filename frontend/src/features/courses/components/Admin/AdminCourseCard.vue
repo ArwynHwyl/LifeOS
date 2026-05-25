@@ -17,6 +17,7 @@ const emit = defineEmits<{
   edit: []
   open: []
   delete: []
+  submit: []
 }>()
 
 const cover = computed(() => getCoverPreset(props.coverId))
@@ -34,17 +35,12 @@ const statusInfo = computed(() => {
   return { label: 'Draft', classes: 'bg-lm-bg-soft text-lm-ink-3 border-2 border-lm-line-soft', dot: 'bg-lm-ink-3' }
 })
 
-const completion = computed(() => {
-  if (props.status === 'published') return 78
-  if (props.status === 'pending') return 46
-  if (props.status === 'revision') return 28
-  return Math.min(65, Math.max(12, props.moduleCount * 18))
-})
+
 </script>
 
 <template>
   <article
-    class="group grid cursor-pointer grid-cols-[auto_minmax(0,1fr)_160px_112px_auto] items-center gap-5 rounded-[18px] border-2 border-lm-line bg-lm-surface px-5 py-4 shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
+    class="group grid cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto_112px_auto] items-center gap-5 rounded-[18px] border-2 border-lm-line bg-lm-surface px-5 py-4 shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
     @click="emit('open')"
   >
     <div
@@ -69,14 +65,15 @@ const completion = computed(() => {
     </div>
 
     <div class="hidden md:block">
-      <div v-if="status !== 'draft'" class="flex items-center justify-between font-mono text-[10px] font-semibold text-lm-ink-3">
-        <span>Completion</span>
-        <span>{{ completion }}%</span>
-      </div>
-      <div v-if="status !== 'draft'" class="mt-2 h-1.5 overflow-hidden rounded-full border border-lm-line-soft bg-lm-bg-soft">
-        <div class="h-full rounded-full bg-lm-yellow" :style="{ width: `${completion}%` }" />
-      </div>
-      <p v-else class="text-center font-mono text-[12px] font-semibold text-lm-ink-3">—</p>
+      <button
+        v-if="status === 'draft' || status === 'revision'"
+        type="button"
+        class="inline-flex items-center justify-center gap-1.5 rounded-lg border-2 border-lm-purple bg-lm-purple-soft px-3 py-2 text-[11px] font-bold text-lm-purple shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
+        @click.stop="emit('submit')"
+      >
+        <svg class="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+        Submit for Review
+      </button>
     </div>
 
     <button
@@ -98,9 +95,7 @@ const completion = computed(() => {
       @click.stop="emit('delete')"
     >
       <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="1" />
-        <circle cx="19" cy="12" r="1" />
-        <circle cx="5" cy="12" r="1" />
+        <path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
       </svg>
     </button>
   </article>

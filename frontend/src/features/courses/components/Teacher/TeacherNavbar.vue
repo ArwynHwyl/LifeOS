@@ -48,24 +48,6 @@ function logout() {
               Courses
             </RouterLink>
           </li>
-          <li>
-            <a
-              href="#"
-              class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-semibold transition-all duration-200"
-              :class="activeItem === 'dashboard'
-                ? 'bg-lm-yellow text-lm-ink shadow-stamp-sm border-2 border-lm-bg/30'
-                : 'text-lm-bg/50 hover:bg-lm-bg/10 hover:text-lm-bg/80'"
-              @click.prevent
-            >
-              <svg class="h-[15px] w-[15px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="7" height="9" rx="1" />
-                <rect x="14" y="3" width="7" height="5" rx="1" />
-                <rect x="14" y="12" width="7" height="9" rx="1" />
-                <rect x="3" y="16" width="7" height="5" rx="1" />
-              </svg>
-              Dashboard
-            </a>
-          </li>
         </ul>
       </div>
 
@@ -101,7 +83,7 @@ function logout() {
         </div>
         <div class="min-w-0 flex-1">
           <p class="font-display truncate text-[13px] font-bold text-lm-bg">Teacher</p>
-          <p class="font-mono text-[10px] text-lm-bg/50">Review access</p>
+          <p class="font-mono text-[10px] text-lm-bg/50">Review</p>
         </div>
         <button
           type="button"
