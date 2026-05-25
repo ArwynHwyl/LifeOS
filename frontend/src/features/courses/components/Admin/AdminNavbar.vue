@@ -1,9 +1,18 @@
 <script setup lang="ts">
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 
 defineProps<{
   activeItem?: 'dashboard' | 'course' | 'help'
 }>()
+
+const router = useRouter()
+
+function logout() {
+  localStorage.removeItem('token')
+  localStorage.removeItem('refreshToken')
+  localStorage.removeItem('authUser')
+  router.push('/login')
+}
 </script>
 
 <template>
@@ -61,7 +70,7 @@ defineProps<{
       </div>
 
       <div>
-        <p class="mb-2 px-2.5 font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-lm-bg/35">Settings</p>
+        <p class="mb-2 px-2.5 font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-lm-bg/35">Systems</p>
         <ul class="space-y-1">
           <li>
             <a
@@ -98,6 +107,7 @@ defineProps<{
           type="button"
           class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-lm-bg/30 transition hover:bg-lm-bg/10 hover:text-lm-bg/60"
           aria-label="Sign out"
+          @click="logout"
         >
           <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
