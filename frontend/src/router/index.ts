@@ -36,12 +36,12 @@ const router = createRouter({
     },
     // Admin course routes
     {
-      path: '/courses',
+      path: '/admin/courses',
       component: () => import('@/features/courses/views/AdminCourseManagementView.vue'),
       meta: { requiresAuth: true }
     },
     {
-      path: '/courses/:id',
+      path: '/admin/courses/:id',
       component: () => import('@/features/courses/views/AdminCourseDetailView.vue'),
       meta: { requiresAuth: true }
     },
@@ -92,6 +92,19 @@ const router = createRouter({
   ]
 })
 
+function getRoleHome(): string {
+  try {
+    const raw = localStorage.getItem('authUser')
+    if (!raw) return '/login'
+    const user = JSON.parse(raw) as { role?: string }
+    if (user.role === 'ROLE_ADMIN') return '/admin/courses'
+    if (user.role === 'ROLE_TEACHER') return '/teacher/courses'
+    return '/learn/courses'
+  } catch {
+    return '/login'
+  }
+}
+
 router.beforeEach((to) => {
   const isAuthenticated = Boolean(localStorage.getItem('token'))
 
@@ -100,7 +113,11 @@ router.beforeEach((to) => {
   }
 
   if (to.meta.guestOnly && isAuthenticated) {
-    return '/'
+    return getRoleHome()
+  }
+
+  if (to.path === '/' && isAuthenticated) {
+    return getRoleHome()
   }
 })
 

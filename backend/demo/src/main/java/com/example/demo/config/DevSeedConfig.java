@@ -37,6 +37,30 @@ public class DevSeedConfig {
                         UserStatus.VERIFY
                 ));
             }
+
+            if (!userRepository.existsByEmail("teacher@lifeos.local")) {
+                userRepository.save(new User(
+                        "teacher@lifeos.local",
+                        "teacher",
+                        passwordEncoder.encode("Teacher12345!"),
+                        "Teacher",
+                        "User",
+                        UserRole.ROLE_TEACHER,
+                        UserStatus.VERIFY
+                ));
+            }
+
+            if (!userRepository.existsByEmail("learner@lifeos.local")) {
+                userRepository.save(new User(
+                        "learner@lifeos.local",
+                        "learner",
+                        passwordEncoder.encode("Learner12345!"),
+                        "Learner",
+                        "User",
+                        UserRole.ROLE_LEARNER,
+                        UserStatus.VERIFY
+                ));
+            }
         };
     }
 }

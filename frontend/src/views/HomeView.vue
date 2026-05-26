@@ -1,14 +1,3 @@
-<template>
-  <main class="home-page">
-    <section class="home-panel">
-      <p class="home-kicker">LifeOS</p>
-      <h1>Welcome{{ username ? `, ${username}` : '' }}</h1>
-      <p class="home-copy">You are signed in and ready to continue learning.</p>
-      <button class="home-button" type="button" @click="logout">Log out</button>
-    </section>
-  </main>
-</template>
-
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
@@ -17,7 +6,6 @@ const router = useRouter()
 const username = computed(() => {
   const rawUser = localStorage.getItem('authUser')
   if (!rawUser) return ''
-
   try {
     return (JSON.parse(rawUser) as { username?: string }).username || ''
   } catch {
@@ -33,55 +21,23 @@ function logout() {
 }
 </script>
 
-<style scoped>
-.home-page {
-  min-height: 100svh;
-  display: grid;
-  place-items: center;
-  padding: 32px;
-  box-sizing: border-box;
-  background: #f6f7fb;
-  color: #111827;
-  font-family: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
-}
-
-.home-panel {
-  width: min(100%, 520px);
-  padding: 32px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #fff;
-  box-shadow: 0 16px 40px rgba(17, 24, 39, 0.08);
-}
-
-.home-kicker {
-  margin: 0 0 12px;
-  color: #4f4ee8;
-  font-weight: 700;
-  font-size: 0.82rem;
-  text-transform: uppercase;
-}
-
-.home-panel h1 {
-  margin: 0;
-  font-size: 2rem;
-  line-height: 1.2;
-  color: #111827;
-}
-
-.home-copy {
-  margin: 12px 0 24px;
-  color: #6b7280;
-}
-
-.home-button {
-  border: none;
-  border-radius: 9999px;
-  background: #4f4ee8;
-  color: #fff;
-  padding: 12px 18px;
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-}
-</style>
+<template>
+  <main class="flex min-h-screen items-center justify-center bg-lm-bg p-8">
+    <div class="w-full max-w-[520px] rounded-[18px] border-2 border-lm-line bg-lm-surface p-8 shadow-stamp-md">
+      <p class="mb-3 font-mono text-[11px] font-bold uppercase tracking-[0.13em] text-lm-ink-3">LifeOS</p>
+      <h1 class="font-display text-[32px] font-bold leading-tight text-lm-ink">
+        Welcome{{ username ? `, ${username}` : '' }}
+      </h1>
+      <p class="mt-3 mb-6 text-[14px] leading-relaxed text-lm-ink-2">
+        You are signed in and ready to continue learning.
+      </p>
+      <button
+        type="button"
+        class="rounded-full border-2 border-lm-line bg-lm-yellow px-5 py-3 text-[14px] font-bold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
+        @click="logout"
+      >
+        Log out
+      </button>
+    </div>
+  </main>
+</template>

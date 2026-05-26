@@ -1,125 +1,13 @@
-<template>
-  <div class="login-page">
-    <aside class="login-sidebar" aria-label="LifeOS highlights">
-      <div class="login-sidebar__rings" aria-hidden="true">
-        <span class="login-sidebar__ring" />
-        <span class="login-sidebar__ring login-sidebar__ring--2" />
-        <span class="login-sidebar__ring login-sidebar__ring--3" />
-      </div>
-
-      <div class="login-sidebar__inner">
-        <header class="login-brand">
-          <span class="login-brand__mark" aria-hidden="true" />
-          <span class="login-brand__name">LifeOS</span>
-        </header>
-
-        <div class="login-sidebar__hero">
-          <h1 class="login-sidebar__heading">Learn by doing, not watching.</h1>
-          <p class="login-sidebar__lead">
-            Replace passive studying with active, interactive learning. Built for better
-            understanding, not just text boring.
-          </p>
-        </div>
-
-        <ul class="login-features">
-          <li class="login-feature">
-            <span class="login-feature__icon" aria-hidden="true" />
-            <div class="login-feature__text">
-              <span class="login-feature__title">Interactive Learning</span>
-              <span class="login-feature__desc">Adjust variables and see results update live.</span>
-            </div>
-          </li>
-          <li class="login-feature">
-            <span class="login-feature__icon" aria-hidden="true" />
-            <div class="login-feature__text">
-              <span class="login-feature__title">Flashcard Recalling</span>
-              <span class="login-feature__desc">Beat the short-term memories.</span>
-            </div>
-          </li>
-          <li class="login-feature">
-            <span class="login-feature__icon" aria-hidden="true" />
-            <div class="login-feature__text">
-              <span class="login-feature__title">Gamified System</span>
-              <span class="login-feature__desc">Earn XP, achievement badges, and learning streak.</span>
-            </div>
-          </li>
-          <li class="login-feature">
-            <span class="login-feature__icon" aria-hidden="true" />
-            <div class="login-feature__text">
-              <span class="login-feature__title">AI Learning Assistant</span>
-              <span class="login-feature__desc">On‑demand help without leaving the page.</span>
-            </div>
-          </li>
-        </ul>
-      </div>
-    </aside>
-
-    <main class="login-main">
-      <div class="login-card">
-        <header class="login-card__header">
-          <h2 class="login-card__title">Welcome back</h2>
-          <p class="login-card__subtitle">Sign in to continue your learning journey</p>
-        </header>
-
-        <form class="login-form" @submit.prevent="handleLogin">
-          <p v-if="formError" class="login-alert" role="alert">{{ formError }}</p>
-
-          <div class="login-field">
-            <label class="login-label" for="login-email">Email</label>
-            <input
-              id="login-email"
-              v-model="email"
-              class="login-input"
-              type="email"
-              name="email"
-              autocomplete="email"
-              placeholder=""
-              required
-            />
-          </div>
-
-          <div class="login-field">
-            <label class="login-label" for="login-password">Password</label>
-            <input
-              id="login-password"
-              v-model="password"
-              class="login-input"
-              type="password"
-              name="password"
-              autocomplete="current-password"
-              placeholder=""
-              required
-            />
-          </div>
-
-          <div class="login-row">
-            <RouterLink class="login-link login-link--solo" to="/forgot-password">
-              Forgot password?
-            </RouterLink>
-          </div>
-
-          <button class="login-submit" type="submit" :disabled="isSubmitting">
-            {{ isSubmitting ? 'Logging in...' : 'Login' }}
-          </button>
-        </form>
-
-        <p class="login-footer">
-          New user?
-          <RouterLink class="login-link" to="/register">Sign Up</RouterLink>
-        </p>
-      </div>
-    </main>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { ref } from 'vue'
 import { AxiosError } from 'axios'
 import { useRouter } from 'vue-router'
+import AuthPageLayout from '@/features/auth/components/AuthPageLayout.vue'
 import { login } from '@/features/auth/services/auth'
 
 const email = ref('')
 const password = ref('')
+const showPassword = ref(false)
 const formError = ref('')
 const isSubmitting = ref(false)
 const router = useRouter()
@@ -136,14 +24,10 @@ function getErrorMessage(error: unknown) {
 async function handleLogin() {
   formError.value = ''
   isSubmitting.value = true
-
   try {
-    const data = await login({
-      email: email.value.trim(),
-      password: password.value
-    })
+    const data = await login({ email: email.value.trim(), password: password.value })
     if (data.user.role === 'ROLE_ADMIN') {
-      await router.push('/courses')
+      await router.push('/admin/courses')
     } else if (data.user.role === 'ROLE_TEACHER') {
       await router.push('/teacher/courses')
     } else {
@@ -157,383 +41,78 @@ async function handleLogin() {
 }
 </script>
 
-<style scoped>
-.login-page {
-  /* tuned to match the reference screenshot */
-  --login-navy: #1c1b47;
-  --login-accent: #4f4ee8;
-  --login-accent-2: #4b4be1;
-  --login-input-bg: #f3f4f9;
-  --login-input-border: #cfd5e3;
-  --login-muted: #9aa1ae;
-  --login-form-text: #111827;
+<template>
+  <AuthPageLayout mood="wave" holding="none" bubble="Welcome back, Learner!">
+    <!-- Form card body -->
+    <header class="mb-5">
+      <h1 class="font-display text-[30px] font-bold leading-tight tracking-tight text-lm-ink">Sign in</h1>
+      <p class="mt-1.5 text-[14px] text-lm-ink-2">Continue your learning streak.</p>
+    </header>
 
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  margin: 0;
-  font-family: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
-  color: var(--login-form-text);
-  background: #fff;
-}
+    <form class="flex flex-col gap-3.5" @submit.prevent="handleLogin">
+      <div v-if="formError" class="rounded-xl border-2 border-lm-red bg-lm-red-soft px-3 py-2.5 text-[12px] font-medium text-lm-red" role="alert">
+        {{ formError }}
+      </div>
 
-.login-sidebar {
-  position: relative;
-  flex: 1 1 50%;
-  min-height: 280px;
-  background: var(--login-navy);
-  color: #fff;
-  overflow: hidden;
-  display: flex;
-  align-items: stretch;
-}
+      <div class="flex flex-col gap-1.5">
+        <label class="font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-lm-ink-3" for="login-email">Email</label>
+        <input
+          id="login-email"
+          v-model="email"
+          type="email"
+          name="email"
+          autocomplete="email"
+          required
+          class="w-full rounded-xl border-2 border-lm-line-soft bg-lm-bg-soft px-3.5 py-3 text-[14px] font-medium text-lm-ink outline-none transition focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
+        />
+      </div>
 
-.login-sidebar__rings {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
+      <div class="flex flex-col gap-1.5">
+        <label class="font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-lm-ink-3" for="login-password">Password</label>
+        <div class="relative">
+          <input
+            id="login-password"
+            v-model="password"
+            :type="showPassword ? 'text' : 'password'"
+            name="password"
+            autocomplete="current-password"
+            required
+            class="w-full rounded-xl border-2 border-lm-line-soft bg-lm-bg-soft py-3 pl-3.5 pr-11 text-[14px] font-medium text-lm-ink outline-none transition focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
+          />
+          <button
+            type="button"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-lm-ink-3 transition hover:text-lm-ink"
+            @click="showPassword = !showPassword"
+          >
+            <svg v-if="showPassword" class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+            <svg v-else class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+          </button>
+        </div>
+      </div>
 
-.login-sidebar__ring {
-  position: absolute;
-  right: -210px;
-  top: -120px;
-  width: 760px;
-  height: 760px;
-  border-radius: 50%;
-  border: 1px solid rgba(156, 163, 255, 0.28);
-}
+      <div class="flex justify-end">
+        <RouterLink
+          class="text-[12px] font-semibold text-lm-ink"
+          style="border-bottom: 1.5px solid #8a8276; text-decoration: none;"
+          to="/forgot-password"
+        >
+          Forgot password?
+        </RouterLink>
+      </div>
 
-.login-sidebar__ring--2 {
-  width: 980px;
-  height: 980px;
-  right: -330px;
-  top: -220px;
-  border-color: rgba(156, 163, 255, 0.18);
-}
+      <button
+        type="submit"
+        class="mt-1.5 flex w-full items-center justify-center gap-2 rounded-full border-2 border-lm-line bg-lm-yellow px-6 py-3 text-[16px] font-semibold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+        :disabled="isSubmitting"
+      >
+        {{ isSubmitting ? 'Signing in...' : 'Sign in' }}
+        <svg v-if="!isSubmitting" class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+      </button>
+    </form>
 
-.login-sidebar__ring--3 {
-  width: 1220px;
-  height: 1220px;
-  right: -420px;
-  top: -320px;
-  border-color: rgba(156, 163, 255, 0.12);
-}
-
-.login-sidebar__inner {
-  position: relative;
-  z-index: 1;
-  padding: clamp(32px, 5vw, 64px);
-  display: flex;
-  flex-direction: column;
-  gap: 36px;
-  justify-content: flex-start;
-  max-width: 560px;
-  margin-inline: 0 auto;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.login-brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 10px;
-}
-
-.login-brand__mark {
-  width: 40px;
-  height: 40px;
-  border-radius: 14px;
-  background: #4f4ee8;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
-  flex-shrink: 0;
-}
-
-.login-brand__name {
-  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-  font-size: 1.35rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: #fff;
-}
-
-.login-sidebar__heading {
-  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-  font-size: clamp(2.6rem, 3.9vw, 3.35rem);
-  font-weight: 600;
-  line-height: 1.02;
-  margin: 0;
-  color: #fff;
-  letter-spacing: -0.02em;
-}
-
-.login-sidebar__lead {
-  margin: 14px 0 0;
-  font-size: 1.02rem;
-  line-height: 1.6;
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.74);
-  max-width: 44ch;
-}
-
-.login-features {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 26px;
-}
-
-.login-feature {
-  display: flex;
-  gap: 14px;
-  align-items: flex-start;
-}
-
-.login-feature__icon {
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  background: rgba(109, 124, 255, 0.95);
-  border: 0;
-}
-
-.login-feature__text {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.login-feature__title {
-  font-weight: 700;
-  font-size: 0.98rem;
-  color: #fff;
-}
-
-.login-feature__desc {
-  font-size: 0.875rem;
-  line-height: 1.45;
-  color: rgba(255, 255, 255, 0.62);
-}
-
-.login-main {
-  flex: 1 1 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: clamp(28px, 6vw, 64px);
-  background: #fff;
-  box-sizing: border-box;
-}
-
-.login-card {
-  width: 100%;
-  max-width: 420px;
-}
-
-.login-card__header {
-  margin-bottom: clamp(24px, 4vw, 32px);
-}
-
-.login-card__title {
-  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-  font-size: 2.15rem;
-  font-weight: 600;
-  margin: 0;
-  color: #000;
-  line-height: 1.2;
-}
-
-.login-card__subtitle {
-  margin: 10px 0 0;
-  font-size: 0.95rem;
-  color: #a1a7b3;
-  line-height: 1.45;
-}
-
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.login-alert {
-  margin: 0;
-  padding: 12px 14px;
-  border-radius: 10px;
-  border: 1px solid #fecaca;
-  background: #fef2f2;
-  color: #991b1b;
-  font-size: 0.9rem;
-  line-height: 1.4;
-}
-
-.login-field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.login-label {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #111827;
-}
-
-.login-input {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 12px 14px;
-  font-size: 1rem;
-  font-family: inherit;
-  border-radius: 10px;
-  border: 1px solid var(--login-input-border);
-  background: var(--login-input-bg);
-  color: var(--login-form-text);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.login-input::placeholder {
-  color: #9ca3af;
-}
-
-.login-input:hover {
-  border-color: #bfc6d7;
-}
-
-.login-input:focus {
-  outline: none;
-  border-color: var(--login-accent);
-  box-shadow: 0 0 0 3px rgba(79, 78, 232, 0.18);
-}
-
-.login-row {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: -2px;
-}
-
-.login-link {
-  color: #6b5cf7;
-  font-size: 0.875rem;
-  font-weight: 500;
-  text-decoration: none;
-  transition: opacity 0.15s ease;
-}
-
-.login-link:hover {
-  opacity: 0.85;
-  text-decoration: underline;
-}
-
-.login-link--solo {
-  margin-top: 2px;
-}
-
-.login-submit {
-  margin-top: 10px;
-  width: 100%;
-  padding: 16px 20px;
-  border: none;
-  border-radius: 9999px;
-  background: var(--login-accent);
-  color: #fff;
-  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-  font-size: 1.1rem;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 10px 24px rgba(79, 78, 232, 0.28);
-  transition:
-    transform 0.15s ease,
-    box-shadow 0.15s ease,
-    background 0.15s ease;
-}
-
-.login-submit:hover {
-  background: #4a49e0;
-  box-shadow: 0 12px 26px rgba(79, 78, 232, 0.32);
-}
-
-.login-submit:disabled {
-  cursor: not-allowed;
-  opacity: 0.68;
-  box-shadow: none;
-}
-
-.login-submit:active {
-  transform: scale(0.99);
-}
-
-.login-submit:focus-visible {
-  outline: 2px solid var(--login-accent);
-  outline-offset: 3px;
-}
-
-.login-footer {
-  margin: 26px 0 0;
-  text-align: center;
-  font-size: 0.9rem;
-  color: #a1a7b3;
-}
-
-.login-footer .login-link {
-  margin-left: 4px;
-  font-weight: 600;
-}
-
-@media (min-width: 901px) {
-  .login-page {
-    flex-direction: row;
-  }
-
-  .login-sidebar {
-    flex: 0 0 40%;
-    min-height: 100svh;
-  }
-
-  .login-main {
-    flex: 0 0 60%;
-    min-height: 100svh;
-  }
-
-  .login-sidebar__inner {
-    padding-top: 58px;
-  }
-}
-
-@media (max-width: 900px) {
-  .login-page {
-    flex-direction: column;
-  }
-
-  .login-sidebar__inner {
-    padding-bottom: 32px;
-  }
-
-  .login-sidebar__heading {
-    max-width: 20ch;
-  }
-
-  .login-features {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
-
-  .login-main {
-    flex: 1;
-    align-items: flex-start;
-    padding-top: 32px;
-  }
-}
-
-@media (max-width: 520px) {
-  .login-features {
-    grid-template-columns: 1fr;
-  }
-}
-</style>
+    <template #footer>
+      New here?
+      <RouterLink class="ml-1 font-bold text-lm-ink" to="/register">Create an account →</RouterLink>
+    </template>
+  </AuthPageLayout>
+</template>

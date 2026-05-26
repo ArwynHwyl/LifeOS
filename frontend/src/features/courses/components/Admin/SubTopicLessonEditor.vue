@@ -124,7 +124,7 @@ const editor = useEditor({
   ],
   editorProps: {
     attributes: {
-      class: 'lesson-editor min-h-[280px] rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-[13px] leading-7 text-slate-700 outline-none focus:border-[#5b4cfa]/50 focus:bg-white',
+      class: 'lesson-editor min-h-[280px] rounded-[10px] border-2 border-lm-line-soft bg-lm-bg-soft px-4 py-3 text-[13px] leading-7 text-lm-ink-2 outline-none focus:border-lm-line focus:bg-lm-surface',
     },
   },
 })
@@ -256,11 +256,11 @@ function escapeHtml(value: string) {
 </script>
 
 <template>
-  <div class="rounded-lg border border-[#d9d4ff] bg-white">
-    <div class="flex flex-wrap items-center gap-2 border-b border-slate-200 px-3 py-2">
+  <div class="rounded-[18px] border-2 border-lm-line bg-lm-surface">
+    <div class="flex flex-wrap items-center gap-2 border-b-2 border-lm-line-soft px-3 py-2">
       <select
         :value="currentBlock"
-        class="h-8 rounded-md border border-slate-200 bg-white px-2 text-[11px] font-semibold text-slate-600"
+        class="h-8 rounded-[8px] border-2 border-lm-line-soft bg-lm-surface px-2 text-[11px] font-semibold text-lm-ink outline-none transition focus:border-lm-line"
         @change="setBlock"
       >
         <option value="paragraph">Paragraph</option>
@@ -349,22 +349,22 @@ function escapeHtml(value: string) {
       >
         {{ assetRefreshing ? '...' : 'Refresh' }}
       </button>
-      <span v-if="localMessage" class="text-[11px] font-medium text-emerald-700">{{ localMessage }}</span>
+      <span v-if="localMessage" class="text-[11px] font-medium text-lm-green">{{ localMessage }}</span>
     </div>
 
     <div class="grid gap-3 p-3 lg:grid-cols-[260px_minmax(0,1fr)]">
       <div class="space-y-3">
         <label class="block">
-          <span class="mb-1 block text-[11px] font-bold text-slate-500">Title</span>
+          <span class="mb-1 block text-[11px] font-bold text-lm-ink-3">Title</span>
           <input
             v-model="title"
             type="text"
-            class="h-9 w-full rounded-lg border border-slate-200 px-3 text-[12px] font-semibold text-slate-800 outline-none focus:border-[#5b4cfa]/50"
+            class="h-9 w-full rounded-[8px] border-2 border-lm-line-soft bg-lm-bg-soft px-3 text-[12px] font-semibold text-lm-ink outline-none transition focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
           />
         </label>
         <label class="block">
-          <span class="mb-1 block text-[11px] font-bold text-slate-500">Interaction</span>
-          <select v-model="interactionType" class="h-9 w-full rounded-lg border border-slate-200 px-3 text-[12px] text-slate-700">
+          <span class="mb-1 block text-[11px] font-bold text-lm-ink-3">Interaction</span>
+          <select v-model="interactionType" class="h-9 w-full rounded-[8px] border-2 border-lm-line-soft bg-lm-bg-soft px-3 text-[12px] text-lm-ink outline-none transition focus:border-lm-line focus:bg-lm-surface">
             <option value="NONE">None</option>
             <option value="THREE_JS">3D visual</option>
             <option value="GRAPH_2D">2D graph</option>
@@ -374,33 +374,37 @@ function escapeHtml(value: string) {
           </select>
         </label>
         <label class="block">
-          <span class="mb-1 block text-[11px] font-bold text-slate-500">Interaction prompt</span>
+          <span class="mb-1 block text-[11px] font-bold text-lm-ink-3">Interaction prompt</span>
           <textarea
             v-model="interactionPrompt"
             rows="4"
-            class="w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-[12px] text-slate-700 outline-none focus:border-[#5b4cfa]/50"
+            class="w-full resize-none rounded-[8px] border-2 border-lm-line-soft bg-lm-bg-soft px-3 py-2 text-[12px] text-lm-ink outline-none transition focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
           />
         </label>
         <label class="block">
-          <span class="mb-1 block text-[11px] font-bold text-slate-500">Interaction config JSON</span>
+          <span class="mb-1 block text-[11px] font-bold text-lm-ink-3">Interaction config JSON</span>
           <textarea
             v-model="interactionConfig"
             rows="6"
             spellcheck="false"
             placeholder="{&quot;kind&quot;:&quot;quiz&quot;,&quot;items&quot;:[]}"
-            class="w-full resize-none rounded-lg border border-slate-200 px-3 py-2 font-mono text-[11px] leading-5 text-slate-700 outline-none focus:border-[#5b4cfa]/50"
+            class="w-full resize-none rounded-[8px] border-2 border-lm-line-soft bg-lm-bg-soft px-3 py-2 font-mono text-[11px] leading-5 text-lm-ink outline-none transition focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
           />
         </label>
         <div class="flex gap-2">
           <button
             type="button"
-            class="h-9 rounded-lg bg-[#5b4cfa] px-3 text-[12px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
+            class="h-9 rounded-[8px] border-2 border-lm-ink bg-lm-ink px-3 text-[12px] font-bold text-lm-bg transition-all duration-200 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             :disabled="!title.trim()"
             @click="onSave"
           >
             Save
           </button>
-          <button type="button" class="h-9 rounded-lg border border-slate-200 px-3 text-[12px] font-bold text-slate-500" @click="emit('cancel')">
+          <button
+            type="button"
+            class="h-9 rounded-[8px] border-2 border-lm-line bg-lm-surface px-3 text-[12px] font-bold text-lm-ink transition hover:bg-lm-bg"
+            @click="emit('cancel')"
+          >
             Cancel
           </button>
         </div>
@@ -419,12 +423,12 @@ function escapeHtml(value: string) {
   padding: 0 0.5rem;
   font-size: 11px;
   font-weight: 700;
-  color: #475569;
+  color: #6b6660;
 }
 .tool-button:hover,
 .tool-button--active {
-  background: #f1f5f9;
-  color: #5b4cfa;
+  background: #ffd333;
+  color: #1a1814;
 }
 .tool-button:disabled {
   opacity: 0.55;
@@ -434,20 +438,20 @@ function escapeHtml(value: string) {
   content: attr(data-placeholder);
   float: left;
   height: 0;
-  color: #94a3b8;
+  color: #9e9892;
   pointer-events: none;
 }
 :deep(.lesson-editor h2) {
   margin: 0.9rem 0 0.35rem;
   font-size: 1.05rem;
   font-weight: 800;
-  color: #0f172a;
+  color: #1a1814;
 }
 :deep(.lesson-editor h3) {
   margin: 0.75rem 0 0.25rem;
   font-size: 0.95rem;
   font-weight: 800;
-  color: #1e293b;
+  color: #1a1814;
 }
 :deep(.lesson-editor p),
 :deep(.lesson-editor ul),
@@ -469,16 +473,17 @@ function escapeHtml(value: string) {
 }
 :deep(.lesson-editor code) {
   border-radius: 0.25rem;
-  background: #e2e8f0;
+  background: #f0ece4;
   padding: 0.1rem 0.25rem;
   font-size: 0.85em;
+  color: #1a1814;
 }
 :deep(.lesson-editor pre) {
   overflow: auto;
   border-radius: 0.5rem;
-  background: #0f172a;
+  background: #1a1814;
   padding: 0.75rem;
-  color: #e2e8f0;
+  color: #fbf7ef;
 }
 :deep(.lesson-editor pre code) {
   background: transparent;
@@ -486,9 +491,9 @@ function escapeHtml(value: string) {
   color: inherit;
 }
 :deep(.lesson-editor blockquote) {
-  border-left: 3px solid #cbd5e1;
+  border-left: 3px solid #d4cec6;
   padding-left: 0.8rem;
-  color: #64748b;
+  color: #6b6660;
 }
 :deep(.lesson-editor figure) {
   display: block;
@@ -501,6 +506,6 @@ function escapeHtml(value: string) {
 :deep(.lesson-editor figcaption) {
   margin-top: 0.25rem;
   font-size: 0.75rem;
-  color: #64748b;
+  color: #9e9892;
 }
 </style>
