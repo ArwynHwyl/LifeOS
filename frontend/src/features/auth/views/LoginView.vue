@@ -27,7 +27,7 @@ async function handleLogin() {
   try {
     const data = await login({ email: email.value.trim(), password: password.value })
     if (data.user.role === 'ROLE_ADMIN') {
-      await router.push('/courses')
+      await router.push('/admin/courses')
     } else if (data.user.role === 'ROLE_TEACHER') {
       await router.push('/teacher/courses')
     } else {

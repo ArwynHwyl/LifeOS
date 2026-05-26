@@ -97,7 +97,7 @@ function getRoleHome(): string {
     const raw = localStorage.getItem('authUser')
     if (!raw) return '/login'
     const user = JSON.parse(raw) as { role?: string }
-    if (user.role === 'ROLE_ADMIN') return '/courses'
+    if (user.role === 'ROLE_ADMIN') return '/admin/courses'
     if (user.role === 'ROLE_TEACHER') return '/teacher/courses'
     return '/learn/courses'
   } catch {

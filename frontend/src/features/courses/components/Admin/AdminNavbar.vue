@@ -35,7 +35,7 @@ function logout() {
         <ul class="space-y-1">
           <li>
             <RouterLink
-              to="/courses"
+              to="/admin/courses"
               class="relative flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-semibold transition-all duration-200"
               :class="activeItem === 'course'
                 ? 'bg-lm-yellow text-lm-ink shadow-stamp-sm border-2 border-lm-bg/30'

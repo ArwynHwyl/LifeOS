@@ -82,7 +82,7 @@ async function createCourse(payload: CourseCreatePayload) {
     const created = await createAdminCourse(payload)
     courses.value = [toAdminCourseCard(created), ...courses.value]
     showAddModal.value = false
-    await router.push(`/courses/${created.id}`)
+    await router.push(`/admin/courses/${created.id}`)
   } catch (error) {
     createError.value = getErrorMessage(error, 'Unable to create course.')
   } finally {
@@ -315,7 +315,7 @@ function getErrorMessage(error: unknown, fallback: string) {
               :module-count="course.moduleCount"
               :last-edited="course.lastEdited"
               :created-by="course.createdBy"
-              @open="router.push(`/courses/${course.id}`)"
+              @open="router.push(`/admin/courses/${course.id}`)"
               @edit="openEditModal(course)"
               @delete="deleteCourse(course.id)"
               @submit="submitCourseForReview(course.id)"

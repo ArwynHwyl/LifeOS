@@ -163,7 +163,7 @@ function getErrorMessage(error: unknown, fallback: string) {
       <!-- Breadcrumb header -->
       <div class="flex shrink-0 items-center justify-between border-b-2 border-lm-line bg-lm-surface px-7 py-3">
         <div class="flex items-center gap-1.5 text-[12px]">
-          <button class="font-semibold text-lm-ink-3 transition hover:text-lm-ink" type="button" @click="router.push('/courses')">
+          <button class="font-semibold text-lm-ink-3 transition hover:text-lm-ink" type="button" @click="router.push('/admin/courses')">
             Courses
           </button>
           <span class="text-lm-line-soft">/</span>
