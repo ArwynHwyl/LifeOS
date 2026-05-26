@@ -8,6 +8,7 @@ import AddCourseModal from '@/features/courses/components/Admin/AddCoursePopUp.v
 import CourseEditPopUp from '@/features/courses/components/Admin/CourseEditPopUp.vue'
 import {
   createAdminCourse,
+  deleteAdminCourse,
   listAdminCourses,
   submitAdminCourseForReview,
   toAdminCourseCard,
@@ -101,8 +102,13 @@ function closeAddModal() {
   createError.value = ''
 }
 
-function deleteCourse(id: string) {
-  courses.value = courses.value.filter((c) => c.id !== id)
+async function deleteCourse(id: string) {
+  try {
+    await deleteAdminCourse(id)
+    courses.value = courses.value.filter((c) => c.id !== id)
+  } catch (error) {
+    loadError.value = getErrorMessage(error, 'Unable to delete course.')
+  }
 }
 
 function setStatus(val: 'all' | CourseStatus) {
@@ -152,9 +158,14 @@ async function submitCourseForReview(courseId: string) {
 
 function getErrorMessage(error: unknown, fallback: string) {
   if (error instanceof AxiosError) {
+    if (error.response?.status === 403) {
+      const data = error.response.data as { error?: string; message?: string } | undefined
+      return data?.error ?? data?.message ?? 'Session expired or permission denied. Please log in again.'
+    }
     const data = error.response?.data as { error?: string; message?: string } | undefined
     return data?.error ?? data?.message ?? fallback
   }
+  if (error instanceof Error) return error.message
   return fallback
 }
 </script>

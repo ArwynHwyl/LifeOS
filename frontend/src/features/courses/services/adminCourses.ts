@@ -202,7 +202,7 @@ export async function uploadCourseDocument(courseId: number | string, file: File
     fileType: file.type || 'application/pdf',
     fileSizeBytes: file.size,
     storagePath: upload.storagePath,
-  })
+}, { timeout: 120_000 })
   return data
 }
 
@@ -372,6 +372,10 @@ For each module and subtopic, suggest interactive or visual learning ideas where
 
 export async function deleteAdminSubTopic(subTopicId: number | string) {
   await api.delete(`/v1/admin/subtopics/${subTopicId}`)
+}
+
+export async function deleteAdminCourse(courseId: number | string) {
+  await api.delete(`/v1/admin/courses/${courseId}`)
 }
 
 export async function submitAdminCourseForReview(courseId: number | string) {
