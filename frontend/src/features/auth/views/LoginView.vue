@@ -102,7 +102,7 @@ async function handleLogin() {
 
       <button
         type="submit"
-        class="mt-1.5 flex w-full items-center justify-center gap-2 rounded-full border-2 border-lm-line bg-lm-yellow px-6 py-3 text-[16px] font-semibold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+        class="mt-1.5 flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border-2 border-lm-line bg-lm-yellow px-6 py-3 text-[16px] font-semibold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
         :disabled="isSubmitting"
       >
         {{ isSubmitting ? 'Signing in...' : 'Sign in' }}

@@ -153,7 +153,7 @@ function getErrorMessage(error: unknown, fallback: string) {
         <div v-if="course" class="flex items-center gap-2">
           <button
             type="button"
-            class="inline-flex items-center gap-1.5 rounded-lg border-2 border-lm-green bg-lm-green-soft px-3 py-1.5 text-[12px] font-semibold text-lm-green shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md disabled:cursor-not-allowed disabled:opacity-50"
+            class="inline-flex items-center gap-1.5 cursor-pointer rounded-lg border-2 border-lm-green bg-lm-green-soft px-3 py-1.5 text-[12px] font-semibold text-lm-green shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md disabled:cursor-not-allowed disabled:opacity-50"
             :disabled="approving || rejecting"
             @click="handleApprove"
           >
@@ -164,14 +164,14 @@ function getErrorMessage(error: unknown, fallback: string) {
           </button>
           <button
             type="button"
-            class="inline-flex items-center gap-1.5 rounded-lg border-2 border-lm-red bg-lm-red-soft px-3 py-1.5 text-[12px] font-semibold text-lm-red shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md disabled:cursor-not-allowed disabled:opacity-50"
+            class="inline-flex items-center gap-1.5 cursor-pointer rounded-lg border-2 border-lm-red bg-lm-red-soft px-3 py-1.5 text-[12px] font-semibold text-lm-red shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md disabled:cursor-not-allowed disabled:opacity-50"
             :disabled="approving || rejecting"
             @click="handleReject"
           >
             <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M18 6 6 18M6 6l12 12" />
             </svg>
-            {{ rejecting ? 'Sending…' : 'Request Revision' }}
+            {{ rejecting ? 'Sending…' : 'Reject' }}
           </button>
         </div>
       </div>

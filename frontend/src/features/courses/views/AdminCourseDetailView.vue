@@ -170,7 +170,7 @@ function getErrorMessage(error: unknown, fallback: string) {
           <span class="truncate font-bold text-lm-ink">{{ course?.title ?? 'Course' }}</span>
         </div>
         <button
-          class="rounded-lg border-2 border-lm-line bg-lm-surface px-3 py-1.5 text-[12px] font-semibold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
+          class="rounded-lg border-2 cursor-pointer border-lm-line bg-lm-surface px-3 py-1.5 text-[12px] font-semibold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
           type="button"
           @click="loadCourse"
         >
@@ -210,6 +210,7 @@ function getErrorMessage(error: unknown, fallback: string) {
             <!-- Course outline (extracted component) -->
             <AdminCourseOutline
               :course-id="courseId"
+              :course-status="course.status"
               :modules="modules"
               :selected-document="selectedDocument"
               :page-start="pageStart"

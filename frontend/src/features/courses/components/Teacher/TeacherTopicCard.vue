@@ -180,7 +180,7 @@ function formatInteractionType(value: string | null | undefined): string {
           <button
             v-if="!discussionOpen"
             type="button"
-            class="mt-4 flex items-center gap-2 rounded-[12px] border-2 border-dashed border-lm-line-soft px-4 py-2.5 text-[12px] font-semibold text-lm-ink-3 transition-all duration-200 hover:border-lm-line hover:bg-lm-surface hover:text-lm-ink"
+            class="mt-4 flex items-center gap-2 cursor-pointer rounded-[12px] border-2 border-dashed border-lm-line-soft px-4 py-2.5 text-[12px] font-semibold text-lm-ink-3 transition-all duration-200 hover:border-lm-line hover:bg-lm-surface hover:text-lm-ink"
             @click.stop="openDiscussion"
           >
             <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -218,7 +218,7 @@ function formatInteractionType(value: string | null | undefined): string {
               <button
                 v-if="!confirmEnd"
                 type="button"
-                class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold text-lm-ink-3 transition hover:bg-lm-red-soft hover:text-lm-red"
+                class="flex items-center gap-1.5 cursor-pointer rounded-lg px-2.5 py-1.5 text-[11px] font-semibold text-lm-ink-3 transition hover:bg-lm-red-soft hover:text-lm-red"
                 @click="confirmEnd = true"
               >
                 <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -232,14 +232,14 @@ function formatInteractionType(value: string | null | undefined): string {
                 <span class="text-[11px] text-lm-ink-2">Clear all comments?</span>
                 <button
                   type="button"
-                  class="rounded-lg border-2 border-lm-red bg-lm-red px-2.5 py-1 text-[11px] font-semibold text-lm-bg transition hover:opacity-90"
+                  class="rounded-lg border-2 cursor-pointer border-lm-red bg-lm-red px-2.5 py-1 text-[11px] font-semibold text-lm-bg transition hover:opacity-90"
                   @click="onEndDiscussion"
                 >
                   End it
                 </button>
                 <button
                   type="button"
-                  class="rounded-lg border-2 border-lm-line bg-lm-surface px-2.5 py-1 text-[11px] font-semibold text-lm-ink transition hover:bg-lm-bg"
+                  class="rounded-lg border-2 cursor-pointer border-lm-line bg-lm-surface px-2.5 py-1 text-[11px] font-semibold text-lm-ink transition hover:bg-lm-bg"
                   @click="confirmEnd = false"
                 >
                   Cancel
@@ -276,7 +276,7 @@ function formatInteractionType(value: string | null | undefined): string {
                         class="ml-auto flex items-center gap-0.5 opacity-0 transition-opacity group-hover/c:opacity-100"
                       >
                         <button type="button"
-                          class="flex h-6 w-6 items-center justify-center rounded-md text-lm-ink-3 transition hover:bg-lm-bg hover:text-lm-ink"
+                          class="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-lm-ink-3 transition hover:bg-lm-bg hover:text-lm-ink"
                           title="Edit"
                           @click="startEdit(comment)">
                           <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -285,7 +285,7 @@ function formatInteractionType(value: string | null | undefined): string {
                           </svg>
                         </button>
                         <button type="button"
-                          class="flex h-6 w-6 items-center justify-center rounded-md text-lm-ink-3 transition hover:bg-lm-red-soft hover:text-lm-red"
+                          class="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-lm-ink-3 transition hover:bg-lm-red-soft hover:text-lm-red"
                           title="Delete"
                           @click="emit('delete-comment', comment.id)">
                           <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -311,10 +311,10 @@ function formatInteractionType(value: string | null | undefined): string {
                       />
                       <div class="mt-1.5 flex gap-2">
                         <button type="button"
-                          class="rounded-lg border-2 border-lm-ink bg-lm-ink px-3 py-1 text-[11px] font-semibold text-lm-bg transition hover:opacity-90"
+                          class="rounded-lg border-2 cursor-pointer border-lm-ink bg-lm-ink px-3 py-1 text-[11px] font-semibold text-lm-bg transition hover:opacity-90"
                           @click="saveEdit">Save</button>
                         <button type="button"
-                          class="rounded-lg border-2 border-lm-line bg-lm-surface px-3 py-1 text-[11px] font-semibold text-lm-ink transition hover:bg-lm-bg"
+                          class="rounded-lg border-2 cursor-pointer border-lm-line bg-lm-surface px-3 py-1 text-[11px] font-semibold text-lm-ink transition hover:bg-lm-bg"
                           @click="cancelEdit">Cancel</button>
                       </div>
                     </div>
@@ -338,7 +338,7 @@ function formatInteractionType(value: string | null | undefined): string {
                 />
                 <button
                   type="button"
-                  class="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] border-2 border-lm-ink bg-lm-ink text-lm-bg shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md disabled:opacity-40"
+                  class="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-[10px] border-2 border-lm-ink bg-lm-ink text-lm-bg shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md disabled:opacity-40"
                   :disabled="!newComment.trim()"
                   @click="submitComment"
                 >
