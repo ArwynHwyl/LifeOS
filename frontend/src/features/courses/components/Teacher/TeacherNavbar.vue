@@ -87,7 +87,7 @@ function logout() {
         </div>
         <button
           type="button"
-          class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-lm-bg/30 transition hover:bg-lm-bg/10 hover:text-lm-bg/60"
+          class="flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-lm-bg/30 transition hover:bg-lm-bg/10 hover:text-lm-bg/60"
           aria-label="Sign out"
           @click="logout"
         >

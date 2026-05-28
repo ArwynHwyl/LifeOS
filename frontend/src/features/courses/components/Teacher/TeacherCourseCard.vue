@@ -91,7 +91,7 @@ const cover = computed(() => getCoverPreset(props.coverId))
         >
           <button
             type="button"
-            class="flex h-7 items-center gap-1 rounded-lg px-2 text-[11px] font-semibold text-lm-green transition hover:bg-lm-green-soft"
+            class="flex h-7 cursor-pointer items-center gap-1 rounded-lg px-2 text-[11px] font-semibold text-lm-green transition hover:bg-lm-green-soft"
             title="Approve course"
             @click.stop="emit('approve')"
           >

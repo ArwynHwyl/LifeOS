@@ -20,11 +20,13 @@ import {
   type AdminDocumentSourceDto,
   type AdminModuleDto,
   type AdminSubTopicDto,
+  type BackendCourseStatus,
   type InteractionType,
 } from '@/features/courses/services/adminCourses'
 
 const props = defineProps<{
   courseId: string
+  courseStatus: BackendCourseStatus
   modules: AdminModuleDto[]
   selectedDocument: AdminDocumentSourceDto | null
   pageStart: number
@@ -33,6 +35,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'module-selected': [id: number | null]
+  'module-edit': [id: number]
   'modules-updated': [modules: AdminModuleDto[]]
   reload: []
 }>()
@@ -379,7 +382,7 @@ function getErrorMessage(error: unknown, fallback: string) {
         />
         <button
           type="button"
-          class="h-9 rounded-lg border-2 border-lm-ink bg-lm-ink px-3 text-[12px] font-bold text-lm-bg transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
+          class="h-9 cursor-pointer rounded-lg border-2 border-lm-ink bg-lm-ink px-3 text-[12px] font-bold text-lm-bg transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
           :disabled="moduleCreating || !newModuleTitle.trim()"
           @click="addModuleForGeneration"
         >
@@ -429,14 +432,25 @@ function getErrorMessage(error: unknown, fallback: string) {
               {{ formatInteractionType(module.interactionType) }}
             </span>
           </span>
-          <span
-            class="rounded-full border-2 border-lm-line px-2 py-1 font-mono text-[10px] font-bold shadow-stamp-sm"
-            :class="module.subTopics.length ? 'bg-lm-green-soft text-lm-green' : 'bg-lm-bg-soft text-lm-ink-3'"
+          <button
+            v-if="courseStatus !== 'PENDING_REVIEW' && module.subTopics.length"
+            type="button"
+            class="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border-2 border-lm-line bg-lm-surface px-3 py-1.5 font-mono text-[11px] font-bold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
+            @click.stop="emit('module-edit', module.id)"
           >
-            {{ module.subTopics.length ? 'Has content' : 'Empty' }}
+            <svg class="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+            </svg>
+            Edit
+          </button>
+          <span
+            v-else-if="!module.subTopics.length"
+            class="rounded-full border-2 border-lm-line bg-lm-bg-soft px-2 py-1 font-mono text-[10px] font-bold text-lm-ink-3 shadow-stamp-sm"
+          >
+            Empty
           </span>
           <span
-            class="rounded-lg border-2 border-lm-line bg-lm-surface px-3 py-1.5 font-mono text-[11px] font-bold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
+            class="cursor-pointer rounded-lg border-2 border-lm-line bg-lm-surface px-3 py-1.5 font-mono text-[11px] font-bold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
             @click.stop="openSubTopicForm(module.id)"
           >
             Add subtopic
@@ -462,7 +476,7 @@ function getErrorMessage(error: unknown, fallback: string) {
               <div class="flex gap-2">
                 <button
                   type="button"
-                  class="h-10 rounded-lg border-2 border-lm-ink bg-lm-ink px-3 text-[12px] font-bold text-lm-bg disabled:cursor-not-allowed disabled:opacity-50"
+                  class="h-10 cursor-pointer rounded-lg border-2 border-lm-ink bg-lm-ink px-3 text-[12px] font-bold text-lm-bg disabled:cursor-not-allowed disabled:opacity-50"
                   :disabled="subTopicSaving || !subTopicTitle.trim()"
                   @click="addManualSubTopic(module.id)"
                 >
@@ -470,7 +484,7 @@ function getErrorMessage(error: unknown, fallback: string) {
                 </button>
                 <button
                   type="button"
-                  class="h-10 rounded-lg border-2 border-lm-line bg-lm-surface px-3 text-[12px] font-bold text-lm-ink shadow-stamp-sm"
+                  class="h-10 cursor-pointer rounded-lg border-2 border-lm-line bg-lm-surface px-3 text-[12px] font-bold text-lm-ink shadow-stamp-sm"
                   @click="closeSubTopicForm"
                 >
                   Cancel
@@ -516,15 +530,16 @@ function getErrorMessage(error: unknown, fallback: string) {
                 </div>
                 <div class="flex items-center gap-1.5">
                   <button
+                    v-if="courseStatus !== 'PENDING_REVIEW'"
                     type="button"
-                    class="h-8 rounded-lg border-2 border-lm-line bg-lm-surface px-3 font-mono text-[11px] font-bold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
+                    class="h-8 cursor-pointer rounded-lg border-2 border-lm-line bg-lm-surface px-3 font-mono text-[11px] font-bold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
                     @click="openLessonEditor(subTopic)"
                   >
                     Edit
                   </button>
                   <button
                     type="button"
-                    class="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-lm-line-soft bg-lm-surface text-lm-ink-3 transition-all duration-200 hover:border-lm-red hover:bg-lm-red-soft hover:text-lm-red"
+                    class="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border-2 border-lm-line-soft bg-lm-surface text-lm-ink-3 transition-all duration-200 hover:border-lm-red hover:bg-lm-red-soft hover:text-lm-red"
                     title="Delete subtopic"
                     @click="removeSubTopic(module.id, subTopic.id)"
                   >
@@ -554,7 +569,7 @@ function getErrorMessage(error: unknown, fallback: string) {
           <div v-if="!discussionOpenMap[module.id]" class="px-4 py-3">
             <button
               type="button"
-              class="flex items-center gap-2 rounded-[12px] border-2 border-dashed border-lm-line-soft px-4 py-2.5 text-[12px] font-semibold text-lm-ink-3 transition-all duration-200 hover:border-lm-line hover:bg-lm-surface hover:text-lm-ink"
+              class="flex cursor-pointer items-center gap-2 rounded-[12px] border-2 border-dashed border-lm-line-soft px-4 py-2.5 text-[12px] font-semibold text-lm-ink-3 transition-all duration-200 hover:border-lm-line hover:bg-lm-surface hover:text-lm-ink"
               @click.stop="openDiscussion(module.id)"
             >
               <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -579,7 +594,7 @@ function getErrorMessage(error: unknown, fallback: string) {
                 </span>
               </div>
               <button v-if="!confirmEndMap[module.id]" type="button"
-                class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold text-lm-ink-3 transition hover:bg-lm-red-soft hover:text-lm-red"
+                class="flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold text-lm-ink-3 transition hover:bg-lm-red-soft hover:text-lm-red"
                 @click.stop="confirmEndMap[module.id] = true">
                 <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M18 6 6 18M6 6l12 12" />
@@ -588,8 +603,8 @@ function getErrorMessage(error: unknown, fallback: string) {
               </button>
               <div v-else class="flex items-center gap-2">
                 <span class="text-[11px] text-lm-ink-2">Clear all comments?</span>
-                <button type="button" class="rounded-lg border-2 border-lm-red bg-lm-red px-2.5 py-1 text-[11px] font-semibold text-lm-bg transition hover:opacity-90" @click.stop="endDiscussion(module.id)">End it</button>
-                <button type="button" class="rounded-lg border-2 border-lm-line bg-lm-surface px-2.5 py-1 text-[11px] font-semibold text-lm-ink transition hover:bg-lm-bg" @click.stop="confirmEndMap[module.id] = false">Cancel</button>
+                <button type="button" class="cursor-pointer rounded-lg border-2 border-lm-red bg-lm-red px-2.5 py-1 text-[11px] font-semibold text-lm-bg transition hover:opacity-90" @click.stop="endDiscussion(module.id)">End it</button>
+                <button type="button" class="cursor-pointer rounded-lg border-2 border-lm-line bg-lm-surface px-2.5 py-1 text-[11px] font-semibold text-lm-ink transition hover:bg-lm-bg" @click.stop="confirmEndMap[module.id] = false">Cancel</button>
               </div>
             </div>
 
@@ -611,10 +626,10 @@ function getErrorMessage(error: unknown, fallback: string) {
                       <span class="text-[12px] font-semibold text-lm-ink">{{ comment.authorName }}</span>
                       <span class="text-[11px] text-lm-ink-3">· {{ comment.createdAt }}</span>
                       <div v-if="comment.authorId === currentUserId && editingCommentId !== comment.id" class="ml-auto flex items-center gap-0.5 opacity-0 transition-opacity group-hover/c:opacity-100">
-                        <button type="button" class="flex h-6 w-6 items-center justify-center rounded-md text-lm-ink-3 transition hover:bg-lm-bg hover:text-lm-ink" @click.stop="startEditComment(comment)">
+                        <button type="button" class="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-lm-ink-3 transition hover:bg-lm-bg hover:text-lm-ink" @click.stop="startEditComment(comment)">
                           <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
                         </button>
-                        <button type="button" class="flex h-6 w-6 items-center justify-center rounded-md text-lm-ink-3 transition hover:bg-lm-red-soft hover:text-lm-red" @click.stop="deleteComment(module.id, comment.id)">
+                        <button type="button" class="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-lm-ink-3 transition hover:bg-lm-red-soft hover:text-lm-red" @click.stop="deleteComment(module.id, comment.id)">
                           <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
                         </button>
                       </div>
@@ -623,8 +638,8 @@ function getErrorMessage(error: unknown, fallback: string) {
                     <div v-else>
                       <textarea v-model="editCommentText" rows="2" class="w-full resize-none rounded-[10px] border-2 border-lm-line bg-lm-surface px-3 py-2 text-[12.5px] leading-relaxed text-lm-ink outline-none ring-2 ring-lm-yellow/20" @keydown.enter.ctrl="saveEditComment(module.id)" @keydown.escape="cancelEditComment" />
                       <div class="mt-1.5 flex gap-2">
-                        <button type="button" class="rounded-lg border-2 border-lm-ink bg-lm-ink px-3 py-1 text-[11px] font-semibold text-lm-bg transition hover:opacity-90" @click.stop="saveEditComment(module.id)">Save</button>
-                        <button type="button" class="rounded-lg border-2 border-lm-line bg-lm-surface px-3 py-1 text-[11px] font-semibold text-lm-ink transition hover:bg-lm-bg" @click.stop="cancelEditComment">Cancel</button>
+                        <button type="button" class="cursor-pointer rounded-lg border-2 border-lm-ink bg-lm-ink px-3 py-1 text-[11px] font-semibold text-lm-bg transition hover:opacity-90" @click.stop="saveEditComment(module.id)">Save</button>
+                        <button type="button" class="cursor-pointer rounded-lg border-2 border-lm-line bg-lm-surface px-3 py-1 text-[11px] font-semibold text-lm-ink transition hover:bg-lm-bg" @click.stop="cancelEditComment">Cancel</button>
                       </div>
                     </div>
                   </div>
@@ -647,7 +662,7 @@ function getErrorMessage(error: unknown, fallback: string) {
                   @keydown.enter.prevent="addComment(module.id)"
                 />
                 <button type="button"
-                  class="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] border-2 border-lm-ink bg-lm-ink text-lm-bg shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md disabled:opacity-40"
+                  class="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-[10px] border-2 border-lm-ink bg-lm-ink text-lm-bg shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md disabled:cursor-not-allowed disabled:opacity-40"
                   :disabled="!(newCommentMap[module.id] ?? '').trim()"
                   @click.stop="addComment(module.id)">
                   <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">

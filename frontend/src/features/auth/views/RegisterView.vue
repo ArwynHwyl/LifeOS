@@ -42,98 +42,89 @@ async function handleRegister() {
 </script>
 
 <template>
-  <AuthPageLayout wide mood="cheer" holding="pencil" bubble="Yes! Let's begin!">
-    <header class="mb-5">
-      <h1 class="font-display text-[30px] font-bold leading-tight tracking-tight text-lm-ink">Create account</h1>
+  <AuthPageLayout tight mood="cheer" holding="pencil" bubble="Yes! Let's begin!">
+    <header class="mb-4">
+      <h1 class="font-display text-[28px] font-bold leading-tight tracking-tight text-lm-ink">Create account</h1>
       <p v-if="successMessage" class="mt-2 rounded-xl border-2 border-lm-green bg-lm-green-soft px-3 py-2.5 text-[12px] font-medium text-lm-green">
         {{ successMessage }}
       </p>
-      <p v-else class="mt-1.5 text-[14px] text-lm-ink-2">Free forever. No card needed.</p>
     </header>
 
-    <form v-if="!successMessage" class="flex flex-col gap-3.5" @submit.prevent="handleRegister">
-      <div v-if="formError" class="rounded-xl border-2 border-lm-red bg-lm-red-soft px-3 py-2.5 text-[12px] font-medium text-lm-red" role="alert">
+    <form v-if="!successMessage" class="flex flex-col gap-3" @submit.prevent="handleRegister">
+      <div v-if="formError" class="rounded-xl border-2 border-lm-red bg-lm-red-soft px-3 py-2 text-[12px] font-medium text-lm-red" role="alert">
         {{ formError }}
       </div>
 
-      <!-- Row 1: Username + Email -->
-      <div class="grid grid-cols-2 gap-3.5">
-        <div class="flex flex-col gap-1.5">
-          <label class="font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-lm-ink-3" for="reg-username">Username</label>
-          <input
-            id="reg-username"
-            v-model="username"
-            type="text"
-            name="username"
-            autocomplete="username"
-            required
-            minlength="3"
-            class="w-full rounded-xl border-2 border-lm-line-soft bg-lm-bg-soft px-3.5 py-3 text-[14px] font-medium text-lm-ink outline-none transition focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
-          />
-        </div>
+      <div class="flex flex-col gap-1.5">
+        <label class="font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-lm-ink-3" for="reg-username">Username</label>
+        <input
+          id="reg-username"
+          v-model="username"
+          type="text"
+          name="username"
+          autocomplete="username"
+          required
+          minlength="3"
+          class="w-full rounded-xl border-2 border-lm-line-soft bg-lm-bg-soft px-3.5 py-2.5 text-[14px] font-medium text-lm-ink outline-none transition focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
+        />
+      </div>
 
-        <div class="flex flex-col gap-1.5">
-          <label class="font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-lm-ink-3" for="reg-email">Email</label>
+      <div class="flex flex-col gap-1.5">
+        <label class="font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-lm-ink-3" for="reg-email">Email</label>
+        <input
+          id="reg-email"
+          v-model="email"
+          type="email"
+          name="email"
+          autocomplete="email"
+          required
+          class="w-full rounded-xl border-2 border-lm-line-soft bg-lm-bg-soft px-3.5 py-2.5 text-[14px] font-medium text-lm-ink outline-none transition focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
+        />
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label class="font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-lm-ink-3" for="reg-password">Password</label>
+        <div class="relative">
           <input
-            id="reg-email"
-            v-model="email"
-            type="email"
-            name="email"
-            autocomplete="email"
+            id="reg-password"
+            v-model="password"
+            :type="showPassword ? 'text' : 'password'"
+            name="new-password"
+            autocomplete="new-password"
             required
-            class="w-full rounded-xl border-2 border-lm-line-soft bg-lm-bg-soft px-3.5 py-3 text-[14px] font-medium text-lm-ink outline-none transition focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
+            minlength="8"
+            class="w-full rounded-xl border-2 border-lm-line-soft bg-lm-bg-soft py-2.5 pl-3.5 pr-11 text-[14px] font-medium text-lm-ink outline-none transition focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
           />
+          <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-lm-ink-3 transition hover:text-lm-ink" @click="showPassword = !showPassword">
+            <svg v-if="showPassword" class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+            <svg v-else class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+          </button>
         </div>
       </div>
 
-      <!-- Row 2: Password + Confirm Password -->
-      <div class="grid grid-cols-2 gap-3.5">
-        <div class="flex flex-col gap-1.5">
-          <label class="font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-lm-ink-3" for="reg-password">Password</label>
-          <div class="relative">
-            <input
-              id="reg-password"
-              v-model="password"
-              :type="showPassword ? 'text' : 'password'"
-              name="new-password"
-              autocomplete="new-password"
-              required
-              minlength="8"
-              class="w-full rounded-xl border-2 border-lm-line-soft bg-lm-bg-soft py-3 pl-3.5 pr-11 text-[14px] font-medium text-lm-ink outline-none transition focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
-            />
-            <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-lm-ink-3 transition hover:text-lm-ink" @click="showPassword = !showPassword">
-              <svg v-if="showPassword" class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
-              <svg v-else class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
-            </button>
-          </div>
-          <span class="text-[11px] text-lm-ink-3">Min. 8 characters.</span>
-        </div>
-
-        <div class="flex flex-col gap-1.5">
-          <label class="font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-lm-ink-3" for="reg-confirm">Confirm Password</label>
-          <div class="relative">
-            <input
-              id="reg-confirm"
-              v-model="confirmPassword"
-              :type="showConfirm ? 'text' : 'password'"
-              name="new-password"
-              autocomplete="new-password"
-              required
-              minlength="8"
-              class="w-full rounded-xl border-2 border-lm-line-soft bg-lm-bg-soft py-3 pl-3.5 pr-11 text-[14px] font-medium text-lm-ink outline-none transition focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
-            />
-            <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-lm-ink-3 transition hover:text-lm-ink" @click="showConfirm = !showConfirm">
-              <svg v-if="showConfirm" class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
-              <svg v-else class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
-            </button>
-          </div>
-          <span class="text-[11px] text-lm-ink-3">Must match password.</span>
+      <div class="flex flex-col gap-1.5">
+        <label class="font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-lm-ink-3" for="reg-confirm">Confirm Password</label>
+        <div class="relative">
+          <input
+            id="reg-confirm"
+            v-model="confirmPassword"
+            :type="showConfirm ? 'text' : 'password'"
+            name="new-password"
+            autocomplete="new-password"
+            required
+            minlength="8"
+            class="w-full rounded-xl border-2 border-lm-line-soft bg-lm-bg-soft py-2.5 pl-3.5 pr-11 text-[14px] font-medium text-lm-ink outline-none transition focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
+          />
+          <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-lm-ink-3 transition hover:text-lm-ink" @click="showConfirm = !showConfirm">
+            <svg v-if="showConfirm" class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+            <svg v-else class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+          </button>
         </div>
       </div>
 
       <button
         type="submit"
-        class="mt-1.5 flex w-full items-center justify-center gap-2 rounded-full border-2 border-lm-line bg-lm-yellow px-6 py-3 text-[16px] font-semibold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+        class="mt-1 flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border-2 border-lm-line bg-lm-yellow px-6 py-2.5 text-[15px] font-semibold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
         :disabled="isSubmitting"
       >
         {{ isSubmitting ? 'Creating account...' : 'Create account' }}

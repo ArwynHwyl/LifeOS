@@ -68,7 +68,7 @@ const statusInfo = computed(() => {
       <button
         v-if="status === 'draft' || status === 'revision'"
         type="button"
-        class="inline-flex items-center justify-center gap-1.5 rounded-lg border-2 border-lm-purple bg-lm-purple-soft px-3 py-2 text-[11px] font-bold text-lm-purple shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
+        class="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border-2 border-lm-purple bg-lm-purple-soft px-3 py-2 text-[11px] font-bold text-lm-purple shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
         @click.stop="emit('submit')"
       >
         <svg class="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
@@ -78,7 +78,8 @@ const statusInfo = computed(() => {
 
     <button
       type="button"
-      class="inline-flex items-center justify-center gap-1.5 rounded-lg border-2 border-lm-line bg-lm-surface px-3 py-2 text-[12px] font-bold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
+      class="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border-2 border-lm-line bg-lm-surface px-3 py-2 text-[12px] font-bold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
+      :class="status === 'pending' ? 'invisible pointer-events-none' : ''"
       @click.stop="emit('edit')"
     >
       <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -90,7 +91,7 @@ const statusInfo = computed(() => {
 
     <button
       type="button"
-      class="flex h-9 w-9 items-center justify-center rounded-lg border-2 border-lm-line-soft bg-lm-surface text-lm-ink-3 transition-all duration-200 hover:border-lm-red hover:bg-lm-red-soft hover:text-lm-red"
+      class="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border-2 border-lm-line-soft bg-lm-surface text-lm-ink-3 transition-all duration-200 hover:border-lm-red hover:bg-lm-red-soft hover:text-lm-red"
       title="Delete"
       @click.stop="emit('delete')"
     >
