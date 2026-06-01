@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import {
   listInteractiveTemplates,
   type InteractionType,
@@ -52,6 +52,35 @@ const selectedFormulaSectionIndex = ref(0)
 const visualTool = ref<'select' | 'zone-rectangle' | 'zone-circle' | 'button' | 'hotspot'>('select')
 const selectedVisualKind = ref<'zone' | 'element' | 'overlap' | null>(null)
 const selectedVisualId = ref<string | null>(null)
+type VisualSelectionItem = { kind: 'zone' | 'element'; id: string }
+type VisualBoundsDraft = {
+  x: number
+  y: number
+  width: number
+  height: number
+  labelX?: number
+  labelY?: number
+}
+const visualEditDraft = ref<{
+  kind: 'zone' | 'element'
+  id: string
+  original: VisualBoundsDraft
+  draft: VisualBoundsDraft
+} | null>(null)
+const selectedVisualGroup = ref<VisualSelectionItem[]>([])
+const visualGroupEditDraft = ref<{
+  original: Record<string, VisualBoundsDraft>
+  draft: Record<string, VisualBoundsDraft>
+} | null>(null)
+const visualToolbarDismissed = ref(false)
+const visualMarquee = ref<{
+  originX: number
+  originY: number
+  x: number
+  y: number
+  width: number
+  height: number
+} | null>(null)
 const visualDraft = ref<{
   kind: 'zone' | 'element'
   shape?: VisualLayerZone['shape']
@@ -64,11 +93,17 @@ const visualDraft = ref<{
   height: number
 } | null>(null)
 const visualDrag = ref<{
-  kind: 'zone' | 'element' | 'zone-label'
+  kind: 'zone' | 'element' | 'zone-label' | 'resize' | 'group'
   id: string
   offsetX: number
   offsetY: number
+  resizeHandle?: VisualResizeHandle
+  start?: VisualBoundsDraft
+  originPoint?: { x: number; y: number }
+  groupStart?: Record<string, VisualBoundsDraft>
 } | null>(null)
+type VisualResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w'
+const visualResizeHandles: VisualResizeHandle[] = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w']
 const jsonStats = computed(() => {
   const lines = jsonDraft.value ? jsonDraft.value.split('\n').length : 0
   const chars = jsonDraft.value.length
@@ -115,6 +150,41 @@ const visualOverlapRegions = computed(() => {
   return current ? generatedOverlapRegions(current) : []
 })
 const visualMaskPrefix = `admin-overlap-${Math.random().toString(36).slice(2)}`
+const visualZonesForRender = computed(() => {
+  const current = visualConfig()
+  if (!current) return []
+  return current.zones.map((zone) => ({ ...zone, ...(draftForVisual('zone', zone.id) ?? {}), ...(groupDraftForVisual('zone', zone.id) ?? {}) }))
+})
+const visualElementsForRender = computed(() => {
+  const current = visualConfig()
+  if (!current) return []
+  return current.elements.map((element) => ({ ...element, ...(draftForVisual('element', element.id) ?? {}), ...(groupDraftForVisual('element', element.id) ?? {}) }))
+})
+const visualOverlapRegionsForRender = computed(() => {
+  const current = visualConfig()
+  if (!current) return []
+  return generatedOverlapRegions({ ...current, zones: visualZonesForRender.value })
+})
+const selectedVisualDraftBounds = computed(() => {
+  if (selectedVisualGroup.value.length > 1) {
+    if (visualToolbarDismissed.value) return null
+    return visualGroupBounds()
+  }
+  const draft = visualEditDraft.value
+  if (draft && draft.kind === selectedVisualKind.value && draft.id === selectedVisualId.value) return draft.draft
+  if (visualToolbarDismissed.value) return null
+  const current = visualConfig()
+  if (!current || !selectedVisualId.value) return null
+  if (selectedVisualKind.value === 'zone') {
+    const zone = current.zones.find((item) => item.id === selectedVisualId.value)
+    return zone ? boundsFromVisualItem(zone) : null
+  }
+  if (selectedVisualKind.value === 'element') {
+    const element = current.elements.find((item) => item.id === selectedVisualId.value)
+    return element ? boundsFromVisualItem(element) : null
+  }
+  return null
+})
 
 watch(
   () => [props.interactionType, props.interactionConfig] as const,
@@ -149,11 +219,16 @@ watch(
 )
 
 onMounted(async () => {
+  window.addEventListener('keydown', handleVisualEditKeydown)
   try {
     templates.value = await listInteractiveTemplates()
   } catch {
     templates.value = []
   }
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleVisualEditKeydown)
 })
 
 function setConfig(next: InteractiveConfig) {
@@ -368,9 +443,37 @@ function visualConfig() {
 }
 
 function selectVisual(kind: 'zone' | 'element' | 'overlap', id: string) {
+  if (selectedVisualKind.value !== kind || selectedVisualId.value !== id) {
+    visualEditDraft.value = null
+    visualDrag.value = null
+    visualGroupEditDraft.value = null
+  }
+  selectedVisualGroup.value = []
+  visualToolbarDismissed.value = false
   selectedVisualKind.value = kind
   selectedVisualId.value = id
   visualTool.value = 'select'
+}
+
+function selectVisualGroup(items: VisualSelectionItem[]) {
+  visualEditDraft.value = null
+  visualGroupEditDraft.value = null
+  visualDrag.value = null
+  visualToolbarDismissed.value = false
+  selectedVisualId.value = null
+  selectedVisualKind.value = null
+  selectedVisualGroup.value = items
+  visualTool.value = 'select'
+}
+
+function clearVisualSelection() {
+  selectedVisualId.value = null
+  selectedVisualKind.value = null
+  selectedVisualGroup.value = []
+  visualEditDraft.value = null
+  visualGroupEditDraft.value = null
+  visualDrag.value = null
+  visualToolbarDismissed.value = false
 }
 
 function selectedVisualZone() {
@@ -394,6 +497,75 @@ function selectedVisualInteraction() {
   const current = visualConfig()
   if (!current || !selectedVisualId.value) return null
   return current.interactions.find((interaction) => interaction.triggerId === selectedVisualId.value) ?? null
+}
+
+function draftForVisual(kind: 'zone' | 'element', id: string) {
+  const edit = visualEditDraft.value
+  return edit?.kind === kind && edit.id === id ? edit.draft : null
+}
+
+function visualSelectionKey(kind: 'zone' | 'element', id: string) {
+  return `${kind}:${id}`
+}
+
+function groupDraftForVisual(kind: 'zone' | 'element', id: string) {
+  return visualGroupEditDraft.value?.draft[visualSelectionKey(kind, id)] ?? null
+}
+
+function isVisualGroupSelected(kind: 'zone' | 'element', id: string) {
+  return selectedVisualGroup.value.some((item) => item.kind === kind && item.id === id)
+}
+
+function boundsFromVisualItem(item: { x: number; y: number; width: number; height: number; labelX?: number; labelY?: number }): VisualBoundsDraft {
+  return {
+    x: item.x,
+    y: item.y,
+    width: item.width,
+    height: item.height,
+    labelX: item.labelX,
+    labelY: item.labelY,
+  }
+}
+
+function visualItemBounds(kind: 'zone' | 'element', id: string) {
+  const current = visualConfig()
+  if (!current) return null
+  const groupDraft = groupDraftForVisual(kind, id)
+  if (groupDraft) return groupDraft
+  const singleDraft = draftForVisual(kind, id)
+  if (singleDraft) return singleDraft
+  const item = kind === 'zone'
+    ? current.zones.find((zone) => zone.id === id)
+    : current.elements.find((element) => element.id === id)
+  return item ? boundsFromVisualItem(item) : null
+}
+
+function visualGroupBounds() {
+  const bounds = selectedVisualGroup.value
+    .map((item) => visualItemBounds(item.kind, item.id))
+    .filter((item): item is VisualBoundsDraft => Boolean(item))
+  if (!bounds.length) return null
+  const left = Math.min(...bounds.map((item) => item.x))
+  const top = Math.min(...bounds.map((item) => item.y))
+  const right = Math.max(...bounds.map((item) => item.x + item.width))
+  const bottom = Math.max(...bounds.map((item) => item.y + item.height))
+  return { x: left, y: top, width: right - left, height: bottom - top }
+}
+
+function intersectsVisualBounds(a: VisualBoundsDraft, b: VisualBoundsDraft) {
+  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y
+}
+
+function visualObjectsInBounds(bounds: VisualBoundsDraft) {
+  const current = visualConfig()
+  if (!current) return []
+  const zones = current.zones
+    .filter((zone) => intersectsVisualBounds(bounds, zone))
+    .map((zone) => ({ kind: 'zone' as const, id: zone.id }))
+  const elements = current.elements
+    .filter((element) => intersectsVisualBounds(bounds, element))
+    .map((element) => ({ kind: 'element' as const, id: element.id }))
+  return [...zones, ...elements]
 }
 
 function visualStyle(item: { x: number; y: number; width: number; height: number }) {
@@ -427,24 +599,123 @@ function visualPoint(event: PointerEvent, current: VisualLayerConfig) {
 }
 
 function clampVisualObject<T extends { x: number; y: number; width: number; height: number }>(item: T, current: VisualLayerConfig): T {
+  const width = Math.max(8, Math.min(item.width, current.canvas.width))
+  const height = Math.max(8, Math.min(item.height, current.canvas.height))
   return {
     ...item,
-    width: Math.max(8, Math.min(item.width, current.canvas.width)),
-    height: Math.max(8, Math.min(item.height, current.canvas.height)),
-    x: Math.max(0, Math.min(item.x, current.canvas.width - Math.max(8, item.width))),
-    y: Math.max(0, Math.min(item.y, current.canvas.height - Math.max(8, item.height))),
+    width,
+    height,
+    x: Math.max(0, Math.min(item.x, current.canvas.width - width)),
+    y: Math.max(0, Math.min(item.y, current.canvas.height - height)),
   }
+}
+
+function beginVisualEdit(kind: 'zone' | 'element', id: string, item: VisualBoundsDraft) {
+  const existing = visualEditDraft.value
+  if (existing?.kind === kind && existing.id === id) return existing
+  const original = boundsFromVisualItem(item)
+  const next = { kind, id, original, draft: { ...original } }
+  visualEditDraft.value = next
+  visualGroupEditDraft.value = null
+  visualToolbarDismissed.value = false
+  return next
+}
+
+function beginVisualGroupEdit() {
+  const current = visualConfig()
+  if (!current || selectedVisualGroup.value.length <= 1) return null
+  const existing = visualGroupEditDraft.value
+  if (existing) return existing
+  const original: Record<string, VisualBoundsDraft> = {}
+  for (const item of selectedVisualGroup.value) {
+    const saved = item.kind === 'zone'
+      ? current.zones.find((zone) => zone.id === item.id)
+      : current.elements.find((element) => element.id === item.id)
+    if (saved) original[visualSelectionKey(item.kind, item.id)] = boundsFromVisualItem(saved)
+  }
+  const next = { original, draft: Object.fromEntries(Object.entries(original).map(([key, value]) => [key, { ...value }])) }
+  visualGroupEditDraft.value = next
+  visualEditDraft.value = null
+  visualToolbarDismissed.value = false
+  return next
+}
+
+function updateVisualEditDraft(patch: Partial<VisualBoundsDraft>) {
+  const current = visualConfig()
+  const edit = visualEditDraft.value
+  if (!current || !edit) return
+  visualEditDraft.value = {
+    ...edit,
+    draft: clampVisualObject({ ...edit.draft, ...patch }, current),
+  }
+}
+
+function updateVisualGroupDraft(dx: number, dy: number, start: Record<string, VisualBoundsDraft>) {
+  const current = visualConfig()
+  const edit = visualGroupEditDraft.value
+  if (!current || !edit) return
+  const items = Object.values(start)
+  if (!items.length) return
+  const left = Math.min(...items.map((item) => item.x))
+  const top = Math.min(...items.map((item) => item.y))
+  const right = Math.max(...items.map((item) => item.x + item.width))
+  const bottom = Math.max(...items.map((item) => item.y + item.height))
+  const minDx = -left
+  const maxDx = current.canvas.width - right
+  const minDy = -top
+  const maxDy = current.canvas.height - bottom
+  const clampedDx = Math.max(minDx, Math.min(maxDx, dx))
+  const clampedDy = Math.max(minDy, Math.min(maxDy, dy))
+  visualGroupEditDraft.value = {
+    ...edit,
+    draft: Object.fromEntries(Object.entries(start).map(([key, item]) => [
+      key,
+      { ...item, x: item.x + clampedDx, y: item.y + clampedDy },
+    ])),
+  }
+}
+
+function visualToolbarStyle(bounds: VisualBoundsDraft) {
+  return {
+    left: `${bounds.x + bounds.width / 2}px`,
+    top: `${Math.max(0, bounds.y - 12)}px`,
+  }
+}
+
+function visualResizeHandleStyle(handle: VisualResizeHandle, bounds: VisualBoundsDraft) {
+  const x = handle.includes('w') ? bounds.x : handle.includes('e') ? bounds.x + bounds.width : bounds.x + bounds.width / 2
+  const y = handle.includes('n') ? bounds.y : handle.includes('s') ? bounds.y + bounds.height : bounds.y + bounds.height / 2
+  return {
+    left: `${x}px`,
+    top: `${y}px`,
+  }
+}
+
+function handleVisualEditKeydown(event: KeyboardEvent) {
+  const target = event.target as HTMLElement | null
+  if (target?.closest('input, textarea, select, [contenteditable="true"]')) return
+  if (!(event.ctrlKey || event.metaKey) || event.shiftKey || event.key.toLowerCase() !== 'z') return
+  if (!visualEditDraft.value && !visualGroupEditDraft.value) return
+  event.preventDefault()
+  cancelVisualEdit()
 }
 
 function beginVisualCanvasPointer(event: PointerEvent) {
   const current = visualConfig()
   if (!current) return
+  const point = visualPoint(event, current)
   if (visualTool.value === 'select') {
-    selectedVisualId.value = null
-    selectedVisualKind.value = null
+    ;(event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId)
+    visualMarquee.value = {
+      originX: point.x,
+      originY: point.y,
+      x: point.x,
+      y: point.y,
+      width: 0,
+      height: 0,
+    }
     return
   }
-  const point = visualPoint(event, current)
   ;(event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId)
   if (visualTool.value === 'zone-rectangle' || visualTool.value === 'zone-circle') {
     visualDraft.value = {
@@ -475,6 +746,17 @@ function moveVisualPointer(event: PointerEvent) {
   const current = visualConfig()
   if (!current) return
   const point = visualPoint(event, current)
+  if (visualMarquee.value) {
+    const draft = visualMarquee.value
+    visualMarquee.value = {
+      ...draft,
+      x: Math.min(draft.originX, point.x),
+      y: Math.min(draft.originY, point.y),
+      width: Math.abs(point.x - draft.originX),
+      height: Math.abs(point.y - draft.originY),
+    }
+    return
+  }
   if (visualDraft.value) {
     const draft = visualDraft.value
     visualDraft.value = {
@@ -487,11 +769,36 @@ function moveVisualPointer(event: PointerEvent) {
     return
   }
   if (!visualDrag.value) return
+  if (visualDrag.value.kind === 'group') {
+    if (!visualDrag.value.originPoint || !visualDrag.value.groupStart) return
+    updateVisualGroupDraft(point.x - visualDrag.value.originPoint.x, point.y - visualDrag.value.originPoint.y, visualDrag.value.groupStart)
+    return
+  }
+  if (visualDrag.value.kind === 'resize') {
+    const drag = visualDrag.value
+    const edit = visualEditDraft.value
+    if (!edit || !drag.start || !drag.originPoint || !drag.resizeHandle) return
+    const dx = point.x - drag.originPoint.x
+    const dy = point.y - drag.originPoint.y
+    const next = { ...drag.start }
+    if (drag.resizeHandle.includes('w')) {
+      next.x = drag.start.x + dx
+      next.width = drag.start.width - dx
+    }
+    if (drag.resizeHandle.includes('e')) next.width = drag.start.width + dx
+    if (drag.resizeHandle.includes('n')) {
+      next.y = drag.start.y + dy
+      next.height = drag.start.height - dy
+    }
+    if (drag.resizeHandle.includes('s')) next.height = drag.start.height + dy
+    updateVisualEditDraft(next)
+    return
+  }
   const x = point.x - visualDrag.value.offsetX
   const y = point.y - visualDrag.value.offsetY
   if (visualDrag.value.kind === 'zone') {
     const zone = current.zones.find((item) => item.id === visualDrag.value?.id)
-    if (zone) updateVisualZone(zone.id, clampVisualObject({ ...zone, x, y }, current))
+    if (zone) updateVisualEditDraft({ x, y })
     return
   }
   if (visualDrag.value.kind === 'zone-label') {
@@ -505,13 +812,31 @@ function moveVisualPointer(event: PointerEvent) {
     return
   }
   const element = current.elements.find((item) => item.id === visualDrag.value?.id)
-  if (element) updateVisualElement(element.id, clampVisualObject({ ...element, x, y }, current))
+  if (element) updateVisualEditDraft({ x, y })
 }
 
 function endVisualPointer(event: PointerEvent) {
   const current = visualConfig()
-  ;(event.currentTarget as HTMLElement).releasePointerCapture?.(event.pointerId)
+  const target = event.currentTarget as HTMLElement
+  if (target.hasPointerCapture?.(event.pointerId)) target.releasePointerCapture?.(event.pointerId)
   if (!current) return
+  if (visualMarquee.value) {
+    const marquee = visualMarquee.value
+    visualMarquee.value = null
+    if (marquee.width < 6 && marquee.height < 6) {
+      clearVisualSelection()
+      return
+    }
+    const selected = visualObjectsInBounds(marquee)
+    if (selected.length === 1) {
+      selectVisual(selected[0].kind, selected[0].id)
+    } else if (selected.length > 1) {
+      selectVisualGroup(selected)
+    } else {
+      clearVisualSelection()
+    }
+    return
+  }
   if (visualDraft.value) {
     const draft = clampVisualObject({
       ...visualDraft.value,
@@ -558,16 +883,55 @@ function beginVisualObjectDrag(kind: 'zone' | 'element', id: string, event: Poin
   const current = visualConfig()
   if (!current) return
   const point = visualPoint(event, current)
-  const item = kind === 'zone'
+  const savedItem = kind === 'zone'
     ? current.zones.find((zone) => zone.id === id)
     : current.elements.find((element) => element.id === id)
-  if (!item) return
+  if (!savedItem) return
+  if (isVisualGroupSelected(kind, id) && selectedVisualGroup.value.length > 1) {
+    const edit = beginVisualGroupEdit()
+    if (!edit) return
+    ;(event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId)
+    visualDrag.value = {
+      kind: 'group',
+      id: '',
+      offsetX: 0,
+      offsetY: 0,
+      originPoint: point,
+      groupStart: Object.fromEntries(Object.entries(edit.draft).map(([key, value]) => [key, { ...value }])),
+    }
+    return
+  }
   selectVisual(kind, id)
+  ;(event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId)
+  const edit = beginVisualEdit(kind, id, draftForVisual(kind, id) ?? savedItem)
   visualDrag.value = {
     kind,
     id,
-    offsetX: point.x - item.x,
-    offsetY: point.y - item.y,
+    offsetX: point.x - edit.draft.x,
+    offsetY: point.y - edit.draft.y,
+  }
+}
+
+function beginVisualResize(handle: VisualResizeHandle, event: PointerEvent) {
+  const current = visualConfig()
+  const kind = selectedVisualKind.value
+  const id = selectedVisualId.value
+  if (!current || (kind !== 'zone' && kind !== 'element') || !id) return
+  const savedItem = kind === 'zone'
+    ? current.zones.find((zone) => zone.id === id)
+    : current.elements.find((element) => element.id === id)
+  if (!savedItem) return
+  const point = visualPoint(event, current)
+  ;(event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId)
+  const edit = beginVisualEdit(kind, id, draftForVisual(kind, id) ?? savedItem)
+  visualDrag.value = {
+    kind: 'resize',
+    id,
+    offsetX: 0,
+    offsetY: 0,
+    resizeHandle: handle,
+    start: { ...edit.draft },
+    originPoint: point,
   }
 }
 
@@ -622,13 +986,95 @@ function refreshVisualOverlap(current: VisualLayerConfig) {
 function updateVisualZone(id: string, patch: Partial<VisualLayerZone>) {
   const current = visualConfig()
   if (!current) return
+  if (visualEditDraft.value?.kind === 'zone' && visualEditDraft.value.id === id && ('labelX' in patch || 'labelY' in patch)) {
+    visualEditDraft.value = {
+      ...visualEditDraft.value,
+      draft: {
+        ...visualEditDraft.value.draft,
+        labelX: patch.labelX ?? visualEditDraft.value.draft.labelX,
+        labelY: patch.labelY ?? visualEditDraft.value.draft.labelY,
+      },
+    }
+  }
+  if (visualEditDraft.value?.kind === 'zone' && visualEditDraft.value.id === id && ('x' in patch || 'y' in patch || 'width' in patch || 'height' in patch)) {
+    visualEditDraft.value = null
+  }
   setConfig(refreshVisualOverlap({ ...current, zones: current.zones.map((zone) => zone.id === id ? { ...zone, ...patch } : zone) }))
 }
 
 function updateVisualElement(id: string, patch: Partial<VisualLayerElement>) {
   const current = visualConfig()
   if (!current) return
+  if (visualEditDraft.value?.kind === 'element' && visualEditDraft.value.id === id && ('x' in patch || 'y' in patch || 'width' in patch || 'height' in patch)) {
+    visualEditDraft.value = null
+  }
   setConfig({ ...current, elements: current.elements.map((element) => element.id === id ? { ...element, ...patch } : element) })
+}
+
+function confirmVisualEdit() {
+  if (visualGroupEditDraft.value) {
+    const current = visualConfig()
+    const edit = visualGroupEditDraft.value
+    visualToolbarDismissed.value = true
+    visualGroupEditDraft.value = null
+    visualDrag.value = null
+    if (!current) return
+    const zones = current.zones.map((zone) => {
+      const draft = edit.draft[visualSelectionKey('zone', zone.id)]
+      return draft ? { ...zone, ...draft } : zone
+    })
+    const elements = current.elements.map((element) => {
+      const draft = edit.draft[visualSelectionKey('element', element.id)]
+      return draft ? { ...element, ...draft } : element
+    })
+    setConfig(refreshVisualOverlap({ ...current, zones, elements }))
+    return
+  }
+  const edit = visualEditDraft.value
+  visualToolbarDismissed.value = true
+  if (!edit) return
+  const draft = { ...edit.draft }
+  visualEditDraft.value = null
+  visualDrag.value = null
+  if (edit.kind === 'zone') {
+    updateVisualZone(edit.id, draft)
+  } else {
+    updateVisualElement(edit.id, draft)
+  }
+}
+
+function cancelVisualEdit() {
+  visualEditDraft.value = null
+  visualGroupEditDraft.value = null
+  visualDrag.value = null
+  visualToolbarDismissed.value = true
+}
+
+function deleteSelectedVisual() {
+  if (selectedVisualGroup.value.length > 1) {
+    const current = visualConfig()
+    const group = selectedVisualGroup.value
+    visualToolbarDismissed.value = true
+    visualGroupEditDraft.value = null
+    visualEditDraft.value = null
+    visualDrag.value = null
+    if (!current) return
+    const selectedKeys = new Set(group.map((item) => visualSelectionKey(item.kind, item.id)))
+    setConfig(refreshVisualOverlap({
+      ...current,
+      zones: current.zones.filter((zone) => !selectedKeys.has(visualSelectionKey('zone', zone.id))),
+      elements: current.elements.filter((element) => !selectedKeys.has(visualSelectionKey('element', element.id))),
+      interactions: current.interactions.filter((interaction) => (
+        !selectedKeys.has(visualSelectionKey('element', interaction.triggerId))
+        && (!interaction.targetZoneId || !selectedKeys.has(visualSelectionKey('zone', interaction.targetZoneId)))
+      )),
+    }))
+    selectedVisualGroup.value = []
+    visualToolbarDismissed.value = false
+    return
+  }
+  visualToolbarDismissed.value = true
+  removeSelectedVisual()
 }
 
 function removeSelectedVisual() {
@@ -638,8 +1084,11 @@ function removeSelectedVisual() {
   if (selectedVisualKind.value === 'overlap') {
     selectedVisualId.value = null
     selectedVisualKind.value = null
+    visualToolbarDismissed.value = false
     return
   }
+  visualEditDraft.value = null
+  visualDrag.value = null
   setConfig(refreshVisualOverlap({
     ...current,
     zones: selectedVisualKind.value === 'zone' ? current.zones.filter((zone) => zone.id !== id) : current.zones,
@@ -648,6 +1097,7 @@ function removeSelectedVisual() {
   }))
   selectedVisualId.value = null
   selectedVisualKind.value = null
+  visualToolbarDismissed.value = false
 }
 
 function updateOverlapValue(id: string, patch: Partial<VisualLayerOverlapValue>) {
@@ -911,6 +1361,20 @@ function labelFor(type: TemplateInteractionType) {
           <span>Background text</span>
           <textarea rows="3" :value="config.canvas.backgroundText ?? ''" maxlength="500" @input="patchConfig({ canvas: { ...config.canvas, backgroundText: ($event.target as HTMLTextAreaElement).value } } as Partial<VisualLayerConfig>)" />
         </label>
+        <template v-if="config.mode === 'PRACTICE'">
+          <label class="field">
+            <span>Practice prompt</span>
+            <textarea rows="3" :value="config.prompt ?? ''" maxlength="500" @input="patchConfig({ prompt: ($event.target as HTMLTextAreaElement).value } as Partial<VisualLayerConfig>)" />
+          </label>
+          <label class="field">
+            <span>Success feedback</span>
+            <textarea rows="2" :value="config.feedback?.success ?? ''" maxlength="500" @input="patchConfig({ feedback: { success: ($event.target as HTMLTextAreaElement).value, failure: config.feedback?.failure ?? '' } } as Partial<VisualLayerConfig>)" />
+          </label>
+          <label class="field">
+            <span>Failure feedback</span>
+            <textarea rows="2" :value="config.feedback?.failure ?? ''" maxlength="500" @input="patchConfig({ feedback: { success: config.feedback?.success ?? '', failure: ($event.target as HTMLTextAreaElement).value } } as Partial<VisualLayerConfig>)" />
+          </label>
+        </template>
         <div class="tool-row">
           <button type="button" class="mini-button" :class="{ active: visualTool === 'select' }" @click="visualTool = 'select'">Select</button>
           <button type="button" class="mini-button" :class="{ active: visualTool === 'zone-rectangle' }" @click="visualTool = 'zone-rectangle'">Zone rect</button>
@@ -950,13 +1414,13 @@ function labelFor(type: TemplateInteractionType) {
         </div>
         <div class="layer-group">
           <strong>Zones</strong>
-          <button v-for="zone in config.zones" :key="zone.id" type="button" class="layer-item" :class="{ active: selectedVisualKind === 'zone' && selectedVisualId === zone.id }" @click="selectVisual('zone', zone.id)">
+          <button v-for="zone in config.zones" :key="zone.id" type="button" class="layer-item" :class="{ active: (selectedVisualKind === 'zone' && selectedVisualId === zone.id) || isVisualGroupSelected('zone', zone.id) }" @click="selectVisual('zone', zone.id)">
             {{ zone.label }}
           </button>
         </div>
         <div class="layer-group">
           <strong>Triggers</strong>
-          <button v-for="element in config.elements" :key="element.id" type="button" class="layer-item" :class="{ active: selectedVisualKind === 'element' && selectedVisualId === element.id }" @click="selectVisual('element', element.id)">
+          <button v-for="element in config.elements" :key="element.id" type="button" class="layer-item" :class="{ active: (selectedVisualKind === 'element' && selectedVisualId === element.id) || isVisualGroupSelected('element', element.id) }" @click="selectVisual('element', element.id)">
             {{ element.label }}
           </button>
         </div>
@@ -995,42 +1459,70 @@ function labelFor(type: TemplateInteractionType) {
               ]"
               :style="visualStyle(visualDraft)"
             />
+            <div
+              v-if="visualMarquee"
+              class="admin-marquee"
+              :style="visualStyle(visualMarquee)"
+            />
             <button
-              v-for="zone in config.zones"
+              v-for="zone in visualZonesForRender"
               :key="zone.id"
               type="button"
               class="admin-zone"
-              :class="[`admin-zone--${zone.shape}`, { active: selectedVisualKind === 'zone' && selectedVisualId === zone.id }]"
+              :class="[`admin-zone--${zone.shape}`, { active: (selectedVisualKind === 'zone' && selectedVisualId === zone.id) || isVisualGroupSelected('zone', zone.id) }]"
               :style="{ ...visualStyle(zone), ...visualZoneLabelStyle(zone), '--zone-color': zone.color, '--zone-highlight-color': zone.highlightColor ?? zone.color, '--zone-highlight-opacity': zone.highlightOpacity ?? 0.82 }"
               @pointerdown.stop="beginVisualObjectDrag('zone', zone.id, $event)"
             >
               <span @pointerdown.stop="beginVisualZoneLabelDrag(zone.id)">{{ zone.label }}</span>
             </button>
             <button
-              v-for="element in config.elements"
+              v-for="element in visualElementsForRender"
               :key="element.id"
               type="button"
               class="admin-trigger"
-              :class="{ active: selectedVisualKind === 'element' && selectedVisualId === element.id, 'admin-trigger--hotspot': element.kind === 'hotspot' }"
+              :class="{ active: (selectedVisualKind === 'element' && selectedVisualId === element.id) || isVisualGroupSelected('element', element.id), 'admin-trigger--hotspot': element.kind === 'hotspot' }"
               :style="visualStyle(element)"
               @pointerdown.stop="beginVisualObjectDrag('element', element.id, $event)"
             >
               {{ element.label }}
             </button>
+            <div
+              v-if="selectedVisualDraftBounds"
+              class="admin-edit-toolbar"
+              :style="visualToolbarStyle(selectedVisualDraftBounds)"
+              @pointerdown.stop
+            >
+              <span v-if="selectedVisualGroup.length > 1" class="admin-edit-toolbar__count">{{ selectedVisualGroup.length }} selected</span>
+              <button type="button" class="admin-edit-toolbar__button admin-edit-toolbar__button--danger" @click.stop="deleteSelectedVisual">Delete</button>
+              <button type="button" class="admin-edit-toolbar__button" @click.stop="cancelVisualEdit">Cancel</button>
+              <button type="button" class="admin-edit-toolbar__button admin-edit-toolbar__button--confirm" @click.stop="confirmVisualEdit">Confirm</button>
+            </div>
+            <template v-if="selectedVisualDraftBounds && selectedVisualGroup.length <= 1">
+              <button
+                v-for="handle in visualResizeHandles"
+                :key="handle"
+                type="button"
+                class="admin-resize-handle"
+                :class="`admin-resize-handle--${handle}`"
+                :style="visualResizeHandleStyle(handle, selectedVisualDraftBounds)"
+                :aria-label="`Resize ${handle}`"
+                @pointerdown.stop.prevent="beginVisualResize(handle, $event)"
+              />
+            </template>
             <svg
-              v-if="visualOverlapRegions.length"
+              v-if="visualOverlapRegionsForRender.length"
               class="admin-overlap-svg"
               :viewBox="`0 0 ${config.canvas.width} ${config.canvas.height}`"
               aria-hidden="true"
             >
               <defs>
-                <mask v-for="region in visualOverlapRegions" :id="overlapMaskId(region.id)" :key="region.id" maskUnits="userSpaceOnUse">
+                <mask v-for="region in visualOverlapRegionsForRender" :id="overlapMaskId(region.id)" :key="region.id" maskUnits="userSpaceOnUse">
                   <rect width="100%" height="100%" fill="black" />
                   <path :d="region.maskPath" fill="white" />
                 </mask>
               </defs>
               <rect
-                v-for="region in visualOverlapRegions"
+                v-for="region in visualOverlapRegionsForRender"
                 v-show="selectedVisualKind === 'overlap' && selectedVisualId === region.id"
                 :key="`${region.id}-active`"
                 width="100%"
@@ -1039,7 +1531,7 @@ function labelFor(type: TemplateInteractionType) {
                 :mask="`url(#${overlapMaskId(region.id)})`"
               />
               <g
-                v-for="region in visualOverlapRegions"
+                v-for="region in visualOverlapRegionsForRender"
                 :key="`${region.id}-label`"
                 class="admin-overlap-label"
                 :class="{ active: selectedVisualKind === 'overlap' && selectedVisualId === region.id, invalid: region.value < 0 }"
@@ -1052,12 +1544,15 @@ function labelFor(type: TemplateInteractionType) {
             </svg>
           </div>
         </div>
+        <div v-if="config.mode === 'PRACTICE'" class="canvas-stage">
+          <InteractivePreview :config="config" />
+        </div>
       </section>
 
       <aside class="visual-editor__properties">
         <div class="properties-header">
           <strong>Properties</strong>
-          <span>{{ selectedVisualId ?? 'Nothing selected' }}</span>
+          <span>{{ selectedVisualGroup.length > 1 ? `${selectedVisualGroup.length} selected` : selectedVisualId ?? 'Nothing selected' }}</span>
         </div>
         <template v-if="selectedVisualZone()">
           <label class="field"><span>Zone ID</span><input :value="selectedVisualZone()?.id" disabled /></label>
@@ -1104,6 +1599,7 @@ function labelFor(type: TemplateInteractionType) {
           <label class="field"><span>Computed exact value</span><input :value="selectedOverlapValue()?.value" disabled /></label>
           <label class="field"><span>Feedback</span><textarea rows="3" :value="selectedOverlapValue()?.feedback ?? ''" maxlength="500" @input="updateOverlapValue(selectedOverlapValue()!.id, { feedback: ($event.target as HTMLTextAreaElement).value })" /></label>
         </template>
+        <p v-else-if="selectedVisualGroup.length > 1" class="empty-note">ลาก object ในกลุ่มเพื่อขยับพร้อมกัน หรือใช้ toolbar บน canvas</p>
         <p v-else class="empty-note">เลือก zone หรือ trigger เพื่อแก้ค่า</p>
         <button v-if="selectedVisualId && selectedVisualKind !== 'overlap'" type="button" class="mini-button" @click="removeSelectedVisual">Delete selected</button>
       </aside>
@@ -1419,7 +1915,7 @@ function labelFor(type: TemplateInteractionType) {
 }
 .visual-editor {
   display: grid;
-  grid-template-columns: minmax(220px, 0.55fr) minmax(520px, 1.5fr) minmax(300px, 0.75fr);
+  grid-template-columns: minmax(210px, 0.48fr) minmax(640px, 1.7fr) minmax(260px, 0.62fr);
   gap: 0.75rem;
   align-items: start;
 }
@@ -1520,6 +2016,7 @@ function labelFor(type: TemplateInteractionType) {
   user-select: none;
 }
 .admin-zone {
+  z-index: 2;
   background: color-mix(in srgb, var(--zone-color) 35%, transparent);
   cursor: move;
 }
@@ -1544,6 +2041,7 @@ function labelFor(type: TemplateInteractionType) {
   opacity: var(--zone-highlight-opacity);
 }
 .admin-trigger {
+  z-index: 3;
   background: #ffd333;
   cursor: move;
 }
@@ -1608,6 +2106,82 @@ function labelFor(type: TemplateInteractionType) {
 }
 .admin-draft--element {
   background: rgba(79, 140, 255, 0.18);
+}
+.admin-marquee {
+  position: absolute;
+  z-index: 20;
+  border: 2px dashed #1a1814;
+  border-radius: 6px;
+  background: rgba(255, 211, 51, 0.18);
+  pointer-events: none;
+}
+.admin-edit-toolbar {
+  position: absolute;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  transform: translate(-50%, -100%);
+  border: 2px solid #1a1814;
+  border-radius: 8px;
+  background: #fffdf8;
+  padding: 0.25rem;
+  box-shadow: 0 8px 18px rgba(26, 24, 20, 0.16);
+}
+.admin-edit-toolbar__count {
+  padding: 0 0.35rem;
+  color: #6b6660;
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.admin-edit-toolbar__button {
+  min-height: 1.75rem;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  padding: 0 0.5rem;
+  color: #1a1814;
+  font-size: 11px;
+  font-weight: 900;
+}
+.admin-edit-toolbar__button:hover {
+  background: #f7f2ea;
+}
+.admin-edit-toolbar__button--danger {
+  color: #9b2614;
+}
+.admin-edit-toolbar__button--confirm {
+  background: #ffd333;
+}
+.admin-resize-handle {
+  position: absolute;
+  z-index: 25;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #1a1814;
+  border-radius: 999px;
+  background: #fffdf8;
+  transform: translate(-50%, -50%);
+}
+.admin-resize-handle:hover {
+  background: #ffd333;
+}
+.admin-resize-handle--nw,
+.admin-resize-handle--se {
+  cursor: nwse-resize;
+}
+.admin-resize-handle--ne,
+.admin-resize-handle--sw {
+  cursor: nesw-resize;
+}
+.admin-resize-handle--n,
+.admin-resize-handle--s {
+  cursor: ns-resize;
+}
+.admin-resize-handle--e,
+.admin-resize-handle--w {
+  cursor: ew-resize;
 }
 .section-list-item {
   display: grid;
