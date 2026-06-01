@@ -63,7 +63,7 @@ class CoursePromptTemplate {
                 %s
 
                 Default course direction when the admin prompt is incomplete:
-                Design a Math for Software Engineering course. Emphasize mathematical concepts that help learners reason about programs, algorithms, graphics, data, and AI systems. Suggest interactive or visual learning ideas for modules and sub-topics using the available interaction metadata.
+                Design a Math for Software Engineering course. Emphasize mathematical concepts that help learners reason about programs, algorithms, graphics, data, and AI systems. Suggest interactive or visual learning ideas only when they improve learning, and generate valid interactionConfig objects for the supported generated types: QUIZ, GRAPH_2D, FORMULA_EXPLORER, and VISUAL_LAYER.
 
                 Extracted source text:
                 %s

@@ -374,7 +374,9 @@ Use the PDF as the factual source. Organize the course into coherent modules wit
 
 Prioritize concepts that help software engineering learners reason about programs, algorithms, graphics, data, and AI systems: logic, functions, discrete structures, linear algebra, probability, optimization, and complexity.
 
-For each module and subtopic, suggest interactive or visual learning ideas where useful. Use interactionType values from NONE, THREE_JS, GRAPH_2D, FORMULA_EXPLORER, QUIZ, or OTHER, and include an implementation-oriented interactionPrompt when interactionType is not NONE.`
+For each module and subtopic, suggest interactive or visual learning ideas only when they genuinely improve learning. Use interactionType values from NONE, QUIZ, GRAPH_2D, FORMULA_EXPLORER, or VISUAL_LAYER.
+
+When interactionType is not NONE, include both an implementation-oriented interactionPrompt and a valid interactionConfig JSON object. interactionConfig.type must exactly match interactionType.`
 
 export async function deleteAdminSubTopic(subTopicId: number | string) {
   await api.delete(`/v1/admin/subtopics/${subTopicId}`)
