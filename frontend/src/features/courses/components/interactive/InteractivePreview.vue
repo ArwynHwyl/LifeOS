@@ -3,11 +3,13 @@ import { computed, ref, watch } from 'vue'
 import { generatedOverlapRegions } from '@/features/courses/types/interactive'
 import type {
   FormulaExplorerConfig,
+  GeneratedOverlapRegion,
   Graph2DConfig,
   InteractiveConfig,
   QuizConfig,
   ThreeJsConfig,
   VisualLayerConfig,
+  VisualLayerZone,
 } from '@/features/courses/types/interactive'
 import { evaluateExpression } from '@/features/courses/utils/expression'
 
@@ -25,6 +27,20 @@ const formulaStepIndex = ref(0)
 const highlightedZoneId = ref<string | null>(null)
 const highlightedOverlapId = ref<string | null>(null)
 const visualFeedback = ref('')
+const learnerZones = ref<VisualLayerZone[]>([])
+const selectedLearnerZoneId = ref<string | null>(null)
+const learnerRegionAnswers = ref<Record<string, string>>({})
+type LearnerResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w'
+const learnerResizeHandles: LearnerResizeHandle[] = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w']
+const learnerVisualDrag = ref<{
+  id: string
+  kind: 'move' | 'resize'
+  offsetX: number
+  offsetY: number
+  resizeHandle?: LearnerResizeHandle
+  start?: VisualLayerZone
+  originPoint?: { x: number; y: number }
+} | null>(null)
 
 watch(
   () => props.config,
@@ -34,6 +50,10 @@ watch(
     highlightedZoneId.value = null
     highlightedOverlapId.value = null
     visualFeedback.value = ''
+    learnerZones.value = []
+    selectedLearnerZoneId.value = null
+    learnerRegionAnswers.value = {}
+    learnerVisualDrag.value = null
     if (config?.type === 'FORMULA_EXPLORER') {
       formulaValues.value = Object.fromEntries(config.variables.map((variable) => [variable.name, variable.initial]))
       selectedFormulaOptionId.value = config.formulaOptions?.[0]?.id ?? null
@@ -118,6 +138,7 @@ const practicePassed = computed(() => {
       return typeof target === 'number' && typeof value === 'number' && Math.abs(value - target) <= tolerance
     })
   }
+  if (config.type === 'VISUAL_LAYER') return visualPracticePassed()
   return false
 })
 
@@ -142,6 +163,56 @@ const visualOverlapRegions = computed(() => {
   if (props.config?.type !== 'VISUAL_LAYER') return []
   return generatedOverlapRegions(props.config)
 })
+
+const visualPracticeSourceZones = computed(() => {
+  if (props.config?.type !== 'VISUAL_LAYER' || props.config.mode !== 'PRACTICE') return []
+  const sourceIds = props.config.overlap?.sourceZoneIds?.length
+    ? props.config.overlap.sourceZoneIds
+    : props.config.zones.map((zone) => zone.id)
+  return sourceIds
+    .map((zoneId) => props.config?.type === 'VISUAL_LAYER' ? props.config.zones.find((zone) => zone.id === zoneId) : null)
+    .filter((zone): zone is VisualLayerZone => Boolean(zone))
+    .slice(0, 3)
+})
+
+const learnerVisualConfig = computed<VisualLayerConfig | null>(() => {
+  if (props.config?.type !== 'VISUAL_LAYER' || props.config.mode !== 'PRACTICE' || !props.config.overlap?.enabled) return null
+  const sourceZoneIds = props.config.overlap.sourceZoneIds.filter((zoneId) => learnerZones.value.some((zone) => zone.id === zoneId))
+  if (!sourceZoneIds.length) return null
+  return {
+    ...props.config,
+    zones: learnerZones.value,
+    elements: [],
+    interactions: [],
+    overlap: {
+      ...props.config.overlap,
+      sourceZoneIds,
+    },
+  }
+})
+
+const learnerOverlapRegions = computed(() => learnerVisualConfig.value ? generatedOverlapRegions(learnerVisualConfig.value) : [])
+
+const expectedVisualPracticeRegions = computed(() => {
+  if (props.config?.type !== 'VISUAL_LAYER' || props.config.mode !== 'PRACTICE' || !props.config.overlap?.enabled) return []
+  const totalInputByZone = new Map((props.config.overlap.inputs ?? [])
+    .filter((input) => input.zoneIds.length === 1)
+    .map((input) => [input.zoneIds[0], input.value]))
+  const expectedValues = props.config.overlap.values?.length
+    ? props.config.overlap.values
+    : generatedOverlapRegions(props.config)
+  return expectedValues.filter((region) => {
+    if (region.zoneIds.length === 1) return (totalInputByZone.get(region.zoneIds[0]) ?? region.value) !== 0
+    return region.value !== 0
+  })
+})
+
+const visibleExpectedLearnerRegions = computed(() => {
+  const expectedIds = new Set(expectedVisualPracticeRegions.value.map((region) => region.id))
+  return learnerOverlapRegions.value.filter((region) => expectedIds.has(region.id))
+})
+
+const selectedLearnerZone = computed(() => learnerZones.value.find((zone) => zone.id === selectedLearnerZoneId.value) ?? null)
 
 function makeGraphPath(config: Graph2DConfig, variables: Record<string, number>) {
   const width = 520
@@ -240,6 +311,226 @@ function visualZoneLabelStyle(zone: VisualLayerConfig['zones'][number]) {
   return {
     '--zone-label-x': `${zone.labelX ?? 50}%`,
     '--zone-label-y': `${zone.labelY ?? 50}%`,
+  }
+}
+
+function visualPracticePassed() {
+  const config = props.config
+  if (config?.type !== 'VISUAL_LAYER' || config.mode !== 'PRACTICE' || !config.overlap?.enabled) return false
+  const requiredZoneIds = visualPracticeSourceZones.value.map((zone) => zone.id)
+  if (!requiredZoneIds.every((zoneId) => learnerZones.value.some((zone) => zone.id === zoneId))) return false
+  const learnerRegionById = new Map(learnerOverlapRegions.value.map((region) => [region.id, region]))
+  return expectedVisualPracticeRegions.value.every((expected) => {
+    if (!learnerRegionById.has(expected.id)) return false
+    const answer = Number(learnerRegionAnswers.value[expected.id])
+    return Number.isFinite(answer) && answer === expected.value
+  })
+}
+
+function visualStagePoint(event: PointerEvent, config: VisualLayerConfig) {
+  const target = event.currentTarget as HTMLElement
+  const stage = target.classList.contains('visual-layer-stage')
+    ? target
+    : target.closest('.visual-layer-stage') as HTMLElement | null
+  const rect = (stage ?? target).getBoundingClientRect()
+  const scaleX = config.canvas.width / rect.width
+  const scaleY = config.canvas.height / rect.height
+  return {
+    x: Math.max(0, Math.min(config.canvas.width, Math.round((event.clientX - rect.left) * scaleX))),
+    y: Math.max(0, Math.min(config.canvas.height, Math.round((event.clientY - rect.top) * scaleY))),
+  }
+}
+
+function clampLearnerZone(zone: VisualLayerZone, config: VisualLayerConfig): VisualLayerZone {
+  const size = Math.max(80, Math.min(Math.max(zone.width, zone.height), Math.min(config.canvas.width, config.canvas.height)))
+  return {
+    ...zone,
+    shape: 'circle',
+    width: size,
+    height: size,
+    x: Math.max(0, Math.min(zone.x, config.canvas.width - size)),
+    y: Math.max(0, Math.min(zone.y, config.canvas.height - size)),
+  }
+}
+
+function learnerZoneAddPlacement(zone: VisualLayerZone, index: number, config: VisualLayerConfig): VisualLayerZone {
+  const size = Math.min(240, Math.max(190, Math.min(zone.width, zone.height)))
+  const centerX = config.canvas.width / 2
+  const placements = [
+    { x: centerX - size - 80, y: 110, labelX: 34, labelY: 28 },
+    { x: centerX + 80, y: 110, labelX: 66, labelY: 28 },
+    { x: centerX - size / 2, y: 280, labelX: 50, labelY: 76 },
+  ]
+  const placement = placements[index] ?? {
+    x: zone.x + index * 30,
+    y: zone.y + index * 30,
+    labelX: zone.labelX,
+    labelY: zone.labelY,
+  }
+  return clampLearnerZone({
+    ...zone,
+    x: placement.x,
+    y: placement.y,
+    width: size,
+    height: size,
+    labelX: placement.labelX,
+    labelY: placement.labelY,
+  }, config)
+}
+
+function addLearnerZone(zone: VisualLayerZone) {
+  if (props.config?.type !== 'VISUAL_LAYER') return
+  if (learnerZones.value.some((item) => item.id === zone.id)) return
+  const sourceIndex = visualPracticeSourceZones.value.findIndex((item) => item.id === zone.id)
+  const nextZone = learnerZoneAddPlacement(zone, sourceIndex >= 0 ? sourceIndex : learnerZones.value.length, props.config)
+  learnerZones.value = [
+    ...learnerZones.value,
+    nextZone,
+  ]
+  selectedLearnerZoneId.value = zone.id
+  checked.value = false
+}
+
+function removeLearnerZone(zoneId: string) {
+  learnerZones.value = learnerZones.value.filter((zone) => zone.id !== zoneId)
+  if (selectedLearnerZoneId.value === zoneId) selectedLearnerZoneId.value = null
+  learnerRegionAnswers.value = {}
+  checked.value = false
+}
+
+function resetLearnerZone(zoneId: string) {
+  if (props.config?.type !== 'VISUAL_LAYER') return
+  const sourceZone = visualPracticeSourceZones.value.find((zone) => zone.id === zoneId)
+  if (!sourceZone) return
+  const sourceIndex = visualPracticeSourceZones.value.findIndex((zone) => zone.id === zoneId)
+  learnerZones.value = learnerZones.value.map((zone) => (
+    zone.id === zoneId ? learnerZoneAddPlacement(sourceZone, sourceIndex, props.config as VisualLayerConfig) : zone
+  ))
+  learnerRegionAnswers.value = {}
+  selectedLearnerZoneId.value = zoneId
+  checked.value = false
+}
+
+function updateLearnerRegionAnswer(regionId: string, event: Event) {
+  learnerRegionAnswers.value = {
+    ...learnerRegionAnswers.value,
+    [regionId]: (event.target as HTMLInputElement).value,
+  }
+  checked.value = false
+}
+
+function beginLearnerZoneDrag(zone: VisualLayerZone, event: PointerEvent) {
+  if (props.config?.type !== 'VISUAL_LAYER') return
+  const point = visualStagePoint(event, props.config)
+  ;(event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId)
+  selectedLearnerZoneId.value = zone.id
+  learnerVisualDrag.value = {
+    id: zone.id,
+    kind: 'move',
+    offsetX: point.x - zone.x,
+    offsetY: point.y - zone.y,
+  }
+}
+
+function beginLearnerZoneResize(zone: VisualLayerZone, handle: LearnerResizeHandle, event: PointerEvent) {
+  if (props.config?.type !== 'VISUAL_LAYER') return
+  const point = visualStagePoint(event, props.config)
+  ;(event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId)
+  selectedLearnerZoneId.value = zone.id
+  learnerVisualDrag.value = {
+    id: zone.id,
+    kind: 'resize',
+    offsetX: 0,
+    offsetY: 0,
+    resizeHandle: handle,
+    start: { ...zone },
+    originPoint: point,
+  }
+}
+
+function selectLearnerStage(event: PointerEvent) {
+  if (event.target === event.currentTarget) selectedLearnerZoneId.value = null
+}
+
+function moveLearnerVisualPointer(event: PointerEvent) {
+  const config = props.config
+  const drag = learnerVisualDrag.value
+  if (config?.type !== 'VISUAL_LAYER' || !drag) return
+  const point = visualStagePoint(event, config)
+  learnerZones.value = learnerZones.value.map((zone) => {
+    if (zone.id !== drag.id) return zone
+    if (drag.kind === 'resize' && drag.start && drag.originPoint && drag.resizeHandle) {
+      const dx = point.x - drag.originPoint.x
+      const dy = point.y - drag.originPoint.y
+      const directionX = drag.resizeHandle.includes('w') ? -1 : drag.resizeHandle.includes('e') ? 1 : 0
+      const directionY = drag.resizeHandle.includes('n') ? -1 : drag.resizeHandle.includes('s') ? 1 : 0
+      const rawDelta = Math.max(directionX * dx, directionY * dy)
+      const nextSize = Math.max(80, drag.start.width + rawDelta)
+      const anchorX = drag.resizeHandle.includes('w') ? drag.start.x + drag.start.width : drag.start.x
+      const anchorY = drag.resizeHandle.includes('n') ? drag.start.y + drag.start.height : drag.start.y
+      return clampLearnerZone({
+        ...zone,
+        x: drag.resizeHandle.includes('w') ? anchorX - nextSize : drag.start.x,
+        y: drag.resizeHandle.includes('n') ? anchorY - nextSize : drag.start.y,
+        width: nextSize,
+        height: nextSize,
+      }, config)
+    }
+    return clampLearnerZone({ ...zone, x: point.x - drag.offsetX, y: point.y - drag.offsetY }, config)
+  })
+  checked.value = false
+}
+
+function endLearnerVisualPointer(event: PointerEvent) {
+  const target = event.currentTarget as HTMLElement
+  if (target.hasPointerCapture?.(event.pointerId)) target.releasePointerCapture?.(event.pointerId)
+  learnerVisualDrag.value = null
+}
+
+function learnerRegionInputStyle(region: GeneratedOverlapRegion) {
+  const config = props.config?.type === 'VISUAL_LAYER' ? props.config : null
+  const canvasCenter = config ? { x: config.canvas.width / 2, y: config.canvas.height / 2 } : { x: 450, y: 260 }
+  const shift = learnerRegionInputShift(region)
+  const x = Math.max(42, Math.min((config?.canvas.width ?? 900) - 42, region.center.x + shift.x))
+  const y = Math.max(30, Math.min((config?.canvas.height ?? 520) - 30, region.center.y + shift.y + (region.zoneIds.length === 1 ? (region.center.y < canvasCenter.y ? -8 : 8) : 0)))
+  return {
+    left: `${x}px`,
+    top: `${y}px`,
+  }
+}
+
+function learnerRegionInputShift(region: GeneratedOverlapRegion) {
+  const ids = region.zoneIds.join('|')
+  if (region.zoneIds.length === 3) return { x: 0, y: 34 }
+  if (ids.includes('zone_a') && ids.includes('zone_b')) return { x: 0, y: -30 }
+  if (ids.includes('zone_a') && ids.includes('zone_c')) return { x: -38, y: 18 }
+  if (ids.includes('zone_b') && ids.includes('zone_c')) return { x: 38, y: 18 }
+  if (ids.includes('zone_a')) return { x: -42, y: -8 }
+  if (ids.includes('zone_b')) return { x: 42, y: -8 }
+  if (ids.includes('zone_c')) return { x: 0, y: 34 }
+  return { x: 0, y: 0 }
+}
+
+function learnerRegionLabel(region: GeneratedOverlapRegion) {
+  const labels = region.zoneIds.map((zoneId) => visualPracticeSourceZones.value.find((zone) => zone.id === zoneId)?.label ?? zoneId.replace(/^zone_/, '').toUpperCase())
+  if (labels.length === 1) return `${labels[0]} only`
+  if (labels.length === 3) return labels.join('')
+  return `${labels.join('')} only`
+}
+
+function learnerToolbarStyle(zone: VisualLayerZone) {
+  return {
+    left: `${zone.x + zone.width / 2}px`,
+    top: `${Math.max(6, zone.y - 10)}px`,
+  }
+}
+
+function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayerZone) {
+  const x = handle.includes('w') ? zone.x : handle.includes('e') ? zone.x + zone.width : zone.x + zone.width / 2
+  const y = handle.includes('n') ? zone.y : handle.includes('s') ? zone.y + zone.height : zone.y + zone.height / 2
+  return {
+    left: `${x}px`,
+    top: `${y}px`,
   }
 }
 
@@ -368,7 +659,96 @@ function transformStyle(config: ThreeJsConfig, values: Record<string, number>) {
         <h3>{{ (config as VisualLayerConfig).title }}</h3>
         <span>Visual layer</span>
       </header>
-      <div class="visual-layer-stage-wrap">
+      <template v-if="config.mode === 'PRACTICE'">
+        <p class="practice-prompt">{{ (config as VisualLayerConfig).prompt }}</p>
+        <div class="visual-practice-toolbar">
+          <button
+            v-for="zone in visualPracticeSourceZones"
+            :key="zone.id"
+            type="button"
+            class="visual-add-button"
+            :disabled="learnerZones.some((item) => item.id === zone.id)"
+            @click="addLearnerZone(zone)"
+          >
+            Add {{ zone.label }}
+          </button>
+        </div>
+        <div class="visual-layer-stage-wrap">
+          <div
+            class="visual-layer-stage visual-layer-stage--practice"
+            :style="{
+              width: `${(config as VisualLayerConfig).canvas.width}px`,
+              height: `${(config as VisualLayerConfig).canvas.height}px`,
+            }"
+            @pointermove="moveLearnerVisualPointer"
+            @pointerup="endLearnerVisualPointer"
+            @pointercancel="endLearnerVisualPointer"
+            @pointerdown="selectLearnerStage"
+          >
+            <p v-if="!learnerZones.length" class="visual-layer-bg-text">Add circles to build the diagram.</p>
+            <div
+              v-for="zone in learnerZones"
+              :key="zone.id"
+              class="visual-zone visual-zone--circle visual-zone--editable"
+              :class="{ 'visual-zone--selected': selectedLearnerZoneId === zone.id }"
+              :style="{ ...visualObjectStyle(zone), ...visualZoneLabelStyle(zone), '--zone-color': zone.color, '--zone-highlight-color': zone.highlightColor ?? zone.color, '--zone-highlight-opacity': zone.highlightOpacity ?? 0.82 }"
+              @pointerdown.stop="beginLearnerZoneDrag(zone, $event)"
+            >
+              <span>{{ zone.label }}</span>
+            </div>
+            <div
+              v-if="selectedLearnerZone"
+              class="visual-zone-toolbar"
+              :style="learnerToolbarStyle(selectedLearnerZone)"
+              @pointerdown.stop
+            >
+              <button type="button" class="visual-zone-toolbar__button" @click.stop="resetLearnerZone(selectedLearnerZone.id)">Reset</button>
+              <button type="button" class="visual-zone-toolbar__button visual-zone-toolbar__button--danger" @click.stop="removeLearnerZone(selectedLearnerZone.id)">Delete</button>
+            </div>
+            <template v-if="selectedLearnerZone">
+              <button
+                v-for="handle in learnerResizeHandles"
+                :key="handle"
+                type="button"
+                class="visual-zone-resize"
+                :class="`visual-zone-resize--${handle}`"
+                :style="learnerResizeHandleStyle(handle, selectedLearnerZone)"
+                :aria-label="`Resize ${handle}`"
+                @pointerdown.stop.prevent="beginLearnerZoneResize(selectedLearnerZone, handle, $event)"
+              />
+            </template>
+            <svg
+              v-if="learnerOverlapRegions.length"
+              class="visual-overlap-svg"
+              :viewBox="`0 0 ${(config as VisualLayerConfig).canvas.width} ${(config as VisualLayerConfig).canvas.height}`"
+              aria-hidden="true"
+            >
+              <path
+                v-for="region in learnerOverlapRegions"
+                :key="`${region.id}-learner-region`"
+                :d="region.maskPath"
+                class="visual-overlap-hit"
+              />
+            </svg>
+            <label
+              v-for="region in visibleExpectedLearnerRegions"
+              :key="`${region.id}-answer`"
+              class="visual-region-answer"
+              :style="learnerRegionInputStyle(region)"
+            >
+              <span>{{ learnerRegionLabel(region) }}</span>
+              <input
+                type="number"
+                :value="learnerRegionAnswers[region.id] ?? ''"
+                @input="updateLearnerRegionAnswer(region.id, $event)"
+              />
+            </label>
+          </div>
+        </div>
+        <button type="button" class="check-button" @click="checked = true">Check</button>
+        <p v-if="checked" class="feedback">{{ activeFeedback }}</p>
+      </template>
+      <div v-if="config.mode !== 'PRACTICE'" class="visual-layer-stage-wrap">
         <div
           class="visual-layer-stage"
           :style="{
@@ -632,6 +1012,29 @@ function transformStyle(config: ThreeJsConfig, values: Record<string, number>) {
     #fbf7ef;
   background-size: 24px 24px;
 }
+.visual-layer-stage--practice {
+  touch-action: none;
+  user-select: none;
+}
+.visual-practice-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.visual-add-button {
+  min-height: 2.25rem;
+  border: 2px solid #1a1814;
+  border-radius: 8px;
+  background: #ffd333;
+  padding: 0 0.75rem;
+  color: #1a1814;
+  font-size: 12px;
+  font-weight: 900;
+}
+.visual-add-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
 .visual-overlap-svg {
   position: absolute;
   inset: 0;
@@ -707,6 +1110,111 @@ function transformStyle(config: ThreeJsConfig, values: Record<string, number>) {
   background: var(--zone-highlight-color);
   opacity: var(--zone-highlight-opacity);
   box-shadow: 0 0 0 5px rgba(255, 211, 51, 0.38);
+}
+.visual-zone--editable {
+  z-index: 6;
+  cursor: move;
+  pointer-events: auto;
+}
+.visual-zone--editable:hover {
+  background: color-mix(in srgb, var(--zone-color) 42%, transparent);
+  box-shadow: inset 0 0 0 2px rgba(26, 24, 20, 0.2);
+}
+.visual-zone--selected {
+  background: color-mix(in srgb, var(--zone-highlight-color) 48%, transparent);
+  box-shadow:
+    0 0 0 5px rgba(255, 211, 51, 0.38),
+    inset 0 0 0 2px rgba(26, 24, 20, 0.18);
+}
+.visual-zone-toolbar {
+  position: absolute;
+  z-index: 14;
+  display: flex;
+  gap: 0.25rem;
+  transform: translate(-50%, -100%);
+  border: 2px solid #1a1814;
+  border-radius: 8px;
+  background: #fffdf8;
+  padding: 0.25rem;
+  box-shadow: 0 8px 18px rgba(26, 24, 20, 0.16);
+}
+.visual-zone-toolbar__button {
+  min-height: 1.7rem;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  padding: 0 0.45rem;
+  color: #1a1814;
+  font-size: 11px;
+  font-weight: 900;
+}
+.visual-zone-toolbar__button:hover {
+  background: #f7f2ea;
+}
+.visual-zone-toolbar__button--danger {
+  color: #9b2614;
+}
+.visual-zone-resize {
+  position: absolute;
+  z-index: 13;
+  border: 2px solid #1a1814;
+  border-radius: 999px;
+  background: #fffdf8;
+  color: #1a1814;
+  font-weight: 900;
+  width: 0.8rem;
+  height: 0.8rem;
+  transform: translate(-50%, -50%);
+}
+.visual-zone-resize:hover {
+  background: #ffd333;
+}
+.visual-zone-resize--nw,
+.visual-zone-resize--se {
+  cursor: nwse-resize;
+}
+.visual-zone-resize--ne,
+.visual-zone-resize--sw {
+  cursor: nesw-resize;
+}
+.visual-zone-resize--n,
+.visual-zone-resize--s {
+  cursor: ns-resize;
+}
+.visual-zone-resize--e,
+.visual-zone-resize--w {
+  cursor: ew-resize;
+}
+.visual-region-answer {
+  position: absolute;
+  z-index: 9;
+  display: grid;
+  width: 4.45rem;
+  gap: 0.15rem;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+}
+.visual-region-answer span {
+  overflow: hidden;
+  border-radius: 6px;
+  background: rgba(255, 253, 248, 0.9);
+  padding: 0.08rem 0.2rem;
+  font-size: 9px;
+  font-weight: 900;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.visual-region-answer input {
+  width: 100%;
+  border: 2px solid #1a1814;
+  border-radius: 6px;
+  background: #fffdf8;
+  padding: 0.22rem 0.25rem;
+  color: #1a1814;
+  font-size: 12px;
+  font-weight: 900;
+  text-align: center;
 }
 .visual-trigger {
   background: #ffd333;
