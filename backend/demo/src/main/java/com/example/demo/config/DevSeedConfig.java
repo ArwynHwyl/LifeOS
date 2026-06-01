@@ -607,6 +607,58 @@ public class DevSeedConfig {
                         }
                         """)
         ));
+        setModule.addSubTopic(subTopic(
+                "Build a Venn Diagram Practice",
+                """
+                        <h2>Build a Venn Diagram Practice</h2>
+                        <p>Build a three-set Venn diagram for clubs A, B, and C. You must add all three circles yourself, arrange them so the required overlaps exist, then enter the exact number of members in each visible region.</p>
+                        <p><strong>Given:</strong> n(A)=33, n(B)=26, n(C)=22, n(A intersect B)=10, n(A intersect C)=8, n(B intersect C)=7, and n(A intersect B intersect C)=3.</p>
+                        <p><strong>Success criteria:</strong> create circles A, B, and C; make all pairwise overlaps and the three-way overlap visible; enter A only=18, B only=12, C only=10, A intersect B only=7, A intersect C only=5, B intersect C only=4, and A intersect B intersect C=3.</p>
+                        """,
+                5,
+                14,
+                22,
+                InteractionType.VISUAL_LAYER,
+                "Ask learners to construct the Venn circles themselves and fill exact region counts.",
+                validate(interactiveConfigService, InteractionType.VISUAL_LAYER, """
+                        {
+                          "type": "VISUAL_LAYER",
+                          "mode": "PRACTICE",
+                          "title": "Build the clubs Venn diagram",
+                          "prompt": "Add circles A, B, and C. Arrange them so every pair overlaps and the middle three-way overlap exists, then enter each exact region count.",
+                          "canvas": {
+                            "width": 900,
+                            "height": 520,
+                            "backgroundText": ""
+                          },
+                          "zones": [
+                            { "id": "zone_a", "label": "A", "shape": "circle", "x": 250, "y": 120, "width": 260, "height": 260, "labelX": 35, "labelY": 30, "color": "#ffd333", "highlightColor": "#ff8f1f", "highlightOpacity": 0.72, "feedback": "" },
+                            { "id": "zone_b", "label": "B", "shape": "circle", "x": 390, "y": 120, "width": 260, "height": 260, "labelX": 65, "labelY": 30, "color": "#8fb3ff", "highlightColor": "#4f8cff", "highlightOpacity": 0.72, "feedback": "" },
+                            { "id": "zone_c", "label": "C", "shape": "circle", "x": 320, "y": 235, "width": 260, "height": 260, "labelX": 50, "labelY": 75, "color": "#8fe0aa", "highlightColor": "#3aa66b", "highlightOpacity": 0.72, "feedback": "" }
+                          ],
+                          "elements": [],
+                          "interactions": [],
+                          "overlap": {
+                            "enabled": true,
+                            "sourceZoneIds": ["zone_a", "zone_b", "zone_c"],
+                            "inputs": [
+                              { "id": "A_ONLY", "label": "n(A)", "zoneIds": ["zone_a"], "value": 33, "kind": "total" },
+                              { "id": "B_ONLY", "label": "n(B)", "zoneIds": ["zone_b"], "value": 26, "kind": "total" },
+                              { "id": "C_ONLY", "label": "n(C)", "zoneIds": ["zone_c"], "value": 22, "kind": "total" },
+                              { "id": "A_AND_B", "label": "n(A ∩ B)", "zoneIds": ["zone_a", "zone_b"], "value": 10, "kind": "intersection" },
+                              { "id": "A_AND_C", "label": "n(A ∩ C)", "zoneIds": ["zone_a", "zone_c"], "value": 8, "kind": "intersection" },
+                              { "id": "B_AND_C", "label": "n(B ∩ C)", "zoneIds": ["zone_b", "zone_c"], "value": 7, "kind": "intersection" },
+                              { "id": "A_AND_B_AND_C", "label": "n(A ∩ B ∩ C)", "zoneIds": ["zone_a", "zone_b", "zone_c"], "value": 3, "kind": "intersection" }
+                            ],
+                            "values": []
+                          },
+                          "feedback": {
+                            "success": "Correct. The circles create every required region and the exact counts match the inclusion-exclusion result.",
+                            "failure": "Not yet. Check that all required overlaps are visible, then recompute the exact region counts from the given totals and intersections."
+                          }
+                        }
+                        """)
+        ));
         publishSeedCourse(courseRepository, setCourse, setModule);
 
         Course vectorCourse = seedCourse(
