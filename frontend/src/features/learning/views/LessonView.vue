@@ -36,6 +36,7 @@ const interactiveConfig = computed(() => {
   if (!current) return null
   return parseInteractiveConfig(current.interactionType, current.interactionConfig)
 })
+const selectedLessonHtml = computed(() => selectedSubTopic.value?.contentHtml || selectedSubTopic.value?.content || '')
 
 onMounted(async () => {
   loading.value = true
@@ -116,7 +117,7 @@ function goToOffset(offset: number) {
             <h1 class="font-display text-[34px] font-bold tracking-tight text-lm-ink leading-tight mt-1.5 m-0">{{ selectedSubTopic.title }}</h1>
           </header>
 
-          <section class="lesson-body rounded-[12px] border-2 border-lm-line bg-lm-surface px-5 py-4 shadow-stamp-sm" v-html="selectedSubTopic.content || ''" />
+          <section class="lesson-body rounded-[12px] border-2 border-lm-line bg-lm-surface px-5 py-4 shadow-stamp-sm" v-html="selectedLessonHtml" />
 
           <InteractivePreview
             v-if="selectedSubTopic.interactionType !== 'NONE'"
@@ -187,8 +188,26 @@ function goToOffset(offset: number) {
   padding-left: 1.3rem;
 }
 :deep(.lesson-body img) {
+  display: block;
   max-width: 100%;
   height: auto;
+  margin: 0.85rem 0;
   border-radius: 8px;
+}
+:deep(.lesson-body a) {
+  color: #1f63d4;
+  font-weight: 800;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.18em;
+}
+:deep(.lesson-body a:hover) {
+  color: #174a9b;
+}
+:deep(.lesson-body figcaption) {
+  margin-top: -0.35rem;
+  color: #6b6660;
+  font-size: 0.86rem;
+  font-weight: 700;
 }
 </style>

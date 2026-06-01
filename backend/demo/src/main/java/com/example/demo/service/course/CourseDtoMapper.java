@@ -260,6 +260,11 @@ public class CourseDtoMapper {
                 subTopic.getId(),
                 subTopic.getTitle(),
                 subTopic.getContent(),
+                lessonHtmlService.contentHtmlWithAssetUrls(
+                        subTopic.getContent(),
+                        subTopic.getAssets(),
+                        asset -> storageService.presignRead(asset.getStoragePath(), ASSET_READ_URL_TTL)
+                ),
                 subTopic.getSortOrder(),
                 subTopic.getInteractionType(),
                 subTopic.getInteractionPrompt(),

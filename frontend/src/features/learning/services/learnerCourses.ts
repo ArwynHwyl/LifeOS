@@ -24,6 +24,7 @@ export interface PublishedSubTopicDto {
   id: number
   title: string
   content: string | null
+  contentHtml: string | null
   sortOrder: number
   interactionType: InteractionType
   interactionPrompt: string | null

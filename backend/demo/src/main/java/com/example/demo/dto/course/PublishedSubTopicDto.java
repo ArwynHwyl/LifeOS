@@ -6,6 +6,7 @@ public record PublishedSubTopicDto(
         Long id,
         String title,
         String content,
+        String contentHtml,
         Integer sortOrder,
         InteractionType interactionType,
         String interactionPrompt,
