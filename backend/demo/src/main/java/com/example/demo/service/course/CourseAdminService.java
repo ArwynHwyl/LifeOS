@@ -42,6 +42,7 @@ public class CourseAdminService {
     private final CourseDtoMapper mapper;
     private final CourseInputValidator validator;
     private final LessonHtmlService lessonHtmlService;
+    private final InteractiveConfigService interactiveConfigService;
 
     public CourseAdminService(
             CourseRepository courseRepository,
@@ -53,7 +54,8 @@ public class CourseAdminService {
             CourseWorkflowGuard workflowGuard,
             CourseDtoMapper mapper,
             CourseInputValidator validator,
-            LessonHtmlService lessonHtmlService
+            LessonHtmlService lessonHtmlService,
+            InteractiveConfigService interactiveConfigService
     ) {
         this.courseRepository = courseRepository;
         this.courseModuleRepository = courseModuleRepository;
@@ -65,6 +67,7 @@ public class CourseAdminService {
         this.mapper = mapper;
         this.validator = validator;
         this.lessonHtmlService = lessonHtmlService;
+        this.interactiveConfigService = interactiveConfigService;
     }
 
     @Transactional(readOnly = true)
@@ -130,11 +133,7 @@ public class CourseAdminService {
     @Transactional
     public CourseDetailDto publish(UUID adminUserId, Long courseId) {
         userAccessService.requireAdmin(validator.requiredUserId(adminUserId));
-        Course course = findCourse(courseId);
-        workflowGuard.requireStatus(course, CourseStatus.APPROVED, "Publish");
-        validateReadyForReview(course);
-        course.publish();
-        return mapper.toDetailDto(course);
+        throw new ValidationException("Courses are published automatically when a teacher approves the review");
     }
 
     @Transactional
@@ -163,7 +162,7 @@ public class CourseAdminService {
         module.updateInteraction(
                 defaultInteractionType(request.interactionType()),
                 validator.optionalText(request.interactionPrompt(), "interactionPrompt", 10_000),
-                validator.optionalJson(request.interactionConfig(), "interactionConfig", 50_000)
+                validateInteractionConfig(request.interactionType(), request.interactionConfig())
         );
         return mapper.toModuleDto(module);
     }
@@ -207,7 +206,7 @@ public class CourseAdminService {
         subTopic.updateInteraction(
                 defaultInteractionType(request.interactionType()),
                 validator.optionalText(request.interactionPrompt(), "interactionPrompt", 10_000),
-                validator.optionalJson(request.interactionConfig(), "interactionConfig", 50_000)
+                validateInteractionConfig(request.interactionType(), request.interactionConfig())
         );
         return mapper.toSubTopicDto(subTopic);
     }
@@ -245,7 +244,7 @@ public class CourseAdminService {
                 requireContentDepth(request.contentDepth()),
                 defaultInteractionType(request.interactionType()),
                 validator.optionalText(request.interactionPrompt(), "interactionPrompt", 10_000),
-                validator.optionalJson(request.interactionConfig(), "interactionConfig", 50_000)
+                validateInteractionConfig(request.interactionType(), request.interactionConfig())
         );
         for (SubTopicCreateRequest subTopicRequest : nullToList(request.subTopics())) {
             validator.validateOptionalPageRange(subTopicRequest.pageStart(), subTopicRequest.pageEnd());
@@ -265,7 +264,7 @@ public class CourseAdminService {
                 request.pageEnd(),
                 defaultInteractionType(request.interactionType()),
                 validator.optionalText(request.interactionPrompt(), "interactionPrompt", 10_000),
-                validator.optionalJson(request.interactionConfig(), "interactionConfig", 50_000)
+                validateInteractionConfig(request.interactionType(), request.interactionConfig())
         );
     }
 
@@ -296,6 +295,10 @@ public class CourseAdminService {
 
     private InteractionType defaultInteractionType(InteractionType interactionType) {
         return interactionType == null ? InteractionType.NONE : interactionType;
+    }
+
+    private String validateInteractionConfig(InteractionType interactionType, String interactionConfig) {
+        return interactiveConfigService.validateAndNormalize(defaultInteractionType(interactionType), interactionConfig);
     }
 
     private void requireRequest(Object request, String message) {

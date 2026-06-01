@@ -5,6 +5,7 @@ public enum InteractionType {
     THREE_JS,
     GRAPH_2D,
     FORMULA_EXPLORER,
+    VISUAL_LAYER,
     QUIZ,
     OTHER
 }

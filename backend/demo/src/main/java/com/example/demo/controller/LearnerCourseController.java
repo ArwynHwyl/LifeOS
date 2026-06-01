@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/learner/courses")
-@PreAuthorize("hasRole('LEARNER')")
+@PreAuthorize("hasAnyRole('LEARNER', 'TEACHER', 'ADMIN')")
 public class LearnerCourseController {
 
     private final LearnerCourseService learnerCourseService;

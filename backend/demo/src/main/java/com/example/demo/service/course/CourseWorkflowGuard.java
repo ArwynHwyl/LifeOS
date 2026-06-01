@@ -15,7 +15,6 @@ class CourseWorkflowGuard {
     );
 
     private static final Set<CourseStatus> ADMIN_REOPENABLE_STATUSES = Set.of(
-            CourseStatus.APPROVED,
             CourseStatus.PUBLISHED
     );
 

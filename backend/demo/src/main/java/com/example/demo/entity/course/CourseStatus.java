@@ -4,6 +4,5 @@ public enum CourseStatus {
     DRAFT,
     PENDING_REVIEW,
     NEED_REVISION,
-    APPROVED,
     PUBLISHED
 }

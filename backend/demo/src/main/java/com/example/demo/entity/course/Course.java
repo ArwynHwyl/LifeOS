@@ -91,9 +91,9 @@ public class Course extends BaseTimestampEntity {
     }
 
     public void approve(User reviewer) {
-        status = CourseStatus.APPROVED;
+        status = CourseStatus.PUBLISHED;
         approvedBy = reviewer;
-        publishedAt = null;
+        publishedAt = Instant.now();
     }
 
     public void publish() {

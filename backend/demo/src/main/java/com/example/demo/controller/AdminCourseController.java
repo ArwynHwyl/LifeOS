@@ -12,6 +12,7 @@ import com.example.demo.dto.course.DocumentPreviewResponse;
 import com.example.demo.dto.course.DocumentSourceDto;
 import com.example.demo.dto.course.DocumentUploadUrlRequest;
 import com.example.demo.dto.course.DocumentUploadUrlResponse;
+import com.example.demo.dto.course.InteractiveTemplateDto;
 import com.example.demo.dto.course.DocumentUploadRequest;
 import com.example.demo.dto.course.ModuleCreateRequest;
 import com.example.demo.dto.course.ModuleDto;
@@ -26,6 +27,7 @@ import com.example.demo.entity.User;
 import com.example.demo.service.course.AiGenerationService;
 import com.example.demo.service.course.CourseAdminService;
 import com.example.demo.service.course.DocumentSourceService;
+import com.example.demo.service.course.InteractiveConfigService;
 import com.example.demo.service.course.SubTopicImageService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -53,17 +55,25 @@ public class AdminCourseController {
     private final DocumentSourceService documentSourceService;
     private final AiGenerationService aiGenerationService;
     private final SubTopicImageService subTopicImageService;
+    private final InteractiveConfigService interactiveConfigService;
 
     public AdminCourseController(
             CourseAdminService courseAdminService,
             DocumentSourceService documentSourceService,
             AiGenerationService aiGenerationService,
-            SubTopicImageService subTopicImageService
+            SubTopicImageService subTopicImageService,
+            InteractiveConfigService interactiveConfigService
     ) {
         this.courseAdminService = courseAdminService;
         this.documentSourceService = documentSourceService;
         this.aiGenerationService = aiGenerationService;
         this.subTopicImageService = subTopicImageService;
+        this.interactiveConfigService = interactiveConfigService;
+    }
+
+    @GetMapping("/interactive-templates")
+    public List<InteractiveTemplateDto> listInteractiveTemplates() {
+        return interactiveConfigService.listTemplates();
     }
 
     @GetMapping("/courses")
