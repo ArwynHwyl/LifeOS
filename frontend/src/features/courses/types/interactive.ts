@@ -201,6 +201,7 @@ export interface VisualLayerConfig {
   type: 'VISUAL_LAYER'
   mode?: InteractiveMode
   title: string
+  prompt?: string
   canvas: {
     width: number
     height: number
@@ -210,6 +211,7 @@ export interface VisualLayerConfig {
   elements: VisualLayerElement[]
   interactions: VisualLayerInteraction[]
   overlap?: VisualLayerOverlapConfig
+  feedback?: PracticeFeedback
 }
 
 export type InteractiveConfig = Graph2DConfig | FormulaExplorerConfig | VisualLayerConfig | QuizConfig | ThreeJsConfig
@@ -333,7 +335,38 @@ export const PRACTICE_DEFAULT_CONFIGS: Record<TemplateInteractionType, Interacti
     successCondition: { kind: 'EXPRESSION_EQUALS', target: 5, tolerance: 0.01 },
     feedback: { success: 'Correct. The magnitude is 5.', failure: 'Not yet. Look for a Pythagorean triple.' },
   },
-  VISUAL_LAYER: DEFAULT_INTERACTIVE_CONFIGS.VISUAL_LAYER,
+  VISUAL_LAYER: {
+    type: 'VISUAL_LAYER',
+    mode: 'PRACTICE',
+    title: 'Build the Venn diagram',
+    prompt: 'Add the required circles, arrange the overlaps, then enter the value for each visible region.',
+    canvas: {
+      width: 900,
+      height: 520,
+      backgroundText: '',
+    },
+    zones: [
+      { id: 'zone_a', label: 'A', shape: 'circle', x: 250, y: 130, width: 260, height: 260, labelX: 35, labelY: 30, color: '#ffd333', highlightColor: '#ff8f1f', highlightOpacity: 0.82, feedback: '' },
+      { id: 'zone_b', label: 'B', shape: 'circle', x: 390, y: 130, width: 260, height: 260, labelX: 65, labelY: 30, color: '#8fb3ff', highlightColor: '#4f8cff', highlightOpacity: 0.82, feedback: '' },
+      { id: 'zone_c', label: 'C', shape: 'circle', x: 320, y: 250, width: 260, height: 260, labelX: 50, labelY: 75, color: '#8fe0aa', highlightColor: '#3aa66b', highlightOpacity: 0.82, feedback: '' },
+    ],
+    elements: [],
+    interactions: [],
+    overlap: ensureVisualOverlapValues({
+      type: 'VISUAL_LAYER',
+      mode: 'PRACTICE',
+      title: 'Build the Venn diagram',
+      canvas: { width: 900, height: 520, backgroundText: '' },
+      zones: [
+        { id: 'zone_a', label: 'A', shape: 'circle', x: 250, y: 130, width: 260, height: 260, color: '#ffd333' },
+        { id: 'zone_b', label: 'B', shape: 'circle', x: 390, y: 130, width: 260, height: 260, color: '#8fb3ff' },
+        { id: 'zone_c', label: 'C', shape: 'circle', x: 320, y: 250, width: 260, height: 260, color: '#8fe0aa' },
+      ],
+      elements: [],
+      interactions: [],
+    }, ['zone_a', 'zone_b', 'zone_c']),
+    feedback: { success: 'Correct. The regions match the expected values.', failure: 'Not yet. Check that every required overlap exists and each region value is correct.' },
+  },
   QUIZ: DEFAULT_INTERACTIVE_CONFIGS.QUIZ,
   THREE_JS: {
     type: 'THREE_JS',
@@ -590,16 +623,30 @@ export function generatedOverlapRegions(config: VisualLayerConfig): GeneratedOve
     .map((zoneId) => config.zones.find((zone) => zone.id === zoneId))
     .filter((zone): zone is VisualLayerZone => Boolean(zone))
     .slice(0, 5)
+  const maskPathById = new Map(values.map((value) => [
+    value.id,
+    overlapRegionMaskPath(value.zoneIds, sourceZones, config.canvas),
+  ]))
+  const totalInputFor = (zoneId: string) => config.overlap?.inputs?.find((input) => sameOverlapSet(input.zoneIds, [zoneId]))
+  const isIsolatedSingleZone = (zoneId: string) => !values.some((value) => (
+    value.zoneIds.length > 1
+    && value.zoneIds.includes(zoneId)
+    && Boolean(maskPathById.get(value.id))
+  ))
   return values.map((value) => {
     const zones = value.zoneIds
       .map((zoneId) => sourceZones.find((zone) => zone.id === zoneId))
       .filter((zone): zone is VisualLayerZone => Boolean(zone))
+    const displayValue = value.zoneIds.length === 1 && isIsolatedSingleZone(value.zoneIds[0])
+      ? totalInputFor(value.zoneIds[0])?.value ?? value.value
+      : value.value
     return {
       ...value,
+      value: displayValue,
       zones,
       excludedZones: sourceZones.filter((zone) => !value.zoneIds.includes(zone.id)),
       center: overlapRegionCenter(value.zoneIds, sourceZones),
-      maskPath: overlapRegionMaskPath(value.zoneIds, sourceZones, config.canvas),
+      maskPath: maskPathById.get(value.id) ?? '',
     }
   }).filter((region) => region.zones.length === region.zoneIds.length && region.maskPath)
 }

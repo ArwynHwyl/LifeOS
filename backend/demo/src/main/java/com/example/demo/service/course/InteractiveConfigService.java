@@ -40,7 +40,7 @@ public class InteractiveConfigService {
     private static final Set<String> FORMULA_STEP_FIELDS = Set.of(
             "label", "expression", "explanation"
     );
-    private static final Set<String> VISUAL_LAYER_FIELDS = Set.of("type", "mode", "title", "canvas", "zones", "elements", "interactions", "overlap");
+    private static final Set<String> VISUAL_LAYER_FIELDS = Set.of("type", "mode", "title", "canvas", "zones", "elements", "interactions", "overlap", "prompt", "feedback");
     private static final Set<String> VISUAL_CANVAS_FIELDS = Set.of("width", "height", "backgroundText");
     private static final Set<String> VISUAL_ZONE_FIELDS = Set.of("id", "label", "shape", "x", "y", "width", "height", "labelX", "labelY", "color", "highlightColor", "highlightOpacity", "feedback");
     private static final Set<String> VISUAL_ELEMENT_FIELDS = Set.of("id", "label", "kind", "x", "y", "width", "height");
@@ -90,7 +90,7 @@ public class InteractiveConfigService {
         switch (type) {
             case GRAPH_2D -> validateGraph(root, practice);
             case FORMULA_EXPLORER -> validateFormula(root, practice);
-            case VISUAL_LAYER -> validateVisualLayer(root);
+            case VISUAL_LAYER -> validateVisualLayer(root, practice);
             case QUIZ -> validateQuiz(root, practice);
             case THREE_JS -> validateThreeJs(root, practice);
             default -> throw new ValidationException("Unsupported interactionType: " + type);
@@ -104,6 +104,7 @@ public class InteractiveConfigService {
         Map<String, Object> formulaVisualization = formulaVisualizationDefault();
         Map<String, Object> formulaPractice = formulaPracticeDefault();
         Map<String, Object> visualLayer = visualLayerDefault();
+        Map<String, Object> visualLayerPractice = visualLayerPracticeDefault();
         Map<String, Object> quizPractice = quizPracticeDefault();
         Map<String, Object> threeVisualization = threeVisualizationDefault();
         Map<String, Object> threePractice = threePracticeDefault();
@@ -143,9 +144,9 @@ public class InteractiveConfigService {
                         InteractionType.VISUAL_LAYER,
                         "Visual Layer",
                         "Build a Canva-style hotspot layer with click-to-highlight behavior.",
+                        visualLayerPractice,
                         visualLayer,
-                        visualLayer,
-                        visualLayer,
+                        visualLayerPractice,
                         List.of(
                                 field("title", "Title", "text", true, null, null, 120, null),
                                 field("zones", "Zones", "visual-zones", true, null, null, null, null),
@@ -306,6 +307,83 @@ public class InteractiveConfigService {
                 "interactions", List.of(
                         Map.of("triggerId", "choice_a", "effect", "HIGHLIGHT_ZONE", "targetZoneId", "zone_a", "feedback", "Zone A highlighted.")
                 )
+        );
+    }
+
+    private Map<String, Object> visualLayerPracticeDefault() {
+        return Map.ofEntries(
+                Map.entry("type", "VISUAL_LAYER"),
+                Map.entry("mode", "PRACTICE"),
+                Map.entry("title", "Build the Venn diagram"),
+                Map.entry("prompt", "Add the required circles, arrange the overlaps, then enter the value for each visible region."),
+                Map.entry("canvas", Map.of("width", 900, "height", 520, "backgroundText", "")),
+                Map.entry("zones", List.of(
+                        Map.ofEntries(
+                                Map.entry("id", "zone_a"),
+                                Map.entry("label", "A"),
+                                Map.entry("shape", "circle"),
+                                Map.entry("x", 250),
+                                Map.entry("y", 130),
+                                Map.entry("width", 260),
+                                Map.entry("height", 260),
+                                Map.entry("labelX", 35),
+                                Map.entry("labelY", 30),
+                                Map.entry("color", "#ffd333"),
+                                Map.entry("highlightColor", "#ff8f1f"),
+                                Map.entry("highlightOpacity", 0.82),
+                                Map.entry("feedback", "")
+                        ),
+                        Map.ofEntries(
+                                Map.entry("id", "zone_b"),
+                                Map.entry("label", "B"),
+                                Map.entry("shape", "circle"),
+                                Map.entry("x", 390),
+                                Map.entry("y", 130),
+                                Map.entry("width", 260),
+                                Map.entry("height", 260),
+                                Map.entry("labelX", 65),
+                                Map.entry("labelY", 30),
+                                Map.entry("color", "#8fb3ff"),
+                                Map.entry("highlightColor", "#4f8cff"),
+                                Map.entry("highlightOpacity", 0.82),
+                                Map.entry("feedback", "")
+                        ),
+                        Map.ofEntries(
+                                Map.entry("id", "zone_c"),
+                                Map.entry("label", "C"),
+                                Map.entry("shape", "circle"),
+                                Map.entry("x", 320),
+                                Map.entry("y", 250),
+                                Map.entry("width", 260),
+                                Map.entry("height", 260),
+                                Map.entry("labelX", 50),
+                                Map.entry("labelY", 75),
+                                Map.entry("color", "#8fe0aa"),
+                                Map.entry("highlightColor", "#3aa66b"),
+                                Map.entry("highlightOpacity", 0.82),
+                                Map.entry("feedback", "")
+                        )
+                )),
+                Map.entry("elements", List.of()),
+                Map.entry("interactions", List.of()),
+                Map.entry("overlap", Map.of(
+                        "enabled", true,
+                        "sourceZoneIds", List.of("zone_a", "zone_b", "zone_c"),
+                        "inputs", List.of(
+                                Map.of("id", "A_ONLY", "label", "A", "zoneIds", List.of("zone_a"), "value", 33, "kind", "total"),
+                                Map.of("id", "B_ONLY", "label", "B", "zoneIds", List.of("zone_b"), "value", 26, "kind", "total"),
+                                Map.of("id", "C_ONLY", "label", "C", "zoneIds", List.of("zone_c"), "value", 22, "kind", "total"),
+                                Map.of("id", "A_AND_B", "label", "A ∩ B", "zoneIds", List.of("zone_a", "zone_b"), "value", 10, "kind", "intersection"),
+                                Map.of("id", "A_AND_C", "label", "A ∩ C", "zoneIds", List.of("zone_a", "zone_c"), "value", 8, "kind", "intersection"),
+                                Map.of("id", "B_AND_C", "label", "B ∩ C", "zoneIds", List.of("zone_b", "zone_c"), "value", 7, "kind", "intersection"),
+                                Map.of("id", "A_AND_B_AND_C", "label", "A ∩ B ∩ C", "zoneIds", List.of("zone_a", "zone_b", "zone_c"), "value", 3, "kind", "intersection")
+                        ),
+                        "values", List.of()
+                )),
+                Map.entry("feedback", Map.of(
+                        "success", "Correct. The regions match the expected values.",
+                        "failure", "Not yet. Check that every required overlap exists and each region value is correct."
+                ))
         );
     }
 
@@ -549,7 +627,7 @@ public class InteractiveConfigService {
         }
     }
 
-    private void validateVisualLayer(ObjectNode root) {
+    private void validateVisualLayer(ObjectNode root, boolean practice) {
         rejectUnknownFields(root, VISUAL_LAYER_FIELDS, "interactionConfig");
         requiredText(root, "title", 120);
         JsonNode canvas = root.get("canvas");
@@ -566,6 +644,11 @@ public class InteractiveConfigService {
         Set<String> elementIds = validateVisualElements(root, canvasWidth, canvasHeight);
         validateVisualInteractions(root, zoneIds, elementIds);
         validateVisualOverlap(root, zoneIds);
+        if (practice) {
+            validateVisualPracticeCommon(root);
+        } else {
+            rejectVisualizationPracticeFields(root);
+        }
     }
 
     private Set<String> validateVisualZones(ObjectNode root, double canvasWidth, double canvasHeight) {
@@ -1004,6 +1087,26 @@ public class InteractiveConfigService {
         String kind = requiredText(conditionObject, "kind", 40);
         if (!expectedKind.equals(kind)) {
             throw new ValidationException("successCondition.kind must be " + expectedKind);
+        }
+    }
+
+    private void validateVisualPracticeCommon(ObjectNode root) {
+        requiredText(root, "prompt", 500);
+        JsonNode feedback = root.get("feedback");
+        if (feedback == null || !feedback.isObject()) {
+            throw new ValidationException("feedback is required for practice interactions");
+        }
+        ObjectNode feedbackObject = (ObjectNode) feedback;
+        rejectUnknownFields(feedbackObject, FEEDBACK_FIELDS, "feedback");
+        requiredText(feedbackObject, "success", 500);
+        requiredText(feedbackObject, "failure", 500);
+        JsonNode overlap = root.get("overlap");
+        if (overlap == null || !overlap.isObject() || !overlap.path("enabled").asBoolean(false)) {
+            throw new ValidationException("overlap is required for visual layer practice");
+        }
+        JsonNode sourceZoneIds = overlap.get("sourceZoneIds");
+        if (sourceZoneIds == null || !sourceZoneIds.isArray() || sourceZoneIds.size() < 2 || sourceZoneIds.size() > 3) {
+            throw new ValidationException("visual layer practice requires 2 to 3 overlap source zones");
         }
     }
 
