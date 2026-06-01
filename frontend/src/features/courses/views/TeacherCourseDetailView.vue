@@ -47,7 +47,7 @@ const commentsMap = ref<Record<string, Comment[]>>({})
 const courseStatus = computed<CourseStatus>(() => {
   if (!course.value) return 'draft'
   const s = course.value.status
-  if (s === 'PUBLISHED' || s === 'APPROVED') return 'published'
+  if (s === 'PUBLISHED') return 'published'
   if (s === 'PENDING_REVIEW') return 'pending'
   if (s === 'NEED_REVISION') return 'revision'
   return 'draft'

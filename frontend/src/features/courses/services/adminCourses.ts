@@ -1,10 +1,11 @@
 import api from '@/services/api'
 import { DEFAULT_COVER_ID } from '@/features/courses/constants/courseCoverPresets'
+import type { InteractiveTemplate } from '@/features/courses/types/interactive'
 import type { CourseStatus } from '@/types/types'
 
 const COURSE_COVER_STORAGE_KEY = 'lifeosCourseCovers'
 
-export type BackendCourseStatus = 'DRAFT' | 'PENDING_REVIEW' | 'NEED_REVISION' | 'APPROVED' | 'PUBLISHED'
+export type BackendCourseStatus = 'DRAFT' | 'PENDING_REVIEW' | 'NEED_REVISION' | 'PUBLISHED'
 
 export interface AdminCourseSummaryDto {
   id: number
@@ -40,7 +41,7 @@ export interface AdminModuleDto {
   subTopics: AdminSubTopicDto[]
 }
 
-export type InteractionType = 'NONE' | 'THREE_JS' | 'GRAPH_2D' | 'FORMULA_EXPLORER' | 'QUIZ' | 'OTHER'
+export type InteractionType = 'NONE' | 'THREE_JS' | 'GRAPH_2D' | 'FORMULA_EXPLORER' | 'VISUAL_LAYER' | 'QUIZ' | 'OTHER'
 
 export interface AdminSubTopicDto {
   id: number
@@ -151,6 +152,11 @@ export async function listAdminCourses() {
 
 export async function getAdminCourse(courseId: number | string) {
   const { data } = await api.get<AdminCourseDetailDto>(`/v1/admin/courses/${courseId}`)
+  return data
+}
+
+export async function listInteractiveTemplates() {
+  const { data } = await api.get<InteractiveTemplate[]>('/v1/admin/interactive-templates')
   return data
 }
 
@@ -406,7 +412,7 @@ export function toAdminCourseCard(course: AdminCourseSummaryDto | AdminCourseDet
 }
 
 function toCourseStatus(status: BackendCourseStatus): CourseStatus {
-  if (status === 'PUBLISHED' || status === 'APPROVED') return 'published'
+  if (status === 'PUBLISHED') return 'published'
   if (status === 'PENDING_REVIEW') return 'pending'
   if (status === 'NEED_REVISION') return 'revision'
   return 'draft'

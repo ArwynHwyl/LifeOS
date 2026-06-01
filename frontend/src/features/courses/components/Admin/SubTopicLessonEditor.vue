@@ -6,6 +6,7 @@ import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import StarterKit from '@tiptap/starter-kit'
 import { EditorContent, useEditor } from '@tiptap/vue-3'
+import InteractiveConfigEditor from '@/features/courses/components/interactive/InteractiveConfigEditor.vue'
 import {
   refreshSubTopicAssets,
   uploadSubTopicImage,
@@ -220,7 +221,7 @@ async function refreshAssetUrls() {
 }
 
 function onSave() {
-  if (interactionConfig.value.trim()) {
+  if (interactionType.value !== 'NONE' && interactionConfig.value.trim()) {
     try {
       JSON.parse(interactionConfig.value)
     } catch {
@@ -233,7 +234,7 @@ function onSave() {
     content: editor.value?.getHTML() ?? '',
     interactionType: interactionType.value,
     interactionPrompt: interactionPrompt.value.trim() || null,
-    interactionConfig: interactionConfig.value.trim() || null,
+    interactionConfig: interactionType.value === 'NONE' ? null : interactionConfig.value.trim() || null,
   })
 }
 
@@ -352,65 +353,47 @@ function escapeHtml(value: string) {
       <span v-if="localMessage" class="text-[11px] font-medium text-lm-green">{{ localMessage }}</span>
     </div>
 
-    <div class="grid gap-3 p-3 lg:grid-cols-[260px_minmax(0,1fr)]">
-      <div class="space-y-3">
-        <label class="block">
-          <span class="mb-1 block text-[11px] font-bold text-lm-ink-3">Title</span>
-          <input
-            v-model="title"
-            type="text"
-            class="h-9 w-full rounded-[8px] border-2 border-lm-line-soft bg-lm-bg-soft px-3 text-[12px] font-semibold text-lm-ink outline-none transition focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
-          />
-        </label>
-        <label class="block">
-          <span class="mb-1 block text-[11px] font-bold text-lm-ink-3">Interaction</span>
-          <select v-model="interactionType" class="h-9 w-full rounded-[8px] border-2 border-lm-line-soft bg-lm-bg-soft px-3 text-[12px] text-lm-ink outline-none transition focus:border-lm-line focus:bg-lm-surface">
-            <option value="NONE">None</option>
-            <option value="THREE_JS">3D visual</option>
-            <option value="GRAPH_2D">2D graph</option>
-            <option value="FORMULA_EXPLORER">Formula explorer</option>
-            <option value="QUIZ">Quiz</option>
-            <option value="OTHER">Other</option>
-          </select>
-        </label>
-        <label class="block">
-          <span class="mb-1 block text-[11px] font-bold text-lm-ink-3">Interaction prompt</span>
-          <textarea
-            v-model="interactionPrompt"
-            rows="4"
-            class="w-full resize-none rounded-[8px] border-2 border-lm-line-soft bg-lm-bg-soft px-3 py-2 text-[12px] text-lm-ink outline-none transition focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
-          />
-        </label>
-        <label class="block">
-          <span class="mb-1 block text-[11px] font-bold text-lm-ink-3">Interaction config JSON</span>
-          <textarea
-            v-model="interactionConfig"
-            rows="6"
-            spellcheck="false"
-            placeholder="{&quot;kind&quot;:&quot;quiz&quot;,&quot;items&quot;:[]}"
-            class="w-full resize-none rounded-[8px] border-2 border-lm-line-soft bg-lm-bg-soft px-3 py-2 font-mono text-[11px] leading-5 text-lm-ink outline-none transition focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
-          />
-        </label>
-        <div class="flex gap-2">
-          <button
-            type="button"
-            class="h-9 rounded-[8px] border-2 border-lm-ink bg-lm-ink px-3 text-[12px] font-bold text-lm-bg transition-all duration-200 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-            :disabled="!title.trim()"
-            @click="onSave"
-          >
-            Save
-          </button>
-          <button
-            type="button"
-            class="h-9 rounded-[8px] border-2 border-lm-line bg-lm-surface px-3 text-[12px] font-bold text-lm-ink transition hover:bg-lm-bg"
-            @click="emit('cancel')"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-
+    <div class="grid gap-4 p-3">
+      <label class="block">
+        <span class="mb-1 block text-[11px] font-bold text-lm-ink-3">Title</span>
+        <input
+          v-model="title"
+          type="text"
+          class="h-9 w-full rounded-[8px] border-2 border-lm-line-soft bg-lm-bg-soft px-3 text-[12px] font-semibold text-lm-ink outline-none transition focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
+        />
+      </label>
       <EditorContent :editor="editor" />
+
+      <section class="interactive-admin-panel">
+        <div class="interactive-admin-panel__header">
+          <h3>Interactive</h3>
+          <span>{{ interactionType }}</span>
+        </div>
+        <InteractiveConfigEditor
+          v-model:interaction-type="interactionType"
+          v-model:interaction-prompt="interactionPrompt"
+          v-model:interaction-config="interactionConfig"
+          @error="emit('error', $event)"
+        />
+      </section>
+
+      <div class="flex gap-2">
+        <button
+          type="button"
+          class="h-9 rounded-[8px] border-2 border-lm-ink bg-lm-ink px-3 text-[12px] font-bold text-lm-bg transition-all duration-200 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          :disabled="!title.trim()"
+          @click="onSave"
+        >
+          Save
+        </button>
+        <button
+          type="button"
+          class="h-9 rounded-[8px] border-2 border-lm-line bg-lm-surface px-3 text-[12px] font-bold text-lm-ink transition hover:bg-lm-bg"
+          @click="emit('cancel')"
+        >
+          Cancel
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -433,6 +416,36 @@ function escapeHtml(value: string) {
 .tool-button:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+.interactive-admin-panel {
+  border: 2px solid #d4cec6;
+  border-radius: 12px;
+  background: #fffdf8;
+  padding: 0.9rem;
+}
+.interactive-admin-panel__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.interactive-admin-panel__header h3 {
+  margin: 0;
+  color: #1a1814;
+  font-size: 1rem;
+  font-weight: 900;
+}
+.interactive-admin-panel__header span {
+  border: 2px solid #d4cec6;
+  border-radius: 999px;
+  background: #f7f2ea;
+  padding: 0.15rem 0.55rem;
+  color: #6b6660;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 800;
 }
 :deep(.tiptap p.is-editor-empty:first-child::before) {
   content: attr(data-placeholder);

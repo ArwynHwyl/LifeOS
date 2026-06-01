@@ -1,122 +1,194 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import InteractivePreview from '@/features/courses/components/interactive/InteractivePreview.vue'
+import { parseInteractiveConfig } from '@/features/courses/types/interactive'
+import { getPublishedCourse, type PublishedCourseDetailDto, type PublishedSubTopicDto } from '@/features/learning/services/learnerCourses'
 import LmIcon from '../components/LmIcon.vue'
 
+const route = useRoute()
 const router = useRouter()
-const selected = ref<number | null>(1)
 
-const options = [
-  { label: 'x = 3' },
-  { label: 'x = 4' },
-  { label: 'x = 6' },
-  { label: 'x = 9' },
-]
+const course = ref<PublishedCourseDetailDto | null>(null)
+const selectedSubTopicId = ref<number | null>(null)
+const loading = ref(true)
+const error = ref('')
+
+const allSubTopics = computed(() => course.value?.modules.flatMap((module) => module.subTopics) ?? [])
+const selectedSubTopic = computed(() => {
+  return allSubTopics.value.find((subTopic) => subTopic.id === selectedSubTopicId.value) ?? allSubTopics.value[0] ?? null
+})
+const selectedModule = computed(() => {
+  const current = selectedSubTopic.value
+  return course.value?.modules.find((module) => module.subTopics.some((subTopic) => subTopic.id === current?.id)) ?? null
+})
+const selectedIndex = computed(() => {
+  const current = selectedSubTopic.value
+  if (!current) return 0
+  return Math.max(0, allSubTopics.value.findIndex((subTopic) => subTopic.id === current.id))
+})
+const progressPercent = computed(() => {
+  if (!allSubTopics.value.length) return 0
+  return ((selectedIndex.value + 1) / allSubTopics.value.length) * 100
+})
+const interactiveConfig = computed(() => {
+  const current = selectedSubTopic.value
+  if (!current) return null
+  return parseInteractiveConfig(current.interactionType, current.interactionConfig)
+})
+
+onMounted(async () => {
+  loading.value = true
+  error.value = ''
+  try {
+    course.value = await getPublishedCourse(String(route.params.courseId))
+    selectedSubTopicId.value = allSubTopics.value[0]?.id ?? null
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Unable to load lesson.'
+  } finally {
+    loading.value = false
+  }
+})
+
+function selectSubTopic(subTopic: PublishedSubTopicDto) {
+  selectedSubTopicId.value = subTopic.id
+}
+
+function goToOffset(offset: number) {
+  const next = allSubTopics.value[selectedIndex.value + offset]
+  if (next) selectedSubTopicId.value = next.id
+}
 </script>
 
 <template>
   <main class="flex-1 flex flex-col overflow-hidden bg-lm-bg">
-
-    <!-- Quiz progress bar -->
     <div class="flex items-center gap-4 px-6 py-3 bg-lm-surface border-b-2 border-lm-line shrink-0">
       <button
-        @click="router.back()"
         class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold border-2 border-lm-line rounded-full bg-lm-surface shadow-stamp-sm hover:-translate-y-px transition-all duration-200 text-lm-ink shrink-0"
+        @click="router.back()"
       >
         <LmIcon name="close" :size="14" />
         Exit
       </button>
       <div class="flex-1 h-4 bg-lm-bg-soft rounded-full overflow-hidden border border-lm-line">
-        <div class="h-full bg-lm-yellow transition-all duration-200" style="width: 40%" />
+        <div class="h-full bg-lm-yellow transition-all duration-200" :style="{ width: `${progressPercent}%` }" />
       </div>
       <span class="flex items-center gap-1.5 px-3 py-1 text-sm font-semibold border border-lm-line rounded-full bg-lm-yellow-soft shrink-0">
-        <LmIcon name="bolt" :size="14" :filled="true" class="text-lm-rust" />
-        +15 XP
-      </span>
-      <span class="flex items-center gap-1.5 px-3 py-1 text-sm font-semibold border border-lm-line rounded-full bg-lm-rust-soft shrink-0">
-        <span class="text-lm-rust"><LmIcon name="flame" :size="14" :filled="true" /></span>
-        7
+        {{ selectedIndex + 1 }} / {{ Math.max(allSubTopics.length, 1) }}
       </span>
     </div>
 
-    <!-- Breadcrumb strip -->
     <div class="flex items-center gap-2.5 px-6 py-2 bg-lm-yellow-soft border-b border-lm-line-soft text-[13px] shrink-0">
-      <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3">ALGEBRA BASICS</span>
+      <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3">{{ course?.title ?? 'LESSON' }}</span>
       <span class="text-lm-ink-3">›</span>
-      <span class="font-semibold text-lm-ink">Topic 5 · Linear equations</span>
+      <span class="font-semibold text-lm-ink">{{ selectedModule?.title ?? 'Loading' }}</span>
       <div class="flex-1" />
-      <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3">QUESTION 2 / 5</span>
+      <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3">{{ selectedSubTopic?.title ?? '' }}</span>
     </div>
 
-    <!-- Scrollable content -->
     <div class="flex-1 overflow-auto relative">
       <div class="absolute inset-0 bg-dot-grid opacity-50 pointer-events-none" />
-      <div class="relative max-w-[840px] mx-auto px-6 py-9 flex flex-col gap-7">
 
-        <!-- Prompt -->
-        <div>
-          <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3">SOLVE FOR <em class="font-math italic not-italic">x</em></span>
-          <h2 class="font-display text-[32px] font-bold tracking-tight text-lm-ink leading-tight mt-1.5 m-0">
-            What value of <em class="font-math italic text-[32px]">x</em> makes this equation true?
-          </h2>
-        </div>
+      <div v-if="loading" class="relative max-w-[840px] mx-auto px-6 py-9 text-lm-ink font-bold">Loading lesson...</div>
+      <div v-else-if="error" class="relative max-w-[840px] mx-auto px-6 py-9 text-lm-rust font-bold">{{ error }}</div>
+      <div v-else-if="!selectedSubTopic" class="relative max-w-[840px] mx-auto px-6 py-9 text-lm-ink font-bold">No lesson content is available.</div>
 
-        <!-- Chalkboard equation -->
-        <div class="relative bg-lm-ink rounded-[18px] border-2 border-lm-line shadow-stamp-md overflow-hidden px-6 py-10 text-center">
-          <div class="absolute inset-0 bg-chalk-dots pointer-events-none" />
-          <span class="relative font-math italic font-semibold text-[58px] text-lm-bg leading-none">2x + 5 = 13</span>
-          <svg class="absolute bottom-2 right-3 opacity-15 pointer-events-none" width="60" height="60" viewBox="0 0 80 80">
-            <path d="M2 30 Q 15 5, 28 30 T 54 30 T 78 30" stroke="#fbf7ef" stroke-width="2" fill="none" stroke-linecap="round"/>
-          </svg>
-        </div>
+      <div v-else class="relative grid max-w-[1180px] mx-auto px-6 py-8 gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+        <aside class="space-y-3">
+          <div v-for="module in course?.modules" :key="module.id" class="space-y-1">
+            <h2 class="m-0 px-2 text-[11px] font-mono font-bold uppercase tracking-[0.06em] text-lm-ink-3">{{ module.title }}</h2>
+            <button
+              v-for="subTopic in module.subTopics"
+              :key="subTopic.id"
+              type="button"
+              class="w-full rounded-[8px] border-2 px-3 py-2 text-left text-[12px] font-bold transition"
+              :class="selectedSubTopic.id === subTopic.id ? 'border-lm-ink bg-lm-yellow text-lm-ink' : 'border-lm-line-soft bg-lm-surface text-lm-ink-2 hover:border-lm-line'"
+              @click="selectSubTopic(subTopic)"
+            >
+              {{ subTopic.title }}
+            </button>
+          </div>
+        </aside>
 
-        <!-- Answer options (2×2 grid) -->
-        <div class="grid grid-cols-2 gap-3.5">
-          <button
-            v-for="(opt, i) in options"
-            :key="i"
-            @click="selected = i"
-            :class="[
-              'flex items-center gap-3.5 px-[22px] py-[18px] border-2 border-lm-line rounded-[18px] transition-all duration-200 cursor-pointer',
-              selected === i
-                ? 'bg-lm-yellow shadow-stamp-md -translate-x-px -translate-y-px'
-                : 'bg-lm-surface shadow-stamp-sm hover:bg-lm-bg-soft hover:shadow-stamp-md'
-            ]"
-          >
-            <div :class="[
-              'w-9 h-9 rounded-full border-2 border-lm-line flex items-center justify-center font-display font-bold text-[15px] shrink-0 transition-colors duration-200',
-              selected === i ? 'bg-lm-ink text-lm-bg' : 'bg-lm-bg-soft text-lm-ink'
-            ]">
-              {{ String.fromCharCode(65 + i) }}
-            </div>
-            <em class="font-math italic font-semibold text-[22px] text-lm-ink not-italic">{{ opt.label }}</em>
-          </button>
-        </div>
+        <article class="space-y-6">
+          <header>
+            <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3">{{ selectedModule?.title }}</span>
+            <h1 class="font-display text-[34px] font-bold tracking-tight text-lm-ink leading-tight mt-1.5 m-0">{{ selectedSubTopic.title }}</h1>
+          </header>
 
-        <!-- Hint callout -->
-        <div class="flex items-center gap-3 p-4 bg-lm-surface border-2 border-lm-line rounded-[12px] shadow-stamp-sm -rotate-[0.4deg] self-start max-w-[460px]">
-          <div class="w-7 h-7 rounded-full bg-lm-yellow border-2 border-lm-line flex items-center justify-center font-bold text-lm-ink shrink-0">?</div>
-          <p class="text-[13.5px] text-lm-ink m-0">
-            <strong>Hint:</strong> Subtract 5 from both sides first, then divide by 2.
-          </p>
-        </div>
+          <section class="lesson-body rounded-[12px] border-2 border-lm-line bg-lm-surface px-5 py-4 shadow-stamp-sm" v-html="selectedSubTopic.content || ''" />
 
+          <InteractivePreview
+            v-if="selectedSubTopic.interactionType !== 'NONE'"
+            :config="interactiveConfig"
+          />
+        </article>
       </div>
     </div>
 
-    <!-- Footer action bar -->
     <div class="flex items-center gap-2.5 px-6 py-3.5 bg-lm-yellow-soft border-t-2 border-lm-line shrink-0">
-      <button class="px-[18px] py-[9px] text-[15px] font-semibold border-2 border-lm-line rounded-full bg-lm-surface shadow-stamp-sm hover:-translate-y-px hover:shadow-stamp-md transition-all duration-200 text-lm-ink">
-        Show hint
-      </button>
-      <button class="px-[18px] py-[9px] text-[15px] font-semibold border-2 border-lm-line rounded-full bg-lm-surface shadow-stamp-sm hover:-translate-y-px hover:shadow-stamp-md transition-all duration-200 text-lm-ink">
-        Show steps
-      </button>
+      <button class="nav-button" :disabled="selectedIndex <= 0" @click="goToOffset(-1)">Previous</button>
       <div class="flex-1" />
-      <button class="flex items-center gap-2 px-[18px] py-[9px] text-[15px] font-semibold border-2 border-lm-line rounded-full bg-lm-ink text-lm-bg shadow-stamp-sm hover:-translate-y-px hover:shadow-stamp-md transition-all duration-200">
-        Check
+      <button class="nav-button nav-button--primary" :disabled="selectedIndex >= allSubTopics.length - 1" @click="goToOffset(1)">
+        Next
         <LmIcon name="arrow" :size="16" />
       </button>
     </div>
   </main>
 </template>
+
+<style scoped>
+.nav-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 2px solid #1a1814;
+  border-radius: 999px;
+  background: #fbf7ef;
+  padding: 0.55rem 1rem;
+  color: #1a1814;
+  font-size: 15px;
+  font-weight: 800;
+  box-shadow: 2px 2px 0 #1a1814;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+.nav-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 3px 3px 0 #1a1814;
+}
+.nav-button--primary {
+  background: #1a1814;
+  color: #fbf7ef;
+}
+.nav-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+:deep(.lesson-body h2) {
+  margin: 1rem 0 0.35rem;
+  font-size: 1.35rem;
+  font-weight: 900;
+}
+:deep(.lesson-body h3) {
+  margin: 0.85rem 0 0.25rem;
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+:deep(.lesson-body p),
+:deep(.lesson-body ul),
+:deep(.lesson-body ol),
+:deep(.lesson-body figure) {
+  margin: 0.7rem 0;
+  color: #3b3630;
+  line-height: 1.7;
+}
+:deep(.lesson-body ul),
+:deep(.lesson-body ol) {
+  padding-left: 1.3rem;
+}
+:deep(.lesson-body img) {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+</style>
