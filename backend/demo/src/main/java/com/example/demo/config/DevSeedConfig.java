@@ -3,7 +3,15 @@ package com.example.demo.config;
 import com.example.demo.entity.User;
 import com.example.demo.entity.UserRole;
 import com.example.demo.entity.UserStatus;
+import com.example.demo.entity.course.ContentDepth;
+import com.example.demo.entity.course.Course;
+import com.example.demo.entity.course.CourseModule;
+import com.example.demo.entity.course.InteractionType;
+import com.example.demo.entity.course.SubTopic;
+import com.example.demo.entity.course.SubTopicSourceType;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.repository.course.CourseRepository;
+import com.example.demo.service.course.InteractiveConfigService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,12 +25,15 @@ public class DevSeedConfig {
     @Bean
     CommandLineRunner seedDevData(
             UserRepository userRepository,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            CourseRepository courseRepository,
+            InteractiveConfigService interactiveConfigService
     ) {
         return args -> {
 
+            User admin;
             if (!userRepository.existsByEmail("admin@lifeos.local")) {
-                userRepository.save(new User(
+                admin = userRepository.save(new User(
                         "admin@lifeos.local",
                         "admin",
                         passwordEncoder.encode("Admin12345!"),
@@ -31,6 +42,8 @@ public class DevSeedConfig {
                         UserRole.ROLE_ADMIN,
                         UserStatus.VERIFY
                 ));
+            } else {
+                admin = userRepository.findByEmail("admin@lifeos.local").orElseThrow();
             }
 
             if (!userRepository.existsByEmail("teacher@lifeos.local")) {
@@ -56,6 +69,732 @@ public class DevSeedConfig {
                         UserStatus.VERIFY
                 ));
             }
+
+            seedInteractiveReferenceCourse(courseRepository, interactiveConfigService, admin);
         };
+    }
+
+    private void seedInteractiveReferenceCourse(
+            CourseRepository courseRepository,
+            InteractiveConfigService interactiveConfigService,
+            User admin
+    ) {
+        removeLegacyAggregateSeedCourse(courseRepository);
+
+        Course matrixCourse = seedCourse(
+                courseRepository,
+                "Matrix",
+                "Seed course from course_source_for_seed_reference/Matrix.pdf covering matrices, multiplication, determinants, inverses, matrix equations, augmented matrices, and linear systems.",
+                admin
+        );
+        CourseModule matrixModule = new CourseModule(
+                "Matrix",
+                "Based on Matrix.pdf: matrices, multiplication, determinants, inverses, matrix equations, and linear systems.",
+                0,
+                ContentDepth.HIGH
+        );
+        matrixModule.addSubTopic(subTopic(
+                "Matrices",
+                """
+                        <h2>Matrices</h2>
+                        <p>A matrix is a rectangular arrangement of numbers. Each number is called an entry, horizontal lines are rows, and vertical lines are columns.</p>
+                        <p>The size of a matrix is written as rows by columns, such as <code>3 x 2</code>. An entry is often written as <code>a_ij</code>, where <code>i</code> is the row and <code>j</code> is the column.</p>
+                        <p>Two matrices are equal when they have the same size and every matching entry is equal. Addition, subtraction, and scalar multiplication are performed entry by entry.</p>
+                        """,
+                0,
+                1,
+                4,
+                InteractionType.NONE,
+                null,
+                null
+        ));
+        matrixModule.addSubTopic(subTopic(
+                "Matrix Multiplication",
+                """
+                        <h2>Matrix Multiplication</h2>
+                        <p>Matrix multiplication is defined when the number of columns in the first matrix equals the number of rows in the second matrix. Each output entry is found by pairing a row from the first matrix with a column from the second matrix and adding the products.</p>
+                        <p>If <code>A</code> has size <code>m x n</code> and <code>B</code> has size <code>n x p</code>, then <code>AB</code> has size <code>m x p</code>.</p>
+                        """,
+                1,
+                5,
+                9,
+                InteractionType.NONE,
+                null,
+                null
+        ));
+        matrixModule.addSubTopic(subTopic(
+                "Determinants",
+                """
+                        <h2>Determinants</h2>
+                        <p>A determinant is a value computed from a square matrix. It is used to test important properties, such as whether a matrix has an inverse, and to solve some systems of equations.</p>
+                        <p>For a <code>2 x 2</code> matrix <code>[[a,b],[c,d]]</code>, the determinant is <code>ad - bc</code>.</p>
+                        """,
+                2,
+                10,
+                15,
+                InteractionType.FORMULA_EXPLORER,
+                "Let learners adjust the entries of a 2x2 matrix until the determinant equals 5.",
+                validate(interactiveConfigService, InteractionType.FORMULA_EXPLORER, """
+                        {
+                          "type": "FORMULA_EXPLORER",
+                          "mode": "PRACTICE",
+                          "title": "2x2 determinant target",
+                          "prompt": "Adjust a, b, c, and d until ad - bc equals 5.",
+                          "formula": "a * d - b * c",
+                          "variables": [
+                            { "name": "a", "label": "a", "min": -5, "max": 5, "step": 1, "initial": 1 },
+                            { "name": "b", "label": "b", "min": -5, "max": 5, "step": 1, "initial": 0 },
+                            { "name": "c", "label": "c", "min": -5, "max": 5, "step": 1, "initial": 0 },
+                            { "name": "d", "label": "d", "min": -5, "max": 5, "step": 1, "initial": 1 }
+                          ],
+                          "precision": 2,
+                          "successCondition": { "kind": "EXPRESSION_EQUALS", "target": 5, "tolerance": 0.01 },
+                          "feedback": {
+                            "success": "Correct. The determinant is 5.",
+                            "failure": "Not yet. Recalculate ad - bc and adjust one entry."
+                          }
+                        }
+                        """)
+        ));
+        matrixModule.addSubTopic(subTopic(
+                "Multiplicative Inverses",
+                """
+                        <h2>Multiplicative Inverses</h2>
+                        <p>The multiplicative inverse of a matrix <code>A</code> is a matrix <code>A^-1</code> such that <code>AA^-1 = I</code> and <code>A^-1A = I</code>.</p>
+                        <p>A square matrix has an inverse when its determinant is nonzero. This idea connects directly to matrix equations and systems of linear equations.</p>
+                        """,
+                3,
+                16,
+                21,
+                InteractionType.NONE,
+                null,
+                null
+        ));
+        matrixModule.addSubTopic(subTopic(
+                "Matrix Equations",
+                """
+                        <h2>Matrix Equations</h2>
+                        <p>Matrix equations use the rules of matrix addition, subtraction, multiplication, and inverses to rearrange and solve equations. The order of multiplication matters because, in general, <code>AB</code> does not have to equal <code>BA</code>.</p>
+                        """,
+                4,
+                22,
+                25,
+                InteractionType.NONE,
+                null,
+                null
+        ));
+        matrixModule.addSubTopic(subTopic(
+                "Augmented Matrices and Linear Systems",
+                """
+                        <h2>Augmented Matrices and Linear Systems</h2>
+                        <p>An augmented matrix places the coefficients and constants of a linear system into one matrix so row operations can be used systematically.</p>
+                        <p>Row operations simplify the system and make it easier to see whether it has one solution, no solution, or infinitely many solutions.</p>
+                        """,
+                5,
+                26,
+                35,
+                InteractionType.GRAPH_2D,
+                "Show a line graph that connects linear systems to intersections.",
+                validate(interactiveConfigService, InteractionType.GRAPH_2D, """
+                        {
+                          "type": "GRAPH_2D",
+                          "mode": "VISUALIZATION",
+                          "title": "Linear equation reference",
+                          "expression": "2 * x + 1",
+                          "xMin": -5,
+                          "xMax": 5,
+                          "yMin": -10,
+                          "yMax": 12,
+                          "sampleCount": 120
+                        }
+                        """)
+        ));
+        publishSeedCourse(courseRepository, matrixCourse, matrixModule);
+
+        Course probabilityCourse = seedCourse(
+                courseRepository,
+                "Probability",
+                "Seed course from course_source_for_seed_reference/PrbDst.pdf covering random variables, probability distributions, expected value, standard deviation, binomial distribution, and normal distribution.",
+                admin
+        );
+        CourseModule probabilityModule = new CourseModule(
+                "Probability",
+                "Based on PrbDst.pdf: random variables, probability distributions, expected value, standard deviation, and major distributions.",
+                0,
+                ContentDepth.HIGH
+        );
+        probabilityModule.addSubTopic(subTopic(
+                "Random Variables",
+                """
+                        <h2>Random Variables</h2>
+                        <p>A random variable represents a quantity of interest from a random experiment, such as the sum of dice rolls, the number of heads in coin flips, or the height of a selected person.</p>
+                        <p>Random variables can be discrete, with listable possible values, or continuous, with real-number values over an interval.</p>
+                        """,
+                0,
+                1,
+                1,
+                InteractionType.NONE,
+                null,
+                null
+        ));
+        probabilityModule.addSubTopic(subTopic(
+                "Discrete Probability Distributions",
+                """
+                        <h2>Discrete Probability Distributions</h2>
+                        <p>A probability distribution assigns probabilities to every possible value of a random variable and can be shown in a table or graph.</p>
+                        <p>For a discrete random variable, all probabilities must be non-negative and their total must equal 1.</p>
+                        """,
+                1,
+                2,
+                3,
+                InteractionType.QUIZ,
+                "Ask learners to choose the list that forms a valid probability distribution.",
+                validate(interactiveConfigService, InteractionType.QUIZ, """
+                        {
+                          "type": "QUIZ",
+                          "mode": "PRACTICE",
+                          "title": "Distribution check",
+                          "prompt": "Choose the list that can be a valid probability distribution.",
+                          "question": "Which list can be a valid probability distribution?",
+                          "options": [
+                            { "id": "a", "label": "0.2, 0.3, 0.5", "correct": true },
+                            { "id": "b", "label": "0.5, 0.7, 0.2", "correct": false },
+                            { "id": "c", "label": "-0.1, 0.6, 0.5", "correct": false },
+                            { "id": "d", "label": "0.1, 0.2, 0.4", "correct": false }
+                          ],
+                          "explanation": "The probabilities must be non-negative and add up to exactly 1.",
+                          "successCondition": { "kind": "QUIZ_CORRECT_OPTION" },
+                          "feedback": {
+                            "success": "Correct. The values are non-negative and sum to 1.",
+                            "failure": "Not yet. Check both non-negativity and the total probability."
+                          }
+                        }
+                        """)
+        ));
+        probabilityModule.addSubTopic(subTopic(
+                "Expected Value of a Discrete Random Variable",
+                """
+                        <h2>Expected Value</h2>
+                        <p>Expected value is a weighted average of a random variable. It is computed by multiplying each value by its probability and adding the results.</p>
+                        <p>This idea summarizes the long-run average behavior of a random experiment repeated many times.</p>
+                        """,
+                2,
+                4,
+                6,
+                InteractionType.NONE,
+                null,
+                null
+        ));
+        probabilityModule.addSubTopic(subTopic(
+                "Standard Deviation and Uniform Distributions",
+                """
+                        <h2>Standard Deviation and Uniform Distributions</h2>
+                        <p>Standard deviation measures how spread out the values of a random variable are around the expected value. A larger value means the outcomes tend to be more widely spread.</p>
+                        <p>A discrete uniform distribution is a case where every possible value has the same probability.</p>
+                        """,
+                3,
+                7,
+                8,
+                InteractionType.NONE,
+                null,
+                null
+        ));
+        probabilityModule.addSubTopic(subTopic(
+                "Binomial Distribution",
+                """
+                        <h2>Binomial Distribution</h2>
+                        <p>The binomial distribution applies to repeated trials where each trial has two outcomes, such as success/failure, and the probability of success stays constant.</p>
+                        <p>The random variable usually represents the number of successes out of the total number of trials.</p>
+                        """,
+                4,
+                9,
+                11,
+                InteractionType.NONE,
+                null,
+                null
+        ));
+        probabilityModule.addSubTopic(subTopic(
+                "Continuous and Normal Distributions",
+                """
+                        <h2>Continuous and Normal Distributions</h2>
+                        <p>A continuous random variable is described by a probability density. The area under the curve over an interval represents probability.</p>
+                        <p>The standard normal distribution and the normal distribution are important models for many data sets, with mean and standard deviation controlling the shape of the curve.</p>
+                        """,
+                5,
+                12,
+                26,
+                InteractionType.GRAPH_2D,
+                "Show a standard bell curve to help learners read area under a curve.",
+                validate(interactiveConfigService, InteractionType.GRAPH_2D, """
+                        {
+                          "type": "GRAPH_2D",
+                          "mode": "VISUALIZATION",
+                          "title": "Standard normal curve",
+                          "expression": "exp(-x^2 / 2)",
+                          "xMin": -4,
+                          "xMax": 4,
+                          "yMin": 0,
+                          "yMax": 1.2,
+                          "sampleCount": 200
+                        }
+                        """)
+        ));
+        publishSeedCourse(courseRepository, probabilityCourse, probabilityModule);
+
+        Course setCourse = seedCourse(
+                courseRepository,
+                "Set",
+                "Seed course from course_source_for_seed_reference/SetAdv.pdf covering set basics, power sets, subset counts, and Venn diagram counting.",
+                admin
+        );
+        CourseModule setModule = new CourseModule(
+                "Set",
+                "Based on SetAdv.pdf: set basics, power sets, subset counts, and counting members in Venn regions.",
+                0,
+                ContentDepth.HIGH
+        );
+        setModule.addSubTopic(subTopic(
+                "Basic Review",
+                """
+                        <h2>Basic Review</h2>
+                        <p>A set is a collection of elements treated as one object. Elements are written inside braces, and order or repetition does not change the set.</p>
+                        <p>Important ideas include the empty set, finite sets, subsets, universal sets, Venn diagrams, union, intersection, difference, and complement.</p>
+                        """,
+                0,
+                1,
+                3,
+                InteractionType.THREE_JS,
+                "Show a controllable 3D object as a visual metaphor for treating a set as one structured object.",
+                validate(interactiveConfigService, InteractionType.THREE_JS, """
+                        {
+                          "type": "THREE_JS",
+                          "mode": "VISUALIZATION",
+                          "title": "Rotating set marker",
+                          "shape": "pyramid",
+                          "color": "#3aa66b",
+                          "rotationSpeed": 0.9
+                        }
+                        """)
+        ));
+        setModule.addSubTopic(subTopic(
+                "Power Sets",
+                """
+                        <h2>Power Sets</h2>
+                        <p>The power set of a set <code>A</code>, written <code>P(A)</code>, is the set of all subsets of <code>A</code>.</p>
+                        <p>For example, if <code>A = {1, 2}</code>, then <code>P(A) = { empty, {1}, {2}, {1,2} }</code>. A power set always contains the empty set and the original set.</p>
+                        """,
+                1,
+                4,
+                8,
+                InteractionType.QUIZ,
+                "Ask learners to check the relationship between elements, subsets, and power sets.",
+                validate(interactiveConfigService, InteractionType.QUIZ, """
+                        {
+                          "type": "QUIZ",
+                          "mode": "PRACTICE",
+                          "title": "Power set check",
+                          "prompt": "Choose the true statement for A = {1, 2}.",
+                          "question": "Which statement is true when A = {1, 2}?",
+                          "options": [
+                            { "id": "a", "label": "{1} is an element of P(A)", "correct": true },
+                            { "id": "b", "label": "3 is an element of P(A)", "correct": false },
+                            { "id": "c", "label": "P(A) has 2 elements", "correct": false },
+                            { "id": "d", "label": "A is not an element of P(A)", "correct": false }
+                          ],
+                          "explanation": "P(A) contains every subset of A, including {1}, {2}, empty set, and A itself.",
+                          "successCondition": { "kind": "QUIZ_CORRECT_OPTION" },
+                          "feedback": {
+                            "success": "Correct. A power set contains subsets as its elements.",
+                            "failure": "Not yet. List every subset of A first."
+                          }
+                        }
+                        """)
+        ));
+        setModule.addSubTopic(subTopic(
+                "Number of Subsets",
+                """
+                        <h2>Number of Subsets</h2>
+                        <p>If a set has <code>n</code> elements, the total number of subsets is <code>2^n</code>. Each element has two choices: it is either included in a subset or not included.</p>
+                        """,
+                2,
+                9,
+                13,
+                InteractionType.FORMULA_EXPLORER,
+                "Let learners adjust the number of set elements and see the total number of subsets.",
+                validate(interactiveConfigService, InteractionType.FORMULA_EXPLORER, """
+                        {
+                          "type": "FORMULA_EXPLORER",
+                          "mode": "VISUALIZATION",
+                          "title": "Subset count",
+                          "formula": "2^n",
+                          "variables": [
+                            { "name": "n", "label": "Members", "min": 0, "max": 10, "step": 1, "initial": 3 }
+                          ],
+                          "precision": 0
+                        }
+                        """)
+        ));
+        setModule.addSubTopic(subTopic(
+                "Counting Members in Regions",
+                """
+                        <h2>Counting Members in Regions</h2>
+                        <p>Counting members in a Venn diagram requires separating overlapping regions clearly, especially when multiple sets overlap.</p>
+                        <p>The key rule is inclusion-exclusion, such as <code>n(A union B) = n(A) + n(B) - n(A intersect B)</code>.</p>
+                        """,
+                3,
+                14,
+                22,
+                InteractionType.FORMULA_EXPLORER,
+                "Let learners choose a counting formula and inspect the result and steps from sample values.",
+                validate(interactiveConfigService, InteractionType.FORMULA_EXPLORER, """
+                        {
+                          "type": "FORMULA_EXPLORER",
+                          "mode": "VISUALIZATION",
+                          "title": "Venn ABC formulas",
+                          "formula": "a + b + c - ab - ac - bc + abc",
+                          "variables": [
+                            { "name": "u", "label": "n(U)", "min": 0, "max": 100, "step": 1, "initial": 60 },
+                            { "name": "a", "label": "n(A)", "min": 0, "max": 80, "step": 1, "initial": 24 },
+                            { "name": "b", "label": "n(B)", "min": 0, "max": 80, "step": 1, "initial": 22 },
+                            { "name": "c", "label": "n(C)", "min": 0, "max": 80, "step": 1, "initial": 18 },
+                            { "name": "ab", "label": "n(A intersect B)", "min": 0, "max": 50, "step": 1, "initial": 8 },
+                            { "name": "ac", "label": "n(A intersect C)", "min": 0, "max": 50, "step": 1, "initial": 6 },
+                            { "name": "bc", "label": "n(B intersect C)", "min": 0, "max": 50, "step": 1, "initial": 5 },
+                            { "name": "abc", "label": "n(A intersect B intersect C)", "min": 0, "max": 30, "step": 1, "initial": 2 }
+                          ],
+                          "precision": 0,
+                          "formulaOptions": [
+                            {
+                              "id": "set-a",
+                              "label": "A",
+                              "formula": "a",
+                              "description": "Shade all members in set A, including regions that overlap with B or C.",
+                              "steps": [
+                                { "label": "Choose circle A", "expression": "a", "explanation": "n(A) includes every region inside circle A: A only, A intersect B, A intersect C, and A intersect B intersect C." }
+                              ]
+                            },
+                            {
+                              "id": "set-b",
+                              "label": "B",
+                              "formula": "b",
+                              "description": "Shade all members in set B, including regions that overlap with A or C.",
+                              "steps": [
+                                { "label": "Choose circle B", "expression": "b", "explanation": "n(B) includes every region inside circle B: B only, A intersect B, B intersect C, and A intersect B intersect C." }
+                              ]
+                            },
+                            {
+                              "id": "set-c",
+                              "label": "C",
+                              "formula": "c",
+                              "description": "Shade all members in set C.",
+                              "steps": [
+                                { "label": "Choose circle C", "expression": "c", "explanation": "n(C) includes every region inside circle C, including overlaps with A or B." }
+                              ]
+                            },
+                            {
+                              "id": "a-only",
+                              "label": "A only",
+                              "formula": "a - ab - ac + abc",
+                              "description": "Shade only the region in A but not in B or C.",
+                              "steps": [
+                                { "label": "Start with all of A", "expression": "a", "explanation": "Circle A contains both A only and the regions overlapping with B or C." },
+                                { "label": "Subtract overlaps with B and C", "expression": "a - ab - ac", "explanation": "Subtract A intersect B and A intersect C, but the middle three-set region has now been subtracted twice." },
+                                { "label": "Add the three-set middle back", "expression": "a - ab - ac + abc", "explanation": "Add A intersect B intersect C back once, leaving A only." }
+                              ]
+                            },
+                            {
+                              "id": "a-union-b",
+                              "label": "A union B",
+                              "formula": "a + b - ab",
+                              "description": "Shade every region that is in A or B.",
+                              "steps": [
+                                { "label": "Add A and B", "expression": "a + b", "explanation": "This counts members in A and B together, but A intersect B is counted twice." },
+                                { "label": "Subtract A intersect B", "expression": "a + b - ab", "explanation": "Subtract the overlap once to get A union B." }
+                              ]
+                            },
+                            {
+                              "id": "a-intersect-b",
+                              "label": "A intersect B",
+                              "formula": "ab",
+                              "description": "Shade members that are in both A and B, including the part that may also be in C.",
+                              "steps": [
+                                { "label": "Look at the overlap of A and B", "expression": "ab", "explanation": "n(A intersect B) counts every member that is in A and B at the same time." }
+                              ]
+                            },
+                            {
+                              "id": "a-union-b-union-c",
+                              "label": "A union B union C",
+                              "formula": "a + b + c - ab - ac - bc + abc",
+                              "description": "Shade every region that is in A, B, or C.",
+                              "steps": [
+                                { "label": "Add all three sets", "expression": "a + b + c", "explanation": "Start by adding members in A, B, and C, but overlapping regions are overcounted." },
+                                { "label": "Subtract pairwise overlaps", "expression": "a + b + c - ab - ac - bc", "explanation": "Subtract A intersect B, A intersect C, and B intersect C to correct double counting." },
+                                { "label": "Add the three-set overlap back", "expression": "a + b + c - ab - ac - bc + abc", "explanation": "The middle three-set region was subtracted one time too many, so add it back." }
+                              ]
+                            },
+                            {
+                              "id": "a-intersect-b-intersect-c",
+                              "label": "A intersect B intersect C",
+                              "formula": "abc",
+                              "description": "Shade only the middle region that is in A, B, and C at the same time.",
+                              "steps": [
+                                { "label": "Look at the three-set middle", "expression": "abc", "explanation": "n(A intersect B intersect C) counts members that belong to all three sets." }
+                              ]
+                            }
+                          ]
+                        }
+                        """)
+        ));
+        setModule.addSubTopic(subTopic(
+                "Three-Set Venn Diagram",
+                """
+                        <h2>Three-Set Venn Diagram</h2>
+                        <p>A Venn diagram separates the regions of sets A, B, and C visually before member counts are computed with inclusion-exclusion.</p>
+                        <p>Use the buttons to highlight circles or important regions, then connect the visual regions to the formulas from the previous topic.</p>
+                        """,
+                4,
+                14,
+                22,
+                InteractionType.VISUAL_LAYER,
+                "Let learners press buttons to highlight zones in a three-set Venn diagram and read feedback.",
+                validate(interactiveConfigService, InteractionType.VISUAL_LAYER, """
+                        {
+                          "type": "VISUAL_LAYER",
+                          "mode": "VISUALIZATION",
+                          "title": "Venn ABC visual layer",
+                          "canvas": {
+                            "width": 900,
+                            "height": 520,
+                            "backgroundText": "A, B, and C overlap to show unions and intersections"
+                          },
+                          "zones": [
+                            { "id": "zone_a", "label": "A", "shape": "circle", "x": 260, "y": 130, "width": 260, "height": 260, "labelX": 63, "labelY": 50, "color": "#ffd333", "highlightColor": "#ff8f1f", "highlightOpacity": 0.72, "feedback": "Circle A contains all members in A, including overlaps with B or C." },
+                            { "id": "zone_b", "label": "B", "shape": "circle", "x": 380, "y": 130, "width": 260, "height": 260, "labelX": 37, "labelY": 50, "color": "#8fb3ff", "highlightColor": "#4f8cff", "highlightOpacity": 0.72, "feedback": "Circle B contains all members in B, including overlaps with A or C." },
+                            { "id": "zone_c", "label": "C", "shape": "circle", "x": 320, "y": 235, "width": 260, "height": 260, "labelX": 50, "labelY": 32, "color": "#8fe0aa", "highlightColor": "#3aa66b", "highlightOpacity": 0.72, "feedback": "Circle C contains all members in C, including overlaps with A or B." }
+                          ],
+                          "elements": [
+                            { "id": "choice_a", "label": "Highlight A", "kind": "button", "x": 40, "y": 40, "width": 170, "height": 48 },
+                            { "id": "choice_b", "label": "Highlight B", "kind": "button", "x": 40, "y": 100, "width": 170, "height": 48 },
+                            { "id": "choice_c", "label": "Highlight C", "kind": "button", "x": 40, "y": 160, "width": 170, "height": 48 }
+                          ],
+                          "interactions": [
+                            { "triggerId": "choice_a", "effect": "HIGHLIGHT_ZONE", "targetZoneId": "zone_a", "feedback": "Circle A contains every member in A." },
+                            { "triggerId": "choice_b", "effect": "HIGHLIGHT_ZONE", "targetZoneId": "zone_b", "feedback": "Circle B contains every member in B." },
+                            { "triggerId": "choice_c", "effect": "HIGHLIGHT_ZONE", "targetZoneId": "zone_c", "feedback": "Circle C contains every member in C." }
+                          ],
+                          "overlap": {
+                            "enabled": true,
+                            "sourceZoneIds": ["zone_a", "zone_b", "zone_c"],
+                            "inputs": [
+                              { "id": "A_ONLY", "label": "A", "zoneIds": ["zone_a"], "value": 33, "kind": "total" },
+                              { "id": "B_ONLY", "label": "B", "zoneIds": ["zone_b"], "value": 26, "kind": "total" },
+                              { "id": "C_ONLY", "label": "C", "zoneIds": ["zone_c"], "value": 22, "kind": "total" },
+                              { "id": "A_AND_B", "label": "A ∩ B", "zoneIds": ["zone_a", "zone_b"], "value": 10, "kind": "intersection" },
+                              { "id": "A_AND_C", "label": "A ∩ C", "zoneIds": ["zone_a", "zone_c"], "value": 8, "kind": "intersection" },
+                              { "id": "B_AND_C", "label": "B ∩ C", "zoneIds": ["zone_b", "zone_c"], "value": 7, "kind": "intersection" },
+                              { "id": "A_AND_B_AND_C", "label": "A ∩ B ∩ C", "zoneIds": ["zone_a", "zone_b", "zone_c"], "value": 3, "kind": "intersection" }
+                            ],
+                            "values": [
+                              { "id": "A_ONLY", "label": "A only", "zoneIds": ["zone_a"], "value": 18, "feedback": "Members in A only, not in B or C." },
+                              { "id": "B_ONLY", "label": "B only", "zoneIds": ["zone_b"], "value": 12, "feedback": "Members in B only, not in A or C." },
+                              { "id": "C_ONLY", "label": "C only", "zoneIds": ["zone_c"], "value": 10, "feedback": "Members in C only, not in A or B." },
+                              { "id": "A_AND_B", "label": "A ∩ B only", "zoneIds": ["zone_a", "zone_b"], "value": 7, "feedback": "Members in A and B but not in C." },
+                              { "id": "A_AND_C", "label": "A ∩ C only", "zoneIds": ["zone_a", "zone_c"], "value": 5, "feedback": "Members in A and C but not in B." },
+                              { "id": "B_AND_C", "label": "B ∩ C only", "zoneIds": ["zone_b", "zone_c"], "value": 4, "feedback": "Members in B and C but not in A." },
+                              { "id": "A_AND_B_AND_C", "label": "A ∩ B ∩ C", "zoneIds": ["zone_a", "zone_b", "zone_c"], "value": 3, "feedback": "Members that belong to A, B, and C." }
+                            ]
+                          }
+                        }
+                        """)
+        ));
+        publishSeedCourse(courseRepository, setCourse, setModule);
+
+        Course vectorCourse = seedCourse(
+                courseRepository,
+                "Vector",
+                "Seed course from course_source_for_seed_reference/Vector.pdf covering vector quantities, coordinate vectors, unit vectors, dot product, cross product, area, and volume.",
+                admin
+        );
+        CourseModule vectorModule = new CourseModule(
+                "Vector",
+                "Based on Vector.pdf: vector quantities, coordinate vectors, unit vectors, dot products, cross products, area, and volume.",
+                0,
+                ContentDepth.HIGH
+        );
+        vectorModule.addSubTopic(subTopic(
+                "Vector Quantities",
+                """
+                        <h2>Vector Quantities</h2>
+                        <p>A vector is a quantity with both magnitude and direction, unlike a scalar, which has magnitude only. Vectors are often represented by arrows or variables marked with an arrow.</p>
+                        <p>Vectors with the same magnitude and direction are considered equal even if they are drawn in different positions.</p>
+                        """,
+                0,
+                1,
+                7,
+                InteractionType.NONE,
+                null,
+                null
+        ));
+        vectorModule.addSubTopic(subTopic(
+                "Vectors in Rectangular Coordinates",
+                """
+                        <h2>Vectors in Rectangular Coordinates</h2>
+                        <p>A vector in rectangular coordinates is written by its components along each axis, such as <code>(x, y)</code>. The magnitude of a two-dimensional vector is <code>sqrt(x^2 + y^2)</code>.</p>
+                        <p>Addition, subtraction, and scalar multiplication are performed component by component.</p>
+                        """,
+                1,
+                8,
+                12,
+                InteractionType.FORMULA_EXPLORER,
+                "Let learners adjust the vector components until the magnitude equals 5.",
+                validate(interactiveConfigService, InteractionType.FORMULA_EXPLORER, """
+                        {
+                          "type": "FORMULA_EXPLORER",
+                          "mode": "PRACTICE",
+                          "title": "Vector magnitude target",
+                          "prompt": "Adjust x and y until the magnitude equals 5.",
+                          "formula": "sqrt(x^2 + y^2)",
+                          "variables": [
+                            { "name": "x", "label": "X component", "min": 0, "max": 10, "step": 1, "initial": 0 },
+                            { "name": "y", "label": "Y component", "min": 0, "max": 10, "step": 1, "initial": 0 }
+                          ],
+                          "precision": 2,
+                          "successCondition": { "kind": "EXPRESSION_EQUALS", "target": 5, "tolerance": 0.01 },
+                          "feedback": {
+                            "success": "Correct. The vector magnitude is 5.",
+                            "failure": "Not yet. Try values that form a 3-4-5 triangle."
+                          }
+                        }
+                        """)
+        ));
+        vectorModule.addSubTopic(subTopic(
+                "Unit Vectors",
+                """
+                        <h2>Unit Vectors</h2>
+                        <p>A unit vector is a vector with magnitude 1. To turn a vector into a unit vector, divide the vector by its magnitude.</p>
+                        """,
+                2,
+                13,
+                16,
+                InteractionType.NONE,
+                null,
+                null
+        ));
+        vectorModule.addSubTopic(subTopic(
+                "Dot Product",
+                """
+                        <h2>Dot Product</h2>
+                        <p>The dot product returns a scalar. It is used to study the angle between vectors and to test perpendicularity. In rectangular coordinates, multiply matching components and add the products.</p>
+                        """,
+                3,
+                17,
+                28,
+                InteractionType.NONE,
+                null,
+                null
+        ));
+        vectorModule.addSubTopic(subTopic(
+                "Cross Product",
+                """
+                        <h2>Cross Product</h2>
+                        <p>The cross product returns a vector perpendicular to the two original vectors. It is used with three-dimensional vectors and connects to the area of a parallelogram.</p>
+                        """,
+                4,
+                29,
+                31,
+                InteractionType.THREE_JS,
+                "Let learners rotate an object to practice reading directions in three dimensions.",
+                validate(interactiveConfigService, InteractionType.THREE_JS, """
+                        {
+                          "type": "THREE_JS",
+                          "mode": "PRACTICE",
+                          "title": "Match the target orientation",
+                          "prompt": "Rotate the object until it matches the target orientation.",
+                          "shape": "cube",
+                          "color": "#4f8cff",
+                          "controls": {
+                            "rotationX": { "min": 0, "max": 180, "step": 15, "initial": 0 },
+                            "rotationY": { "min": 0, "max": 180, "step": 15, "initial": 0 },
+                            "rotationZ": { "min": 0, "max": 180, "step": 15, "initial": 0 }
+                          },
+                          "successCondition": {
+                            "kind": "TRANSFORM_MATCH",
+                            "target": { "rotationX": 45, "rotationY": 90, "rotationZ": 0 },
+                            "tolerance": 5
+                          },
+                          "feedback": {
+                            "success": "Correct. The object matches the target orientation.",
+                            "failure": "Not yet. Compare the current orientation with the target."
+                          }
+                        }
+                        """)
+        ));
+        vectorModule.addSubTopic(subTopic(
+                "Area and Volume",
+                """
+                        <h2>Area and Volume</h2>
+                        <p>Cross products and scalar triple products help compute the area and volume of geometric shapes built from vectors, such as parallelograms and parallelepipeds.</p>
+                        """,
+                5,
+                32,
+                40,
+                InteractionType.NONE,
+                null,
+                null
+        ));
+        publishSeedCourse(courseRepository, vectorCourse, vectorModule);
+    }
+
+    private Course seedCourse(CourseRepository courseRepository, String title, String description, User admin) {
+        Course course = courseRepository.findAllByOrderByCreatedAtDesc().stream()
+                .filter(existingCourse -> title.equals(existingCourse.getTitle()))
+                .findFirst()
+                .orElseGet(() -> new Course(title, description, admin));
+        course.updateDetails(title, description);
+        course.clearModules();
+        return course;
+    }
+
+    private void publishSeedCourse(CourseRepository courseRepository, Course course, CourseModule module) {
+        course.addModule(module);
+        course.publish();
+        courseRepository.save(course);
+    }
+
+    private void removeLegacyAggregateSeedCourse(CourseRepository courseRepository) {
+        courseRepository.findAllByOrderByCreatedAtDesc().stream()
+                .filter(course -> "Interactive Math Foundations".equals(course.getTitle()))
+                .forEach(courseRepository::delete);
+    }
+
+    private SubTopic subTopic(
+            String title,
+            String content,
+            int sortOrder,
+            Integer pageStart,
+            Integer pageEnd,
+            InteractionType interactionType,
+            String interactionPrompt,
+            String interactionConfig
+    ) {
+        return new SubTopic(
+                title,
+                content,
+                sortOrder,
+                SubTopicSourceType.MANUAL,
+                pageStart,
+                pageEnd,
+                interactionType,
+                interactionPrompt,
+                interactionConfig
+        );
+    }
+
+    private String validate(
+            InteractiveConfigService interactiveConfigService,
+            InteractionType interactionType,
+            String interactionConfig
+    ) {
+        return interactiveConfigService.validateAndNormalize(interactionType, interactionConfig);
     }
 }
