@@ -10,6 +10,7 @@ public record PublishedSubTopicDto(
         Integer sortOrder,
         InteractionType interactionType,
         String interactionPrompt,
-        String interactionConfig
+        String interactionConfig,
+        InteractiveProgressDto interactiveProgress
 ) {
 }

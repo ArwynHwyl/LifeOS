@@ -5,12 +5,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.demo.entity.course.InteractionType;
 import com.example.demo.service.exception.ValidationException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 class InteractiveConfigServiceTests {
 
     private final InteractiveConfigService service = new InteractiveConfigService(new ObjectMapper());
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
     void noneClearsConfig() {
@@ -36,7 +38,32 @@ class InteractiveConfigServiceTests {
                 """)).contains("\"overlap\"").contains("\"value\":8.0").contains("\"value\":6.0").contains("\"value\":3.0");
         assertThat(service.validateAndNormalize(InteractionType.QUIZ, """
                 {"type":"QUIZ","title":"Quiz","question":"Pick one","options":[{"id":"a","label":"A","correct":true},{"id":"b","label":"B","correct":false}],"explanation":"Because."}
-                """)).contains("\"type\":\"QUIZ\"").contains("\"mode\":\"VISUALIZATION\"");
+                """)).contains("\"type\":\"QUIZ\"").contains("\"mode\":\"PRACTICE\"");
+    }
+
+    @Test
+    void normalizesLegacyQuizConfigsToPractice() throws Exception {
+        String normalized = service.validateAndNormalize(InteractionType.QUIZ, """
+                {"type":"QUIZ","mode":"VISUALIZATION","title":"Quiz","question":"Pick one","options":[{"id":"a","label":"A","correct":true},{"id":"b","label":"B","correct":false}],"explanation":"Because."}
+                """);
+
+        JsonNode root = objectMapper.readTree(normalized);
+        assertThat(root.path("mode").asText()).isEqualTo("PRACTICE");
+        assertThat(root.path("prompt").asText()).isEqualTo("Pick one");
+        assertThat(root.path("successCondition").path("kind").asText()).isEqualTo("QUIZ_CORRECT_OPTION");
+        assertThat(root.path("feedback").path("success").asText()).isEqualTo("Correct.");
+    }
+
+    @Test
+    void exposesQuizTemplateAsPracticeOnly() {
+        var quizTemplate = service.listTemplates().stream()
+                .filter(template -> template.type() == InteractionType.QUIZ)
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(quizTemplate.defaultConfig()).containsEntry("mode", "PRACTICE");
+        assertThat(quizTemplate.visualizationDefaultConfig()).containsEntry("mode", "PRACTICE");
+        assertThat(quizTemplate.practiceDefaultConfig()).containsEntry("mode", "PRACTICE");
     }
 
     @Test
@@ -152,10 +179,10 @@ class InteractiveConfigServiceTests {
     @Test
     void rejectsInvalidPracticeContracts() {
         assertThatThrownBy(() -> service.validateAndNormalize(InteractionType.QUIZ, """
-                {"type":"QUIZ","mode":"PRACTICE","title":"Quiz","prompt":"Pick one","question":"Pick one","options":[{"id":"a","label":"A","correct":true},{"id":"b","label":"B","correct":false}],"feedback":{"success":"Correct","failure":"Try again"}}
+                {"type":"QUIZ","mode":"PRACTICE","title":"Quiz","prompt":"Pick one","question":"Pick one","options":[{"id":"a","label":"A","correct":true},{"id":"b","label":"B","correct":false}],"successCondition":{"kind":"POINT_ON_GRAPH"},"feedback":{"success":"Correct","failure":"Try again"}}
                 """))
                 .isInstanceOf(ValidationException.class)
-                .hasMessageContaining("successCondition is required");
+                .hasMessageContaining("successCondition.kind must be QUIZ_CORRECT_OPTION");
 
     }
 }

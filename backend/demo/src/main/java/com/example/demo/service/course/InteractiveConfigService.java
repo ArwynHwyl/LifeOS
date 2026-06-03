@@ -81,7 +81,7 @@ public class InteractiveConfigService {
         }
         ObjectNode root = parseObject(interactionConfig);
         requireType(root, type);
-        boolean practice = normalizeAndValidateMode(root);
+        boolean practice = normalizeAndValidateMode(root, type);
         switch (type) {
             case GRAPH_2D -> validateGraph(root, practice);
             case FORMULA_EXPLORER -> validateFormula(root, practice);
@@ -151,7 +151,7 @@ public class InteractiveConfigService {
                         "Quiz",
                         "Render a local multiple-choice check with immediate feedback.",
                         quizPractice,
-                        quizVisualizationDefault(),
+                        quizPractice,
                         quizPractice,
                         List.of(
                                 field("title", "Title", "text", true, null, null, 120, null),
@@ -223,21 +223,6 @@ public class InteractiveConfigService {
                 "precision", 2,
                 "successCondition", Map.of("kind", "EXPRESSION_EQUALS", "target", 5, "tolerance", 0.01),
                 "feedback", Map.of("success", "Correct. The magnitude is 5.", "failure", "Not yet. Look for a Pythagorean triple.")
-        );
-    }
-
-    private Map<String, Object> quizVisualizationDefault() {
-        return Map.of(
-                "type", "QUIZ",
-                "mode", "VISUALIZATION",
-                "title", "Quick check",
-                "question", "Which value makes 2x + 5 = 13 true?",
-                "options", List.of(
-                        Map.of("id", "a", "label", "x = 3", "correct", false),
-                        Map.of("id", "b", "label", "x = 4", "correct", true),
-                        Map.of("id", "c", "label", "x = 6", "correct", false)
-                ),
-                "explanation", "Subtract 5 from both sides, then divide by 2."
         );
     }
 
@@ -437,9 +422,13 @@ public class InteractiveConfigService {
         }
     }
 
-    private boolean normalizeAndValidateMode(ObjectNode root) {
+    private boolean normalizeAndValidateMode(ObjectNode root, InteractionType type) {
         JsonNode mode = root.get("mode");
         if (mode == null || mode.isNull()) {
+            if (type == InteractionType.QUIZ) {
+                normalizeQuizPracticeFields(root);
+                return true;
+            }
             root.put("mode", "VISUALIZATION");
             return false;
         }
@@ -450,8 +439,47 @@ public class InteractiveConfigService {
         if (!Set.of("VISUALIZATION", "PRACTICE").contains(value)) {
             throw new ValidationException("mode must be VISUALIZATION or PRACTICE");
         }
+        if (type == InteractionType.QUIZ) {
+            root.put("mode", "PRACTICE");
+            normalizeQuizPracticeFields(root);
+            return true;
+        }
         root.put("mode", value);
         return "PRACTICE".equals(value);
+    }
+
+    private void normalizeQuizPracticeFields(ObjectNode root) {
+        root.put("mode", "PRACTICE");
+        if (!root.hasNonNull("prompt")) {
+            String question = root.path("question").isTextual() ? root.path("question").asText() : "Choose the correct answer.";
+            root.put("prompt", question);
+        }
+        JsonNode successCondition = root.get("successCondition");
+        if (successCondition == null || successCondition.isNull()) {
+            ObjectNode condition = root.putObject("successCondition");
+            condition.put("kind", "QUIZ_CORRECT_OPTION");
+        } else if (successCondition.isObject()) {
+            ObjectNode condition = (ObjectNode) successCondition;
+            JsonNode legacyType = condition.get("type");
+            if (!condition.hasNonNull("kind") && legacyType != null && legacyType.isTextual()) {
+                condition.put("kind", legacyType.asText());
+            }
+            condition.remove("type");
+        }
+        JsonNode feedback = root.get("feedback");
+        if (feedback == null || feedback.isNull()) {
+            ObjectNode feedbackObject = root.putObject("feedback");
+            feedbackObject.put("success", "Correct.");
+            feedbackObject.put("failure", "Not quite. Try again.");
+        } else if (feedback.isObject()) {
+            ObjectNode feedbackObject = (ObjectNode) feedback;
+            if (!feedbackObject.hasNonNull("success")) {
+                feedbackObject.put("success", "Correct.");
+            }
+            if (!feedbackObject.hasNonNull("failure")) {
+                feedbackObject.put("failure", "Not quite. Try again.");
+            }
+        }
     }
 
     private void validateGraph(ObjectNode root, boolean practice) {

@@ -16,8 +16,14 @@ const props = defineProps<{
   config: InteractiveConfig | null
 }>()
 
+const emit = defineEmits<{
+  started: []
+  checked: [payload: { passed: boolean }]
+}>()
+
 const selectedAnswer = ref<string | null>(null)
 const checked = ref(false)
+const started = ref(false)
 const formulaValues = ref<Record<string, number>>({})
 const graphValues = ref<Record<string, number>>({})
 const selectedFormulaOptionId = ref<string | null>(null)
@@ -45,6 +51,7 @@ watch(
   (config) => {
     selectedAnswer.value = null
     checked.value = false
+    started.value = false
     highlightedZoneId.value = null
     highlightedOverlapId.value = null
     visualFeedback.value = ''
@@ -109,8 +116,9 @@ const selectedOption = computed(() => {
 
 const practicePassed = computed(() => {
   const config = props.config
-  if (!config || config.mode !== 'PRACTICE') return false
+  if (!config) return false
   if (config.type === 'QUIZ') return Boolean(selectedOption.value?.correct)
+  if (config.mode !== 'PRACTICE') return false
   if (config.type === 'FORMULA_EXPLORER' && config.successCondition?.kind === 'EXPRESSION_EQUALS') {
     const value = Number(formulaResult.value)
     const tolerance = config.successCondition.tolerance ?? 0
@@ -132,7 +140,7 @@ const practicePassed = computed(() => {
 
 const activeFeedback = computed(() => {
   const config = props.config
-  if (!config || config.mode !== 'PRACTICE' || !checked.value) return ''
+  if (!config || (config.mode !== 'PRACTICE' && config.type !== 'QUIZ') || !checked.value) return ''
   if (!('feedback' in config)) return ''
   return practicePassed.value ? config.feedback?.success : config.feedback?.failure
 })
@@ -235,6 +243,18 @@ function updateFormulaValue(variable: FormulaExplorerConfig['variables'][number]
     [variable.name]: Number((event.target as HTMLInputElement).value),
   }
   checked.value = false
+}
+
+function markStarted() {
+  if (started.value || !props.config) return
+  started.value = true
+  emit('started')
+}
+
+function runCheck() {
+  markStarted()
+  checked.value = true
+  emit('checked', { passed: practicePassed.value })
 }
 
 function selectFormulaOption(optionId: string) {
@@ -517,7 +537,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
 </script>
 
 <template>
-  <section class="interactive-preview">
+  <section class="interactive-preview" @pointerdown.capture="markStarted" @input.capture="markStarted" @change.capture="markStarted">
     <div v-if="!config" class="interactive-empty">Unsupported or invalid interactive config.</div>
 
     <div v-else-if="config.type === 'GRAPH_2D'" class="space-y-3">
@@ -560,7 +580,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
           <span>{{ name }}: <strong>{{ graphValues[String(name)] }}</strong></span>
           <input type="range" :min="control.min" :max="control.max" :step="control.step" :value="graphValues[String(name)]" @input="updateGraphValue(String(name), $event)" />
         </label>
-        <button type="button" class="check-button" @click="checked = true">Check</button>
+        <button type="button" class="check-button" @click="runCheck">Check</button>
         <p v-if="checked" class="feedback">{{ activeFeedback }}</p>
       </div>
     </div>
@@ -618,7 +638,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
         </div>
       </div>
       <template v-if="config.mode === 'PRACTICE'">
-        <button type="button" class="check-button" @click="checked = true">Check</button>
+        <button type="button" class="check-button" @click="runCheck">Check</button>
         <p v-if="checked" class="feedback">{{ activeFeedback }}</p>
       </template>
     </div>
@@ -626,7 +646,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
     <div v-else-if="config.type === 'VISUAL_LAYER'" class="space-y-3">
       <header class="interactive-header">
         <h3>{{ (config as VisualLayerConfig).title }}</h3>
-        <span>Visual layer</span>
+        <span>Set / Diagram</span>
       </header>
       <template v-if="config.mode === 'PRACTICE'">
         <p class="practice-prompt">{{ (config as VisualLayerConfig).prompt }}</p>
@@ -714,7 +734,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
             </label>
           </div>
         </div>
-        <button type="button" class="check-button" @click="checked = true">Check</button>
+        <button type="button" class="check-button" @click="runCheck">Check</button>
         <p v-if="checked" class="feedback">{{ activeFeedback }}</p>
       </template>
       <div v-if="config.mode !== 'PRACTICE'" class="visual-layer-stage-wrap">
@@ -794,7 +814,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
       <header class="interactive-header">
         <h3>{{ (config as QuizConfig).title }}</h3>
       </header>
-      <p v-if="config.mode === 'PRACTICE'" class="practice-prompt">{{ config.prompt }}</p>
+      <p class="practice-prompt">{{ config.prompt }}</p>
       <p class="quiz-question">{{ (config as QuizConfig).question }}</p>
       <div class="grid gap-2 sm:grid-cols-2">
         <button
@@ -812,9 +832,9 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
           {{ option.label }}
         </button>
       </div>
-      <button type="button" class="check-button" :disabled="!selectedAnswer" @click="checked = true">Check</button>
+      <button type="button" class="check-button" :disabled="!selectedAnswer" @click="runCheck">Check</button>
       <p v-if="checked" class="feedback">
-        {{ config.mode === 'PRACTICE' ? activeFeedback : (selectedOption?.correct ? 'Correct.' : 'Not quite.') }}
+        {{ activeFeedback || (selectedOption?.correct ? 'Correct.' : 'Not quite.') }}
         <span v-if="(config as QuizConfig).explanation">{{ (config as QuizConfig).explanation }}</span>
       </p>
     </div>
@@ -824,6 +844,11 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
 
 <style scoped>
 .interactive-preview {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
   border: 2px solid #1a1814;
   border-radius: 10px;
   background: #fbf7ef;
@@ -930,6 +955,9 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   opacity: 0.45;
 }
 .visual-layer-stage-wrap {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   max-width: 100%;
   overflow: auto;
   border: 2px solid #d4cec6;

@@ -9,6 +9,7 @@ import com.example.demo.dto.course.DocumentSourceDto;
 import com.example.demo.dto.course.ModuleDto;
 import com.example.demo.dto.course.PublishedCourseDetailDto;
 import com.example.demo.dto.course.PublishedCourseSummaryDto;
+import com.example.demo.dto.course.InteractiveProgressDto;
 import com.example.demo.dto.course.PublishedModuleDto;
 import com.example.demo.dto.course.PublishedSubTopicDto;
 import com.example.demo.dto.course.SubTopicDto;
@@ -17,6 +18,7 @@ import com.example.demo.entity.User;
 import com.example.demo.entity.course.AiGenerationLog;
 import com.example.demo.entity.course.Course;
 import com.example.demo.entity.course.CourseModule;
+import com.example.demo.entity.course.InteractionType;
 import com.example.demo.entity.course.CourseReview;
 import com.example.demo.entity.course.CourseReviewComment;
 import com.example.demo.entity.course.DocumentSource;
@@ -24,6 +26,7 @@ import com.example.demo.entity.course.SubTopic;
 import com.example.demo.entity.course.SubTopicAsset;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.time.Duration;
 import org.springframework.stereotype.Component;
 
@@ -223,6 +226,10 @@ public class CourseDtoMapper {
     }
 
     public PublishedCourseDetailDto toPublishedDetailDto(Course course) {
+        return toPublishedDetailDto(course, Map.of());
+    }
+
+    public PublishedCourseDetailDto toPublishedDetailDto(Course course, Map<Long, InteractiveProgressDto> progressBySubTopicId) {
         return new PublishedCourseDetailDto(
                 course.getId(),
                 course.getTitle(),
@@ -230,7 +237,7 @@ public class CourseDtoMapper {
                 course.getPublishedAt(),
                 course.getModules().stream()
                         .sorted(Comparator.comparing(CourseModule::getSortOrder).thenComparing(CourseModule::getId))
-                        .map(this::toPublishedModuleDto)
+                        .map(module -> toPublishedModuleDto(module, progressBySubTopicId))
                         .toList()
         );
     }
@@ -240,6 +247,10 @@ public class CourseDtoMapper {
     }
 
     private PublishedModuleDto toPublishedModuleDto(CourseModule module) {
+        return toPublishedModuleDto(module, Map.of());
+    }
+
+    private PublishedModuleDto toPublishedModuleDto(CourseModule module, Map<Long, InteractiveProgressDto> progressBySubTopicId) {
         return new PublishedModuleDto(
                 module.getId(),
                 module.getTitle(),
@@ -250,12 +261,16 @@ public class CourseDtoMapper {
                 module.getInteractionConfig(),
                 module.getSubTopics().stream()
                         .sorted(Comparator.comparing(SubTopic::getSortOrder).thenComparing(SubTopic::getId))
-                        .map(this::toPublishedSubTopicDto)
+                        .map(subTopic -> toPublishedSubTopicDto(subTopic, progressBySubTopicId))
                         .toList()
         );
     }
 
     private PublishedSubTopicDto toPublishedSubTopicDto(SubTopic subTopic) {
+        return toPublishedSubTopicDto(subTopic, Map.of());
+    }
+
+    private PublishedSubTopicDto toPublishedSubTopicDto(SubTopic subTopic, Map<Long, InteractiveProgressDto> progressBySubTopicId) {
         return new PublishedSubTopicDto(
                 subTopic.getId(),
                 subTopic.getTitle(),
@@ -268,7 +283,8 @@ public class CourseDtoMapper {
                 subTopic.getSortOrder(),
                 subTopic.getInteractionType(),
                 subTopic.getInteractionPrompt(),
-                subTopic.getInteractionConfig()
+                subTopic.getInteractionConfig(),
+                subTopic.getInteractionType() == InteractionType.NONE ? null : progressBySubTopicId.get(subTopic.getId())
         );
     }
 

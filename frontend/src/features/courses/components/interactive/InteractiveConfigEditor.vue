@@ -4,7 +4,9 @@ import {
   listInteractiveTemplates,
   type InteractionType,
 } from '@/features/courses/services/adminCourses'
+import InteractiveChallengeShell from '@/features/courses/components/interactive/InteractiveChallengeShell.vue'
 import InteractivePreview from '@/features/courses/components/interactive/InteractivePreview.vue'
+import type { InteractiveProgressStatus } from '@/features/learning/services/learnerCourses'
 import {
   DEFAULT_INTERACTIVE_CONFIGS,
   TEMPLATE_TYPES,
@@ -14,6 +16,7 @@ import {
   ensureVisualOverlapValues,
   generatedOverlapRegions,
   isTemplateInteractionType,
+  normalizeInteractiveConfig,
   stringifyInteractiveConfig,
   type FormulaExplorerConfig,
   type FormulaOptionConfig,
@@ -45,7 +48,9 @@ const emit = defineEmits<{
 
 const templates = ref<InteractiveTemplate[]>([])
 const config = ref<InteractiveConfig | null>(configFromTypeAndRaw(props.interactionType, props.interactionConfig))
-const advancedOpen = ref(false)
+const studioTabs = ['Design', 'Preview', 'JSON'] as const
+const activeStudioTab = ref<'Design' | 'Preview' | 'JSON'>('Design')
+const simulatedProgressStatus = ref<InteractiveProgressStatus>('NOT_STARTED')
 const jsonDraft = ref(config.value ? stringifyInteractiveConfig(config.value) : '')
 const jsonError = ref('')
 const selectedFormulaSectionIndex = ref(0)
@@ -140,6 +145,28 @@ const templateChoices = computed(() => {
   }))
 })
 
+const templateCards = computed(() => [
+  { type: 'GRAPH_2D' as const, title: 'Graph', description: 'Plot expressions and create point-matching practice.' },
+  { type: 'FORMULA_EXPLORER' as const, title: 'Formula', description: 'Let learners adjust variables and inspect results.' },
+  { type: 'VISUAL_LAYER' as const, title: 'Set / Diagram Builder', description: 'Create Venn, set, and hotspot diagram activities.' },
+  { type: 'QUIZ' as const, title: 'Quiz', description: 'Build a quick multiple-choice check.' },
+])
+
+const presetCards = computed(() => [
+  { id: 'venn-2', title: '2-set Venn practice', type: 'VISUAL_LAYER' as const, config: twoSetVennPreset },
+  { id: 'venn-3', title: '3-set Venn practice', type: 'VISUAL_LAYER' as const, config: threeSetVennPreset },
+  { id: 'hotspot', title: 'Hotspot diagram', type: 'VISUAL_LAYER' as const, config: hotspotPreset },
+  { id: 'formula-target', title: 'Formula target practice', type: 'FORMULA_EXPLORER' as const, config: formulaTargetPreset },
+  { id: 'graph-point', title: 'Graph point match', type: 'GRAPH_2D' as const, config: graphPointPreset },
+  { id: 'quick-quiz', title: 'Quick quiz', type: 'QUIZ' as const, config: quickQuizPreset },
+])
+
+const previewObjective = computed(() => {
+  if (prompt.value.trim()) return prompt.value
+  if (config.value && 'prompt' in config.value && config.value.prompt?.trim()) return config.value.prompt
+  return 'Complete this activity to master the concept.'
+})
+
 const selectedFormulaOption = computed(() => {
   if (config.value?.type !== 'FORMULA_EXPLORER') return null
   return config.value.formulaOptions?.[selectedFormulaSectionIndex.value] ?? null
@@ -232,10 +259,98 @@ onUnmounted(() => {
 })
 
 function setConfig(next: InteractiveConfig) {
-  config.value = next
+  const normalized = normalizeInteractiveConfig(next)
+  config.value = normalized
   jsonError.value = ''
-  jsonDraft.value = stringifyInteractiveConfig(next)
+  jsonDraft.value = stringifyInteractiveConfig(normalized)
   emit('update:interactionConfig', jsonDraft.value)
+}
+
+function selectTemplateCard(type: TemplateInteractionType | 'NONE' | 'OTHER') {
+  emit('update:interactionType', type)
+  if (type === 'NONE') {
+    config.value = null
+    jsonDraft.value = ''
+    emit('update:interactionConfig', '')
+    return
+  }
+  if (type === 'OTHER') {
+    config.value = null
+    jsonDraft.value = props.interactionConfig ?? ''
+    return
+  }
+  setConfig(cloneDefaultConfig(type))
+}
+
+function applyPreset(preset: { type: TemplateInteractionType; config: () => InteractiveConfig }) {
+  const next = preset.config()
+  if (config.value?.type === next.type) {
+    next.title = config.value.title
+  }
+  emit('update:interactionType', preset.type)
+  setConfig(next)
+}
+
+function twoSetVennPreset(): InteractiveConfig {
+  const config: VisualLayerConfig = {
+    type: 'VISUAL_LAYER',
+    mode: 'PRACTICE',
+    title: 'Build the Venn diagram',
+    prompt: 'Add circles A and B, arrange the overlap, then enter each exact region value.',
+    canvas: { width: 900, height: 520, backgroundText: '' },
+    zones: [
+      { id: 'zone_a', label: 'A', shape: 'circle', x: 250, y: 140, width: 280, height: 280, labelX: 34, labelY: 28, color: '#ffd333', highlightColor: '#ff8f1f', highlightOpacity: 0.82 },
+      { id: 'zone_b', label: 'B', shape: 'circle', x: 390, y: 140, width: 280, height: 280, labelX: 66, labelY: 28, color: '#8fb3ff', highlightColor: '#4f8cff', highlightOpacity: 0.82 },
+    ],
+    elements: [],
+    interactions: [],
+    feedback: { success: 'Correct. The exact Venn regions match.', failure: 'Not yet. Check totals and the intersection.' },
+  }
+  return { ...config, overlap: ensureVisualOverlapValues({ ...config, overlap: { enabled: true, sourceZoneIds: ['zone_a', 'zone_b'], inputs: [
+    { id: 'A_ONLY', label: 'A', zoneIds: ['zone_a'], value: 11, kind: 'total' },
+    { id: 'B_ONLY', label: 'B', zoneIds: ['zone_b'], value: 9, kind: 'total' },
+    { id: 'A_AND_B', label: 'A intersect B', zoneIds: ['zone_a', 'zone_b'], value: 3, kind: 'intersection' },
+  ], values: [] } }, ['zone_a', 'zone_b']) }
+}
+
+function threeSetVennPreset(): InteractiveConfig {
+  return clonePracticeDefaultConfig('VISUAL_LAYER')
+}
+
+function hotspotPreset(): InteractiveConfig {
+  return {
+    type: 'VISUAL_LAYER',
+    mode: 'VISUALIZATION',
+    title: 'Hotspot diagram',
+    canvas: { width: 900, height: 520, backgroundText: 'Click a label to highlight the matching region.' },
+    zones: [
+      { id: 'zone_input', label: 'Input', shape: 'rectangle', x: 90, y: 170, width: 190, height: 120, color: '#ffd333', highlightColor: '#ff8f1f', highlightOpacity: 0.82, feedback: 'Inputs are the values supplied to the process.' },
+      { id: 'zone_process', label: 'Process', shape: 'rectangle', x: 355, y: 150, width: 190, height: 160, color: '#8fb3ff', highlightColor: '#4f8cff', highlightOpacity: 0.82, feedback: 'The process transforms inputs into outputs.' },
+      { id: 'zone_output', label: 'Output', shape: 'rectangle', x: 620, y: 170, width: 190, height: 120, color: '#8fe0aa', highlightColor: '#3aa66b', highlightOpacity: 0.82, feedback: 'Outputs are the results produced by the process.' },
+    ],
+    elements: [
+      { id: 'choice_input', label: 'Input', kind: 'button', x: 110, y: 365, width: 150, height: 48 },
+      { id: 'choice_process', label: 'Process', kind: 'button', x: 375, y: 365, width: 150, height: 48 },
+      { id: 'choice_output', label: 'Output', kind: 'button', x: 640, y: 365, width: 150, height: 48 },
+    ],
+    interactions: [
+      { triggerId: 'choice_input', effect: 'HIGHLIGHT_ZONE', targetZoneId: 'zone_input', feedback: 'Inputs start the flow.' },
+      { triggerId: 'choice_process', effect: 'HIGHLIGHT_ZONE', targetZoneId: 'zone_process', feedback: 'Processing applies the rule.' },
+      { triggerId: 'choice_output', effect: 'HIGHLIGHT_ZONE', targetZoneId: 'zone_output', feedback: 'Outputs finish the flow.' },
+    ],
+  }
+}
+
+function formulaTargetPreset(): InteractiveConfig {
+  return clonePracticeDefaultConfig('FORMULA_EXPLORER')
+}
+
+function graphPointPreset(): InteractiveConfig {
+  return clonePracticeDefaultConfig('GRAPH_2D')
+}
+
+function quickQuizPreset(): InteractiveConfig {
+  return clonePracticeDefaultConfig('QUIZ')
 }
 
 function patchConfig(patch: Partial<InteractiveConfig>) {
@@ -245,6 +360,10 @@ function patchConfig(patch: Partial<InteractiveConfig>) {
 
 function setMode(mode: 'VISUALIZATION' | 'PRACTICE') {
   if (!isTemplateInteractionType(props.interactionType)) return
+  if (props.interactionType === 'QUIZ') {
+    setConfig(clonePracticeDefaultConfig('QUIZ'))
+    return
+  }
   if (mode === 'PRACTICE') {
     const current = config.value
     const next = clonePracticeDefaultConfig(props.interactionType)
@@ -1155,29 +1274,85 @@ function updateGraphControl(name: string, patch: Partial<{ min: number; max: num
 function labelFor(type: TemplateInteractionType) {
   if (type === 'GRAPH_2D') return '2D graph'
   if (type === 'FORMULA_EXPLORER') return 'Formula explorer'
-  if (type === 'VISUAL_LAYER') return 'Visual layer'
+  if (type === 'VISUAL_LAYER') return 'Set / Diagram Builder'
   return 'Quiz'
 }
 </script>
 
 <template>
   <div class="interactive-config-shell" :class="{ 'interactive-config-shell--canvas': config?.type === 'FORMULA_EXPLORER' || config?.type === 'VISUAL_LAYER' }">
-    <div class="interactive-config-controls space-y-3">
-      <label class="block">
-        <span class="mb-1 block text-[11px] font-bold text-lm-ink-3">Interaction</span>
-        <select
-          v-model="templateType"
-          class="h-9 w-full rounded-[8px] border-2 border-lm-line-soft bg-lm-bg-soft px-3 text-[12px] text-lm-ink outline-none transition focus:border-lm-line focus:bg-lm-surface"
-        >
-          <option value="NONE">None</option>
-          <option v-for="template in templateChoices" :key="template.type" :value="template.type">{{ template.label }}</option>
-          <option value="OTHER">Other JSON</option>
-        </select>
-      </label>
+    <div class="studio-tabs" role="tablist" aria-label="Interactive editor sections">
+      <button v-for="tab in studioTabs" :key="tab" type="button" class="studio-tab" :class="{ active: activeStudioTab === tab }" @click="activeStudioTab = tab">
+        {{ tab }}
+      </button>
+    </div>
 
-    <div v-if="config" class="mode-row" role="group" aria-label="Interactive mode">
+    <div v-if="activeStudioTab === 'Design'" class="interactive-config-controls space-y-4">
+      <section class="studio-section">
+        <div class="studio-section__header">
+          <div>
+            <h3>Template</h3>
+            <p>Choose the activity type first, then refine the fields below.</p>
+          </div>
+          <label class="compact-select">
+            <span>Compact picker</span>
+            <select v-model="templateType">
+              <option value="NONE">None</option>
+              <option v-for="template in templateChoices" :key="template.type" :value="template.type">{{ template.label }}</option>
+              <option value="OTHER">Other JSON</option>
+            </select>
+          </label>
+        </div>
+        <div class="template-card-grid">
+          <button
+            v-for="card in templateCards"
+            :key="card.type"
+            type="button"
+            class="template-card"
+            :class="{ active: templateType === card.type }"
+            @click="selectTemplateCard(card.type)"
+          >
+            <strong>{{ card.title }}</strong>
+            <span>{{ card.description }}</span>
+          </button>
+          <button type="button" class="template-card" :class="{ active: templateType === 'NONE' }" @click="selectTemplateCard('NONE')">
+            <strong>None</strong>
+            <span>No activity for this lesson.</span>
+          </button>
+          <button type="button" class="template-card" :class="{ active: templateType === 'OTHER' }" @click="selectTemplateCard('OTHER')">
+            <strong>Other JSON</strong>
+            <span>Paste custom JSON without using a template editor.</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="studio-section">
+        <div class="studio-section__header">
+          <div>
+            <h3>Presets</h3>
+            <p>Apply a complete starter config, then edit it.</p>
+          </div>
+        </div>
+        <div class="preset-grid">
+          <button
+            v-for="preset in presetCards"
+            :key="preset.id"
+            type="button"
+            class="preset-button"
+            @click="applyPreset(preset)"
+          >
+            {{ preset.title }}
+          </button>
+        </div>
+      </section>
+
+    <section class="studio-section studio-section--fields">
+    <div v-if="config && config.type !== 'QUIZ'" class="mode-row" role="group" aria-label="Interactive mode">
       <button type="button" :class="{ active: (config.mode ?? 'VISUALIZATION') === 'VISUALIZATION' }" @click="setMode('VISUALIZATION')">Visualization</button>
       <button type="button" :class="{ active: config.mode === 'PRACTICE' }" @click="setMode('PRACTICE')">Practice</button>
+    </div>
+    <div v-else-if="config?.type === 'QUIZ'" class="mode-row mode-row--fixed" aria-label="Interactive mode">
+      <span>Practice activity</span>
     </div>
 
     <label class="block">
@@ -1585,72 +1760,82 @@ function labelFor(type: TemplateInteractionType) {
     <div v-else-if="config?.type === 'QUIZ'" class="space-y-3">
       <label class="field"><span>Title</span><input :value="config.title" maxlength="120" @input="patchConfig({ title: ($event.target as HTMLInputElement).value })" /></label>
       <label class="field"><span>Question</span><textarea rows="3" :value="config.question" maxlength="500" @input="patchConfig({ question: ($event.target as HTMLTextAreaElement).value })" /></label>
-      <div class="space-y-2">
-        <div v-for="(option, index) in config.options" :key="`${option.id}-${index}`" class="nested-row nested-row--quiz">
-          <input type="radio" name="correct-option" :checked="option.correct" title="Correct answer" @change="setCorrectQuizOption(index)" />
-          <label class="field"><span>ID</span><input :value="option.id" maxlength="24" @input="updateQuizOption(index, { id: ($event.target as HTMLInputElement).value })" /></label>
-          <label class="field field--wide"><span>Option</span><input :value="option.label" maxlength="250" @input="updateQuizOption(index, { label: ($event.target as HTMLInputElement).value })" /></label>
-          <button type="button" class="mini-button" :disabled="config.options.length <= 2" @click="removeQuizOption(index)">Remove</button>
+      <div class="quiz-answer-grid">
+        <div v-for="(option, index) in config.options" :key="`${option.id}-${index}`" class="quiz-answer-card" :class="{ 'quiz-answer-card--correct': option.correct }">
+          <label class="quiz-answer-card__main">
+            <input type="radio" name="correct-option" :checked="option.correct" @change="setCorrectQuizOption(index)" />
+            <input
+              class="quiz-answer-input"
+              :value="option.label"
+              maxlength="250"
+              :aria-label="`Option ${index + 1}`"
+              @input="updateQuizOption(index, { label: ($event.target as HTMLInputElement).value })"
+            />
+          </label>
+          <div class="quiz-answer-card__meta">
+            <label class="quiz-id-chip">
+              <span>ID</span>
+              <input :value="option.id" maxlength="24" @input="updateQuizOption(index, { id: ($event.target as HTMLInputElement).value })" />
+            </label>
+            <span class="quiz-answer-state">{{ option.correct ? 'Correct answer' : 'Distractor' }}</span>
+            <button type="button" class="mini-button" :disabled="config.options.length <= 2" @click="removeQuizOption(index)">Remove</button>
+          </div>
         </div>
-        <button type="button" class="mini-button" :disabled="config.options.length >= 6" @click="addQuizOption">Add option</button>
+        <button type="button" class="quiz-add-card" :disabled="config.options.length >= 6" @click="addQuizOption">Add option</button>
       </div>
       <label class="field"><span>Explanation</span><textarea rows="3" :value="config.explanation ?? ''" maxlength="1000" @input="patchConfig({ explanation: ($event.target as HTMLTextAreaElement).value })" /></label>
-      <label v-if="config.mode === 'PRACTICE'" class="field"><span>Practice prompt</span><textarea rows="2" :value="config.prompt ?? ''" maxlength="500" @input="patchConfig({ prompt: ($event.target as HTMLTextAreaElement).value })" /></label>
+      <label class="field"><span>Practice prompt</span><textarea rows="2" :value="config.prompt ?? ''" maxlength="500" @input="patchConfig({ prompt: ($event.target as HTMLTextAreaElement).value })" /></label>
     </div>
 
     <div v-if="config?.mode === 'PRACTICE' && config.type !== 'VISUAL_LAYER'" class="editor-grid">
       <label class="field"><span>Success feedback</span><textarea rows="2" :value="config.feedback?.success ?? ''" maxlength="500" @input="patchConfig({ feedback: { success: ($event.target as HTMLTextAreaElement).value, failure: config.feedback?.failure ?? '' } })" /></label>
       <label class="field"><span>Failure feedback</span><textarea rows="2" :value="config.feedback?.failure ?? ''" maxlength="500" @input="patchConfig({ feedback: { success: config.feedback?.success ?? '', failure: ($event.target as HTMLTextAreaElement).value } })" /></label>
     </div>
+    </section>
 
-    <div v-else-if="templateType === 'OTHER'" class="json-panel">
+    </div>
+
+    <div v-else-if="activeStudioTab === 'Preview'" class="interactive-config-preview">
+      <div v-if="config" class="space-y-3">
+        <div class="mode-row" role="group" aria-label="Simulated progress status">
+          <button type="button" :class="{ active: simulatedProgressStatus === 'NOT_STARTED' }" @click="simulatedProgressStatus = 'NOT_STARTED'">Not started</button>
+          <button type="button" :class="{ active: simulatedProgressStatus === 'TRIED' }" @click="simulatedProgressStatus = 'TRIED'">Tried</button>
+          <button type="button" :class="{ active: simulatedProgressStatus === 'MASTERED' }" @click="simulatedProgressStatus = 'MASTERED'">Mastered</button>
+        </div>
+        <InteractiveChallengeShell
+          :interaction-type="config.type"
+          :objective="previewObjective"
+          :status="simulatedProgressStatus"
+          :mode="config.mode ?? 'VISUALIZATION'"
+        >
+          <InteractivePreview :config="config" />
+        </InteractiveChallengeShell>
+      </div>
+      <div v-else class="json-panel">
+        <p class="empty-note">Select a template or apply a preset to preview the learner challenge.</p>
+      </div>
+    </div>
+
+    <div v-else class="json-panel">
       <div class="json-panel__header">
         <div>
-          <h4>Custom JSON</h4>
-          <span>{{ jsonStats }}</span>
+          <h4>{{ templateType === 'OTHER' ? 'Custom JSON' : 'Advanced JSON' }}</h4>
+          <span>{{ config ? `${config.type} / ${config.mode ?? 'VISUALIZATION'} / ${jsonStats}` : jsonStats }}</span>
         </div>
         <div class="json-panel__actions">
           <button type="button" class="mini-button" @click="formatAdvancedJson">Format</button>
+          <button v-if="config" type="button" class="mini-button" @click="resetAdvancedJson">Reset</button>
           <button type="button" class="mini-button mini-button--dark" @click="applyAdvancedJson">Apply</button>
         </div>
       </div>
       <textarea
         v-model="jsonDraft"
-        rows="16"
+        rows="22"
         spellcheck="false"
         class="json-box json-box--advanced"
-        placeholder="{&quot;type&quot;:&quot;CUSTOM&quot;}"
-        @blur="applyAdvancedJson"
+        placeholder="{&quot;type&quot;:&quot;QUIZ&quot;}"
       />
       <p v-if="jsonError" class="json-error">{{ jsonError }}</p>
-    </div>
-
-    <div v-if="config" class="space-y-2">
-      <button type="button" class="mini-button" @click="advancedOpen = !advancedOpen">
-        {{ advancedOpen ? 'Hide JSON' : 'Advanced JSON' }}
-      </button>
-      <div v-if="advancedOpen" class="json-panel">
-        <div class="json-panel__header">
-          <div>
-            <h4>Advanced JSON</h4>
-            <span>{{ config.type }} / {{ config.mode ?? 'VISUALIZATION' }} / {{ jsonStats }}</span>
-          </div>
-          <div class="json-panel__actions">
-            <button type="button" class="mini-button" @click="formatAdvancedJson">Format</button>
-            <button type="button" class="mini-button" @click="resetAdvancedJson">Reset</button>
-            <button type="button" class="mini-button mini-button--dark" @click="applyAdvancedJson">Apply</button>
-          </div>
-        </div>
-        <textarea v-model="jsonDraft" rows="20" spellcheck="false" class="json-box json-box--advanced" />
-        <p v-if="jsonError" class="json-error">{{ jsonError }}</p>
-      </div>
-    </div>
-
-    </div>
-
-    <div v-if="config && config.type !== 'FORMULA_EXPLORER' && config.type !== 'VISUAL_LAYER'" class="interactive-config-preview">
-      <div class="preview-label">Preview</div>
-      <InteractivePreview :config="config" />
     </div>
   </div>
 </template>
@@ -1659,6 +1844,143 @@ function labelFor(type: TemplateInteractionType) {
 .interactive-config-shell {
   display: grid;
   gap: 1rem;
+}
+.studio-tabs,
+.interactive-config-controls,
+.interactive-config-preview,
+.interactive-config-shell > .json-panel {
+  grid-column: 1 / -1;
+}
+.studio-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  border-bottom: 2px solid #d4cec6;
+  padding-bottom: 0.55rem;
+}
+.studio-tab {
+  min-height: 2.25rem;
+  border: 2px solid #1a1814;
+  border-radius: 999px;
+  background: #fbf7ef;
+  padding: 0 0.9rem;
+  color: #1a1814;
+  font-size: 12px;
+  font-weight: 900;
+}
+.studio-tab.active {
+  background: #1a1814;
+  color: #fbf7ef;
+}
+.studio-section {
+  display: grid;
+  gap: 0.75rem;
+  border: 2px solid #d4cec6;
+  border-radius: 10px;
+  background: #fffdf8;
+  padding: 0.85rem;
+}
+.studio-section--fields {
+  background: transparent;
+}
+.studio-section__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.studio-section__header h3 {
+  margin: 0;
+  color: #1a1814;
+  font-size: 13px;
+  font-weight: 900;
+}
+.studio-section__header p {
+  margin: 0.15rem 0 0;
+  color: #6b6660;
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.35;
+}
+.compact-select {
+  display: grid;
+  gap: 0.25rem;
+  min-width: min(100%, 220px);
+}
+.compact-select span {
+  color: #6b6660;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.compact-select select {
+  height: 2.2rem;
+  border: 2px solid #d4cec6;
+  border-radius: 8px;
+  background: #f7f2ea;
+  padding: 0 0.55rem;
+  color: #1a1814;
+  font-size: 12px;
+  font-weight: 800;
+  outline: none;
+}
+.compact-select select:focus {
+  border-color: #1a1814;
+  background: #fffdf8;
+}
+.template-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.5rem;
+}
+.template-card {
+  min-height: 5.4rem;
+  border: 2px solid #d4cec6;
+  border-radius: 8px;
+  background: #fbf7ef;
+  padding: 0.65rem;
+  text-align: left;
+  color: #1a1814;
+  transition: border-color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+}
+.template-card:hover,
+.template-card.active {
+  border-color: #1a1814;
+  box-shadow: 2px 2px 0 #1a1814;
+  transform: translateY(-1px);
+}
+.template-card strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 12px;
+  font-weight: 900;
+}
+.template-card span {
+  display: block;
+  color: #6b6660;
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.35;
+}
+.preset-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+.preset-button {
+  min-height: 2rem;
+  border: 2px solid #d4cec6;
+  border-radius: 999px;
+  background: #fbf7ef;
+  padding: 0 0.7rem;
+  color: #1a1814;
+  font-size: 11px;
+  font-weight: 900;
+}
+.preset-button:hover {
+  border-color: #1a1814;
+  background: #ffd333;
 }
 .interactive-config-controls,
 .interactive-config-preview {
@@ -1673,15 +1995,8 @@ function labelFor(type: TemplateInteractionType) {
 }
 @media (min-width: 1200px) {
   .interactive-config-shell {
-    grid-template-columns: minmax(360px, 0.95fr) minmax(520px, 1.25fr);
-    align-items: start;
-  }
-  .interactive-config-shell--canvas {
     grid-template-columns: 1fr;
-  }
-  .interactive-config-preview {
-    position: sticky;
-    top: 1rem;
+    align-items: start;
   }
 }
 .editor-grid {
@@ -1742,6 +2057,112 @@ function labelFor(type: TemplateInteractionType) {
 .nested-row--quiz {
   grid-template-columns: auto 70px minmax(0, 1fr) auto;
   align-items: end;
+}
+.quiz-answer-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+.quiz-answer-card,
+.quiz-add-card {
+  min-width: 0;
+  border: 2px solid #1a1814;
+  border-radius: 8px;
+  background: #fffdf8;
+  color: #1a1814;
+}
+.quiz-answer-card {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.65rem;
+  box-shadow: 2px 2px 0 transparent;
+}
+.quiz-answer-card--correct {
+  background: #ffd333;
+  box-shadow: 2px 2px 0 #1a1814;
+}
+.quiz-answer-card__main {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 3.1rem;
+}
+.quiz-answer-card__main input[type='radio'] {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: #1a1814;
+}
+.quiz-answer-input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: #1a1814;
+  font-size: 14px;
+  font-weight: 900;
+  outline: none;
+}
+.quiz-answer-input:focus {
+  border-radius: 6px;
+  background: rgba(255, 253, 248, 0.7);
+  box-shadow: 0 0 0 2px rgba(26, 24, 20, 0.2);
+}
+.quiz-answer-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  padding-left: 1.65rem;
+}
+.quiz-id-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 2px solid #d4cec6;
+  border-radius: 999px;
+  background: #fbf7ef;
+  padding: 0.15rem 0.45rem;
+}
+.quiz-id-chip span,
+.quiz-answer-state {
+  color: #6b6660;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.quiz-id-chip input {
+  width: 2.4rem;
+  border: 0;
+  background: transparent;
+  color: #1a1814;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 900;
+  outline: none;
+}
+.quiz-answer-state {
+  border-radius: 999px;
+  background: #f0ece4;
+  padding: 0.25rem 0.5rem;
+}
+.quiz-answer-card--correct .quiz-answer-state {
+  background: #dff4df;
+  color: #245e3e;
+}
+.quiz-add-card {
+  min-height: 4.5rem;
+  border-style: dashed;
+  background: #fbf7ef;
+  font-size: 13px;
+  font-weight: 900;
+}
+.quiz-add-card:hover:not(:disabled) {
+  background: #ffd333;
+}
+.quiz-add-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 .section-card,
 .option-card,
@@ -2271,6 +2692,15 @@ function labelFor(type: TemplateInteractionType) {
 .mode-row button.active {
   background: #ffd333;
 }
+.mode-row--fixed {
+  grid-template-columns: 1fr;
+  width: max-content;
+  background: #ffd333;
+  padding: 0.45rem 0.8rem;
+  color: #1a1814;
+  font-size: 11px;
+  font-weight: 900;
+}
 .check-field {
   display: flex;
   align-items: center;
@@ -2282,6 +2712,7 @@ function labelFor(type: TemplateInteractionType) {
   .editor-grid,
   .nested-row,
   .nested-row--quiz,
+  .quiz-answer-grid,
   .formula-builder,
   .visual-editor {
     grid-template-columns: 1fr;

@@ -1,9 +1,17 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import InteractiveChallengeShell from '@/features/courses/components/interactive/InteractiveChallengeShell.vue'
 import InteractivePreview from '@/features/courses/components/interactive/InteractivePreview.vue'
 import { parseInteractiveConfig } from '@/features/courses/types/interactive'
-import { getPublishedCourse, type PublishedCourseDetailDto, type PublishedSubTopicDto } from '@/features/learning/services/learnerCourses'
+import {
+  getPublishedCourse,
+  updateInteractiveProgress,
+  type InteractiveProgressDto,
+  type InteractiveProgressStatus,
+  type PublishedCourseDetailDto,
+  type PublishedSubTopicDto,
+} from '@/features/learning/services/learnerCourses'
 import LmIcon from '../components/LmIcon.vue'
 
 const route = useRoute()
@@ -36,7 +44,25 @@ const interactiveConfig = computed(() => {
   if (!current) return null
   return parseInteractiveConfig(current.interactionType, current.interactionConfig)
 })
+const currentInteractiveMode = computed(() => {
+  if (selectedSubTopic.value?.interactionType === 'QUIZ') return 'PRACTICE'
+  return interactiveConfig.value?.mode ?? 'VISUALIZATION'
+})
 const selectedLessonHtml = computed(() => selectedSubTopic.value?.contentHtml || selectedSubTopic.value?.content || '')
+const currentProgressStatus = computed<InteractiveProgressStatus>(() => selectedSubTopic.value?.interactiveProgress?.status ?? 'NOT_STARTED')
+const currentChallengeObjective = computed(() => {
+  const current = selectedSubTopic.value
+  const config = interactiveConfig.value
+  if (!current) return 'Complete this activity to master the concept.'
+  if (current.interactionPrompt?.trim()) return current.interactionPrompt
+  if (config && 'prompt' in config && config.prompt?.trim()) return config.prompt
+  if (current.interactionType === 'QUIZ') return 'Answer the quiz to check your understanding.'
+  if (current.interactionType === 'GRAPH_2D') return 'Use the graph to match the target behavior.'
+  if (current.interactionType === 'FORMULA_EXPLORER') return 'Adjust the formula inputs to reach the target.'
+  if (current.interactionType === 'VISUAL_LAYER') return 'Build or inspect the set diagram to master the concept.'
+  return 'Complete this activity to master the concept.'
+})
+const currentInteractiveMastered = computed(() => selectedSubTopic.value?.interactionType !== 'NONE' && currentProgressStatus.value === 'MASTERED')
 
 onMounted(async () => {
   loading.value = true
@@ -58,6 +84,72 @@ function selectSubTopic(subTopic: PublishedSubTopicDto) {
 function goToOffset(offset: number) {
   const next = allSubTopics.value[selectedIndex.value + offset]
   if (next) selectedSubTopicId.value = next.id
+}
+
+function progressMarkerClass(subTopic: PublishedSubTopicDto) {
+  if (subTopic.interactionType === 'NONE') return ''
+  const status = subTopic.interactiveProgress?.status ?? 'NOT_STARTED'
+  if (status === 'MASTERED') return 'progress-marker progress-marker--mastered'
+  if (status === 'TRIED') return 'progress-marker progress-marker--tried'
+  return 'progress-marker progress-marker--not-started'
+}
+
+function setSubTopicProgress(subTopicId: number, progress: InteractiveProgressDto) {
+  if (!course.value) return
+  course.value = {
+    ...course.value,
+    modules: course.value.modules.map((module) => ({
+      ...module,
+      subTopics: module.subTopics.map((subTopic) => (
+        subTopic.id === subTopicId ? { ...subTopic, interactiveProgress: progress } : subTopic
+      )),
+    })),
+  }
+}
+
+function optimisticProgress(status: Exclude<InteractiveProgressStatus, 'NOT_STARTED'>) {
+  const current = selectedSubTopic.value
+  if (!current) return null
+  const existing = current.interactiveProgress
+  if (existing?.status === 'MASTERED' && status === 'TRIED') return existing
+  const next: InteractiveProgressDto = {
+    subTopicId: current.id,
+    status,
+    attemptCount: (existing?.attemptCount ?? 0) + 1,
+    masteredAt: status === 'MASTERED' ? (existing?.masteredAt ?? new Date().toISOString()) : (existing?.masteredAt ?? null),
+    updatedAt: new Date().toISOString(),
+  }
+  setSubTopicProgress(current.id, next)
+  return next
+}
+
+async function persistInteractiveProgress(status: Exclude<InteractiveProgressStatus, 'NOT_STARTED'>) {
+  const current = selectedSubTopic.value
+  if (!current || current.interactionType === 'NONE') return
+  if (current.interactiveProgress?.status === 'MASTERED' && status === 'TRIED') return
+  optimisticProgress(status)
+  try {
+    const saved = await updateInteractiveProgress(String(route.params.courseId), current.id, status)
+    setSubTopicProgress(current.id, saved)
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Unable to save challenge progress.'
+  }
+}
+
+function handleInteractiveStarted() {
+  if (currentInteractiveMode.value !== 'PRACTICE') {
+    if (currentProgressStatus.value !== 'MASTERED') {
+      void persistInteractiveProgress('MASTERED')
+    }
+    return
+  }
+  if (currentProgressStatus.value === 'NOT_STARTED') {
+    void persistInteractiveProgress('TRIED')
+  }
+}
+
+function handleInteractiveChecked(payload: { passed: boolean }) {
+  void persistInteractiveProgress(payload.passed ? 'MASTERED' : 'TRIED')
 }
 </script>
 
@@ -106,12 +198,17 @@ function goToOffset(offset: number) {
               :class="selectedSubTopic.id === subTopic.id ? 'border-lm-ink bg-lm-yellow text-lm-ink' : 'border-lm-line-soft bg-lm-surface text-lm-ink-2 hover:border-lm-line'"
               @click="selectSubTopic(subTopic)"
             >
-              {{ subTopic.title }}
+              <span class="flex min-w-0 items-center gap-2">
+                <span v-if="subTopic.interactionType !== 'NONE'" :class="progressMarkerClass(subTopic)">
+                  <span v-if="subTopic.interactiveProgress?.status === 'MASTERED'">✓</span>
+                </span>
+                <span class="min-w-0 flex-1">{{ subTopic.title }}</span>
+              </span>
             </button>
           </div>
         </aside>
 
-        <article class="space-y-6">
+        <article class="min-w-0 space-y-6">
           <header>
             <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3">{{ selectedModule?.title }}</span>
             <h1 class="font-display text-[34px] font-bold tracking-tight text-lm-ink leading-tight mt-1.5 m-0">{{ selectedSubTopic.title }}</h1>
@@ -119,10 +216,19 @@ function goToOffset(offset: number) {
 
           <section class="lesson-body rounded-[12px] border-2 border-lm-line bg-lm-surface px-5 py-4 shadow-stamp-sm" v-html="selectedLessonHtml" />
 
-          <InteractivePreview
+          <InteractiveChallengeShell
             v-if="selectedSubTopic.interactionType !== 'NONE'"
-            :config="interactiveConfig"
-          />
+            :interaction-type="selectedSubTopic.interactionType"
+            :objective="currentChallengeObjective"
+            :status="currentProgressStatus"
+            :mode="currentInteractiveMode"
+          >
+            <InteractivePreview
+              :config="interactiveConfig"
+              @started="handleInteractiveStarted"
+              @checked="handleInteractiveChecked"
+            />
+          </InteractiveChallengeShell>
         </article>
       </div>
     </div>
@@ -131,7 +237,7 @@ function goToOffset(offset: number) {
       <button class="nav-button" :disabled="selectedIndex <= 0" @click="goToOffset(-1)">Previous</button>
       <div class="flex-1" />
       <button class="nav-button nav-button--primary" :disabled="selectedIndex >= allSubTopics.length - 1" @click="goToOffset(1)">
-        Next
+        {{ currentInteractiveMastered ? 'Mastered · Next' : 'Next' }}
         <LmIcon name="arrow" :size="16" />
       </button>
     </div>
@@ -164,6 +270,32 @@ function goToOffset(offset: number) {
 .nav-button:disabled {
   cursor: not-allowed;
   opacity: 0.45;
+}
+.progress-marker {
+  display: inline-grid;
+  width: 0.85rem;
+  height: 0.85rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 2px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  line-height: 1;
+}
+.progress-marker--not-started {
+  color: #8f887e;
+  background: transparent;
+}
+.progress-marker--tried {
+  border-color: #1a1814;
+  background: #ffd333;
+  color: #1a1814;
+}
+.progress-marker--mastered {
+  border-color: #245e3e;
+  background: #dff4df;
+  color: #245e3e;
+  font-weight: 900;
 }
 :deep(.lesson-body h2) {
   margin: 1rem 0 0.35rem;

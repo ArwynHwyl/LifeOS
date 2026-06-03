@@ -29,9 +29,32 @@ export interface PublishedSubTopicDto {
   interactionType: InteractionType
   interactionPrompt: string | null
   interactionConfig: string | null
+  interactiveProgress: InteractiveProgressDto | null
+}
+
+export type InteractiveProgressStatus = 'NOT_STARTED' | 'TRIED' | 'MASTERED'
+
+export interface InteractiveProgressDto {
+  subTopicId: number
+  status: InteractiveProgressStatus
+  attemptCount: number
+  masteredAt: string | null
+  updatedAt: string | null
 }
 
 export async function getPublishedCourse(courseId: number | string) {
   const { data } = await api.get<PublishedCourseDetailDto>(`/v1/learner/courses/${courseId}`)
+  return data
+}
+
+export async function updateInteractiveProgress(
+  courseId: number | string,
+  subTopicId: number | string,
+  status: Exclude<InteractiveProgressStatus, 'NOT_STARTED'>,
+) {
+  const { data } = await api.put<InteractiveProgressDto>(
+    `/v1/learner/courses/${courseId}/subtopics/${subTopicId}/interactive-progress`,
+    { status },
+  )
   return data
 }

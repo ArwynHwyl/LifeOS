@@ -352,12 +352,31 @@ export function clonePracticeDefaultConfig(type: TemplateInteractionType): Inter
   return JSON.parse(JSON.stringify(PRACTICE_DEFAULT_CONFIGS[type])) as InteractiveConfig
 }
 
+export function normalizeInteractiveConfig(config: InteractiveConfig): InteractiveConfig {
+  if (config.type !== 'QUIZ') return config
+  const defaults = clonePracticeDefaultConfig('QUIZ') as QuizConfig
+  return {
+    ...defaults,
+    ...config,
+    mode: 'PRACTICE',
+    prompt: config.prompt?.trim() || config.question || defaults.prompt,
+    successCondition: {
+      kind: 'QUIZ_CORRECT_OPTION',
+      ...(config.successCondition ?? {}),
+    },
+    feedback: {
+      success: config.feedback?.success?.trim() || defaults.feedback?.success || 'Correct.',
+      failure: config.feedback?.failure?.trim() || defaults.feedback?.failure || 'Not quite. Try again.',
+    },
+  }
+}
+
 export function parseInteractiveConfig(type: InteractionType, raw: string | null | undefined): InteractiveConfig | null {
   if (!isTemplateInteractionType(type) || !raw?.trim()) return null
   try {
     const parsed = JSON.parse(raw) as InteractiveConfig
     if (parsed.type !== type) return null
-    return { mode: 'VISUALIZATION', ...parsed } as InteractiveConfig
+    return normalizeInteractiveConfig({ mode: 'VISUALIZATION', ...parsed } as InteractiveConfig)
   } catch {
     return null
   }

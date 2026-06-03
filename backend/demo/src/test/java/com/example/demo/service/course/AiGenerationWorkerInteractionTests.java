@@ -38,7 +38,7 @@ class AiGenerationWorkerInteractionTests {
         ));
 
         assertThat(read(result, "type")).isEqualTo(InteractionType.QUIZ);
-        assertThat((String) read(result, "config")).contains("\"type\":\"QUIZ\"").contains("\"mode\":\"VISUALIZATION\"");
+        assertThat((String) read(result, "config")).contains("\"type\":\"QUIZ\"").contains("\"mode\":\"PRACTICE\"");
     }
 
     @Test

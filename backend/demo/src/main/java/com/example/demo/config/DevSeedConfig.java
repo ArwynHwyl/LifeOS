@@ -194,7 +194,7 @@ public class DevSeedConfig {
                 26,
                 35,
                 InteractionType.GRAPH_2D,
-                "Show a line graph that connects linear systems to intersections.",
+                "Show a line graph that connects linear systems to intersections before the learner tries matching a target point.",
                 validate(interactiveConfigService, InteractionType.GRAPH_2D, """
                         {
                           "type": "GRAPH_2D",
@@ -206,6 +206,41 @@ public class DevSeedConfig {
                           "yMin": -10,
                           "yMax": 12,
                           "sampleCount": 120
+                        }
+                        """)
+        ));
+        matrixModule.addSubTopic(subTopic(
+                "Graph Point Match Practice",
+                """
+                        <h2>Graph Point Match Practice</h2>
+                        <p>After inspecting the reference line, adjust the slope of <code>y = mx + 1</code> so the graph passes through the target point.</p>
+                        <p>Use substitution to reason about the target: when <code>x = 2</code>, the graph should produce <code>y = 5</code>.</p>
+                        """,
+                6,
+                26,
+                35,
+                InteractionType.GRAPH_2D,
+                "Challenge learners to adjust a line so it passes through the target point.",
+                validate(interactiveConfigService, InteractionType.GRAPH_2D, """
+                        {
+                          "type": "GRAPH_2D",
+                          "mode": "PRACTICE",
+                          "title": "Graph point match",
+                          "prompt": "Adjust the slope m until the line passes through the target point (2, 5).",
+                          "expression": "m * x + 1",
+                          "controls": {
+                            "m": { "min": -3, "max": 5, "step": 0.5, "initial": 1 }
+                          },
+                          "xMin": -5,
+                          "xMax": 5,
+                          "yMin": -10,
+                          "yMax": 12,
+                          "sampleCount": 120,
+                          "successCondition": { "kind": "POINT_ON_GRAPH", "target": { "x": 2, "y": 5 }, "tolerance": 0.1 },
+                          "feedback": {
+                            "success": "Correct. With m = 2, the line reaches the point (2, 5).",
+                            "failure": "Not yet. Substitute x = 2 and solve m * 2 + 1 = 5."
+                          }
                         }
                         """)
         ));
@@ -324,7 +359,7 @@ public class DevSeedConfig {
                 12,
                 26,
                 InteractionType.GRAPH_2D,
-                "Show a standard bell curve to help learners read area under a curve.",
+                "Show a standard bell curve to help learners read area under a curve before trying a peak-matching challenge.",
                 validate(interactiveConfigService, InteractionType.GRAPH_2D, """
                         {
                           "type": "GRAPH_2D",
@@ -336,6 +371,41 @@ public class DevSeedConfig {
                           "yMin": 0,
                           "yMax": 1.2,
                           "sampleCount": 200
+                        }
+                        """)
+        ));
+        probabilityModule.addSubTopic(subTopic(
+                "Normal Curve Peak Practice",
+                """
+                        <h2>Normal Curve Peak Practice</h2>
+                        <p>The reference normal curve reaches its maximum at the center. In this challenge, adjust the scale of the curve so the peak reaches the target point.</p>
+                        <p>At <code>x = 0</code>, the expression <code>exp(-x^2 / 2)</code> equals 1, so the scale directly controls the peak height.</p>
+                        """,
+                6,
+                12,
+                26,
+                InteractionType.GRAPH_2D,
+                "Challenge learners to adjust the normal curve height so the peak reaches the target.",
+                validate(interactiveConfigService, InteractionType.GRAPH_2D, """
+                        {
+                          "type": "GRAPH_2D",
+                          "mode": "PRACTICE",
+                          "title": "Normal curve peak match",
+                          "prompt": "Adjust the scale a until the curve passes through the target peak at (0, 1).",
+                          "expression": "a * exp(-x^2 / 2)",
+                          "controls": {
+                            "a": { "min": 0.2, "max": 1.8, "step": 0.1, "initial": 0.5 }
+                          },
+                          "xMin": -4,
+                          "xMax": 4,
+                          "yMin": 0,
+                          "yMax": 1.8,
+                          "sampleCount": 200,
+                          "successCondition": { "kind": "POINT_ON_GRAPH", "target": { "x": 0, "y": 1 }, "tolerance": 0.02 },
+                          "feedback": {
+                            "success": "Correct. The curve reaches height 1 at x = 0.",
+                            "failure": "Not yet. At x = 0, exp(0) = 1, so the scale controls the peak directly."
+                          }
                         }
                         """)
         ));
@@ -370,7 +440,7 @@ public class DevSeedConfig {
                           "type": "VISUAL_LAYER",
                           "mode": "VISUALIZATION",
                           "title": "Set as a collection",
-                          "canvas": { "width": 900, "height": 520, "backgroundText": "Click each element to highlight the set region." },
+                          "canvas": { "width": 900, "height": 520, "backgroundText": "Click the element button to highlight the set region." },
                           "zones": [
                             { "id": "zone_set", "label": "Set A", "shape": "circle", "x": 280, "y": 100, "width": 320, "height": 320, "color": "#8fe0aa", "highlightColor": "#3aa66b", "highlightOpacity": 0.82, "feedback": "Set A is treated as one collection." }
                           ],
@@ -384,13 +454,55 @@ public class DevSeedConfig {
                         """)
         ));
         setModule.addSubTopic(subTopic(
+                "2-Set Venn Practice",
+                """
+                        <h2>2-Set Venn Practice</h2>
+                        <p>After reviewing sets as collections, build a two-set Venn diagram for sets A and B.</p>
+                        <p><strong>Given:</strong> n(A)=11, n(B)=9, and n(A intersect B)=3. Add both circles, create the overlap, then fill the exact region values.</p>
+                        """,
+                1,
+                1,
+                3,
+                InteractionType.VISUAL_LAYER,
+                "Ask learners to build a two-set Venn diagram and fill each exact region.",
+                validate(interactiveConfigService, InteractionType.VISUAL_LAYER, """
+                        {
+                          "type": "VISUAL_LAYER",
+                          "mode": "PRACTICE",
+                          "title": "2-set Venn practice",
+                          "prompt": "Add circles A and B, arrange the overlap, then enter the exact value for each visible region.",
+                          "canvas": { "width": 900, "height": 520, "backgroundText": "" },
+                          "zones": [
+                            { "id": "zone_a", "label": "A", "shape": "circle", "x": 250, "y": 140, "width": 280, "height": 280, "labelX": 34, "labelY": 28, "color": "#ffd333", "highlightColor": "#ff8f1f", "highlightOpacity": 0.82, "feedback": "" },
+                            { "id": "zone_b", "label": "B", "shape": "circle", "x": 390, "y": 140, "width": 280, "height": 280, "labelX": 66, "labelY": 28, "color": "#8fb3ff", "highlightColor": "#4f8cff", "highlightOpacity": 0.82, "feedback": "" }
+                          ],
+                          "elements": [],
+                          "interactions": [],
+                          "overlap": {
+                            "enabled": true,
+                            "sourceZoneIds": ["zone_a", "zone_b"],
+                            "inputs": [
+                              { "id": "A_ONLY", "label": "n(A)", "zoneIds": ["zone_a"], "value": 11, "kind": "total" },
+                              { "id": "B_ONLY", "label": "n(B)", "zoneIds": ["zone_b"], "value": 9, "kind": "total" },
+                              { "id": "A_AND_B", "label": "n(A intersect B)", "zoneIds": ["zone_a", "zone_b"], "value": 3, "kind": "intersection" }
+                            ],
+                            "values": []
+                          },
+                          "feedback": {
+                            "success": "Correct. A only is 8, B only is 6, and the overlap is 3.",
+                            "failure": "Not yet. Subtract the overlap from each set total to get the exact outside regions."
+                          }
+                        }
+                        """)
+        ));
+        setModule.addSubTopic(subTopic(
                 "Power Sets",
                 """
                         <h2>Power Sets</h2>
                         <p>The power set of a set <code>A</code>, written <code>P(A)</code>, is the set of all subsets of <code>A</code>.</p>
                         <p>For example, if <code>A = {1, 2}</code>, then <code>P(A) = { empty, {1}, {2}, {1,2} }</code>. A power set always contains the empty set and the original set.</p>
                         """,
-                1,
+                2,
                 4,
                 8,
                 InteractionType.QUIZ,
@@ -423,7 +535,7 @@ public class DevSeedConfig {
                         <h2>Number of Subsets</h2>
                         <p>If a set has <code>n</code> elements, the total number of subsets is <code>2^n</code>. Each element has two choices: it is either included in a subset or not included.</p>
                         """,
-                2,
+                3,
                 9,
                 13,
                 InteractionType.FORMULA_EXPLORER,
@@ -448,7 +560,7 @@ public class DevSeedConfig {
                         <p>Counting members in a Venn diagram requires separating overlapping regions clearly, especially when multiple sets overlap.</p>
                         <p>The key rule is inclusion-exclusion, such as <code>n(A union B) = n(A) + n(B) - n(A intersect B)</code>.</p>
                         """,
-                3,
+                4,
                 14,
                 22,
                 InteractionType.FORMULA_EXPLORER,
@@ -559,7 +671,7 @@ public class DevSeedConfig {
                         <p>A Venn diagram separates the regions of sets A, B, and C visually before member counts are computed with inclusion-exclusion.</p>
                         <p>Use the buttons to highlight circles or important regions, then connect the visual regions to the formulas from the previous topic.</p>
                         """,
-                4,
+                5,
                 14,
                 22,
                 InteractionType.VISUAL_LAYER,
@@ -622,7 +734,7 @@ public class DevSeedConfig {
                         <p><strong>Given:</strong> n(A)=33, n(B)=26, n(C)=22, n(A intersect B)=10, n(A intersect C)=8, n(B intersect C)=7, and n(A intersect B intersect C)=3.</p>
                         <p><strong>Success criteria:</strong> create circles A, B, and C; make all pairwise overlaps and the three-way overlap visible; enter A only=18, B only=12, C only=10, A intersect B only=7, A intersect C only=5, B intersect C only=4, and A intersect B intersect C=3.</p>
                         """,
-                5,
+                6,
                 14,
                 22,
                 InteractionType.VISUAL_LAYER,
