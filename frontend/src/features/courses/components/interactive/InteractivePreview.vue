@@ -7,7 +7,6 @@ import type {
   Graph2DConfig,
   InteractiveConfig,
   QuizConfig,
-  ThreeJsConfig,
   VisualLayerConfig,
   VisualLayerZone,
 } from '@/features/courses/types/interactive'
@@ -21,7 +20,6 @@ const selectedAnswer = ref<string | null>(null)
 const checked = ref(false)
 const formulaValues = ref<Record<string, number>>({})
 const graphValues = ref<Record<string, number>>({})
-const transformValues = ref<Record<string, number>>({})
 const selectedFormulaOptionId = ref<string | null>(null)
 const formulaStepIndex = ref(0)
 const highlightedZoneId = ref<string | null>(null)
@@ -61,9 +59,6 @@ watch(
     }
     if (config?.type === 'GRAPH_2D') {
       graphValues.value = Object.fromEntries(Object.entries(config.controls ?? {}).map(([name, control]) => [name, control.initial]))
-    }
-    if (config?.type === 'THREE_JS') {
-      transformValues.value = Object.fromEntries(Object.entries(config.controls ?? {}).map(([name, control]) => [name, control?.initial ?? 0]))
     }
   },
   { immediate: true, deep: true },
@@ -130,13 +125,6 @@ const practicePassed = computed(() => {
     } catch {
       return false
     }
-  }
-  if (config.type === 'THREE_JS' && config.successCondition?.kind === 'TRANSFORM_MATCH') {
-    const tolerance = config.successCondition.tolerance ?? 0
-    return Object.entries(config.successCondition.target).every(([name, target]) => {
-      const value = transformValues.value[name]
-      return typeof target === 'number' && typeof value === 'number' && Math.abs(value - target) <= tolerance
-    })
   }
   if (config.type === 'VISUAL_LAYER') return visualPracticePassed()
   return false
@@ -262,14 +250,6 @@ function setFormulaStep(index: number) {
 function updateGraphValue(name: string, event: Event) {
   graphValues.value = {
     ...graphValues.value,
-    [name]: Number((event.target as HTMLInputElement).value),
-  }
-  checked.value = false
-}
-
-function updateTransformValue(name: string, event: Event) {
-  transformValues.value = {
-    ...transformValues.value,
     [name]: Number((event.target as HTMLInputElement).value),
   }
   checked.value = false
@@ -534,17 +514,6 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   }
 }
 
-function transformStyle(config: ThreeJsConfig, values: Record<string, number>) {
-  const rotationX = values.rotationX ?? 18
-  const rotationY = values.rotationY ?? 0
-  const rotationZ = values.rotationZ ?? 0
-  const scale = values.scale ?? 1
-  return {
-    backgroundColor: config.color,
-    color: config.color,
-    transform: `rotateX(${rotationX}deg) rotateY(${rotationY}deg) rotateZ(${rotationZ}deg) scale(${scale})`,
-  }
-}
 </script>
 
 <template>
@@ -850,41 +819,6 @@ function transformStyle(config: ThreeJsConfig, values: Record<string, number>) {
       </p>
     </div>
 
-    <div v-else-if="config.type === 'THREE_JS'" class="space-y-3">
-      <header class="interactive-header">
-        <h3>{{ (config as ThreeJsConfig).title }}</h3>
-        <span>{{ (config as ThreeJsConfig).shape }}</span>
-      </header>
-      <p v-if="config.mode === 'PRACTICE'" class="practice-prompt">{{ config.prompt }}</p>
-      <div class="scene" :class="{ 'scene--practice': config.mode === 'PRACTICE' }" :style="{ '--speed': `${Math.max(0.1, 3.2 - ((config as ThreeJsConfig).rotationSpeed ?? 0.8))}s` }">
-        <div v-if="config.mode === 'PRACTICE'" class="target-wrap">
-          <span>Target</span>
-          <div
-            class="scene-shape scene-shape--target"
-            :class="`scene-shape--${(config as ThreeJsConfig).shape}`"
-            :style="transformStyle(config as ThreeJsConfig, (config as ThreeJsConfig).successCondition?.target ?? {})"
-          />
-        </div>
-        <div class="target-wrap">
-          <span v-if="config.mode === 'PRACTICE'">Current</span>
-          <div
-            class="scene-shape"
-            :class="[`scene-shape--${(config as ThreeJsConfig).shape}`, { 'scene-shape--animated': config.mode !== 'PRACTICE' }]"
-            :style="config.mode === 'PRACTICE'
-              ? transformStyle(config as ThreeJsConfig, transformValues)
-              : { backgroundColor: (config as ThreeJsConfig).color, color: (config as ThreeJsConfig).color }"
-          />
-        </div>
-      </div>
-      <div v-if="config.mode === 'PRACTICE'" class="space-y-3">
-        <label v-for="(control, name) in (config as ThreeJsConfig).controls" :key="name" class="formula-slider">
-          <span>{{ name }}: <strong>{{ transformValues[String(name)] }}</strong></span>
-          <input type="range" :min="control?.min" :max="control?.max" :step="control?.step" :value="transformValues[String(name)]" @input="updateTransformValue(String(name), $event)" />
-        </label>
-        <button type="button" class="check-button" @click="checked = true">Check</button>
-        <p v-if="checked" class="feedback">{{ activeFeedback }}</p>
-      </div>
-    </div>
   </section>
 </template>
 
@@ -1335,65 +1269,5 @@ function transformStyle(config: ThreeJsConfig, values: Record<string, number>) {
   color: #4f4942;
   font-size: 13px;
   font-weight: 700;
-}
-.scene {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2rem;
-  min-height: 260px;
-  overflow: hidden;
-  border: 2px solid #d4cec6;
-  border-radius: 8px;
-  background: radial-gradient(circle at 50% 35%, #ffffff 0, #f0ece4 52%, #d4cec6 100%);
-  perspective: 700px;
-}
-.scene--practice {
-  flex-wrap: wrap;
-}
-.target-wrap {
-  display: grid;
-  min-width: 160px;
-  min-height: 190px;
-  place-items: center;
-  gap: 0.75rem;
-  color: #6b6660;
-  font-size: 11px;
-  font-weight: 900;
-  text-transform: uppercase;
-}
-.scene-shape {
-  width: 120px;
-  height: 120px;
-  border: 2px solid #1a1814;
-  box-shadow: 18px 18px 0 rgba(26, 24, 20, 0.16);
-  transform-style: preserve-3d;
-}
-.scene-shape--animated {
-  animation: scene-spin var(--speed) linear infinite;
-}
-.scene-shape--target {
-  opacity: 0.55;
-}
-.scene-shape--sphere {
-  border-radius: 999px;
-  background-image: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.75), transparent 32%);
-}
-.scene-shape--pyramid {
-  width: 0;
-  height: 0;
-  border-right: 70px solid transparent;
-  border-bottom: 130px solid currentColor;
-  border-left: 70px solid transparent;
-  background: transparent !important;
-  box-shadow: none;
-}
-@keyframes scene-spin {
-  from {
-    transform: rotateX(18deg) rotateY(0deg);
-  }
-  to {
-    transform: rotateX(18deg) rotateY(360deg);
-  }
 }
 </style>

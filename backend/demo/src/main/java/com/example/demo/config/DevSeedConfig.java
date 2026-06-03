@@ -363,16 +363,23 @@ public class DevSeedConfig {
                 0,
                 1,
                 3,
-                InteractionType.THREE_JS,
-                "Show a controllable 3D object as a visual metaphor for treating a set as one structured object.",
-                validate(interactiveConfigService, InteractionType.THREE_JS, """
+                InteractionType.VISUAL_LAYER,
+                "Let learners click set regions to connect the set as one object with its elements.",
+                validate(interactiveConfigService, InteractionType.VISUAL_LAYER, """
                         {
-                          "type": "THREE_JS",
+                          "type": "VISUAL_LAYER",
                           "mode": "VISUALIZATION",
-                          "title": "Rotating set marker",
-                          "shape": "pyramid",
-                          "color": "#3aa66b",
-                          "rotationSpeed": 0.9
+                          "title": "Set as a collection",
+                          "canvas": { "width": 900, "height": 520, "backgroundText": "Click each element to highlight the set region." },
+                          "zones": [
+                            { "id": "zone_set", "label": "Set A", "shape": "circle", "x": 280, "y": 100, "width": 320, "height": 320, "color": "#8fe0aa", "highlightColor": "#3aa66b", "highlightOpacity": 0.82, "feedback": "Set A is treated as one collection." }
+                          ],
+                          "elements": [
+                            { "id": "element_one", "label": "Element", "kind": "button", "x": 60, "y": 60, "width": 150, "height": 48 }
+                          ],
+                          "interactions": [
+                            { "triggerId": "element_one", "effect": "HIGHLIGHT_ZONE", "targetZoneId": "zone_set", "feedback": "The element belongs to Set A." }
+                          ]
                         }
                         """)
         ));
@@ -754,29 +761,29 @@ public class DevSeedConfig {
                 4,
                 29,
                 31,
-                InteractionType.THREE_JS,
-                "Let learners rotate an object to practice reading directions in three dimensions.",
-                validate(interactiveConfigService, InteractionType.THREE_JS, """
+                InteractionType.FORMULA_EXPLORER,
+                "Let learners explore the cross product magnitude by adjusting vector length and angle.",
+                validate(interactiveConfigService, InteractionType.FORMULA_EXPLORER, """
                         {
-                          "type": "THREE_JS",
+                          "type": "FORMULA_EXPLORER",
                           "mode": "PRACTICE",
-                          "title": "Match the target orientation",
-                          "prompt": "Rotate the object until it matches the target orientation.",
-                          "shape": "cube",
-                          "color": "#4f8cff",
-                          "controls": {
-                            "rotationX": { "min": 0, "max": 180, "step": 15, "initial": 0 },
-                            "rotationY": { "min": 0, "max": 180, "step": 15, "initial": 0 },
-                            "rotationZ": { "min": 0, "max": 180, "step": 15, "initial": 0 }
-                          },
+                          "title": "Cross product magnitude",
+                          "prompt": "Adjust the vector lengths and angle until the parallelogram area is 24.",
+                          "formula": "a * b * sin(theta)",
+                          "variables": [
+                            { "name": "a", "label": "Vector a length", "min": 1, "max": 12, "step": 1, "initial": 4 },
+                            { "name": "b", "label": "Vector b length", "min": 1, "max": 12, "step": 1, "initial": 6 },
+                            { "name": "theta", "label": "Angle radians", "min": 0, "max": 3.14, "step": 0.01, "initial": 1.57 }
+                          ],
+                          "precision": 2,
                           "successCondition": {
-                            "kind": "TRANSFORM_MATCH",
-                            "target": { "rotationX": 45, "rotationY": 90, "rotationZ": 0 },
-                            "tolerance": 5
+                            "kind": "EXPRESSION_EQUALS",
+                            "target": 24,
+                            "tolerance": 0.1
                           },
                           "feedback": {
-                            "success": "Correct. The object matches the target orientation.",
-                            "failure": "Not yet. Compare the current orientation with the target."
+                            "success": "Correct. The cross product magnitude equals the parallelogram area.",
+                            "failure": "Not yet. Use |a||b|sin(theta) to reach the target area."
                           }
                         }
                         """)

@@ -52,11 +52,6 @@ public class InteractiveConfigService {
             "type", "mode", "title", "question", "options", "explanation", "prompt", "successCondition", "feedback"
     );
     private static final Set<String> QUIZ_OPTION_FIELDS = Set.of("id", "label", "correct");
-    private static final Set<String> THREE_FIELDS = Set.of(
-            "type", "mode", "title", "shape", "color", "rotationSpeed", "controls", "prompt", "successCondition", "feedback"
-    );
-    private static final Set<String> THREE_SHAPES = Set.of("cube", "sphere", "pyramid");
-    private static final Set<String> THREE_CONTROLS = Set.of("rotationX", "rotationY", "rotationZ", "scale");
     private static final Set<String> CONTROL_FIELDS = Set.of("min", "max", "step", "initial");
     private static final Set<String> SUCCESS_CONDITION_FIELDS = Set.of("kind", "target", "tolerance", "correctOptionId");
     private static final Set<String> FEEDBACK_FIELDS = Set.of("success", "failure");
@@ -92,7 +87,6 @@ public class InteractiveConfigService {
             case FORMULA_EXPLORER -> validateFormula(root, practice);
             case VISUAL_LAYER -> validateVisualLayer(root, practice);
             case QUIZ -> validateQuiz(root, practice);
-            case THREE_JS -> validateThreeJs(root, practice);
             default -> throw new ValidationException("Unsupported interactionType: " + type);
         }
         return stringify(root);
@@ -106,8 +100,6 @@ public class InteractiveConfigService {
         Map<String, Object> visualLayer = visualLayerDefault();
         Map<String, Object> visualLayerPractice = visualLayerPracticeDefault();
         Map<String, Object> quizPractice = quizPracticeDefault();
-        Map<String, Object> threeVisualization = threeVisualizationDefault();
-        Map<String, Object> threePractice = threePracticeDefault();
         return List.of(
                 new InteractiveTemplateDto(
                         InteractionType.GRAPH_2D,
@@ -166,20 +158,6 @@ public class InteractiveConfigService {
                                 field("question", "Question", "textarea", true, null, null, 500, null),
                                 field("options", "Options", "quiz-options", true, null, null, null, null),
                                 field("explanation", "Explanation", "textarea", false, null, null, 1000, null)
-                        )
-                ),
-                new InteractiveTemplateDto(
-                        InteractionType.THREE_JS,
-                        "3D Scene",
-                        "Render a safe controlled 3D primitive scene.",
-                        threeVisualization,
-                        threeVisualization,
-                        threePractice,
-                        List.of(
-                                field("title", "Title", "text", true, null, null, 120, null),
-                                field("shape", "Shape", "select", true, null, null, null, List.of("cube", "sphere", "pyramid")),
-                                field("color", "Color", "color", true, null, null, 7, null),
-                                field("rotationSpeed", "Rotation speed", "number", true, 0.0, 3.0, null, null)
                         )
                 )
         );
@@ -405,35 +383,6 @@ public class InteractiveConfigService {
         );
     }
 
-    private Map<String, Object> threeVisualizationDefault() {
-        return Map.of(
-                "type", "THREE_JS",
-                "mode", "VISUALIZATION",
-                "title", "Rotating cube",
-                "shape", "cube",
-                "color", "#4f8cff",
-                "rotationSpeed", 0.8
-        );
-    }
-
-    private Map<String, Object> threePracticeDefault() {
-        return Map.of(
-                "type", "THREE_JS",
-                "mode", "PRACTICE",
-                "title", "Match the target rotation",
-                "prompt", "Rotate the object until it matches the target orientation.",
-                "shape", "cube",
-                "color", "#4f8cff",
-                "controls", Map.of(
-                        "rotationX", Map.of("min", 0, "max", 180, "step", 15, "initial", 0),
-                        "rotationY", Map.of("min", 0, "max", 180, "step", 15, "initial", 0),
-                        "rotationZ", Map.of("min", 0, "max", 180, "step", 15, "initial", 0)
-                ),
-                "successCondition", Map.of("kind", "TRANSFORM_MATCH", "target", Map.of("rotationX", 45, "rotationY", 90, "rotationZ", 0), "tolerance", 5),
-                "feedback", Map.of("success", "Correct. The object matches the target orientation.", "failure", "Not yet. Compare the current orientation with the target.")
-        );
-    }
-
     private InteractiveFieldDto field(
             String path,
             String label,
@@ -451,8 +400,7 @@ public class InteractiveConfigService {
         return type == InteractionType.GRAPH_2D
                 || type == InteractionType.FORMULA_EXPLORER
                 || type == InteractionType.VISUAL_LAYER
-                || type == InteractionType.QUIZ
-                || type == InteractionType.THREE_JS;
+                || type == InteractionType.QUIZ;
     }
 
     private String optionalJson(String value) {
@@ -1045,28 +993,6 @@ public class InteractiveConfigService {
         }
     }
 
-    private void validateThreeJs(ObjectNode root, boolean practice) {
-        rejectUnknownFields(root, THREE_FIELDS, "interactionConfig");
-        requiredText(root, "title", 120);
-        String shape = requiredText(root, "shape", 20);
-        if (!THREE_SHAPES.contains(shape)) {
-            throw new ValidationException("shape must be cube, sphere, or pyramid");
-        }
-        String color = requiredText(root, "color", 7);
-        if (!color.matches("#[0-9A-Fa-f]{6}")) {
-            throw new ValidationException("color must be a hex color");
-        }
-        if (practice) {
-            Map<String, double[]> controls = validateControls(root, THREE_CONTROLS, 1, 4);
-            validatePracticeCommon(root, "TRANSFORM_MATCH");
-            validateTransformMatchCondition((ObjectNode) root.get("successCondition"), controls);
-            optionalNumber(root, "rotationSpeed", 0, 3);
-        } else {
-            requiredNumber(root, "rotationSpeed", 0, 3);
-            rejectVisualizationPracticeFields(root);
-        }
-    }
-
     private void validatePracticeCommon(ObjectNode root, String expectedKind) {
         requiredText(root, "prompt", 500);
         JsonNode feedback = root.get("feedback");
@@ -1177,29 +1103,6 @@ public class InteractiveConfigService {
         rejectUnknownFields(targetObject, Set.of("x", "y"), "successCondition.target");
         requiredNumber(targetObject, "x", xMin, xMax);
         requiredNumber(targetObject, "y", yMin, yMax);
-        optionalNumber(condition, "tolerance", 0, 1000);
-    }
-
-    private void validateTransformMatchCondition(ObjectNode condition, Map<String, double[]> controls) {
-        JsonNode target = condition.get("target");
-        if (target == null || !target.isObject()) {
-            throw new ValidationException("successCondition.target is required");
-        }
-        ObjectNode targetObject = (ObjectNode) target;
-        Iterator<String> fields = targetObject.fieldNames();
-        int count = 0;
-        while (fields.hasNext()) {
-            String field = fields.next();
-            count++;
-            double[] range = controls.get(field);
-            if (range == null) {
-                throw new ValidationException("successCondition target must reference only declared controls");
-            }
-            requiredNumber(targetObject, field, range[0], range[1]);
-        }
-        if (count == 0) {
-            throw new ValidationException("successCondition.target must include at least one control");
-        }
         optionalNumber(condition, "tolerance", 0, 1000);
     }
 

@@ -6,9 +6,10 @@ public record GeneratedSubTopicDraft(
         String title,
         String content,
         InteractionType interactionType,
-        String interactionPrompt
+        String interactionPrompt,
+        String interactionConfig
 ) {
     public GeneratedSubTopicDraft(String title, String content) {
-        this(title, content, InteractionType.NONE, null);
+        this(title, content, InteractionType.NONE, null, null);
     }
 }

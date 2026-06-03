@@ -1152,34 +1152,11 @@ function updateGraphControl(name: string, patch: Partial<{ min: number; max: num
   setConfig({ ...config.value, controls: { ...controls, [name]: { ...controls[name], ...patch } } } as InteractiveConfig)
 }
 
-function updateTransformControl(name: 'rotationX' | 'rotationY' | 'rotationZ' | 'scale', patch: Partial<{ min: number; max: number; step: number; initial: number }>) {
-  if (config.value?.type !== 'THREE_JS') return
-  const controls = config.value.controls ?? {}
-  setConfig({ ...config.value, controls: { ...controls, [name]: { ...controls[name], ...patch } } } as InteractiveConfig)
-}
-
-function toggleTransformControl(name: 'rotationX' | 'rotationY' | 'rotationZ' | 'scale', enabled: boolean) {
-  if (config.value?.type !== 'THREE_JS') return
-  const controls = { ...(config.value.controls ?? {}) }
-  const target = { ...(config.value.successCondition?.target ?? {}) }
-  if (enabled) {
-    controls[name] = name === 'scale'
-      ? { min: 0.5, max: 2, step: 0.1, initial: 1 }
-      : { min: 0, max: 180, step: 15, initial: 0 }
-    target[name] = controls[name].initial
-  } else {
-    delete controls[name]
-    delete target[name]
-  }
-  setConfig({ ...config.value, controls, successCondition: { kind: 'TRANSFORM_MATCH', target, tolerance: config.value.successCondition?.tolerance ?? 5 } } as InteractiveConfig)
-}
-
 function labelFor(type: TemplateInteractionType) {
   if (type === 'GRAPH_2D') return '2D graph'
   if (type === 'FORMULA_EXPLORER') return 'Formula explorer'
   if (type === 'VISUAL_LAYER') return 'Visual layer'
-  if (type === 'QUIZ') return 'Quiz'
-  return '3D scene'
+  return 'Quiz'
 }
 </script>
 
@@ -1619,33 +1596,6 @@ function labelFor(type: TemplateInteractionType) {
       </div>
       <label class="field"><span>Explanation</span><textarea rows="3" :value="config.explanation ?? ''" maxlength="1000" @input="patchConfig({ explanation: ($event.target as HTMLTextAreaElement).value })" /></label>
       <label v-if="config.mode === 'PRACTICE'" class="field"><span>Practice prompt</span><textarea rows="2" :value="config.prompt ?? ''" maxlength="500" @input="patchConfig({ prompt: ($event.target as HTMLTextAreaElement).value })" /></label>
-    </div>
-
-    <div v-else-if="config?.type === 'THREE_JS'" class="editor-grid">
-      <label class="field field--wide"><span>Title</span><input :value="config.title" maxlength="120" @input="patchConfig({ title: ($event.target as HTMLInputElement).value })" /></label>
-      <label class="field">
-        <span>Shape</span>
-        <select :value="config.shape" @change="patchConfig({ shape: ($event.target as HTMLSelectElement).value as 'cube' | 'sphere' | 'pyramid' })">
-          <option value="cube">Cube</option>
-          <option value="sphere">Sphere</option>
-          <option value="pyramid">Pyramid</option>
-        </select>
-      </label>
-      <label class="field"><span>Color</span><input type="color" :value="config.color" @input="patchConfig({ color: ($event.target as HTMLInputElement).value })" /></label>
-      <label v-if="config.mode !== 'PRACTICE'" class="field"><span>Rotation</span><input type="number" min="0" max="3" step="0.1" :value="config.rotationSpeed ?? 0.8" @input="patchConfig({ rotationSpeed: Number(($event.target as HTMLInputElement).value) })" /></label>
-      <template v-if="config.mode === 'PRACTICE'">
-        <label class="field field--wide"><span>Practice prompt</span><textarea rows="2" :value="config.prompt ?? ''" maxlength="500" @input="patchConfig({ prompt: ($event.target as HTMLTextAreaElement).value })" /></label>
-        <div v-for="name in ['rotationX', 'rotationY', 'rotationZ', 'scale'] as const" :key="name" class="nested-row transform-row">
-          <label class="check-field"><input type="checkbox" :checked="Boolean(config.controls?.[name])" @change="toggleTransformControl(name, ($event.target as HTMLInputElement).checked)" /> <span>{{ name }}</span></label>
-          <template v-if="config.controls?.[name]">
-            <label class="field"><span>Min</span><input type="number" :value="config.controls[name]?.min" @input="updateTransformControl(name, { min: Number(($event.target as HTMLInputElement).value) })" /></label>
-            <label class="field"><span>Max</span><input type="number" :value="config.controls[name]?.max" @input="updateTransformControl(name, { max: Number(($event.target as HTMLInputElement).value) })" /></label>
-            <label class="field"><span>Step</span><input type="number" :value="config.controls[name]?.step" @input="updateTransformControl(name, { step: Number(($event.target as HTMLInputElement).value) })" /></label>
-            <label class="field"><span>Initial</span><input type="number" :value="config.controls[name]?.initial" @input="updateTransformControl(name, { initial: Number(($event.target as HTMLInputElement).value) })" /></label>
-            <label class="field"><span>Target</span><input type="number" :value="config.successCondition?.target[name] ?? config.controls[name]?.initial" @input="patchConfig({ successCondition: { kind: 'TRANSFORM_MATCH', target: { ...(config.successCondition?.target ?? {}), [name]: Number(($event.target as HTMLInputElement).value) }, tolerance: config.successCondition?.tolerance ?? 5 } })" /></label>
-          </template>
-        </div>
-      </template>
     </div>
 
     <div v-if="config?.mode === 'PRACTICE' && config.type !== 'VISUAL_LAYER'" class="editor-grid">
@@ -2320,11 +2270,6 @@ function labelFor(type: TemplateInteractionType) {
 }
 .mode-row button.active {
   background: #ffd333;
-}
-.transform-row {
-  grid-column: 1 / -1;
-  grid-template-columns: 120px repeat(5, minmax(0, 1fr));
-  align-items: end;
 }
 .check-field {
   display: flex;

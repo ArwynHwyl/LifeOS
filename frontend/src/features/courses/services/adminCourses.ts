@@ -41,7 +41,7 @@ export interface AdminModuleDto {
   subTopics: AdminSubTopicDto[]
 }
 
-export type InteractionType = 'NONE' | 'THREE_JS' | 'GRAPH_2D' | 'FORMULA_EXPLORER' | 'VISUAL_LAYER' | 'QUIZ' | 'OTHER'
+export type InteractionType = 'NONE' | 'GRAPH_2D' | 'FORMULA_EXPLORER' | 'VISUAL_LAYER' | 'QUIZ' | 'OTHER'
 
 export interface AdminSubTopicDto {
   id: number

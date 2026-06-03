@@ -37,9 +37,6 @@ class InteractiveConfigServiceTests {
         assertThat(service.validateAndNormalize(InteractionType.QUIZ, """
                 {"type":"QUIZ","title":"Quiz","question":"Pick one","options":[{"id":"a","label":"A","correct":true},{"id":"b","label":"B","correct":false}],"explanation":"Because."}
                 """)).contains("\"type\":\"QUIZ\"").contains("\"mode\":\"VISUALIZATION\"");
-        assertThat(service.validateAndNormalize(InteractionType.THREE_JS, """
-                {"type":"THREE_JS","title":"Scene","shape":"cube","color":"#4f8cff","rotationSpeed":1}
-                """)).contains("\"type\":\"THREE_JS\"").contains("\"mode\":\"VISUALIZATION\"");
     }
 
     @Test
@@ -52,9 +49,6 @@ class InteractiveConfigServiceTests {
                 """)).contains("\"mode\":\"PRACTICE\"");
         assertThat(service.validateAndNormalize(InteractionType.GRAPH_2D, """
                 {"type":"GRAPH_2D","mode":"PRACTICE","title":"Line","prompt":"Set slope","expression":"m * x","controls":{"m":{"min":0,"max":5,"step":0.5,"initial":1}},"xMin":0,"xMax":5,"yMin":0,"yMax":10,"sampleCount":100,"successCondition":{"kind":"POINT_ON_GRAPH","target":{"x":2,"y":6},"tolerance":0.1},"feedback":{"success":"Correct","failure":"Not yet"}}
-                """)).contains("\"mode\":\"PRACTICE\"");
-        assertThat(service.validateAndNormalize(InteractionType.THREE_JS, """
-                {"type":"THREE_JS","mode":"PRACTICE","title":"Match","prompt":"Rotate it","shape":"cube","color":"#4f8cff","controls":{"rotationX":{"min":0,"max":180,"step":15,"initial":0},"rotationY":{"min":0,"max":180,"step":15,"initial":0}},"successCondition":{"kind":"TRANSFORM_MATCH","target":{"rotationX":45,"rotationY":90},"tolerance":5},"feedback":{"success":"Correct","failure":"Not yet"}}
                 """)).contains("\"mode\":\"PRACTICE\"");
     }
 
@@ -163,22 +157,5 @@ class InteractiveConfigServiceTests {
                 .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("successCondition is required");
 
-        assertThatThrownBy(() -> service.validateAndNormalize(InteractionType.THREE_JS, """
-                {"type":"THREE_JS","mode":"PRACTICE","title":"Match","prompt":"Rotate it","shape":"torus","color":"#4f8cff","controls":{"rotationX":{"min":0,"max":180,"step":15,"initial":0}},"successCondition":{"kind":"TRANSFORM_MATCH","target":{"rotationX":45},"tolerance":5},"feedback":{"success":"Correct","failure":"Not yet"}}
-                """))
-                .isInstanceOf(ValidationException.class)
-                .hasMessageContaining("shape must be cube");
-
-        assertThatThrownBy(() -> service.validateAndNormalize(InteractionType.THREE_JS, """
-                {"type":"THREE_JS","mode":"PRACTICE","title":"Match","prompt":"Rotate it","shape":"cube","color":"#4f8cff","controls":{"width":{"min":0,"max":180,"step":15,"initial":0}},"successCondition":{"kind":"TRANSFORM_MATCH","target":{"width":45},"tolerance":5},"feedback":{"success":"Correct","failure":"Not yet"}}
-                """))
-                .isInstanceOf(ValidationException.class)
-                .hasMessageContaining("unsupported control");
-
-        assertThatThrownBy(() -> service.validateAndNormalize(InteractionType.THREE_JS, """
-                {"type":"THREE_JS","mode":"PRACTICE","title":"Match","prompt":"Rotate it","shape":"cube","color":"#4f8cff","controls":{"rotationX":{"min":0,"max":180,"step":15,"initial":0}},"successCondition":{"kind":"TRANSFORM_MATCH","target":{"rotationY":45},"tolerance":5},"feedback":{"success":"Correct","failure":"Not yet"}}
-                """))
-                .isInstanceOf(ValidationException.class)
-                .hasMessageContaining("target must reference only declared controls");
     }
 }

@@ -1,8 +1,8 @@
 import type { InteractionType } from '@/features/courses/services/adminCourses'
 
-export type TemplateInteractionType = 'GRAPH_2D' | 'FORMULA_EXPLORER' | 'VISUAL_LAYER' | 'QUIZ' | 'THREE_JS'
+export type TemplateInteractionType = 'GRAPH_2D' | 'FORMULA_EXPLORER' | 'VISUAL_LAYER' | 'QUIZ'
 export type InteractiveMode = 'VISUALIZATION' | 'PRACTICE'
-export type SuccessConditionKind = 'QUIZ_CORRECT_OPTION' | 'EXPRESSION_EQUALS' | 'POINT_ON_GRAPH' | 'TRANSFORM_MATCH'
+export type SuccessConditionKind = 'QUIZ_CORRECT_OPTION' | 'EXPRESSION_EQUALS' | 'POINT_ON_GRAPH'
 
 export interface PracticeFeedback {
   success: string
@@ -15,8 +15,6 @@ export interface NumericControlConfig {
   step: number
   initial: number
 }
-
-export type TransformControlName = 'rotationX' | 'rotationY' | 'rotationZ' | 'scale'
 
 export interface QuizCorrectOptionCondition {
   kind: 'QUIZ_CORRECT_OPTION'
@@ -35,17 +33,10 @@ export interface PointOnGraphCondition {
   tolerance?: number
 }
 
-export interface TransformMatchCondition {
-  kind: 'TRANSFORM_MATCH'
-  target: Partial<Record<TransformControlName, number>>
-  tolerance?: number
-}
-
 export type SuccessCondition =
   | QuizCorrectOptionCondition
   | ExpressionEqualsCondition
   | PointOnGraphCondition
-  | TransformMatchCondition
 
 export interface PracticeConfigBase {
   mode: 'PRACTICE'
@@ -121,19 +112,6 @@ export interface QuizConfig {
   explanation?: string
   prompt?: string
   successCondition?: QuizCorrectOptionCondition
-  feedback?: PracticeFeedback
-}
-
-export interface ThreeJsConfig {
-  type: 'THREE_JS'
-  mode?: InteractiveMode
-  title: string
-  shape: 'cube' | 'sphere' | 'pyramid'
-  color: string
-  rotationSpeed?: number
-  controls?: Partial<Record<TransformControlName, NumericControlConfig>>
-  prompt?: string
-  successCondition?: TransformMatchCondition
   feedback?: PracticeFeedback
 }
 
@@ -214,7 +192,7 @@ export interface VisualLayerConfig {
   feedback?: PracticeFeedback
 }
 
-export type InteractiveConfig = Graph2DConfig | FormulaExplorerConfig | VisualLayerConfig | QuizConfig | ThreeJsConfig
+export type InteractiveConfig = Graph2DConfig | FormulaExplorerConfig | VisualLayerConfig | QuizConfig
 
 export interface InteractiveTemplate {
   type: TemplateInteractionType
@@ -235,7 +213,7 @@ export interface InteractiveTemplate {
   }>
 }
 
-export const TEMPLATE_TYPES: TemplateInteractionType[] = ['GRAPH_2D', 'FORMULA_EXPLORER', 'VISUAL_LAYER', 'QUIZ', 'THREE_JS']
+export const TEMPLATE_TYPES: TemplateInteractionType[] = ['GRAPH_2D', 'FORMULA_EXPLORER', 'VISUAL_LAYER', 'QUIZ']
 
 export const DEFAULT_INTERACTIVE_CONFIGS: Record<TemplateInteractionType, InteractiveConfig> = {
   GRAPH_2D: {
@@ -294,14 +272,6 @@ export const DEFAULT_INTERACTIVE_CONFIGS: Record<TemplateInteractionType, Intera
     explanation: 'Subtract 5 from both sides, then divide by 2.',
     successCondition: { kind: 'QUIZ_CORRECT_OPTION' },
     feedback: { success: 'Correct.', failure: 'Not quite. Try solving for x first.' },
-  },
-  THREE_JS: {
-    type: 'THREE_JS',
-    mode: 'VISUALIZATION',
-    title: 'Rotating cube',
-    shape: 'cube',
-    color: '#4f8cff',
-    rotationSpeed: 0.8,
   },
 }
 
@@ -368,21 +338,6 @@ export const PRACTICE_DEFAULT_CONFIGS: Record<TemplateInteractionType, Interacti
     feedback: { success: 'Correct. The regions match the expected values.', failure: 'Not yet. Check that every required overlap exists and each region value is correct.' },
   },
   QUIZ: DEFAULT_INTERACTIVE_CONFIGS.QUIZ,
-  THREE_JS: {
-    type: 'THREE_JS',
-    mode: 'PRACTICE',
-    title: 'Match the target rotation',
-    prompt: 'Rotate the object until it matches the target orientation.',
-    shape: 'cube',
-    color: '#4f8cff',
-    controls: {
-      rotationX: { min: 0, max: 180, step: 15, initial: 0 },
-      rotationY: { min: 0, max: 180, step: 15, initial: 0 },
-      rotationZ: { min: 0, max: 180, step: 15, initial: 0 },
-    },
-    successCondition: { kind: 'TRANSFORM_MATCH', target: { rotationX: 45, rotationY: 90, rotationZ: 0 }, tolerance: 5 },
-    feedback: { success: 'Correct. The object matches the target orientation.', failure: 'Not yet. Compare the current orientation with the target.' },
-  },
 }
 
 export function isTemplateInteractionType(value: InteractionType): value is TemplateInteractionType {

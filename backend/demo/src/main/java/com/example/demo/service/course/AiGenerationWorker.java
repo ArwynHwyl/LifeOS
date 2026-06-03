@@ -35,6 +35,7 @@ class AiGenerationWorker {
     private final PdfDocumentService pdfDocumentService;
     private final CourseInputValidator validator;
     private final LessonHtmlService lessonHtmlService;
+    private final InteractiveConfigService interactiveConfigService;
 
     AiGenerationWorker(
             AiGenerationLogRepository aiGenerationLogRepository,
@@ -46,7 +47,8 @@ class AiGenerationWorker {
             PdfStorageService storageService,
             PdfDocumentService pdfDocumentService,
             CourseInputValidator validator,
-            LessonHtmlService lessonHtmlService
+            LessonHtmlService lessonHtmlService,
+            InteractiveConfigService interactiveConfigService
     ) {
         this.aiGenerationLogRepository = aiGenerationLogRepository;
         this.courseModuleRepository = courseModuleRepository;
@@ -58,6 +60,7 @@ class AiGenerationWorker {
         this.pdfDocumentService = pdfDocumentService;
         this.validator = validator;
         this.lessonHtmlService = lessonHtmlService;
+        this.interactiveConfigService = interactiveConfigService;
     }
 
     @Async
@@ -160,6 +163,7 @@ class AiGenerationWorker {
         List<SubTopic> generatedSubTopics = new ArrayList<>();
         int sortOrder = 0;
         for (GeneratedSubTopicDraft generated : draft.subTopics()) {
+            NormalizedGeneratedInteraction interaction = normalizeGeneratedSubTopicInteraction(generated);
             SubTopic subTopic = new SubTopic(
                     validator.requiredText(generated.title(), "generated title", 255),
                     lessonHtmlService.sanitizeForStorage(validator.requiredText(generated.content(), "generated content", 50_000)),
@@ -167,8 +171,9 @@ class AiGenerationWorker {
                     SubTopicSourceType.AI_GENERATED,
                     log.getPageStart(),
                     log.getPageEnd(),
-                    defaultInteractionType(generated.interactionType()),
-                    validator.optionalText(generated.interactionPrompt(), "generated interactionPrompt", 10_000)
+                    interaction.type(),
+                    interaction.prompt(),
+                    interaction.config()
             );
             generatedSubTopics.add(subTopic);
         }
@@ -208,6 +213,7 @@ class AiGenerationWorker {
             }
             int subTopicSortOrder = 0;
             for (GeneratedSubTopicDraft generatedSubTopic : generatedSubTopics) {
+                NormalizedGeneratedInteraction interaction = normalizeGeneratedSubTopicInteraction(generatedSubTopic);
                 module.addSubTopic(new SubTopic(
                         validator.requiredText(generatedSubTopic.title(), "generated sub-topic title", 255),
                         lessonHtmlService.sanitizeForStorage(validator.requiredText(generatedSubTopic.content(), "generated sub-topic content", 50_000)),
@@ -215,16 +221,52 @@ class AiGenerationWorker {
                         SubTopicSourceType.AI_GENERATED,
                         log.getPageStart(),
                         log.getPageEnd(),
-                        defaultInteractionType(generatedSubTopic.interactionType()),
-                        validator.optionalText(generatedSubTopic.interactionPrompt(), "generated interactionPrompt", 10_000)
+                        interaction.type(),
+                        interaction.prompt(),
+                        interaction.config()
                 ));
             }
             course.addModule(module);
         }
     }
 
+    private NormalizedGeneratedInteraction normalizeGeneratedSubTopicInteraction(GeneratedSubTopicDraft generated) {
+        InteractionType type = defaultInteractionType(generated.interactionType());
+        String prompt = validator.optionalText(generated.interactionPrompt(), "generated interactionPrompt", 10_000);
+        String config = validator.optionalText(generated.interactionConfig(), "generated interactionConfig", 50_000);
+        if (type == InteractionType.NONE) {
+            return new NormalizedGeneratedInteraction(InteractionType.NONE, prompt, null);
+        }
+        try {
+            String normalizedConfig = interactiveConfigService.validateAndNormalize(type, config);
+            return new NormalizedGeneratedInteraction(type, prompt, normalizedConfig);
+        } catch (ValidationException ex) {
+            return new NormalizedGeneratedInteraction(
+                    InteractionType.NONE,
+                    validator.optionalText(downgradedInteractionPrompt(type, prompt, ex), "generated interactionPrompt", 10_000),
+                    null
+            );
+        }
+    }
+
+    private String downgradedInteractionPrompt(InteractionType type, String prompt, ValidationException ex) {
+        String detail = prompt == null || prompt.isBlank() ? "AI suggested an interactive " + type + " activity." : prompt;
+        String message = ex.getMessage();
+        if (message == null || message.isBlank()) {
+            return detail;
+        }
+        return detail + " Config needs review: " + message;
+    }
+
     private InteractionType defaultInteractionType(InteractionType interactionType) {
         return interactionType == null ? InteractionType.NONE : interactionType;
+    }
+
+    private record NormalizedGeneratedInteraction(
+            InteractionType type,
+            String prompt,
+            String config
+    ) {
     }
 
     private String failureMessage(RuntimeException ex) {
