@@ -24,6 +24,7 @@ const emit = defineEmits<{
 const selectedAnswer = ref<string | null>(null)
 const checked = ref(false)
 const started = ref(false)
+const quizHintVisible = ref(false)
 const formulaValues = ref<Record<string, number>>({})
 const graphValues = ref<Record<string, number>>({})
 const selectedFormulaOptionId = ref<string | null>(null)
@@ -52,6 +53,7 @@ watch(
     selectedAnswer.value = null
     checked.value = false
     started.value = false
+    quizHintVisible.value = false
     highlightedZoneId.value = null
     highlightedOverlapId.value = null
     visualFeedback.value = ''
@@ -278,6 +280,10 @@ function updateGraphValue(name: string, event: Event) {
 function chooseAnswer(optionId: string) {
   selectedAnswer.value = optionId
   checked.value = false
+}
+
+function quizOptionLetter(option: QuizConfig['options'][number], index: number) {
+  return option.id.length === 1 ? option.id.toUpperCase() : String.fromCharCode(65 + index)
 }
 
 function runVisualInteraction(triggerId: string) {
@@ -537,7 +543,13 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
 </script>
 
 <template>
-  <section class="interactive-preview" @pointerdown.capture="markStarted" @input.capture="markStarted" @change.capture="markStarted">
+  <section
+    class="interactive-preview"
+    :class="{ 'interactive-preview--quiz': config?.type === 'QUIZ' }"
+    @pointerdown.capture="markStarted"
+    @input.capture="markStarted"
+    @change.capture="markStarted"
+  >
     <div v-if="!config" class="interactive-empty">Unsupported or invalid interactive config.</div>
 
     <div v-else-if="config.type === 'GRAPH_2D'" class="space-y-3">
@@ -810,15 +822,17 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
       <p v-if="visualFeedback" class="feedback">{{ visualFeedback }}</p>
     </div>
 
-    <div v-else-if="config.type === 'QUIZ'" class="space-y-4">
-      <header class="interactive-header">
-        <h3>{{ (config as QuizConfig).title }}</h3>
+    <div v-else-if="config.type === 'QUIZ'" class="quiz-stage">
+      <header class="quiz-stage__header">
+        <span>{{ (config as QuizConfig).title }}</span>
+        <h3>{{ config.prompt }}</h3>
       </header>
-      <p class="practice-prompt">{{ config.prompt }}</p>
-      <p class="quiz-question">{{ (config as QuizConfig).question }}</p>
-      <div class="grid gap-2 sm:grid-cols-2">
+      <div class="quiz-question-panel">
+        <p>{{ (config as QuizConfig).question }}</p>
+      </div>
+      <div class="quiz-option-grid">
         <button
-          v-for="option in (config as QuizConfig).options"
+          v-for="(option, index) in (config as QuizConfig).options"
           :key="option.id"
           type="button"
           class="quiz-option"
@@ -829,14 +843,28 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
           }"
           @click="chooseAnswer(option.id)"
         >
-          {{ option.label }}
+          <span class="quiz-option__badge">{{ quizOptionLetter(option, index) }}</span>
+          <span>{{ option.label }}</span>
         </button>
       </div>
-      <button type="button" class="check-button" :disabled="!selectedAnswer" @click="runCheck">Check</button>
-      <p v-if="checked" class="feedback">
+      <div v-if="(config as QuizConfig).explanation && (quizHintVisible || checked)" class="quiz-hint">
+        <strong>{{ checked ? 'Explanation' : 'Hint' }}</strong>
+        <span>{{ (config as QuizConfig).explanation }}</span>
+      </div>
+      <p v-if="checked" class="quiz-feedback" :class="{ 'quiz-feedback--success': practicePassed, 'quiz-feedback--failure': !practicePassed }">
         {{ activeFeedback || (selectedOption?.correct ? 'Correct.' : 'Not quite.') }}
-        <span v-if="(config as QuizConfig).explanation">{{ (config as QuizConfig).explanation }}</span>
       </p>
+      <footer class="quiz-action-row">
+        <button
+          v-if="(config as QuizConfig).explanation"
+          type="button"
+          class="quiz-secondary-button"
+          @click="quizHintVisible = !quizHintVisible"
+        >
+          {{ quizHintVisible ? 'Hide hint' : 'Show hint' }}
+        </button>
+        <button type="button" class="quiz-check-button" :disabled="!selectedAnswer" @click="runCheck">Check</button>
+      </footer>
     </div>
 
   </section>
@@ -854,6 +882,13 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   background: #fbf7ef;
   padding: 1rem;
   color: #1a1814;
+}
+.interactive-preview--quiz {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
 }
 .interactive-empty {
   color: #8c3322;
@@ -1039,6 +1074,175 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   font-weight: 900;
   line-height: 1.35;
   pointer-events: none;
+}
+.quiz-stage {
+  display: grid;
+  gap: 1.25rem;
+  width: min(100%, 860px);
+  margin: 0 auto;
+}
+.quiz-stage__header {
+  display: grid;
+  gap: 0.35rem;
+}
+.quiz-stage__header span {
+  color: #8f887e;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.quiz-stage__header h3 {
+  margin: 0;
+  color: #1a1814;
+  font-size: clamp(1.25rem, 2vw, 1.75rem);
+  font-weight: 950;
+  line-height: 1.2;
+}
+.quiz-question-panel {
+  display: grid;
+  min-height: 8.5rem;
+  place-items: center;
+  overflow: hidden;
+  border: 2px solid #1a1814;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle, rgba(255, 253, 248, 0.08) 1px, transparent 1.5px),
+    #171611;
+  background-size: 18px 18px;
+  padding: 1.5rem;
+  color: #fffdf8;
+  box-shadow: 3px 3px 0 #1a1814;
+}
+.quiz-question-panel p {
+  max-width: 100%;
+  margin: 0;
+  text-align: center;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.65rem, 4vw, 3rem);
+  font-style: italic;
+  font-weight: 900;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.quiz-option-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+.quiz-option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 1rem;
+  min-height: 5rem;
+  border: 2px solid #1a1814;
+  border-radius: 14px;
+  background: #fffdf8;
+  padding: 0.85rem 1.2rem;
+  color: #1a1814;
+  text-align: left;
+  font-size: 1.1rem;
+  font-weight: 900;
+  line-height: 1.25;
+  box-shadow: 3px 3px 0 #1a1814;
+  transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
+}
+.quiz-option:hover {
+  transform: translateY(-1px);
+  box-shadow: 4px 4px 0 #1a1814;
+}
+.quiz-option--selected {
+  background: #ffd333;
+}
+.quiz-option--correct {
+  background: #dff4df;
+}
+.quiz-option--wrong {
+  background: #f9d3c5;
+}
+.quiz-option__badge {
+  display: inline-grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  place-items: center;
+  border: 2px solid #1a1814;
+  border-radius: 999px;
+  background: #fbf7ef;
+  color: #1a1814;
+  font-size: 0.85rem;
+  font-weight: 950;
+}
+.quiz-option--selected .quiz-option__badge {
+  background: #1a1814;
+  color: #ffd333;
+}
+.quiz-hint,
+.quiz-feedback {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: min(100%, 520px);
+  border: 2px solid #1a1814;
+  border-radius: 12px;
+  background: #fffdf8;
+  padding: 0.85rem 1rem;
+  color: #1a1814;
+  font-size: 0.9rem;
+  font-weight: 750;
+  line-height: 1.45;
+  box-shadow: 3px 3px 0 #1a1814;
+}
+.quiz-hint strong,
+.quiz-feedback {
+  font-weight: 900;
+}
+.quiz-feedback--success {
+  background: #dff4df;
+  color: #245e3e;
+}
+.quiz-feedback--failure {
+  background: #f9d3c5;
+  color: #8c3322;
+}
+.quiz-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-top: 2px solid #e4ded6;
+  padding-top: 0.75rem;
+}
+.quiz-secondary-button,
+.quiz-check-button {
+  min-height: 3rem;
+  border: 2px solid #1a1814;
+  border-radius: 999px;
+  padding: 0 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 950;
+  box-shadow: 3px 3px 0 #1a1814;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+.quiz-secondary-button {
+  background: #fffdf8;
+  color: #1a1814;
+}
+.quiz-check-button {
+  margin-left: auto;
+  background: #1a1814;
+  color: #fffdf8;
+}
+.quiz-secondary-button:hover,
+.quiz-check-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 4px 4px 0 #1a1814;
+}
+.quiz-check-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 .visual-zone,
 .visual-trigger {
@@ -1244,33 +1448,6 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
 .formula-slider input {
   width: 100%;
 }
-.quiz-question {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 800;
-}
-.quiz-option {
-  min-height: 3rem;
-  border: 2px solid #1a1814;
-  border-radius: 8px;
-  background: #fffdf8;
-  padding: 0.65rem 0.8rem;
-  text-align: left;
-  font-size: 13px;
-  font-weight: 800;
-  transition: transform 150ms ease, background 150ms ease;
-}
-.quiz-option:hover,
-.quiz-option--selected {
-  background: #ffd333;
-  transform: translateY(-1px);
-}
-.quiz-option--correct {
-  background: #cdebc5;
-}
-.quiz-option--wrong {
-  background: #f5c7bd;
-}
 .check-button {
   height: 2.4rem;
   border: 2px solid #1a1814;
@@ -1297,5 +1474,32 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   color: #4f4942;
   font-size: 13px;
   font-weight: 700;
+}
+@media (max-width: 700px) {
+  .quiz-stage {
+    gap: 0.9rem;
+  }
+  .quiz-question-panel {
+    min-height: 6.5rem;
+    border-radius: 14px;
+    padding: 1rem;
+  }
+  .quiz-option-grid {
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+  .quiz-option {
+    min-height: 4.25rem;
+    padding: 0.75rem 0.9rem;
+    font-size: 1rem;
+  }
+  .quiz-action-row {
+    align-items: stretch;
+  }
+  .quiz-secondary-button,
+  .quiz-check-button {
+    width: 100%;
+    margin-left: 0;
+  }
 }
 </style>
