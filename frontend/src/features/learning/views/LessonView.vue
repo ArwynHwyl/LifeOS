@@ -52,10 +52,8 @@ const selectedLessonHtml = computed(() => selectedSubTopic.value?.contentHtml ||
 const currentProgressStatus = computed<InteractiveProgressStatus>(() => selectedSubTopic.value?.interactiveProgress?.status ?? 'NOT_STARTED')
 const currentChallengeObjective = computed(() => {
   const current = selectedSubTopic.value
-  const config = interactiveConfig.value
   if (!current) return 'Complete this activity to master the concept.'
   if (current.interactionPrompt?.trim()) return current.interactionPrompt
-  if (config && 'prompt' in config && config.prompt?.trim()) return config.prompt
   if (current.interactionType === 'QUIZ') return 'Answer the quiz to check your understanding.'
   if (current.interactionType === 'GRAPH_2D') return 'Use the graph to match the target behavior.'
   if (current.interactionType === 'FORMULA_EXPLORER') return 'Adjust the formula inputs to reach the target.'
