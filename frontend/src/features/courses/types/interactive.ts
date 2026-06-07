@@ -40,7 +40,6 @@ export type SuccessCondition =
 
 export interface PracticeConfigBase {
   mode: 'PRACTICE'
-  prompt: string
   successCondition: SuccessCondition
   feedback: PracticeFeedback
 }
@@ -56,7 +55,6 @@ export interface Graph2DConfig {
   yMax: number
   sampleCount: number
   controls?: Record<string, NumericControlConfig>
-  prompt?: string
   successCondition?: PointOnGraphCondition
   feedback?: PracticeFeedback
 }
@@ -92,7 +90,6 @@ export interface FormulaExplorerConfig {
   variables: FormulaVariableConfig[]
   precision: number
   formulaOptions?: FormulaOptionConfig[]
-  prompt?: string
   successCondition?: ExpressionEqualsCondition
   feedback?: PracticeFeedback
 }
@@ -110,7 +107,6 @@ export interface QuizConfig {
   question: string
   options: QuizOptionConfig[]
   explanation?: string
-  prompt?: string
   successCondition?: QuizCorrectOptionCondition
   feedback?: PracticeFeedback
 }
@@ -179,7 +175,6 @@ export interface VisualLayerConfig {
   type: 'VISUAL_LAYER'
   mode?: InteractiveMode
   title: string
-  prompt?: string
   canvas: {
     width: number
     height: number
@@ -230,11 +225,12 @@ export const DEFAULT_INTERACTIVE_CONFIGS: Record<TemplateInteractionType, Intera
   FORMULA_EXPLORER: {
     type: 'FORMULA_EXPLORER',
     mode: 'VISUALIZATION',
-    title: 'Area explorer',
-    formula: 'width * height',
+    title: 'Linear formula explorer',
+    formula: 'a * x + b',
     variables: [
-      { name: 'width', label: 'Width', min: 1, max: 20, step: 1, initial: 6 },
-      { name: 'height', label: 'Height', min: 1, max: 20, step: 1, initial: 4 },
+      { name: 'a', label: 'a', min: -5, max: 5, step: 0.5, initial: 2 },
+      { name: 'x', label: 'x', min: -10, max: 10, step: 1, initial: 1 },
+      { name: 'b', label: 'b', min: -10, max: 10, step: 1, initial: 1 },
     ],
     precision: 2,
   },
@@ -262,7 +258,6 @@ export const DEFAULT_INTERACTIVE_CONFIGS: Record<TemplateInteractionType, Intera
     type: 'QUIZ',
     mode: 'PRACTICE',
     title: 'Quick check',
-    prompt: 'Choose the value that satisfies the equation.',
     question: 'Which value makes 2x + 5 = 13 true?',
     options: [
       { id: 'a', label: 'x = 3', correct: false },
@@ -280,7 +275,6 @@ export const PRACTICE_DEFAULT_CONFIGS: Record<TemplateInteractionType, Interacti
     type: 'GRAPH_2D',
     mode: 'PRACTICE',
     title: 'Match the line',
-    prompt: 'Adjust the slope until the graph passes through the target point.',
     expression: 'm * x',
     controls: { m: { min: 0, max: 5, step: 0.5, initial: 1 } },
     xMin: 0,
@@ -294,22 +288,21 @@ export const PRACTICE_DEFAULT_CONFIGS: Record<TemplateInteractionType, Interacti
   FORMULA_EXPLORER: {
     type: 'FORMULA_EXPLORER',
     mode: 'PRACTICE',
-    title: 'Target magnitude',
-    prompt: 'Adjust x and y until the magnitude equals 5.',
-    formula: 'sqrt(x^2 + y^2)',
+    title: 'Linear formula target',
+    formula: 'a * x + b',
     variables: [
-      { name: 'x', label: 'X component', min: 0, max: 10, step: 1, initial: 0 },
-      { name: 'y', label: 'Y component', min: 0, max: 10, step: 1, initial: 0 },
+      { name: 'a', label: 'a', min: -5, max: 5, step: 0.5, initial: 2 },
+      { name: 'x', label: 'x', min: -10, max: 10, step: 1, initial: 1 },
+      { name: 'b', label: 'b', min: -10, max: 10, step: 1, initial: 1 },
     ],
     precision: 2,
-    successCondition: { kind: 'EXPRESSION_EQUALS', target: 5, tolerance: 0.01 },
-    feedback: { success: 'Correct. The magnitude is 5.', failure: 'Not yet. Look for a Pythagorean triple.' },
+    successCondition: { kind: 'EXPRESSION_EQUALS', target: 7, tolerance: 0.01 },
+    feedback: { success: 'Correct. The expression reaches the target value.', failure: 'Try again. Adjust the coefficient, input, or constant.' },
   },
   VISUAL_LAYER: {
     type: 'VISUAL_LAYER',
     mode: 'PRACTICE',
     title: 'Build the Venn diagram',
-    prompt: 'Add the required circles, arrange the overlaps, then enter the value for each visible region.',
     canvas: {
       width: 900,
       height: 520,
@@ -359,7 +352,6 @@ export function normalizeInteractiveConfig(config: InteractiveConfig): Interacti
     ...defaults,
     ...config,
     mode: 'PRACTICE',
-    prompt: config.prompt?.trim() || config.question || defaults.prompt,
     successCondition: {
       kind: 'QUIZ_CORRECT_OPTION',
       ...(config.successCondition ?? {}),

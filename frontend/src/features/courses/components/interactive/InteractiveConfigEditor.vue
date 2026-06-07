@@ -163,7 +163,6 @@ const presetCards = computed(() => [
 
 const previewObjective = computed(() => {
   if (prompt.value.trim()) return prompt.value
-  if (config.value && 'prompt' in config.value && config.value.prompt?.trim()) return config.value.prompt
   return 'Complete this activity to master the concept.'
 })
 
@@ -296,7 +295,6 @@ function twoSetVennPreset(): InteractiveConfig {
     type: 'VISUAL_LAYER',
     mode: 'PRACTICE',
     title: 'Build the Venn diagram',
-    prompt: 'Add circles A and B, arrange the overlap, then enter each exact region value.',
     canvas: { width: 900, height: 520, backgroundText: '' },
     zones: [
       { id: 'zone_a', label: 'A', shape: 'circle', x: 250, y: 140, width: 280, height: 280, labelX: 34, labelY: 28, color: '#ffd333', highlightColor: '#ff8f1f', highlightOpacity: 0.82 },
@@ -1379,7 +1377,6 @@ function labelFor(type: TemplateInteractionType) {
       <label class="field"><span>Y max</span><input type="number" :value="config.yMax" @input="patchConfig({ yMax: Number(($event.target as HTMLInputElement).value) })" /></label>
       <label class="field"><span>Samples</span><input type="number" min="20" max="500" :value="config.sampleCount" @input="patchConfig({ sampleCount: Number(($event.target as HTMLInputElement).value) })" /></label>
       <template v-if="config.mode === 'PRACTICE'">
-        <label class="field field--wide"><span>Practice prompt</span><textarea rows="2" :value="config.prompt ?? ''" maxlength="500" @input="patchConfig({ prompt: ($event.target as HTMLTextAreaElement).value })" /></label>
         <template v-for="(control, name) in config.controls" :key="name">
           <label class="field"><span>{{ name }} min</span><input type="number" :value="control.min" @input="updateGraphControl(String(name), { min: Number(($event.target as HTMLInputElement).value) })" /></label>
           <label class="field"><span>{{ name }} max</span><input type="number" :value="control.max" @input="updateGraphControl(String(name), { max: Number(($event.target as HTMLInputElement).value) })" /></label>
@@ -1397,7 +1394,6 @@ function labelFor(type: TemplateInteractionType) {
         <label class="field field--wide"><span>Formula</span><input :value="config.formula" maxlength="160" @input="patchConfig({ formula: ($event.target as HTMLInputElement).value })" /></label>
         <label class="field"><span>Precision</span><input type="number" min="0" max="6" :value="config.precision" @input="patchConfig({ precision: Number(($event.target as HTMLInputElement).value) })" /></label>
         <template v-if="config.mode === 'PRACTICE'">
-          <label class="field field--wide"><span>Practice prompt</span><textarea rows="2" :value="config.prompt ?? ''" maxlength="500" @input="patchConfig({ prompt: ($event.target as HTMLTextAreaElement).value })" /></label>
           <label class="field"><span>Target result</span><input type="number" :value="config.successCondition?.target" @input="patchConfig({ successCondition: { kind: 'EXPRESSION_EQUALS', target: Number(($event.target as HTMLInputElement).value), tolerance: config.successCondition?.tolerance ?? 0.01 } })" /></label>
           <label class="field"><span>Tolerance</span><input type="number" min="0" :value="config.successCondition?.tolerance ?? 0.01" @input="patchConfig({ successCondition: { kind: 'EXPRESSION_EQUALS', target: config.successCondition?.target ?? 0, tolerance: Number(($event.target as HTMLInputElement).value) } })" /></label>
         </template>
@@ -1418,7 +1414,15 @@ function labelFor(type: TemplateInteractionType) {
             <label class="field"><span>Max</span><input type="number" :value="variable.max" @input="updateVariable(index, { max: Number(($event.target as HTMLInputElement).value) })" /></label>
             <label class="field"><span>Step</span><input type="number" :value="variable.step" @input="updateVariable(index, { step: Number(($event.target as HTMLInputElement).value) })" /></label>
             <label class="field"><span>Initial</span><input type="number" :value="variable.initial" @input="updateVariable(index, { initial: Number(($event.target as HTMLInputElement).value) })" /></label>
-            <button type="button" class="mini-button" :disabled="config.variables.length <= 1" @click="removeVariable(index)">Remove</button>
+            <button type="button" class="mini-button mini-button--icon" :disabled="config.variables.length <= 1" aria-label="Remove variable" title="Remove variable" @click="removeVariable(index)">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 7h16" />
+                <path d="M10 11v6" />
+                <path d="M14 11v6" />
+                <path d="M6 7l1 14h10l1-14" />
+                <path d="M9 7V4h6v3" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
@@ -1514,10 +1518,6 @@ function labelFor(type: TemplateInteractionType) {
           <textarea rows="3" :value="config.canvas.backgroundText ?? ''" maxlength="500" @input="patchConfig({ canvas: { ...config.canvas, backgroundText: ($event.target as HTMLTextAreaElement).value } } as Partial<VisualLayerConfig>)" />
         </label>
         <template v-if="config.mode === 'PRACTICE'">
-          <label class="field">
-            <span>Practice prompt</span>
-            <textarea rows="3" :value="config.prompt ?? ''" maxlength="500" @input="patchConfig({ prompt: ($event.target as HTMLTextAreaElement).value } as Partial<VisualLayerConfig>)" />
-          </label>
           <label class="field">
             <span>Success feedback</span>
             <textarea rows="2" :value="config.feedback?.success ?? ''" maxlength="500" @input="patchConfig({ feedback: { success: ($event.target as HTMLTextAreaElement).value, failure: config.feedback?.failure ?? '' } } as Partial<VisualLayerConfig>)" />
@@ -1778,13 +1778,20 @@ function labelFor(type: TemplateInteractionType) {
               <input :value="option.id" maxlength="24" @input="updateQuizOption(index, { id: ($event.target as HTMLInputElement).value })" />
             </label>
             <span class="quiz-answer-state">{{ option.correct ? 'Correct answer' : 'Distractor' }}</span>
-            <button type="button" class="mini-button" :disabled="config.options.length <= 2" @click="removeQuizOption(index)">Remove</button>
+            <button type="button" class="mini-button mini-button--icon" :disabled="config.options.length <= 2" aria-label="Remove option" title="Remove option" @click="removeQuizOption(index)">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 7h16" />
+                <path d="M10 11v6" />
+                <path d="M14 11v6" />
+                <path d="M6 7l1 14h10l1-14" />
+                <path d="M9 7V4h6v3" />
+              </svg>
+            </button>
           </div>
         </div>
         <button type="button" class="quiz-add-card" :disabled="config.options.length >= 6" @click="addQuizOption">Add option</button>
       </div>
       <label class="field"><span>Explanation</span><textarea rows="3" :value="config.explanation ?? ''" maxlength="1000" @input="patchConfig({ explanation: ($event.target as HTMLTextAreaElement).value })" /></label>
-      <label class="field"><span>Practice prompt</span><textarea rows="2" :value="config.prompt ?? ''" maxlength="500" @input="patchConfig({ prompt: ($event.target as HTMLTextAreaElement).value })" /></label>
     </div>
 
     <div v-if="config?.mode === 'PRACTICE' && config.type !== 'VISUAL_LAYER'" class="editor-grid">
@@ -2072,7 +2079,8 @@ function labelFor(type: TemplateInteractionType) {
   color: #1a1814;
 }
 .quiz-answer-card {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 0.45rem;
   padding: 0.65rem;
   box-shadow: 2px 2px 0 transparent;

@@ -557,7 +557,6 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
         <h3>{{ (config as Graph2DConfig).title }}</h3>
         <code>{{ (config as Graph2DConfig).expression }}</code>
       </header>
-      <p v-if="config.mode === 'PRACTICE'" class="practice-prompt">{{ config.prompt }}</p>
       <svg class="graph-canvas" viewBox="0 0 520 260" role="img" :aria-label="(config as Graph2DConfig).title">
         <defs>
           <pattern id="graph-grid" width="26" height="26" patternUnits="userSpaceOnUse">
@@ -602,7 +601,6 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
         <h3>{{ (config as FormulaExplorerConfig).title }}</h3>
         <code>{{ activeFormulaExpression }}</code>
       </header>
-      <p v-if="config.mode === 'PRACTICE'" class="practice-prompt">{{ config.prompt }}</p>
       <div v-if="(config as FormulaExplorerConfig).formulaOptions?.length" class="formula-choice-row">
         <button
           v-for="option in (config as FormulaExplorerConfig).formulaOptions"
@@ -661,7 +659,6 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
         <span>Set / Diagram</span>
       </header>
       <template v-if="config.mode === 'PRACTICE'">
-        <p class="practice-prompt">{{ (config as VisualLayerConfig).prompt }}</p>
         <div class="visual-practice-toolbar">
           <button
             v-for="zone in visualPracticeSourceZones"
@@ -825,7 +822,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
     <div v-else-if="config.type === 'QUIZ'" class="quiz-stage">
       <header class="quiz-stage__header">
         <span>{{ (config as QuizConfig).title }}</span>
-        <h3>{{ config.prompt }}</h3>
+        <h3>{{ config.question }}</h3>
       </header>
       <div class="quiz-question-panel">
         <p>{{ (config as QuizConfig).question }}</p>
