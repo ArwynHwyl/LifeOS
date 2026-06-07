@@ -364,7 +364,7 @@ function getErrorMessage(error: unknown, fallback: string) {
 </script>
 
 <template>
-  <section class="mb-5 rounded-[18px] bg-lm-surface border-2 border-lm-line p-5 shadow-stamp-sm">
+  <section class="mb-5 rounded-[18px] border-2 border-lm-line bg-lm-surface p-5 shadow-stamp-sm">
     <!-- Header + add module -->
     <div class="mb-4 flex items-center justify-between gap-4">
       <div>
@@ -378,11 +378,11 @@ function getErrorMessage(error: unknown, fallback: string) {
           v-model="newModuleTitle"
           type="text"
           placeholder="New module title"
-          class="h-9 w-56 rounded-lg border-2 border-lm-line-soft bg-lm-bg-soft px-3 text-[12px] font-medium text-lm-ink outline-none transition placeholder:text-lm-ink-3 focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
+          class="h-9 w-56 rounded-lg border-2 border-lm-line-soft bg-lm-bg-soft px-3 text-[12px] text-lm-ink outline-none placeholder:text-lm-ink-3 focus:border-lm-line"
         />
         <button
           type="button"
-          class="h-9 cursor-pointer rounded-lg border-2 border-lm-ink bg-lm-ink px-3 text-[12px] font-bold text-lm-bg transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
+          class="h-9 rounded-lg border-2 border-lm-ink bg-lm-ink px-4 text-[12px] font-bold text-lm-bg shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md disabled:cursor-not-allowed disabled:opacity-50"
           :disabled="moduleCreating || !newModuleTitle.trim()"
           @click="addModuleForGeneration"
         >
@@ -428,14 +428,14 @@ function getErrorMessage(error: unknown, fallback: string) {
             <span class="mt-0.5 block truncate font-mono text-[11px] font-medium text-lm-ink-3">
               {{ module.subTopics.length }} subtopic{{ module.subTopics.length === 1 ? '' : 's' }} · {{ module.contentDepth.toLowerCase() }} depth
             </span>
-            <span v-if="module.interactionType !== 'NONE'" class="mt-1 inline-flex rounded-full border border-lm-line-soft bg-lm-purple-soft px-2 py-0.5 font-mono text-[10px] font-bold text-lm-purple">
+            <span v-if="module.interactionType !== 'NONE'" class="mt-1 inline-flex rounded-full border border-lm-line-soft bg-lm-purple-soft px-2 py-0.5 font-mono text-[9px] font-bold text-lm-purple">
               {{ formatInteractionType(module.interactionType) }}
             </span>
           </span>
           <button
             v-if="courseStatus !== 'PENDING_REVIEW' && module.subTopics.length"
             type="button"
-            class="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border-2 border-lm-line bg-lm-surface px-3 py-1.5 font-mono text-[11px] font-bold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
+            class="inline-flex h-8 cursor-pointer items-center justify-center gap-1.5 rounded-lg border-2 border-lm-line bg-lm-surface px-3 font-mono text-[11px] font-bold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
             @click.stop="emit('module-edit', module.id)"
           >
             <svg class="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -459,24 +459,24 @@ function getErrorMessage(error: unknown, fallback: string) {
 
         <!-- Add subtopic inline form -->
         <div v-if="editingSubTopicModuleId === module.id" class="border-t-2 border-lm-line-soft bg-lm-bg-soft px-4 py-3">
-          <div class="rounded-lg border-2 border-lm-line bg-lm-surface p-3 shadow-stamp-sm">
+          <div class="rounded-[10px] border-2 border-lm-line bg-lm-surface p-3 shadow-stamp-sm">
             <div class="grid gap-3 lg:grid-cols-[280px_minmax(0,1fr)_auto]">
               <input
                 v-model="subTopicTitle"
                 type="text"
                 placeholder="Subtopic title"
-                class="h-10 rounded-lg border-2 border-lm-line-soft bg-lm-bg-soft px-3 text-[12px] font-medium text-lm-ink outline-none focus:border-lm-line focus:bg-lm-surface"
+                class="h-10 rounded-lg border-2 border-lm-line-soft bg-lm-bg-soft px-3 text-[12px] text-lm-ink outline-none placeholder:text-lm-ink-3 focus:border-lm-line"
               />
               <input
                 v-model="subTopicContent"
                 type="text"
                 placeholder="Short content or notes"
-                class="h-10 rounded-lg border-2 border-lm-line-soft bg-lm-bg-soft px-3 text-[12px] font-medium text-lm-ink outline-none focus:border-lm-line focus:bg-lm-surface"
+                class="h-10 rounded-lg border-2 border-lm-line-soft bg-lm-bg-soft px-3 text-[12px] text-lm-ink outline-none placeholder:text-lm-ink-3 focus:border-lm-line"
               />
               <div class="flex gap-2">
                 <button
                   type="button"
-                  class="h-10 cursor-pointer rounded-lg border-2 border-lm-ink bg-lm-ink px-3 text-[12px] font-bold text-lm-bg disabled:cursor-not-allowed disabled:opacity-50"
+                  class="h-10 rounded-lg border-2 border-lm-ink bg-lm-ink px-4 text-[12px] font-bold text-lm-bg shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md disabled:cursor-not-allowed disabled:opacity-50"
                   :disabled="subTopicSaving || !subTopicTitle.trim()"
                   @click="addManualSubTopic(module.id)"
                 >
@@ -484,7 +484,7 @@ function getErrorMessage(error: unknown, fallback: string) {
                 </button>
                 <button
                   type="button"
-                  class="h-10 cursor-pointer rounded-lg border-2 border-lm-line bg-lm-surface px-3 text-[12px] font-bold text-lm-ink shadow-stamp-sm"
+                  class="h-10 rounded-lg border-2 border-lm-line bg-lm-surface px-4 text-[12px] font-bold text-lm-ink shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
                   @click="closeSubTopicForm"
                 >
                   Cancel
@@ -532,7 +532,7 @@ function getErrorMessage(error: unknown, fallback: string) {
                   <button
                     v-if="courseStatus !== 'PENDING_REVIEW'"
                     type="button"
-                    class="h-8 cursor-pointer rounded-lg border-2 border-lm-line bg-lm-surface px-3 font-mono text-[11px] font-bold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
+                  class="h-8 cursor-pointer rounded-lg border-2 border-lm-line bg-lm-surface px-3 font-mono text-[11px] font-bold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
                     @click="openLessonEditor(subTopic)"
                   >
                     Edit
@@ -649,7 +649,7 @@ function getErrorMessage(error: unknown, fallback: string) {
 
             <!-- Add comment input -->
             <div class="flex items-start gap-3 border-t-2 border-lm-line-soft px-4 py-4">
-              <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-lm-line bg-lm-yellow font-display text-[10px] font-bold text-lm-ink shadow-stamp-sm">
+              <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-lm-line bg-lm-yellow font-display text-[10px] font-bold text-lm-ink">
                 {{ initials(currentUserName) }}
               </div>
               <div class="flex flex-1 items-end gap-2">

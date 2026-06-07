@@ -176,18 +176,18 @@ function getErrorMessage(error: unknown, fallback: string) {
 
     <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
       <!-- Page header -->
-      <header class="shrink-0 border-b-2 border-lm-line bg-lm-surface px-7 py-4">
-        <div class="flex items-center justify-between gap-4">
+      <header class="admin-page-header">
+        <div class="admin-page-header__inner">
           <div>
-            <h1 class="font-display text-[23px] font-bold leading-tight text-lm-ink">Course Management</h1>
-            <p class="mt-0.5 font-mono text-[12px] font-medium text-lm-ink-3">Manage, publish and track all learning content</p>
+            <h1 class="admin-page-header__title">Course Management</h1>
+            <p class="admin-page-header__subtitle">Manage, publish and track all learning content</p>
           </div>
 
           <!-- Controls group -->
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2">
             <!-- Search -->
             <div class="relative">
-              <svg class="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-lm-ink-3"
+              <svg class="pointer-events-none absolute left-3 top-1/2 h-3 w-3 -translate-y-1/2 text-lm-ink-3"
                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
               </svg>
@@ -195,7 +195,7 @@ function getErrorMessage(error: unknown, fallback: string) {
                 v-model="searchQuery"
                 type="search"
                 placeholder="Search courses..."
-                class="h-11 w-72 rounded-xl border-2 border-lm-line-soft bg-lm-bg-soft py-2 pl-10 pr-3 text-[12px] font-semibold text-lm-ink outline-none transition placeholder:text-lm-ink-3 focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
+                class="admin-page-header__control w-[310px] rounded-[12px] border-2 border-lm-line-soft bg-lm-bg-soft py-2 pl-9 pr-3 font-display text-[12px] font-bold text-lm-ink outline-none transition placeholder:text-lm-ink-3 focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
               />
             </div>
 
@@ -203,7 +203,7 @@ function getErrorMessage(error: unknown, fallback: string) {
             <div class="relative">
               <button
                 type="button"
-                class="inline-flex h-11 min-w-32 items-center justify-between gap-2 rounded-xl border-2 border-lm-line-soft bg-lm-bg-soft px-4 text-[12px] font-bold text-lm-ink-2 transition hover:border-lm-line hover:bg-lm-surface"
+                class="admin-page-header__control inline-flex min-w-[145px] items-center justify-between gap-2 rounded-[12px] border-2 border-lm-line-soft bg-lm-bg-soft px-3.5 font-display text-[12px] font-bold text-lm-ink-2 transition hover:border-lm-line hover:bg-lm-surface"
                 @click="showStatusMenu = !showStatusMenu"
               >
                 <span v-if="statusFilter !== 'all'" class="h-1.5 w-1.5 rounded-full"
@@ -214,7 +214,7 @@ function getErrorMessage(error: unknown, fallback: string) {
                 </svg>
               </button>
               <div v-if="showStatusMenu"
-                class="absolute right-0 top-full z-20 mt-1.5 w-40 overflow-hidden rounded-xl border-2 border-lm-line bg-lm-surface shadow-stamp-md">
+                class="absolute right-0 top-full z-20 mt-1.5 w-40 overflow-hidden rounded-[10px] border-2 border-lm-line bg-lm-surface shadow-stamp-sm">
                 <button v-for="[val, label] in [['all','All status'],['published','Published'],['pending','Pending Review'],['revision','Needs Revision'],['draft','Draft']]" :key="val"
                   type="button"
                   class="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-[12px] transition hover:bg-lm-bg-soft"
@@ -230,10 +230,10 @@ function getErrorMessage(error: unknown, fallback: string) {
             <!-- New Course CTA -->
             <button
               type="button"
-              class="inline-flex h-11 items-center gap-2 rounded-full bg-lm-yellow border-2 border-lm-line px-5 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md active:scale-[0.98]"
+              class="admin-page-header__control inline-flex items-center gap-2 rounded-full border-[3px] border-lm-line bg-lm-yellow px-5 text-[14px] font-extrabold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md active:scale-[0.98]"
               @click="openAddModal"
             >
-              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
               </svg>
               New Course
@@ -242,62 +242,42 @@ function getErrorMessage(error: unknown, fallback: string) {
         </div>
       </header>
 
-      <main class="flex-1 overflow-y-auto px-7 py-6 relative">
+      <main class="relative flex-1 overflow-y-auto px-7 py-7">
         <div class="absolute inset-0 bg-dot-grid opacity-40 pointer-events-none" />
 
         <div class="relative">
           <!-- Stats grid -->
-          <section class="mb-6 grid gap-4 xl:grid-cols-4">
-            <div class="rounded-[18px] bg-lm-surface p-5 border-2 border-lm-line shadow-stamp-sm">
-              <div class="flex items-start justify-between">
-                <p class="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-lm-ink-3">Total Courses</p>
-                <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-lm-purple-soft border border-lm-line-soft text-lm-purple">
-                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>
-                </span>
-              </div>
-              <p class="mt-6 font-display text-[28px] font-bold text-lm-ink">{{ stats.total }}</p>
-              <p class="mt-1 font-mono text-[11px] font-semibold text-lm-purple">+{{ stats.draft }} draft</p>
+          <section class="mb-6 grid gap-3 xl:grid-cols-4">
+            <div class="admin-card px-5 py-4 shadow-stamp-sm">
+              <p class="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-lm-ink-3">Total Courses</p>
+              <p class="mt-3 font-display text-[26px] font-extrabold leading-none text-lm-ink">{{ stats.total }}</p>
+              <p class="mt-1 text-[12px] font-bold text-lm-ink-3">+{{ stats.draft }} draft</p>
             </div>
 
-            <div class="rounded-[18px] bg-lm-surface p-5 border-2 border-lm-line shadow-stamp-sm">
-              <div class="flex items-start justify-between">
-                <p class="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-lm-ink-3">Published</p>
-                <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-lm-green-soft border border-lm-line-soft text-lm-green">
-                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5" /></svg>
-                </span>
-              </div>
-              <p class="mt-6 font-display text-[28px] font-bold text-lm-green">{{ stats.published }}</p>
-              <p class="mt-1 font-mono text-[11px] font-semibold text-lm-ink-3">Ready for learners</p>
+            <div class="admin-card px-5 py-4 shadow-stamp-sm">
+              <p class="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-lm-ink-3">Published</p>
+              <p class="mt-3 font-display text-[26px] font-extrabold leading-none text-lm-green">{{ stats.published }}</p>
+              <p class="mt-1 text-[12px] font-bold text-lm-ink-3">Ready for learners</p>
             </div>
 
-            <div class="rounded-[18px] bg-lm-surface p-5 border-2 border-lm-line shadow-stamp-sm">
-              <div class="flex items-start justify-between">
-                <p class="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-lm-ink-3">Pending Review</p>
-                <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-lm-purple-soft border border-lm-line-soft text-lm-purple">
-                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
-                </span>
-              </div>
-              <p class="mt-6 font-display text-[28px] font-bold text-lm-purple">{{ stats.pending }}</p>
-              <p class="mt-1 font-mono text-[11px] font-semibold text-lm-ink-3">Awaiting teacher</p>
+            <div class="admin-card px-5 py-4 shadow-stamp-sm">
+              <p class="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-lm-ink-3">Pending Review</p>
+              <p class="mt-3 font-display text-[26px] font-extrabold leading-none text-lm-purple">{{ stats.pending }}</p>
+              <p class="mt-1 text-[12px] font-bold text-lm-ink-3">Awaiting teacher</p>
             </div>
 
-            <div class="rounded-[18px] bg-lm-surface p-5 border-2 border-lm-line shadow-stamp-sm">
-              <div class="flex items-start justify-between">
-                <p class="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-lm-ink-3">Needs Revision</p>
-                <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-lm-red-soft border border-lm-line-soft text-lm-red">
-                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /><path d="M15 9 9 15M9 9l6 6" /></svg>
-                </span>
-              </div>
-              <p class="mt-6 font-display text-[28px] font-bold text-lm-red">{{ stats.revision }}</p>
-              <p class="mt-1 font-mono text-[11px] font-semibold text-lm-ink-3">Teacher feedback</p>
+            <div class="admin-card px-5 py-4 shadow-stamp-sm">
+              <p class="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-lm-ink-3">Needs Revision</p>
+              <p class="mt-3 font-display text-[26px] font-extrabold leading-none text-lm-red">{{ stats.revision }}</p>
+              <p class="mt-1 text-[12px] font-bold text-lm-ink-3">Teacher feedback</p>
             </div>
           </section>
 
           <!-- Section separator -->
-          <div class="mb-4 flex items-center gap-3">
-            <p class="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-lm-ink-3">Courses</p>
+          <div class="mb-5 flex items-center gap-4">
+            <p class="font-mono text-[13px] font-bold uppercase tracking-[0.22em] text-lm-ink-3">Courses</p>
             <div class="flex-1 border-t-2 border-lm-line-soft" />
-            <span class="font-mono text-[11px] font-semibold text-lm-ink-3">{{ filteredCourses.length }}</span>
+            <span class="font-mono text-[15px] font-semibold text-lm-ink-3">{{ filteredCourses.length }}</span>
           </div>
 
           <!-- Error banner -->
@@ -310,12 +290,12 @@ function getErrorMessage(error: unknown, fallback: string) {
           </div>
 
           <!-- Loading skeletons -->
-          <div v-if="loadingCourses" class="space-y-4">
-            <div v-for="index in 5" :key="index" class="h-[84px] animate-pulse rounded-[18px] bg-lm-surface border-2 border-lm-line-soft" />
+          <div v-if="loadingCourses" class="space-y-3">
+            <div v-for="index in 5" :key="index" class="h-[78px] animate-pulse rounded-[12px] border-2 border-lm-line-soft bg-lm-surface" />
           </div>
 
           <!-- Course list -->
-          <div v-else-if="filteredCourses.length > 0" class="space-y-4">
+          <div v-else-if="filteredCourses.length > 0" class="space-y-3">
             <CourseCard
               v-for="course in filteredCourses"
               :key="course.id"
@@ -338,7 +318,7 @@ function getErrorMessage(error: unknown, fallback: string) {
             v-else
             class="flex flex-col items-center justify-center rounded-[18px] border-2 border-dashed border-lm-line-soft bg-lm-surface py-24 text-center"
           >
-            <div class="flex h-14 w-14 items-center justify-center rounded-[18px] bg-lm-yellow border-2 border-lm-line shadow-stamp-sm text-lm-ink">
+            <div class="flex h-14 w-14 items-center justify-center rounded-[18px] border-2 border-lm-line bg-lm-yellow text-lm-ink shadow-stamp-sm">
               <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
                 <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
@@ -353,7 +333,7 @@ function getErrorMessage(error: unknown, fallback: string) {
             <button
               v-if="!searchQuery"
               type="button"
-              class="mt-5 inline-flex items-center gap-2 rounded-full bg-lm-yellow border-2 border-lm-line px-5 py-2.5 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
+              class="mt-5 inline-flex h-11 items-center rounded-full border-2 border-lm-line bg-lm-yellow px-5 text-[14px] font-bold text-lm-ink shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
               @click="openAddModal"
             >
               New Course

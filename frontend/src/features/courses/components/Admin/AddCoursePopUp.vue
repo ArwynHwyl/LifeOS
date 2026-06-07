@@ -149,7 +149,7 @@ watch(aiEnabled, (enabled) => {
                   </div>
                   <div>
                     <h2 id="add-course-title" class="font-display text-[15px] font-bold text-lm-ink">New Course</h2>
-                    <p class="text-[11px] text-lm-ink-3">Fill in the details below.</p>
+                    <p class="mt-1 text-[11px] text-lm-ink-3">Fill in the details below</p>
                   </div>
                 </div>
                 <button type="button"
@@ -169,14 +169,14 @@ watch(aiEnabled, (enabled) => {
                 <div>
                   <label for="new-course-title" class="mb-1.5 block text-[12px] font-semibold text-lm-ink-2">Course title</label>
                   <input id="new-course-title" v-model="title" type="text" required placeholder="e.g. Quadratic Functions"
-                    class="w-full rounded-[10px] border-2 border-lm-line-soft bg-lm-bg-soft px-3.5 py-2.5 text-[13px] text-lm-ink outline-none transition placeholder:text-lm-ink-3 focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40" />
+                    class="h-10 w-full rounded-[10px] border-2 border-lm-line-soft bg-lm-bg-soft px-3.5 text-[13px] text-lm-ink outline-none transition placeholder:text-lm-ink-3 focus:border-lm-line focus:ring-2 focus:ring-lm-yellow/40" />
                 </div>
 
                 <!-- Description -->
                 <div>
                   <label for="new-course-desc" class="mb-1.5 block text-[12px] font-semibold text-lm-ink-2">Description</label>
                   <textarea id="new-course-desc" v-model="description" rows="3" placeholder="Brief overview of what students will learn…"
-                    class="w-full resize-none rounded-[10px] border-2 border-lm-line-soft bg-lm-bg-soft px-3.5 py-2.5 text-[13px] text-lm-ink outline-none transition placeholder:text-lm-ink-3 focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40" />
+                    class="w-full resize-none rounded-[10px] border-2 border-lm-line-soft bg-lm-bg-soft px-3.5 py-2.5 text-[13px] text-lm-ink outline-none transition placeholder:text-lm-ink-3 focus:border-lm-line focus:ring-2 focus:ring-lm-yellow/40" />
                 </div>
 
                 <!-- Cover picker -->
@@ -187,7 +187,7 @@ watch(aiEnabled, (enabled) => {
                   <div class="mb-3 flex items-start gap-4">
                     <!-- Live preview -->
                     <div
-                      class="flex h-14 w-14 shrink-0 items-center justify-center rounded-[14px] border-2 border-lm-line font-display text-2xl font-bold shadow-stamp-sm transition-all duration-150"
+                      class="flex h-14 w-14 shrink-0 items-center justify-center rounded-[14px] border-2 border-lm-line font-math text-2xl font-bold italic shadow-stamp-sm transition-all duration-150"
                       :class="[selectedPreview.bgClass, selectedPreview.textClass]"
                     >
                       {{ selectedPreview.symbol }}
@@ -221,7 +221,7 @@ watch(aiEnabled, (enabled) => {
                       v-model="symbolSearch"
                       type="search"
                       placeholder="Search symbols…"
-                      class="w-full rounded-[8px] border-2 border-lm-line-soft bg-lm-bg-soft py-1.5 pl-7 pr-3 text-[12px] text-lm-ink outline-none transition placeholder:text-lm-ink-3 focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
+                      class="h-9 w-full rounded-[10px] border-2 border-lm-line-soft bg-lm-bg-soft py-1.5 pl-7 pr-3 text-[12px] text-lm-ink outline-none placeholder:text-lm-ink-3 focus:border-lm-line"
                     />
                   </div>
 
@@ -232,7 +232,7 @@ watch(aiEnabled, (enabled) => {
                         v-for="sym in filteredSymbols"
                         :key="sym.id"
                         type="button"
-                        class="flex aspect-square items-center justify-center rounded-lg text-[13px] font-bold leading-none transition-all duration-100"
+                        class="flex aspect-square items-center justify-center rounded-[8px] font-math text-[13px] font-bold leading-none transition-all duration-100"
                         :class="
                           selectedSymbolId === sym.id
                             ? 'border-2 border-lm-line bg-lm-yellow text-lm-ink shadow-stamp-sm'
@@ -252,7 +252,7 @@ watch(aiEnabled, (enabled) => {
                 <label class="flex cursor-pointer items-start gap-3 rounded-[10px] border-2 border-lm-line-soft bg-lm-bg-soft/60 px-4 py-3 transition hover:border-lm-line hover:bg-lm-bg">
                   <input v-model="aiEnabled" type="checkbox" class="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-lm-line text-lm-ink focus:ring-lm-yellow/30" />
                   <span>
-                    <span class="block text-[13px] font-semibold text-lm-ink">Enable AI generation</span>
+                    <span class="block text-[13px] font-bold text-lm-ink">Enable AI generation</span>
                     <span class="mt-0.5 block text-[11px] text-lm-ink-3">Provide a PDF and prompt to generate a draft course outline.</span>
                   </span>
                 </label>
@@ -265,7 +265,7 @@ watch(aiEnabled, (enabled) => {
                     <div>
                       <label for="ai-prompt" class="mb-1.5 block text-[12px] font-semibold text-lm-ink-2">Prompt</label>
                       <textarea id="ai-prompt" v-model="prompt" rows="7" required placeholder="Describe structure, tone, difficulty level…"
-                        class="w-full resize-none rounded-[10px] border-2 border-lm-line-soft bg-lm-bg-soft px-3.5 py-2.5 text-[13px] text-lm-ink outline-none transition placeholder:text-lm-ink-3 focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40" />
+                        class="w-full resize-none rounded-[10px] border-2 border-lm-line-soft bg-lm-bg-soft px-3.5 py-2.5 text-[13px] text-lm-ink outline-none transition placeholder:text-lm-ink-3 focus:border-lm-line focus:ring-2 focus:ring-lm-yellow/40" />
                     </div>
                     <div>
                       <span class="mb-1.5 block text-[12px] font-semibold text-lm-ink-2">PDF source</span>
@@ -305,11 +305,11 @@ watch(aiEnabled, (enabled) => {
                   {{ errorMessage }}
                 </p>
                 <button type="button"
-                  class="flex-1 rounded-[10px] border-2 border-lm-line bg-lm-surface px-4 py-2.5 text-[13px] font-semibold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
+                  class="h-10 flex-1 rounded-full border-2 border-lm-line bg-lm-surface px-4 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
                   :disabled="submitting"
                   @click="close">Cancel</button>
                 <button type="submit"
-                  class="flex-1 rounded-[10px] border-2 border-lm-line bg-lm-yellow px-4 py-2.5 text-[13px] font-semibold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md disabled:cursor-not-allowed disabled:opacity-60">
+                  class="h-10 flex-1 rounded-full border-2 border-lm-line bg-lm-yellow px-4 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md disabled:cursor-not-allowed disabled:opacity-50">
                   {{ submitting ? 'Creating...' : 'Create course' }}
                 </button>
               </footer>
