@@ -59,4 +59,19 @@ class GeminiAiDraftGeneratorTests {
         assertThat(objectMapper.readTree(subTopic.interactionConfig()).path("kind").asText()).isEqualTo("SIMPLIFY");
         assertThat(objectMapper.readTree(subTopic.interactionConfig()).path("start").asText()).isEqualTo("P -> Q");
     }
+
+    @Test
+    void parsesSubTopicLogicCircuitConfig() throws Exception {
+        @SuppressWarnings("unchecked")
+        List<GeneratedSubTopicDraft> subTopics = ReflectionTestUtils.invokeMethod(generator, "parseSubTopics", """
+                {"subTopics":[{"title":"Circuit topic","content":"Lesson content","interactionType":"LOGIC_FLOW","interactionPrompt":"Build gate circuit","interactionConfig":{"type":"LOGIC_FLOW","kind":"CIRCUIT","mode":"PRACTICE","title":"Gate circuit","expression":"(A & B) | !C","variables":["A","B","C"],"goal":"MATCH_OUTPUT","feedback":{"success":"Correct!","failure":"Incorrect inputs."}}}]}
+                """);
+
+        assertThat(subTopics).hasSize(1);
+        GeneratedSubTopicDraft subTopic = subTopics.get(0);
+        assertThat(subTopic.interactionType()).isEqualTo(InteractionType.LOGIC_FLOW);
+        assertThat(subTopic.interactionPrompt()).isEqualTo("Build gate circuit");
+        assertThat(objectMapper.readTree(subTopic.interactionConfig()).path("kind").asText()).isEqualTo("CIRCUIT");
+        assertThat(objectMapper.readTree(subTopic.interactionConfig()).path("expression").asText()).isEqualTo("(A & B) | !C");
+    }
 }
