@@ -154,6 +154,12 @@ const practicePassed = computed(() => {
   return false
 })
 
+const isDiscreteContinuousQuiz = computed(() => {
+  if (props.config?.type !== 'QUIZ') return false
+  const labels = props.config.options.map(o => o.label.toLowerCase())
+  return labels.includes('discrete') && labels.includes('continuous')
+})
+
 const activeFeedback = computed(() => {
   const config = props.config
   if (!config || (config.mode !== 'PRACTICE' && config.type !== 'QUIZ') || !checked.value) return ''
@@ -1001,28 +1007,59 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
     </div>
 
     <div v-else-if="config.type === 'QUIZ'" class="quiz-stage">
-      <header class="quiz-stage__header">
+      <header v-if="!isDiscreteContinuousQuiz" class="quiz-stage__header">
         <span>{{ (config as QuizConfig).title }}</span>
         <h3>{{ config.question }}</h3>
       </header>
-      <div class="quiz-question-panel">
+      <div v-if="!isDiscreteContinuousQuiz" class="quiz-question-panel">
         <p>{{ (config as QuizConfig).question }}</p>
       </div>
-      <div class="quiz-option-grid">
+      <div :class="isDiscreteContinuousQuiz ? 'quiz-custom-grid' : 'quiz-option-grid'">
         <button
           v-for="(option, index) in (config as QuizConfig).options"
           :key="option.id"
           type="button"
-          class="quiz-option"
-          :class="{
+          :class="isDiscreteContinuousQuiz ? {
+            'quiz-option-custom-card': true,
+            'quiz-option-custom-card--selected': selectedAnswer === option.id,
+            'quiz-option-custom-card--correct': checked && option.correct,
+            'quiz-option-custom-card--wrong': checked && selectedAnswer === option.id && !option.correct,
+          } : {
+            'quiz-option': true,
             'quiz-option--selected': selectedAnswer === option.id,
             'quiz-option--correct': checked && option.correct,
             'quiz-option--wrong': checked && selectedAnswer === option.id && !option.correct,
           }"
           @click="chooseAnswer(option.id)"
         >
-          <span class="quiz-option__badge">{{ quizOptionLetter(option, index) }}</span>
-          <span>{{ option.label }}</span>
+          <template v-if="isDiscreteContinuousQuiz && option.label.toLowerCase() === 'discrete'">
+            <div class="custom-card-graphic discrete-graphic">
+              <span class="word-count">
+                COU<span class="highlight-nt">NT</span><span class="count-line">_</span><sup class="count-sup">123</sup>
+              </span>
+            </div>
+            <h4 class="custom-card-title">Discrete</h4>
+            <p class="custom-card-subtitle">COUNTABLE VALUES</p>
+          </template>
+
+          <template v-else-if="isDiscreteContinuousQuiz && option.label.toLowerCase() === 'continuous'">
+            <div class="custom-card-graphic continuous-graphic">
+              <div class="ruler-box">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ruler-icon-svg">
+                  <rect x="2" y="7" width="20" height="10" rx="3" fill="#d0e1fd" stroke="currentColor" stroke-width="2" />
+                  <path d="M6 10v4M10 10v4M14 10v4M18 10v4" />
+                  <path d="M2 12h20" />
+                </svg>
+              </div>
+            </div>
+            <h4 class="custom-card-title">Continuous</h4>
+            <p class="custom-card-subtitle">MEASURABLE SCALE</p>
+          </template>
+
+          <template v-else>
+            <span class="quiz-option__badge">{{ quizOptionLetter(option, index) }}</span>
+            <span>{{ option.label }}</span>
+          </template>
         </button>
       </div>
       <div v-if="(config as QuizConfig).explanation && (quizHintVisible || checked)" class="quiz-hint">
@@ -1258,6 +1295,104 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   gap: 1.25rem;
   width: min(100%, 860px);
   margin: 0 auto;
+}
+.quiz-custom-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+.quiz-option-custom-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 11rem;
+  border: 1.5px solid #1a1814;
+  border-radius: 16px;
+  background: #ffffff;
+  padding: 1.5rem;
+  color: #1a1814;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 #1a1814;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+.quiz-option-custom-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 4px 4px 0 #1a1814;
+}
+.quiz-option-custom-card--selected {
+  background: #fff4bf !important;
+  border-color: #1a1814 !important;
+}
+.quiz-option-custom-card--correct {
+  background: #dff4df !important;
+  border-color: #245e3e !important;
+  box-shadow: 3px 3px 0 #245e3e !important;
+}
+.quiz-option-custom-card--wrong {
+  background: #f9d3c5 !important;
+  border-color: #8c3322 !important;
+  box-shadow: 3px 3px 0 #8c3322 !important;
+}
+.custom-card-graphic {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 4.5rem;
+  margin-bottom: 0.5rem;
+}
+.discrete-graphic {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 800;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+}
+.word-count {
+  display: inline-flex;
+  align-items: center;
+}
+.highlight-nt {
+  background: #ffd333;
+  border: 1.5px solid #1a1814;
+  border-radius: 6px;
+  padding: 0.1rem 0.35rem;
+  margin-left: 0.1rem;
+  box-shadow: 1px 1px 0 #1a1814;
+}
+.count-line {
+  margin-left: 0.2rem;
+  font-weight: 400;
+}
+.count-sup {
+  font-size: 0.75rem;
+  font-weight: 900;
+  margin-left: 0.15rem;
+  align-self: flex-start;
+  margin-top: 0.2rem;
+}
+.ruler-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ruler-icon-svg {
+  color: #1a1814;
+}
+.custom-card-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 900;
+}
+.custom-card-subtitle {
+  margin: 0.25rem 0 0 0;
+  color: #8f887e;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 .quiz-stage__header {
   display: grid;

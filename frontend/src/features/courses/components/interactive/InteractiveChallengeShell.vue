@@ -22,7 +22,14 @@ const typeLabel = computed(() => {
 const effectiveMode = computed(() => props.interactionType === 'QUIZ' ? 'PRACTICE' : props.mode)
 
 const eyebrowLabel = computed(() => effectiveMode.value === 'PRACTICE' ? 'Challenge' : 'Explore')
-const headingLabel = computed(() => `${eyebrowLabel.value}: ${typeLabel.value}`)
+
+const actionLabel = computed(() => {
+  if (props.interactionType === 'QUIZ') return 'CLASSIFY'
+  if (props.interactionType === 'GRAPH_2D') return 'GRAPH'
+  if (props.interactionType === 'FORMULA_EXPLORER') return 'FORMULA'
+  if (props.interactionType === 'VISUAL_LAYER') return 'DIAGRAM'
+  return 'ACTIVITY'
+})
 
 const feedbackLabel = computed(() => effectiveMode.value === 'PRACTICE'
   ? 'Mastered. You can keep exploring or move to the next lesson.'
@@ -31,32 +38,76 @@ const feedbackLabel = computed(() => effectiveMode.value === 'PRACTICE'
 </script>
 
 <template>
-  <section class="challenge-section" :class="`challenge-section--${status.toLowerCase().replace('_', '-')}`">
-    <header class="challenge-section__header">
-      <div class="challenge-section__title-row">
-        <span class="challenge-section__type">{{ headingLabel }}</span>
-      </div>
-      <span class="challenge-section__status">Interactive</span>
-    </header>
-
-    <div class="challenge-section__body">
-      <p class="challenge-section__objective">{{ objective }}</p>
-
-      <div class="challenge-section__content">
-        <slot />
-      </div>
-
-      <div v-if="status === 'MASTERED'" class="challenge-section__feedback">
-        <svg class="challenge-section__check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-          <polyline points="20 6 9 17 4 12" />
-        </svg>
-        <p>{{ feedbackLabel }}</p>
-      </div>
+  <div class="challenge-container">
+    <!-- Outer Divider -->
+    <div class="challenge-divider">
+      <span class="challenge-badge">{{ eyebrowLabel.toUpperCase() }}: {{ actionLabel.toUpperCase() }}</span>
+      <div class="challenge-divider-line" />
+      <span class="challenge-activity-label">INTERACTIVE ACTIVITY</span>
     </div>
-  </section>
+
+    <!-- Main Challenge Card -->
+    <section class="challenge-section" :class="`challenge-section--${status.toLowerCase().replace('_', '-')}`">
+      <div class="challenge-section__body">
+        <p v-if="objective" class="challenge-section__objective">"{{ objective }}"</p>
+
+        <div class="challenge-section__content">
+          <slot />
+        </div>
+
+        <div v-if="status === 'MASTERED'" class="challenge-section__feedback">
+          <svg class="challenge-section__check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          <p>{{ feedbackLabel }}</p>
+        </div>
+      </div>
+    </section>
+  </div>
 </template>
 
 <style scoped>
+.challenge-container {
+  width: 100%;
+  margin: 1.5rem 0;
+}
+
+.challenge-divider {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.challenge-badge {
+  display: inline-flex;
+  align-items: center;
+  border: 2px solid #1a1814;
+  border-radius: 8px;
+  background: #a63a13;
+  padding: 0.35rem 0.85rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 900;
+  color: #fffdf8;
+  box-shadow: 2px 2px 0 #1a1814;
+  letter-spacing: 0.04em;
+}
+
+.challenge-divider-line {
+  flex: 1;
+  height: 1.5px;
+  background: #e4ded6;
+  margin: 0 1rem;
+}
+
+.challenge-activity-label {
+  color: #8f887e;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
+
 .challenge-section {
   display: grid;
   width: 100%;
@@ -64,61 +115,26 @@ const feedbackLabel = computed(() => effectiveMode.value === 'PRACTICE'
   max-width: 100%;
   box-sizing: border-box;
   overflow: hidden;
-  border: 2px solid #1a1814;
-  border-radius: 22px;
-  background: #f4eee6;
+  border: 1.5px solid #1a1814;
+  border-radius: 20px;
+  background: #fcfaf4;
   color: #1a1814;
-  box-shadow: 6px 6px 0 #1a1814;
 }
 
-.challenge-section__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  min-height: 4.8rem;
-  border-bottom: 2px solid #1a1814;
-  background: #c94718;
-  padding: 1.15rem 1.55rem;
-  color: #fffdf8;
-}
-.challenge-section__title-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-}
-.challenge-section__type {
-  font-family: "Bricolage Grotesque", "Plus Jakarta Sans", system-ui, sans-serif;
-  font-size: clamp(1.35rem, 2.6vw, 1.8rem);
-  font-weight: 900;
-  line-height: 1.1;
-}
-
-.challenge-section__status {
-  flex-shrink: 0;
-  border-radius: 999px;
-  background: rgba(255, 253, 248, 0.22);
-  padding: 0.35rem 0.8rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 10px;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #fffdf8;
-}
 .challenge-section__body {
   display: grid;
-  gap: 1.3rem;
-  padding: 2.1rem 1.7rem 2rem;
+  gap: 1.25rem;
+  padding: 2rem 1.75rem;
 }
 
 .challenge-section__objective {
   margin: 0;
   color: #1a1814;
   text-align: center;
-  font-size: 1rem;
-  font-weight: 900;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.15rem;
+  font-style: italic;
+  font-weight: 600;
   line-height: 1.45;
 }
 
@@ -133,7 +149,8 @@ const feedbackLabel = computed(() => effectiveMode.value === 'PRACTICE'
   gap: 0.45rem;
   border-radius: 8px;
   background: #edfbf2;
-  padding: 0.6rem 0.85rem;
+  padding: 0.5rem 0.75rem;
+  border: 1.5px solid #245e3e;
 }
 .challenge-section__check-icon {
   width: 0.95rem;
@@ -164,19 +181,18 @@ const feedbackLabel = computed(() => effectiveMode.value === 'PRACTICE'
 }
 
 @media (max-width: 720px) {
-  .challenge-section {
-    border-radius: 16px;
+  .challenge-divider {
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
-  .challenge-section__header {
-    min-height: 0;
-    padding: 1rem;
+  .challenge-divider-line {
+    display: none;
+  }
+  .challenge-section {
+    border-radius: 14px;
   }
   .challenge-section__body {
-    padding: 1.35rem 1rem 1.2rem;
-  }
-  .challenge-section__status {
-    font-size: 9px;
-    padding: 0.3rem 0.55rem;
+    padding: 1.25rem 1rem;
   }
 }
 </style>
