@@ -147,6 +147,7 @@ export interface VisualLayerElement {
   qx?: number
   qy?: number
   flow?: 'none' | 'forward' | 'backward'
+  arrow?: 'none' | 'start' | 'end' | 'both'
   color?: string
   strokeWidth?: number
 }

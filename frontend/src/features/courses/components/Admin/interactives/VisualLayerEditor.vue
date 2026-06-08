@@ -38,24 +38,33 @@
       </div>
     </div>
 
-    <!-- Drawing tools -->
-    <div class="flex items-center gap-1 p-[6px_8px] bg-lm-bg-soft rounded-[10px] border-2 border-lm-line-soft">
-      <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mr-1.5 tracking-wider mb-0">Tools</p>
-      <button
-        v-for="[t, l] in [['select', 'Select'], ['zone-circle', '○ Circle'], ['zone-rect', '□ Rect'], ['button', 'Button'], ['hotspot', 'Hotspot'], ['line', '⏤ Line']]"
-        :key="t"
-        @click="tool = t"
-        class="h-7 px-2.5 rounded-[7px] border-2 border-transparent bg-transparent font-display text-[11px] font-bold text-lm-ink cursor-pointer transition-all duration-100"
-        :class="{ 'border-lm-line bg-lm-yellow shadow-stamp-sm': tool === t }"
-      >
-        {{ l }}
-      </button>
+    <!-- Drawing tools & settings -->
+    <div class="flex items-center justify-between p-[6px_8px] bg-lm-bg-soft rounded-[10px] border-2 border-lm-line-soft flex-wrap gap-2">
+      <div class="flex items-center gap-1 flex-wrap">
+        <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mr-1.5 tracking-wider mb-0">Tools</p>
+        <button
+          v-for="[t, l] in [['select', 'Select'], ['zone-circle', '○ Circle'], ['zone-rect', '□ Rect'], ['button', 'Button'], ['hotspot', 'Hotspot'], ['line', '⏤ Line']]"
+          :key="t"
+          @click="tool = t"
+          class="h-7 px-2.5 rounded-[7px] border-2 border-transparent bg-transparent font-display text-[11px] font-bold text-lm-ink cursor-pointer transition-all duration-100"
+          :class="{ 'border-lm-line bg-lm-yellow shadow-stamp-sm': tool === t }"
+        >
+          {{ l }}
+        </button>
+      </div>
+      <label class="flex items-center gap-2 cursor-pointer select-none px-2.5">
+        <input
+          type="checkbox"
+          :checked="overlap?.enabled ?? false"
+          @change="toggleVisualOverlap($event.target.checked)"
+          class="w-4 h-4 rounded border-lm-line-soft text-lm-yellow focus:ring-lm-yellow"
+        />
+        <span class="font-display text-[11px] font-bold text-lm-ink">Auto overlap</span>
+      </label>
     </div>
 
-    <!-- Canvas + Properties (2-col) -->
-    <div class="grid grid-cols-1 gap-3" :class="{ 'grid-cols-[1fr_220px]': selectedZone || selectedElement }">
-      <!-- Canvas -->
-      <div class="border-2 border-lm-line rounded-[14px] overflow-hidden bg-[#fffdf8] shadow-stamp-sm">
+    <!-- Canvas -->
+    <div class="border-2 border-lm-line rounded-[14px] overflow-hidden bg-[#fffdf8] shadow-stamp-sm">
         <svg
           viewBox="0 0 900 520"
           class="block w-full h-auto select-none"
@@ -161,9 +170,9 @@
             v-for="el in elements"
             :key="el.id"
             @click.stop="onElementClick(el)"
-            @pointerdown="el.kind !== 'line' ? startMoveDrag(el, 'element', $event) : null"
+            @pointerdown="startMoveDrag(el, 'element', $event)"
             class="cursor-pointer"
-            :class="{ 'cursor-move': el.kind !== 'line' && tool === 'select' }"
+            :class="{ 'cursor-move': tool === 'select' }"
             :style="{ color: el.color || '#1a1814' }"
           >
             <!-- Normal elements (rect/button/hotspot) -->
@@ -215,15 +224,15 @@
               <path
                 :d="`M ${el.x1} ${el.y1} Q ${el.qx !== undefined ? el.qx : ((el.x1 + el.x2)/2)} ${el.qy !== undefined ? el.qy : ((el.y1 + el.y2)/2)} ${el.x2} ${el.y2}`"
                 fill="none"
-                :stroke="selectedId === el.id && selectedKind === 'element' ? 'var(--lm-ink)' : 'currentColor'"
+                stroke="currentColor"
                 :stroke-width="selectedId === el.id && selectedKind === 'element' ? (el.strokeWidth || 3) + 1.5 : (el.strokeWidth || 3)"
                 :stroke-dasharray="el.flow && el.flow !== 'none' ? '8 6' : 'none'"
                 :class="{
                   'animate-flow-forward': el.flow === 'forward',
                   'animate-flow-backward': el.flow === 'backward'
                 }"
-                :marker-end="el.flow === 'forward' ? 'url(#vl-arrow)' : 'none'"
-                :marker-start="el.flow === 'backward' ? 'url(#vl-arrow)' : 'none'"
+                :marker-end="(el.arrow === 'end' || el.arrow === 'both' || (!el.arrow && el.flow === 'forward')) ? 'url(#vl-arrow)' : 'none'"
+                :marker-start="(el.arrow === 'start' || el.arrow === 'both' || (!el.arrow && el.flow === 'backward')) ? 'url(#vl-arrow)' : 'none'"
                 stroke-linecap="round"
               />
               <!-- Center label positioned at Bezier midpoint -->
@@ -336,26 +345,59 @@
         </svg>
       </div>
 
-      <!-- Properties Panel -->
-      <div v-if="selectedZone || selectedElement" class="border-2 border-lm-line-soft rounded-[14px] bg-lm-surface p-3.5 flex flex-col gap-2.5 overflow-auto max-h-[520px]">
-        <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 color-lm-ink tracking-wider mb-0">Properties</p>
-
-        <!-- Zone Props -->
-        <div v-if="selectedZone" class="flex flex-col gap-2.5">
-          <div class="flex items-center gap-2 mb-[2px]">
-            <div class="w-3.5 h-3.5 rounded-full border-2 border-lm-line shrink-0" :style="{ background: selectedZone.color }" />
-            <span class="font-display text-[13px] font-bold text-lm-ink">{{ selectedZone.label }}</span>
-            <span class="font-mono text-[9px] text-lm-ink-3">{{ selectedZone.shape }}</span>
+    <!-- Properties Panel -->
+    <div v-if="selectedZone || selectedElement" class="border-2 border-lm-line-soft rounded-[14px] bg-lm-surface p-4 flex flex-col gap-3.5 text-left">
+      <!-- Header -->
+      <div class="flex items-center justify-between border-b-2 border-lm-line-soft pb-2.5">
+        <div class="flex items-center gap-2">
+          <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0">Properties</p>
+          <div v-if="selectedZone" class="flex items-center gap-1.5">
+            <div class="w-3 h-3 rounded-full border border-lm-line" :style="{ background: selectedZone.color }" />
+            <span class="font-display text-[12px] font-bold text-lm-ink">{{ selectedZone.label }}</span>
+            <span class="font-mono text-[9px] text-lm-ink-3">({{ selectedZone.shape }})</span>
           </div>
-          
+          <div v-else-if="selectedElement" class="flex items-center gap-1.5">
+            <span class="font-display text-[12px] font-bold text-lm-ink">{{ selectedElement.label }}</span>
+            <span class="font-mono text-[9px] text-lm-ink-3">({{ selectedElement.kind }})</span>
+          </div>
+        </div>
+        <button @click="clearSelection" class="font-display text-[10px] font-bold text-lm-ink-3 hover:text-lm-ink bg-transparent border-none cursor-pointer">✕ Close</button>
+      </div>
+
+      <!-- Zone Properties Grid -->
+      <div v-if="selectedZone" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Col 1: Basic Info -->
+        <div class="flex flex-col gap-3">
           <div>
             <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Label</p>
             <input v-model="selectedZone.label" @input="onZoneChange" class="w-full box-border font-display text-[12px] px-2.5 py-1.75 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink" />
           </div>
+          <div>
+            <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Shape</p>
+            <select v-model="selectedZone.shape" @change="onZoneChange" class="w-full box-border font-display text-[12px] px-2.5 py-1.75 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink">
+              <option value="circle">Circle</option>
+              <option value="rectangle">Rectangle</option>
+            </select>
+          </div>
+          <div>
+            <label class="flex items-center gap-2 cursor-pointer select-none py-1">
+              <input
+                type="checkbox"
+                :checked="overlap?.sourceZoneIds?.includes(selectedZone.id) ?? false"
+                :disabled="overlap?.enabled && overlap?.sourceZoneIds?.includes(selectedZone.id) && overlap?.sourceZoneIds?.length <= 1"
+                @change="toggleOverlapSource(selectedZone.id, $event.target.checked)"
+                class="w-4 h-4 rounded border-lm-line-soft text-lm-yellow focus:ring-lm-yellow"
+              />
+              <span class="font-display text-[12px] font-bold text-lm-ink">Include in auto overlap</span>
+            </label>
+          </div>
+        </div>
 
+        <!-- Col 2: Color and Opacity -->
+        <div class="flex flex-col gap-3">
           <div>
             <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Color</p>
-            <div class="flex gap-1.5">
+            <div class="flex gap-1.5 flex-wrap">
               <button
                 v-for="c in VL_COLORS"
                 :key="c"
@@ -366,17 +408,6 @@
               />
             </div>
           </div>
-
-          <!-- X, Y, Width, Height fields removed, drag-and-drop enabled on canvas instead -->
-
-          <div>
-            <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Shape</p>
-            <select v-model="selectedZone.shape" @change="onZoneChange" class="w-full box-border font-display text-[12px] px-2.5 py-1.75 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink">
-              <option value="circle">Circle</option>
-              <option value="rectangle">Rectangle</option>
-            </select>
-          </div>
-
           <div>
             <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Highlight opacity</p>
             <div class="flex items-center gap-2">
@@ -392,7 +423,10 @@
               <span class="font-mono text-[10px] text-lm-ink-3 min-w-[28px]">{{ selectedZone.highlightOpacity ?? 0.82 }}</span>
             </div>
           </div>
+        </div>
 
+        <!-- Col 3: Feedback & Actions -->
+        <div class="flex flex-col justify-between gap-3">
           <div>
             <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Zone feedback</p>
             <textarea
@@ -403,28 +437,21 @@
               class="w-full box-border font-display text-[12px] px-2.5 py-1.75 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink resize-y"
             />
           </div>
-
-          <button @click="deleteZone(selectedZone.id)" class="font-display text-[11px] font-bold border-2 border-lm-red rounded-[8px] bg-lm-red-soft p-[4px_10px] cursor-pointer text-lm-red mt-1">
-            <span class="flex items-center gap-1.5">
-              <AdminIcon name="trash" :size="12" /> Delete zone
-            </span>
+          <button @click="deleteZone(selectedZone.id)" class="w-full font-display text-[11px] font-bold border-2 border-lm-red rounded-[8px] bg-lm-red-soft py-2 cursor-pointer text-lm-red flex items-center justify-center gap-1.5">
+            <AdminIcon name="trash" :size="12" /> Delete zone
           </button>
         </div>
+      </div>
 
-        <!-- Element Props -->
-        <div v-else-if="selectedElement" class="flex flex-col gap-2.5">
-          <span class="font-display text-[13px] font-bold text-lm-ink">{{ selectedElement.label }}</span>
-          <span class="font-mono text-[9px] text-lm-ink-3">{{ selectedElement.kind }}</span>
-
+      <!-- Element Properties Grid -->
+      <div v-else-if="selectedElement" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Col 1: Basic Info -->
+        <div class="flex flex-col gap-3">
           <div>
             <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Label</p>
             <input v-model="selectedElement.label" @input="onElementChange" class="w-full box-border font-display text-[12px] px-2.5 py-1.75 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink" />
           </div>
-
-          <!-- Line-specific fields -->
-          <template v-if="selectedElement.kind === 'line'">
-            <!-- Line coordinates removed, drag-and-drop handles enabled on canvas instead -->
-
+          <div v-if="selectedElement.kind === 'line'" class="flex flex-col gap-3">
             <div>
               <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Flow Direction</p>
               <select v-model="selectedElement.flow" @change="onElementChange" class="w-full box-border font-display text-[12px] px-2.5 py-1.75 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink">
@@ -433,7 +460,21 @@
                 <option value="backward">Backward (End → Start)</option>
               </select>
             </div>
+            <div>
+              <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Arrowhead</p>
+              <select v-model="selectedElement.arrow" @change="onElementChange" class="w-full box-border font-display text-[12px] px-2.5 py-1.75 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink">
+                <option value="none">None</option>
+                <option value="end">At End (Start → End)</option>
+                <option value="start">At Start (End → Start)</option>
+                <option value="both">Both Ends</option>
+              </select>
+            </div>
+          </div>
+        </div>
 
+        <!-- Col 2: Stylings & Interactions -->
+        <div class="flex flex-col gap-3">
+          <template v-if="selectedElement.kind === 'line'">
             <div>
               <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Thickness</p>
               <div class="flex items-center gap-2">
@@ -441,10 +482,9 @@
                 <span class="font-mono text-[10px] text-lm-ink-3 min-w-[24px]">{{ selectedElement.strokeWidth || 3 }}px</span>
               </div>
             </div>
-
             <div>
               <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Line Color</p>
-              <div class="flex gap-1.5">
+              <div class="flex gap-1.5 flex-wrap">
                 <button
                   v-for="c in ['#1a1814', '#ffd333', '#8fb3ff', '#8fe0aa', '#ff9aa8']"
                   :key="c"
@@ -456,30 +496,30 @@
               </div>
             </div>
           </template>
-
-          <div v-if="selectedElementInteraction" class="flex flex-col gap-2.5">
+          <template v-else-if="selectedElementInteraction">
             <div>
               <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">On click → Highlight</p>
               <select v-model="selectedElementInteraction.targetZoneId" @change="onInteractionChange" class="w-full box-border font-display text-[12px] px-2.5 py-1.75 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink">
                 <option v-for="z in zones" :key="z.id" :value="z.id">{{ z.label }}</option>
               </select>
             </div>
+          </template>
+        </div>
 
-            <div>
-              <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Feedback</p>
-              <textarea
-                v-model="selectedElementInteraction.feedback"
-                @input="onInteractionChange"
-                rows="2"
-                class="w-full box-border font-display text-[12px] px-2.5 py-1.75 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink resize-y"
-              />
-            </div>
+        <!-- Col 3: Feedback & Actions -->
+        <div class="flex flex-col justify-between gap-3">
+          <div v-if="selectedElementInteraction && selectedElement.kind !== 'line'">
+            <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Feedback</p>
+            <textarea
+              v-model="selectedElementInteraction.feedback"
+              @input="onInteractionChange"
+              rows="2"
+              class="w-full box-border font-display text-[12px] px-2.5 py-1.75 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink resize-y"
+            />
           </div>
-
-          <button @click="deleteElement(selectedElement.id)" class="font-display text-[11px] font-bold border-2 border-lm-red rounded-[8px] bg-lm-red-soft p-[4px_10px] cursor-pointer text-lm-red mt-1">
-            <span class="flex items-center gap-1.5">
-              <AdminIcon name="trash" :size="12" /> Delete trigger
-            </span>
+          <div v-else />
+          <button @click="deleteElement(selectedElement.id)" class="w-full font-display text-[11px] font-bold border-2 border-lm-red rounded-[8px] bg-lm-red-soft py-2 cursor-pointer text-lm-red flex items-center justify-center gap-1.5">
+            <AdminIcon name="trash" :size="12" /> Delete {{ selectedElement.kind === 'line' ? 'line' : 'trigger' }}
           </button>
         </div>
       </div>
@@ -583,26 +623,48 @@
       </div>
     </div>
 
-    <!-- Elements list -->
-    <div v-if="elements.length > 0">
+    <!-- Triggers list (Excludes Lines) -->
+    <div v-if="elements.filter(e => e.kind !== 'line').length > 0">
       <div class="flex items-center justify-between mb-2">
-        <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0">Triggers ({{ elements.length }})</p>
+        <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0">Triggers ({{ elements.filter(e => e.kind !== 'line').length }})</p>
       </div>
       <div class="flex flex-col gap-1">
         <div
-          v-for="el in elements"
+          v-for="el in elements.filter(e => e.kind !== 'line')"
           :key="el.id"
           @click="onElementListClick(el)"
           class="flex items-center gap-2 p-[8px_12px] w-full box-border text-left border-2 border-lm-line-soft rounded-[10px] cursor-pointer transition-all duration-120 bg-lm-surface"
           :class="{ 'border-lm-line bg-lm-yellow shadow-stamp-sm': selectedId === el.id && selectedKind === 'element' }"
         >
-          <span class="w-[22px] h-[22px] rounded-[6px] bg-lm-bg-soft border-2 border-lm-line-soft grid place-items-center font-mono text-[8px] text-lm-ink-3 shrink-0">{{ el.kind === 'line' ? '⏤' : '▸' }}</span>
+          <span class="w-[22px] h-[22px] rounded-[6px] bg-lm-bg-soft border-2 border-lm-line-soft grid place-items-center font-mono text-[8px] text-lm-ink-3 shrink-0">▸</span>
           <span class="flex-1 font-display text-[12px] font-bold text-lm-ink">{{ el.label }}</span>
-          <span v-if="el.kind === 'line'" class="font-mono text-[9px] text-lm-ink-3">
-            flow: {{ el.flow || 'none' }}
-          </span>
-          <span v-else-if="getInteraction(el.id)" class="font-mono text-[9px] text-lm-ink-3">
+          <span v-if="getInteraction(el.id)" class="font-mono text-[9px] text-lm-ink-3">
             → {{ zones.find(z => z.id === getInteraction(el.id).targetZoneId)?.label || '?' }}
+          </span>
+          <button @click.stop="deleteElement(el.id)" class="grid place-items-center w-6 h-6 rounded-[6px] border border-lm-line-soft bg-transparent cursor-pointer text-lm-ink-3 shrink-0">
+            <AdminIcon name="trash" :size="11" />
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lines list -->
+    <div v-if="elements.filter(e => e.kind === 'line').length > 0">
+      <div class="flex items-center justify-between mb-2">
+        <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0">Lines ({{ elements.filter(e => e.kind === 'line').length }})</p>
+      </div>
+      <div class="flex flex-col gap-1">
+        <div
+          v-for="el in elements.filter(e => e.kind === 'line')"
+          :key="el.id"
+          @click="onElementListClick(el)"
+          class="flex items-center gap-2 p-[8px_12px] w-full box-border text-left border-2 border-lm-line-soft rounded-[10px] cursor-pointer transition-all duration-120 bg-lm-surface"
+          :class="{ 'border-lm-line bg-lm-yellow shadow-stamp-sm': selectedId === el.id && selectedKind === 'element' }"
+        >
+          <span class="w-[22px] h-[22px] rounded-[6px] bg-lm-bg-soft border-2 border-lm-line-soft grid place-items-center font-mono text-[8px] text-lm-ink-3 shrink-0">⏤</span>
+          <span class="flex-1 font-display text-[12px] font-bold text-lm-ink">{{ el.label }}</span>
+          <span class="font-mono text-[9px] text-lm-ink-3">
+            flow: {{ el.flow || 'none' }}
           </span>
           <button @click.stop="deleteElement(el.id)" class="grid place-items-center w-6 h-6 rounded-[6px] border border-lm-line-soft bg-transparent cursor-pointer text-lm-ink-3 shrink-0">
             <AdminIcon name="trash" :size="11" />
@@ -629,6 +691,7 @@
 import { ref, computed, watch } from 'vue'
 import MonoLabel from '../MonoLabel.vue'
 import AdminIcon from '../AdminIcon.vue'
+import { ensureVisualOverlapValues } from '@/features/courses/types/interactive'
 
 const props = defineProps({
   config: {
@@ -779,14 +842,33 @@ function startMoveDrag(item, kind, e) {
   const rect = svg.getBoundingClientRect()
   const clickX = ((e.clientX - rect.left) / rect.width) * 900
   const clickY = ((e.clientY - rect.top) / rect.height) * 520
-  drag.value = {
-    type: 'move',
-    kind: kind,
-    id: item.id,
-    startX: clickX,
-    startY: clickY,
-    initX: item.x,
-    initY: item.y
+  if (kind === 'element' && item.kind === 'line') {
+    const defaultQx = (item.x1 + item.x2) / 2
+    const defaultQy = (item.y1 + item.y2) / 2
+    drag.value = {
+      type: 'move',
+      kind: kind,
+      id: item.id,
+      startX: clickX,
+      startY: clickY,
+      isLine: true,
+      initX1: item.x1,
+      initY1: item.y1,
+      initX2: item.x2,
+      initY2: item.y2,
+      initQx: item.qx !== undefined ? item.qx : defaultQx,
+      initQy: item.qy !== undefined ? item.qy : defaultQy
+    }
+  } else {
+    drag.value = {
+      type: 'move',
+      kind: kind,
+      id: item.id,
+      startX: clickX,
+      startY: clickY,
+      initX: item.x,
+      initY: item.y
+    }
   }
   e.currentTarget.setPointerCapture(e.pointerId)
 }
@@ -852,8 +934,17 @@ function onPointerMove(e) {
     } else {
       const item = elements.value.find(el => el.id === drag.value.id)
       if (item) {
-        item.x = drag.value.initX + dx
-        item.y = drag.value.initY + dy
+        if (drag.value.isLine) {
+          item.x1 = drag.value.initX1 + dx
+          item.y1 = drag.value.initY1 + dy
+          item.x2 = drag.value.initX2 + dx
+          item.y2 = drag.value.initY2 + dy
+          item.qx = drag.value.initQx + dx
+          item.qy = drag.value.initQy + dy
+        } else {
+          item.x = drag.value.initX + dx
+          item.y = drag.value.initY + dy
+        }
       }
     }
   } else if (drag.value.type === 'resize') {
@@ -935,6 +1026,12 @@ function onCanvasClick(e) {
       highlightOpacity: 0.82
     }
     zones.value.push(newZone)
+    if (overlap.value?.enabled) {
+      overlap.value = ensureVisualOverlapValues({
+        zones: zones.value,
+        overlap: overlap.value
+      }, overlap.value.sourceZoneIds)
+    }
     selectZone(newZone.id)
     tool.value = 'select'
     emitChange()
@@ -953,6 +1050,12 @@ function onCanvasClick(e) {
       highlightOpacity: 0.82
     }
     zones.value.push(newZone)
+    if (overlap.value?.enabled) {
+      overlap.value = ensureVisualOverlapValues({
+        zones: zones.value,
+        overlap: overlap.value
+      }, overlap.value.sourceZoneIds)
+    }
     selectZone(newZone.id)
     tool.value = 'select'
     emitChange()
@@ -1017,6 +1120,12 @@ function updateSelectedZoneColor(c) {
 }
 
 function onZoneChange() {
+  if (overlap.value?.enabled) {
+    overlap.value = ensureVisualOverlapValues({
+      zones: zones.value,
+      overlap: overlap.value
+    }, overlap.value.sourceZoneIds)
+  }
   emitChange()
 }
 
@@ -1025,6 +1134,12 @@ function deleteZone(id) {
   interactions.value = interactions.value.filter(i => i.targetZoneId !== id)
   if (overlap.value?.sourceZoneIds) {
     overlap.value.sourceZoneIds = overlap.value.sourceZoneIds.filter(s => s !== id)
+  }
+  if (overlap.value?.enabled) {
+    overlap.value = ensureVisualOverlapValues({
+      zones: zones.value,
+      overlap: overlap.value
+    }, overlap.value.sourceZoneIds)
   }
   if (selectedId.value === id) clearSelection()
   emitChange()
@@ -1045,6 +1160,12 @@ function addZone() {
     highlightOpacity: 0.82
   }
   zones.value.push(newZone)
+  if (overlap.value?.enabled) {
+    overlap.value = ensureVisualOverlapValues({
+      zones: zones.value,
+      overlap: overlap.value
+    }, overlap.value.sourceZoneIds)
+  }
   selectZone(newZone.id)
   emitChange()
 }
@@ -1078,6 +1199,45 @@ function deleteElement(id) {
 
 function getInteraction(elementId) {
   return interactions.value.find(i => i.triggerId === elementId)
+}
+
+function toggleVisualOverlap(enabled) {
+  if (!enabled) {
+    overlap.value = {
+      ...(overlap.value ?? { sourceZoneIds: [], inputs: [], values: [] }),
+      enabled: false
+    }
+    emitChange()
+    return
+  }
+
+  const sourceZoneIds = overlap.value?.sourceZoneIds?.length
+    ? overlap.value.sourceZoneIds
+    : zones.value.slice(0, 5).map(z => z.id)
+
+  overlap.value = ensureVisualOverlapValues({
+    zones: zones.value,
+    overlap: overlap.value
+  }, sourceZoneIds)
+
+  emitChange()
+}
+
+function toggleOverlapSource(zoneId, enabled) {
+  const sourceZoneIds = overlap.value?.sourceZoneIds ?? zones.value.slice(0, 5).map((zone) => zone.id)
+  let nextSources = enabled
+    ? [...sourceZoneIds, zoneId]
+    : sourceZoneIds.filter((id) => id !== zoneId)
+
+  // Keep unique and limit to max 5
+  nextSources = [...new Set(nextSources)].slice(0, 5)
+
+  overlap.value = ensureVisualOverlapValues({
+    zones: zones.value,
+    overlap: overlap.value
+  }, nextSources)
+
+  emitChange()
 }
 
 function onOverlapInputChange() {

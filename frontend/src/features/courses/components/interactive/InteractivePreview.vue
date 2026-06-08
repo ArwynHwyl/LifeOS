@@ -948,8 +948,8 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
                   'animate-flow-forward': element.flow === 'forward',
                   'animate-flow-backward': element.flow === 'backward'
                 }"
-                :marker-end="element.flow === 'forward' ? 'url(#vl-arrow)' : 'none'"
-                :marker-start="element.flow === 'backward' ? 'url(#vl-arrow)' : 'none'"
+                :marker-end="(element.arrow === 'end' || element.arrow === 'both' || (!element.arrow && element.flow === 'forward')) ? 'url(#vl-arrow)' : 'none'"
+                :marker-start="(element.arrow === 'start' || element.arrow === 'both' || (!element.arrow && element.flow === 'backward')) ? 'url(#vl-arrow)' : 'none'"
                 stroke-linecap="round"
                 style="pointer-events: auto; cursor: pointer;"
                 @click="runVisualInteraction(element.id)"
