@@ -52,15 +52,48 @@
           {{ l }}
         </button>
       </div>
-      <label class="flex items-center gap-2 cursor-pointer select-none px-2.5">
-        <input
-          type="checkbox"
-          :checked="overlap?.enabled ?? false"
-          @change="toggleVisualOverlap($event.target.checked)"
-          class="w-4 h-4 rounded border-lm-line-soft text-lm-yellow focus:ring-lm-yellow"
-        />
-        <span class="font-display text-[11px] font-bold text-lm-ink">Auto overlap</span>
-      </label>
+      <!-- Activity Mode Segmented Control -->
+      <div class="flex items-center gap-[2px] p-[3px] bg-lm-bg-soft border-2 border-lm-line-soft rounded-[8px]">
+        <button
+          type="button"
+          @click="toggleVisualOverlap(false)"
+          class="h-7 px-3.5 rounded-[6px] border-none font-display text-[11px] font-bold cursor-pointer transition-all duration-100"
+          :class="!(overlap?.enabled) ? 'bg-lm-ink text-lm-bg' : 'bg-transparent text-lm-ink-3 hover:text-lm-ink'"
+        >
+          🔍 View Mode
+        </button>
+        <button
+          type="button"
+          @click="toggleVisualOverlap(true)"
+          class="h-7 px-3.5 rounded-[6px] border-none font-display text-[11px] font-bold cursor-pointer transition-all duration-100"
+          :class="overlap?.enabled ? 'bg-lm-yellow text-lm-ink border-2 border-lm-line shadow-stamp-sm' : 'bg-transparent text-lm-ink-3 hover:text-lm-ink'"
+        >
+          ✏ Practice Mode
+        </button>
+      </div>
+    </div>
+
+    <!-- Practice Mode Warning / Info Banner -->
+    <div v-if="overlap?.enabled" class="flex flex-col gap-2.5 p-4 border-2 border-lm-yellow bg-lm-yellow-soft rounded-[14px] text-left shadow-stamp-sm">
+      <div class="flex items-start gap-2.5">
+        <span class="w-5 h-5 rounded-full bg-lm-yellow text-lm-ink grid place-items-center text-[12px] font-extrabold shrink-0 border border-lm-line">!</span>
+        <div class="flex-1">
+          <p class="font-display text-[12px] font-bold text-lm-ink m-0">Venn Diagram Practice Mode Active</p>
+          <p class="font-display text-[11px] text-lm-ink-2 m-0 mt-0.5 leading-normal">
+            Students will start with an empty canvas, use top buttons (e.g. Add A, Add B) to construct circles, drag/arrange them to overlap, and input the exact region counts.
+          </p>
+        </div>
+      </div>
+      <!-- Warning if admin added buttons, lines or non-circles -->
+      <div v-if="hasHiddenElements" class="flex items-start gap-2.5 border-t border-[rgba(26,24,20,0.08)] pt-2.5">
+        <span class="w-5 h-5 rounded-full bg-lm-red text-white grid place-items-center text-[11px] font-extrabold shrink-0 border border-lm-line">⚠️</span>
+        <div class="flex-1">
+          <p class="font-display text-[12px] font-bold text-lm-red m-0">Hidden Elements Warning</p>
+          <p class="font-display text-[11px] text-lm-ink-2 m-0 mt-0.5 leading-normal">
+            Your canvas has static elements (lines, buttons, hotspots) or non-Venn zones. <strong>These will be hidden from the student in Practice Mode.</strong> Only circle zones included in the overlap settings will be visible.
+          </p>
+        </div>
+      </div>
     </div>
 
     <!-- Canvas -->
@@ -92,7 +125,7 @@
             </marker>
 
             <!-- Zone ClipPaths -->
-            <clipPath v-for="zone in zones" :key="`clip-${zone.id}`" :id="`clip-${zone.id}`">
+            <clipPath v-for="zone in zones" :key="`clip-${zone.id}`" :id="`${instanceId}-clip-${zone.id}`">
               <ellipse
                 v-if="zone.shape === 'circle'"
                 :cx="zone.x + zone.width / 2"
@@ -111,7 +144,7 @@
             </clipPath>
 
             <!-- Region Masks -->
-            <mask v-for="region in exactRegions" :key="`mask-${region.id}`" :id="`mask-${region.id}`">
+            <mask v-for="region in exactRegions" :key="`mask-${region.id}`" :id="`${instanceId}-mask-${region.id}`">
               <rect x="0" y="0" width="900" height="520" fill="black" />
               <!-- Included intersection -->
               <ellipse
@@ -131,7 +164,7 @@
                 fill="white"
               />
 
-              <g v-else-if="region.zones.length === 2" :clip-path="`url(#clip-${region.zones[1].id})`">
+              <g v-else-if="region.zones.length === 2" :clip-path="`url(#${instanceId}-clip-${region.zones[1].id})`">
                 <ellipse
                   v-if="region.zones[0].shape === 'circle'"
                   :cx="region.zones[0].x + region.zones[0].width / 2"
@@ -150,8 +183,8 @@
                 />
               </g>
 
-              <g v-else-if="region.zones.length === 3" :clip-path="`url(#clip-${region.zones[2].id})`">
-                <g :clip-path="`url(#clip-${region.zones[1].id})`">
+              <g v-else-if="region.zones.length === 3" :clip-path="`url(#${instanceId}-clip-${region.zones[2].id})`">
+                <g :clip-path="`url(#${instanceId}-clip-${region.zones[1].id})`">
                   <ellipse
                     v-if="region.zones[0].shape === 'circle'"
                     :cx="region.zones[0].x + region.zones[0].width / 2"
@@ -423,7 +456,7 @@
             :key="`${region.id}-active`"
             width="900"
             height="520"
-            :mask="`url(#mask-${region.id})`"
+            :mask="`url(#${instanceId}-mask-${region.id})`"
             style="fill: rgba(225, 95, 65, 0.48); pointer-events: none;"
           />
 
@@ -696,38 +729,56 @@
       </div>
     </div>
 
-    <!-- Overlap values section -->
-    <div v-if="overlap?.sourceZoneIds?.length > 0" class="border-2 border-lm-line-soft rounded-[14px] bg-[#fffdf8] overflow-hidden">
-      <div class="flex items-center justify-between p-[10px_14px] border-b-2 border-lm-line-soft bg-lm-bg-soft">
+    <!-- Practice Math Targets & Region Answers section -->
+    <div v-if="overlap?.sourceZoneIds?.length > 0" class="border-2 border-lm-line rounded-[14px] bg-[#fffdf8] overflow-hidden shadow-stamp-sm text-left">
+      <div class="flex items-center justify-between p-[10px_14px] border-b-2 border-lm-line bg-lm-bg-soft">
         <div class="flex items-center gap-2">
-          <span class="w-[22px] h-[22px] rounded-[7px] bg-lm-purple-soft border-2 border-lm-line grid place-items-center font-math text-[13px] font-bold italic text-lm-purple">∩</span>
-          <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-0">Overlap values</p>
+          <span class="w-[22px] h-[22px] rounded-[7px] bg-lm-purple border-2 border-lm-line grid place-items-center font-math text-[13px] font-bold italic text-white shadow-stamp-xs">∩</span>
+          <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink m-0">
+            {{ overlap.enabled ? 'Practice Math Targets (Given Values)' : 'Venn Overlap Settings' }}
+          </p>
         </div>
-        <span v-if="overlap.enabled" class="font-mono text-[9px] text-lm-ink-3">Inclusion-exclusion</span>
+        <span class="font-mono text-[9px] text-lm-ink-3 bg-lm-surface px-2 py-[2px] rounded border border-lm-line-soft">
+          {{ overlap.enabled ? 'Inclusion-Exclusion Principle' : 'Visual Mode' }}
+        </span>
       </div>
 
-      <div class="p-3.5">
-        <div v-if="overlap.enabled" class="flex flex-wrap gap-2.5 mb-3.5">
+      <div class="p-4">
+        <!-- Subtitle instruction -->
+        <p class="font-display text-[11px] text-lm-ink-2 m-0 mb-3 leading-normal">
+          {{ overlap.enabled 
+            ? 'Set the inclusive totals and intersections as given values for the math problem. The editor will automatically compute the exact region counts (answers).' 
+            : 'Venn overlap configuration for highlighting and interactive region select tools.' }}
+        </p>
+
+        <!-- Totals & Intersections Inputs Grid (Only in Practice Mode) -->
+        <div v-if="overlap.enabled" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2.5 mb-4">
           <div
             v-for="inp_item in overlap.inputs"
             :key="inp_item.id"
-            class="flex flex-col gap-1 min-w-[100px]"
+            class="flex flex-col gap-1.5 p-2.5 border-2 border-lm-line-soft bg-lm-surface rounded-[10px] items-center text-center shadow-stamp-sm"
           >
-            <p class="font-math text-[12px] font-bold italic text-lm-ink-2 m-0">{{ inp_item.label }}</p>
+            <p class="font-math text-[13px] font-bold italic text-lm-ink m-0 leading-none">
+              n({{ inp_item.label.replace(/^n\((.*)\)$/i, '$1') }})
+            </p>
             <input
               type="number"
               v-model.number="inp_item.value"
               @input="onOverlapInputChange"
-              class="w-[80px] font-display text-[14px] font-bold p-[6px_10px] border-2 border-lm-line rounded-[8px] bg-lm-surface outline-none text-lm-ink shadow-stamp-sm text-center"
+              class="w-[70px] box-border font-display text-[13px] font-bold p-[4px_6px] border-2 border-lm-line rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink text-center"
             />
-            <span class="font-mono text-[8px] text-lm-ink-3 uppercase">{{ inp_item.kind }}</span>
+            <span class="font-mono text-[8px] text-lm-ink-3 uppercase leading-tight font-bold tracking-wide select-none">
+              {{ getOverlapInputHelperText(inp_item.zoneIds) }}
+            </span>
           </div>
         </div>
 
-        <!-- Computed exact regions -->
-        <div v-if="exactRegions.length > 0" class="mt-3.5">
+        <!-- Computed exact regions / Student Answers Preview -->
+        <div v-if="exactRegions.length > 0" class="mt-4 border-t border-[rgba(26,24,20,0.06)] pt-4">
           <div class="flex items-center gap-2.5 mb-2.5">
-            <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 text-[9px] mb-0">Exact regions</p>
+            <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-2 m-0 leading-none">
+              {{ overlap.enabled ? 'Expected Region Answers (Student Inputs Preview)' : 'Exact regions' }}
+            </p>
             <div class="flex-1 border-t border-lm-line-soft" />
           </div>
 
@@ -735,7 +786,7 @@
             <div
               v-for="r in exactRegions"
               :key="r.id"
-              class="flex items-center gap-2 p-[6px_12px] border-2 border-lm-line-soft rounded-[10px] cursor-pointer transition-all duration-120 bg-lm-surface"
+              class="flex items-center gap-2 p-[6px_12px] border-2 border-lm-line rounded-[10px] cursor-pointer transition-all duration-120 bg-lm-surface"
               :class="{
                 'border-lm-line bg-lm-yellow shadow-stamp-sm': selectedId === r.id && selectedKind === 'region',
                 'border-lm-red bg-lm-red-soft': r.value < 0 && !(selectedId === r.id && selectedKind === 'region')
@@ -755,15 +806,15 @@
                   }"
                 />
               </div>
-              <span class="font-display text-[11px] font-semibold text-lm-ink-2">{{ r.label }}</span>
-              <span class="font-display text-[14px] font-[800] text-lm-ink min-w-[20px] text-right" :class="{ 'text-lm-red': r.value < 0 }">
+              <span class="font-display text-[11px] font-bold text-lm-ink-2">{{ getStudentRegionLabel(r) }}</span>
+              <span class="font-display text-[13px] font-[800] text-lm-ink min-w-[20px] text-right" :class="{ 'text-lm-red': r.value < 0 }">
                 {{ r.value }}
               </span>
             </div>
           </div>
 
-          <p v-if="exactRegions.some(r => r.value < 0)" class="font-display text-[11px] font-semibold text-lm-red mt-2 flex items-center gap-1.5 text-left">
-            <span class="w-3.5 h-3.5 rounded-full bg-lm-red text-white grid place-items-center text-[9px] font-[800] shrink-0">!</span>
+          <p v-if="exactRegions.some(r => r.value < 0)" class="font-display text-[11px] font-semibold text-lm-red mt-2.5 flex items-center gap-1.5 text-left">
+            <span class="w-3.5 h-3.5 rounded-full bg-lm-red text-white grid place-items-center text-[9px] font-[800] shrink-0 border border-lm-line">!</span>
             Some regions are negative — check the totals and intersections.
           </p>
         </div>
@@ -877,7 +928,35 @@ const props = defineProps({
 
 const emit = defineEmits(['change'])
 
+const instanceId = 'vle-' + Math.random().toString(36).substring(2, 9)
+
 const VL_COLORS = ['#ffd333', '#8fb3ff', '#8fe0aa', '#ff9aa8', '#e3d4ff']
+
+const hasHiddenElements = computed(() => {
+  if (!overlap.value?.enabled) return false
+  const hasElements = elements.value.length > 0
+  const nonOverlapZones = zones.value.some(z => !overlap.value.sourceZoneIds?.includes(z.id) || z.shape !== 'circle')
+  return hasElements || nonOverlapZones
+})
+
+function getOverlapInputHelperText(zoneIds) {
+  const names = zoneIds.map(id => zones.value.find(z => z.id === id)?.label || id.replace(/^zone_/, '').toUpperCase())
+  if (zoneIds.length === 1) {
+    return `Total members in ${names[0]}`
+  } else if (zoneIds.length === 2) {
+    return `Intersection of ${names[0]} and ${names[1]}`
+  } else if (zoneIds.length === 3) {
+    return `Three-way intersection of ${names[0]}, ${names[1]}, and ${names[2]}`
+  }
+  return `Intersection of ${zoneIds.length} sets`
+}
+
+function getStudentRegionLabel(region) {
+  const labels = region.zoneIds.map((zoneId) => zones.value.find((zone) => zone.id === zoneId)?.label ?? zoneId.replace(/^zone_/, '').toUpperCase())
+  if (labels.length === 1) return `${labels[0]} only`
+  if (labels.length === 3) return labels.join('')
+  return `${labels.join('')} only`
+}
 
 const VL_PRESETS = [
   { id:'venn-2', label:'2-set Venn', desc:'Two overlapping sets',
@@ -980,9 +1059,7 @@ function applyPreset(preset) {
 }
 
 function emitChange() {
-  const sourceZoneIds = overlap.value?.sourceZoneIds?.length
-    ? overlap.value.sourceZoneIds
-    : zones.value.slice(0, 5).map(z => z.id)
+  const sourceZoneIds = (overlap.value?.sourceZoneIds || []).filter(id => zones.value.some(z => z.id === id))
 
   const updatedOverlap = overlap.value ? {
     ...overlap.value,
@@ -994,7 +1071,7 @@ function emitChange() {
     values: []
   }
 
-  if (sourceZoneIds.length > 0 && (!updatedOverlap.values || updatedOverlap.values.length === 0)) {
+  if (sourceZoneIds.length > 0) {
     const tempConfig = {
       type: 'VISUAL_LAYER',
       canvas: { width: 900, height: 520 },
@@ -1004,11 +1081,21 @@ function emitChange() {
       overlap: updatedOverlap
     }
     const tempOverlap = ensureVisualOverlapValues(tempConfig, sourceZoneIds)
-    updatedOverlap.values = tempOverlap.values.map(v => ({
-      ...v,
-      feedback: v.feedback ?? ''
-    }))
+    const oldValues = updatedOverlap.values || overlap.value?.values || []
+    
+    updatedOverlap.values = tempOverlap.values.map(v => {
+      const saved = oldValues.find(oldV => oldV.id === v.id)
+      return {
+        ...v,
+        feedback: saved?.feedback ?? v.feedback ?? '',
+        label: saved?.label ?? v.label
+      }
+    })
     updatedOverlap.inputs = tempOverlap.inputs
+    overlap.value = updatedOverlap
+  } else {
+    updatedOverlap.values = []
+    updatedOverlap.inputs = []
     overlap.value = updatedOverlap
   }
 
@@ -1227,9 +1314,11 @@ function onCanvasClick(e) {
 
   if (tool.value === 'zone-circle') {
     const idx = zones.value.length
+    const letters = ['a', 'b', 'c', 'd', 'e']
+    const nextLetter = letters.find(l => !zones.value.some(z => z.id === `zone_${l}`)) || String.fromCharCode(97 + idx)
     const newZone = {
-      id: `zone_${Date.now()}`,
-      label: String.fromCharCode(65 + idx),
+      id: `zone_${nextLetter}`,
+      label: nextLetter.toUpperCase(),
       shape: 'circle',
       x: clickX - 110,
       y: clickY - 110,
@@ -1240,20 +1329,23 @@ function onCanvasClick(e) {
       highlightOpacity: 0.82
     }
     zones.value.push(newZone)
-    if (overlap.value?.enabled) {
-      overlap.value = ensureVisualOverlapValues({
-        zones: zones.value,
-        overlap: overlap.value
-      }, overlap.value.sourceZoneIds)
+    if (overlap.value) {
+      const nextSources = [...(overlap.value.sourceZoneIds || [])]
+      if (nextSources.length < 5 && !nextSources.includes(newZone.id)) {
+        nextSources.push(newZone.id)
+      }
+      overlap.value.sourceZoneIds = nextSources
     }
     selectZone(newZone.id)
     tool.value = 'select'
     emitChange()
   } else if (tool.value === 'zone-rect') {
     const idx = zones.value.length
+    const letters = ['a', 'b', 'c', 'd', 'e']
+    const nextLetter = letters.find(l => !zones.value.some(z => z.id === `zone_${l}`)) || String.fromCharCode(97 + idx)
     const newZone = {
-      id: `zone_${Date.now()}`,
-      label: String.fromCharCode(65 + idx),
+      id: `zone_${nextLetter}`,
+      label: nextLetter.toUpperCase(),
       shape: 'rectangle',
       x: clickX - 95,
       y: clickY - 85,
@@ -1264,11 +1356,12 @@ function onCanvasClick(e) {
       highlightOpacity: 0.82
     }
     zones.value.push(newZone)
-    if (overlap.value?.enabled) {
-      overlap.value = ensureVisualOverlapValues({
-        zones: zones.value,
-        overlap: overlap.value
-      }, overlap.value.sourceZoneIds)
+    if (overlap.value) {
+      const nextSources = [...(overlap.value.sourceZoneIds || [])]
+      if (nextSources.length < 5 && !nextSources.includes(newZone.id)) {
+        nextSources.push(newZone.id)
+      }
+      overlap.value.sourceZoneIds = nextSources
     }
     selectZone(newZone.id)
     tool.value = 'select'
@@ -1334,16 +1427,6 @@ function updateSelectedZoneColor(c) {
 }
 
 function onZoneChange() {
-  if (overlap.value) {
-    const isEnabled = overlap.value.enabled ?? false
-    overlap.value = {
-      ...ensureVisualOverlapValues({
-        zones: zones.value,
-        overlap: overlap.value
-      }, overlap.value.sourceZoneIds),
-      enabled: isEnabled
-    }
-  }
   emitChange()
 }
 
@@ -1351,15 +1434,7 @@ function deleteZone(id) {
   zones.value = zones.value.filter(z => z.id !== id)
   interactions.value = interactions.value.filter(i => i.targetZoneId !== id)
   if (overlap.value) {
-    const nextSources = (overlap.value.sourceZoneIds || []).filter(s => s !== id)
-    const isEnabled = overlap.value.enabled ?? false
-    overlap.value = {
-      ...ensureVisualOverlapValues({
-        zones: zones.value,
-        overlap: overlap.value
-      }, nextSources),
-      enabled: isEnabled
-    }
+    overlap.value.sourceZoneIds = (overlap.value.sourceZoneIds || []).filter(s => s !== id)
   }
   if (selectedId.value === id) clearSelection()
   emitChange()
@@ -1367,9 +1442,11 @@ function deleteZone(id) {
 
 function addZone() {
   const idx = zones.value.length
+  const letters = ['a', 'b', 'c', 'd', 'e']
+  const nextLetter = letters.find(l => !zones.value.some(z => z.id === `zone_${l}`)) || String.fromCharCode(97 + idx)
   const newZone = {
-    id: `zone_${idx + 1}`,
-    label: String.fromCharCode(65 + idx),
+    id: `zone_${nextLetter}`,
+    label: nextLetter.toUpperCase(),
     shape: 'circle',
     x: 200 + idx * 80,
     y: 150,
@@ -1381,15 +1458,11 @@ function addZone() {
   }
   zones.value.push(newZone)
   if (overlap.value) {
-    const nextSources = [...(overlap.value.sourceZoneIds || []), newZone.id].slice(0, 5)
-    const isEnabled = overlap.value.enabled ?? false
-    overlap.value = {
-      ...ensureVisualOverlapValues({
-        zones: zones.value,
-        overlap: overlap.value
-      }, nextSources),
-      enabled: isEnabled
+    const nextSources = [...(overlap.value.sourceZoneIds || [])]
+    if (nextSources.length < 5 && !nextSources.includes(newZone.id)) {
+      nextSources.push(newZone.id)
     }
+    overlap.value.sourceZoneIds = nextSources
   }
   selectZone(newZone.id)
   emitChange()
@@ -1440,10 +1513,11 @@ function toggleVisualOverlap(enabled) {
     ? overlap.value.sourceZoneIds
     : zones.value.slice(0, 5).map(z => z.id)
 
-  overlap.value = ensureVisualOverlapValues({
-    zones: zones.value,
-    overlap: overlap.value
-  }, sourceZoneIds)
+  overlap.value = {
+    ...(overlap.value ?? {}),
+    enabled: true,
+    sourceZoneIds
+  }
 
   emitChange()
 }
@@ -1457,13 +1531,8 @@ function toggleOverlapSource(zoneId, enabled) {
   // Keep unique and limit to max 5
   nextSources = [...new Set(nextSources)].slice(0, 5)
 
-  const isEnabled = overlap.value?.enabled ?? false
-  overlap.value = {
-    ...ensureVisualOverlapValues({
-      zones: zones.value,
-      overlap: overlap.value
-    }, nextSources),
-    enabled: isEnabled
+  if (overlap.value) {
+    overlap.value.sourceZoneIds = nextSources
   }
 
   emitChange()
