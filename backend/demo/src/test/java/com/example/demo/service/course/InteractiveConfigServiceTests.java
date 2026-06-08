@@ -197,4 +197,146 @@ class InteractiveConfigServiceTests {
                 .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("unexpectedly");
     }
+
+    @Test
+    void acceptsValidLineElements() {
+        assertThat(service.validateAndNormalize(InteractionType.VISUAL_LAYER, """
+                {
+                  "type": "VISUAL_LAYER",
+                  "title": "Visual Layer with Line",
+                  "canvas": {"width": 900, "height": 520},
+                  "zones": [],
+                  "elements": [
+                    {
+                      "id": "line_1",
+                      "label": "My Line",
+                      "kind": "line",
+                      "x": 10, "y": 20, "width": 100, "height": 50,
+                      "x1": 10, "y1": 20, "x2": 110, "y2": 70,
+                      "qx": 60, "qy": 45,
+                      "flow": "forward",
+                      "arrow": "both",
+                      "color": "#1a1814",
+                      "strokeWidth": 3
+                    }
+                  ],
+                  "interactions": []
+                }
+                """)).contains("\"kind\":\"line\"");
+    }
+
+    @Test
+    void rejectsInvalidLineElements() {
+        assertThatThrownBy(() -> service.validateAndNormalize(InteractionType.VISUAL_LAYER, """
+                {
+                  "type": "VISUAL_LAYER",
+                  "title": "Invalid Line Flow",
+                  "canvas": {"width": 900, "height": 520},
+                  "zones": [],
+                  "elements": [
+                    {
+                      "id": "line_1",
+                      "label": "My Line",
+                      "kind": "line",
+                      "x": 10, "y": 20, "width": 100, "height": 50,
+                      "x1": 10, "y1": 20, "x2": 110, "y2": 70,
+                      "flow": "invalid-flow"
+                    }
+                  ],
+                  "interactions": []
+                }
+                """))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("line flow must be none, forward, or backward");
+
+        assertThatThrownBy(() -> service.validateAndNormalize(InteractionType.VISUAL_LAYER, """
+                {
+                  "type": "VISUAL_LAYER",
+                  "title": "Invalid Line Color",
+                  "canvas": {"width": 900, "height": 520},
+                  "zones": [],
+                  "elements": [
+                    {
+                      "id": "line_1",
+                      "label": "My Line",
+                      "kind": "line",
+                      "x": 10, "y": 20, "width": 100, "height": 50,
+                      "x1": 10, "y1": 20, "x2": 110, "y2": 70,
+                      "color": "invalid"
+                    }
+                  ],
+                  "interactions": []
+                }
+                """))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("line color must be a hex color");
+
+        assertThatThrownBy(() -> service.validateAndNormalize(InteractionType.VISUAL_LAYER, """
+                {
+                  "type": "VISUAL_LAYER",
+                  "title": "Invalid Line Arrow",
+                  "canvas": {"width": 900, "height": 520},
+                  "zones": [],
+                  "elements": [
+                    {
+                      "id": "line_1",
+                      "label": "My Line",
+                      "kind": "line",
+                      "x": 10, "y": 20, "width": 100, "height": 50,
+                      "x1": 10, "y1": 20, "x2": 110, "y2": 70,
+                      "arrow": "invalid"
+                    }
+                  ],
+                  "interactions": []
+                }
+                """))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("line arrow must be none, start, end, or both");
+
+        assertThatThrownBy(() -> service.validateAndNormalize(InteractionType.VISUAL_LAYER, """
+                {
+                  "type": "VISUAL_LAYER",
+                  "title": "Invalid Line Stroke Width",
+                  "canvas": {"width": 900, "height": 520},
+                  "zones": [],
+                  "elements": [
+                    {
+                      "id": "line_1",
+                      "label": "My Line",
+                      "kind": "line",
+                      "x": 10, "y": 20, "width": 100, "height": 50,
+                      "x1": 10, "y1": 20, "x2": 110, "y2": 70,
+                      "strokeWidth": 0
+                    }
+                  ],
+                  "interactions": []
+                }
+                """))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("strokeWidth");
+    }
+
+    @Test
+    void acceptsMinimalLineElement() {
+        assertThat(service.validateAndNormalize(InteractionType.VISUAL_LAYER, """
+                {
+                  "type": "VISUAL_LAYER",
+                  "title": "Visual Layer with Minimal Line",
+                  "canvas": {"width": 900, "height": 520},
+                  "zones": [],
+                  "elements": [
+                    {
+                      "id": "line_1",
+                      "label": "My Minimal Line",
+                      "kind": "line",
+                      "x": 10, "y": 20, "width": 100, "height": 50,
+                      "x1": 10, "y1": 20, "x2": 110, "y2": 70
+                    }
+                  ],
+                  "interactions": []
+                }
+                """)).contains("\"kind\":\"line\"");
+    }
 }
+
+

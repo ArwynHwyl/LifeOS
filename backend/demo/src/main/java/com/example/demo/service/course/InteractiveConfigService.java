@@ -43,7 +43,10 @@ public class InteractiveConfigService {
     private static final Set<String> VISUAL_LAYER_FIELDS = Set.of("type", "mode", "title", "canvas", "zones", "elements", "interactions", "overlap", "prompt", "feedback");
     private static final Set<String> VISUAL_CANVAS_FIELDS = Set.of("width", "height", "backgroundText");
     private static final Set<String> VISUAL_ZONE_FIELDS = Set.of("id", "label", "shape", "x", "y", "width", "height", "labelX", "labelY", "color", "highlightColor", "highlightOpacity", "feedback");
-    private static final Set<String> VISUAL_ELEMENT_FIELDS = Set.of("id", "label", "kind", "x", "y", "width", "height");
+    private static final Set<String> VISUAL_ELEMENT_FIELDS = Set.of(
+            "id", "label", "kind", "x", "y", "width", "height",
+            "x1", "y1", "x2", "y2", "qx", "qy", "flow", "arrow", "color", "strokeWidth"
+    );
     private static final Set<String> VISUAL_INTERACTION_FIELDS = Set.of("triggerId", "effect", "targetZoneId", "feedback");
     private static final Set<String> VISUAL_OVERLAP_FIELDS = Set.of("enabled", "sourceZoneIds", "inputs", "values");
     private static final Set<String> VISUAL_OVERLAP_INPUT_FIELDS = Set.of("id", "label", "zoneIds", "value", "kind");
@@ -737,10 +740,36 @@ public class InteractiveConfigService {
             }
             requiredText(elementObject, "label", 120);
             String kind = requiredText(elementObject, "kind", 20);
-            if (!Set.of("button", "hotspot").contains(kind)) {
-                throw new ValidationException("element kind must be button or hotspot");
+            if (!Set.of("button", "hotspot", "line").contains(kind)) {
+                throw new ValidationException("element kind must be button, hotspot, or line");
             }
-            validateVisualBounds(elementObject, canvasWidth, canvasHeight);
+            if ("line".equals(kind)) {
+                requiredNumber(elementObject, "x", 0, canvasWidth);
+                requiredNumber(elementObject, "y", 0, canvasHeight);
+                requiredNumber(elementObject, "width", 0, canvasWidth);
+                requiredNumber(elementObject, "height", 0, canvasHeight);
+                requiredNumber(elementObject, "x1", 0, canvasWidth);
+                requiredNumber(elementObject, "y1", 0, canvasHeight);
+                requiredNumber(elementObject, "x2", 0, canvasWidth);
+                requiredNumber(elementObject, "y2", 0, canvasHeight);
+                optionalNumber(elementObject, "qx", 0, canvasWidth);
+                optionalNumber(elementObject, "qy", 0, canvasHeight);
+                String flow = optionalText(elementObject, "flow", 20);
+                if (flow != null && !Set.of("none", "forward", "backward").contains(flow)) {
+                    throw new ValidationException("line flow must be none, forward, or backward");
+                }
+                String arrow = optionalText(elementObject, "arrow", 10);
+                if (arrow != null && !Set.of("none", "start", "end", "both").contains(arrow)) {
+                    throw new ValidationException("line arrow must be none, start, end, or both");
+                }
+                String color = optionalText(elementObject, "color", 7);
+                if (color != null && !color.matches("#[0-9A-Fa-f]{6}")) {
+                    throw new ValidationException("line color must be a hex color");
+                }
+                optionalNumber(elementObject, "strokeWidth", 1, 20);
+            } else {
+                validateVisualBounds(elementObject, canvasWidth, canvasHeight);
+            }
         }
         return ids;
     }
