@@ -42,7 +42,7 @@
     <div class="flex items-center gap-1 p-[6px_8px] bg-lm-bg-soft rounded-[10px] border-2 border-lm-line-soft">
       <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mr-1.5 tracking-wider mb-0">Tools</p>
       <button
-        v-for="[t, l] in [['select', 'Select'], ['zone-circle', '○ Circle'], ['zone-rect', '□ Rect'], ['button', 'Button'], ['hotspot', 'Hotspot']]"
+        v-for="[t, l] in [['select', 'Select'], ['zone-circle', '○ Circle'], ['zone-rect', '□ Rect'], ['button', 'Button'], ['hotspot', 'Hotspot'], ['line', '⏤ Line']]"
         :key="t"
         @click="tool = t"
         class="h-7 px-2.5 rounded-[7px] border-2 border-transparent bg-transparent font-display text-[11px] font-bold text-lm-ink cursor-pointer transition-all duration-100"
@@ -58,15 +58,29 @@
       <div class="border-2 border-lm-line rounded-[14px] overflow-hidden bg-[#fffdf8] shadow-stamp-sm">
         <svg
           viewBox="0 0 900 520"
-          class="block w-full h-auto"
+          class="block w-full h-auto select-none"
           :style="{ cursor: tool !== 'select' ? 'crosshair' : 'default' }"
           @click="onCanvasClick"
+          @pointermove="onPointerMove"
+          @pointerup="onPointerUp"
+          @pointerleave="onPointerUp"
         >
           <!-- Grid background -->
           <defs>
             <pattern id="vl-dots" width="20" height="20" patternUnits="userSpaceOnUse">
               <circle cx="10" cy="10" r="1.2" fill="rgba(26,24,20,0.08)" />
             </pattern>
+            <marker
+              id="vl-arrow"
+              viewBox="0 0 10 10"
+              refX="6"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto-start-reverse"
+            >
+              <path d="M 0 2 L 8 5 L 0 8 z" fill="currentColor" />
+            </marker>
           </defs>
           <rect width="900" height="520" fill="url(#vl-dots)" />
 
@@ -75,7 +89,9 @@
             v-for="z in zones"
             :key="z.id"
             @click.stop="selectZone(z.id)"
+            @pointerdown="startMoveDrag(z, 'zone', $event)"
             class="cursor-pointer"
+            :class="{ 'cursor-move': tool === 'select' }"
           >
             <ellipse
               v-if="z.shape === 'circle'"
@@ -112,6 +128,32 @@
             >
               {{ z.label }}
             </text>
+
+            <!-- Resize handle for Zone -->
+            <g v-if="selectedId === z.id && selectedKind === 'zone'">
+              <circle
+                v-if="z.shape === 'circle'"
+                :cx="z.x + z.width"
+                :cy="z.y + z.height / 2"
+                r="7"
+                fill="#fff"
+                stroke="var(--lm-ink)"
+                stroke-width="2"
+                class="cursor-ew-resize"
+                @pointerdown.stop="startResizeDrag(z, 'zone', $event)"
+              />
+              <circle
+                v-else
+                :cx="z.x + z.width"
+                :cy="z.y + z.height"
+                r="7"
+                fill="#fff"
+                stroke="var(--lm-ink)"
+                stroke-width="2"
+                class="cursor-se-resize"
+                @pointerdown.stop="startResizeDrag(z, 'zone', $event)"
+              />
+            </g>
           </g>
 
           <!-- Elements -->
@@ -119,27 +161,138 @@
             v-for="el in elements"
             :key="el.id"
             @click.stop="onElementClick(el)"
+            @pointerdown="el.kind !== 'line' ? startMoveDrag(el, 'element', $event) : null"
             class="cursor-pointer"
+            :class="{ 'cursor-move': el.kind !== 'line' && tool === 'select' }"
+            :style="{ color: el.color || '#1a1814' }"
           >
-            <rect
-              :x="el.x"
-              :y="el.y"
-              :width="el.width"
-              :height="el.height"
-              :rx="el.kind === 'hotspot' ? 999 : 10"
-              fill="var(--lm-surface)"
-              :stroke="selectedId === el.id && selectedKind === 'element' ? 'var(--lm-ink)' : 'var(--lm-line)'"
-              :stroke-width="2"
-            />
-            <text
-              :x="el.x + el.width / 2"
-              :y="el.y + el.height / 2"
-              text-anchor="middle"
-              dominant-baseline="central"
-              class="font-display text-[13px] font-bold fill-lm-ink pointer-events-none"
-            >
-              {{ el.label }}
-            </text>
+            <!-- Normal elements (rect/button/hotspot) -->
+            <template v-if="el.kind !== 'line'">
+              <rect
+                :x="el.x"
+                :y="el.y"
+                :width="el.width"
+                :height="el.height"
+                :rx="el.kind === 'hotspot' ? 999 : 10"
+                fill="var(--lm-surface)"
+                :stroke="selectedId === el.id && selectedKind === 'element' ? 'var(--lm-ink)' : 'var(--lm-line)'"
+                :stroke-width="2"
+              />
+              <text
+                :x="el.x + el.width / 2"
+                :y="el.y + el.height / 2"
+                text-anchor="middle"
+                dominant-baseline="central"
+                class="font-display text-[13px] font-bold fill-lm-ink pointer-events-none"
+              >
+                {{ el.label }}
+              </text>
+
+              <!-- Resize handle for button/hotspot -->
+              <g v-if="selectedId === el.id && selectedKind === 'element'">
+                <circle
+                  :cx="el.x + el.width"
+                  :cy="el.y + el.height"
+                  r="7"
+                  fill="#fff"
+                  stroke="var(--lm-ink)"
+                  stroke-width="2"
+                  class="cursor-se-resize"
+                  @pointerdown.stop="startResizeDrag(el, 'element', $event)"
+                />
+              </g>
+            </template>
+            <!-- Line elements -->
+            <template v-else>
+              <!-- Thick transparent curved path for easy clicking/selecting -->
+              <path
+                :d="`M ${el.x1} ${el.y1} Q ${el.qx !== undefined ? el.qx : ((el.x1 + el.x2)/2)} ${el.qy !== undefined ? el.qy : ((el.y1 + el.y2)/2)} ${el.x2} ${el.y2}`"
+                fill="none"
+                stroke="transparent"
+                stroke-width="16"
+              />
+              <!-- The visible curved line -->
+              <path
+                :d="`M ${el.x1} ${el.y1} Q ${el.qx !== undefined ? el.qx : ((el.x1 + el.x2)/2)} ${el.qy !== undefined ? el.qy : ((el.y1 + el.y2)/2)} ${el.x2} ${el.y2}`"
+                fill="none"
+                :stroke="selectedId === el.id && selectedKind === 'element' ? 'var(--lm-ink)' : 'currentColor'"
+                :stroke-width="selectedId === el.id && selectedKind === 'element' ? (el.strokeWidth || 3) + 1.5 : (el.strokeWidth || 3)"
+                :stroke-dasharray="el.flow && el.flow !== 'none' ? '8 6' : 'none'"
+                :class="{
+                  'animate-flow-forward': el.flow === 'forward',
+                  'animate-flow-backward': el.flow === 'backward'
+                }"
+                :marker-end="el.flow === 'forward' ? 'url(#vl-arrow)' : 'none'"
+                :marker-start="el.flow === 'backward' ? 'url(#vl-arrow)' : 'none'"
+                stroke-linecap="round"
+              />
+              <!-- Center label positioned at Bezier midpoint -->
+              <text
+                v-if="el.label && el.label !== 'Line'"
+                :x="0.25 * el.x1 + 0.5 * (el.qx !== undefined ? el.qx : ((el.x1 + el.x2)/2)) + 0.25 * el.x2"
+                :y="0.25 * el.y1 + 0.5 * (el.qy !== undefined ? el.qy : ((el.y1 + el.y2)/2)) + 0.25 * el.y2 - 10"
+                text-anchor="middle"
+                class="font-display text-[11px] font-bold fill-lm-ink pointer-events-none select-none"
+              >
+                {{ el.label }}
+              </text>
+
+              <!-- Line handles (only shown when selected in editor) -->
+              <g v-if="selectedId === el.id && selectedKind === 'element'">
+                <!-- Helper dashed lines for curve control -->
+                <line
+                  :x1="el.x1"
+                  :y1="el.y1"
+                  :x2="el.qx !== undefined ? el.qx : ((el.x1 + el.x2)/2)"
+                  :y2="el.qy !== undefined ? el.qy : ((el.y1 + el.y2)/2)"
+                  stroke="var(--lm-line-soft)"
+                  stroke-width="1.2"
+                  stroke-dasharray="3 3"
+                />
+                <line
+                  :x1="el.x2"
+                  :y1="el.y2"
+                  :x2="el.qx !== undefined ? el.qx : ((el.x1 + el.x2)/2)"
+                  :y2="el.qy !== undefined ? el.qy : ((el.y1 + el.y2)/2)"
+                  stroke="var(--lm-line-soft)"
+                  stroke-width="1.2"
+                  stroke-dasharray="3 3"
+                />
+                <!-- Start handle -->
+                <circle
+                  :cx="el.x1"
+                  :cy="el.y1"
+                  r="6"
+                  fill="#fff"
+                  stroke="var(--lm-ink)"
+                  stroke-width="2"
+                  class="cursor-move"
+                  @pointerdown.stop="startLineDrag(el, 'start', $event)"
+                />
+                <!-- End handle -->
+                <circle
+                  :cx="el.x2"
+                  :cy="el.y2"
+                  r="6"
+                  fill="#fff"
+                  stroke="var(--lm-ink)"
+                  stroke-width="2"
+                  class="cursor-move"
+                  @pointerdown.stop="startLineDrag(el, 'end', $event)"
+                />
+                <!-- Curve control handle -->
+                <circle
+                  :cx="el.qx !== undefined ? el.qx : ((el.x1 + el.x2)/2)"
+                  :cy="el.qy !== undefined ? el.qy : ((el.y1 + el.y2)/2)"
+                  r="7"
+                  fill="var(--lm-yellow)"
+                  stroke="var(--lm-ink)"
+                  stroke-width="2"
+                  class="cursor-move"
+                  @pointerdown.stop="startLineDrag(el, 'curve', $event)"
+                />
+              </g>
+            </template>
           </g>
 
           <!-- Overlap badges -->
@@ -214,24 +367,7 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-1.5">
-            <div>
-              <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">X</p>
-              <input type="number" v-model.number="selectedZone.x" @input="onZoneChange" class="w-full box-border font-display text-[12px] px-2.5 py-1.75 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink" />
-            </div>
-            <div>
-              <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Y</p>
-              <input type="number" v-model.number="selectedZone.y" @input="onZoneChange" class="w-full box-border font-display text-[12px] px-2.5 py-1.75 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink" />
-            </div>
-            <div>
-              <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Width</p>
-              <input type="number" v-model.number="selectedZone.width" @input="onZoneChange" class="w-full box-border font-display text-[12px] px-2.5 py-1.75 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink" />
-            </div>
-            <div>
-              <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Height</p>
-              <input type="number" v-model.number="selectedZone.height" @input="onZoneChange" class="w-full box-border font-display text-[12px] px-2.5 py-1.75 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink" />
-            </div>
-          </div>
+          <!-- X, Y, Width, Height fields removed, drag-and-drop enabled on canvas instead -->
 
           <div>
             <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Shape</p>
@@ -284,6 +420,42 @@
             <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Label</p>
             <input v-model="selectedElement.label" @input="onElementChange" class="w-full box-border font-display text-[12px] px-2.5 py-1.75 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink" />
           </div>
+
+          <!-- Line-specific fields -->
+          <template v-if="selectedElement.kind === 'line'">
+            <!-- Line coordinates removed, drag-and-drop handles enabled on canvas instead -->
+
+            <div>
+              <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Flow Direction</p>
+              <select v-model="selectedElement.flow" @change="onElementChange" class="w-full box-border font-display text-[12px] px-2.5 py-1.75 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink">
+                <option value="none">None (Static)</option>
+                <option value="forward">Forward (Start → End)</option>
+                <option value="backward">Backward (End → Start)</option>
+              </select>
+            </div>
+
+            <div>
+              <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Thickness</p>
+              <div class="flex items-center gap-2">
+                <input type="range" min="1" max="10" step="1" v-model.number="selectedElement.strokeWidth" @input="onElementChange" class="flex-1" />
+                <span class="font-mono text-[10px] text-lm-ink-3 min-w-[24px]">{{ selectedElement.strokeWidth || 3 }}px</span>
+              </div>
+            </div>
+
+            <div>
+              <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Line Color</p>
+              <div class="flex gap-1.5">
+                <button
+                  v-for="c in ['#1a1814', '#ffd333', '#8fb3ff', '#8fe0aa', '#ff9aa8']"
+                  :key="c"
+                  @click="selectedElement.color = c; onElementChange()"
+                  class="w-6 h-6 rounded-full border-2 border-lm-line-soft cursor-pointer"
+                  :style="{ background: c }"
+                  :class="{ 'border-3 border-lm-ink': selectedElement.color === c || (!selectedElement.color && c === '#1a1814') }"
+                />
+              </div>
+            </div>
+          </template>
 
           <div v-if="selectedElementInteraction" class="flex flex-col gap-2.5">
             <div>
@@ -424,9 +596,12 @@
           class="flex items-center gap-2 p-[8px_12px] w-full box-border text-left border-2 border-lm-line-soft rounded-[10px] cursor-pointer transition-all duration-120 bg-lm-surface"
           :class="{ 'border-lm-line bg-lm-yellow shadow-stamp-sm': selectedId === el.id && selectedKind === 'element' }"
         >
-          <span class="w-[22px] h-[22px] rounded-[6px] bg-lm-bg-soft border-2 border-lm-line-soft grid place-items-center font-mono text-[8px] text-lm-ink-3 shrink-0">▸</span>
+          <span class="w-[22px] h-[22px] rounded-[6px] bg-lm-bg-soft border-2 border-lm-line-soft grid place-items-center font-mono text-[8px] text-lm-ink-3 shrink-0">{{ el.kind === 'line' ? '⏤' : '▸' }}</span>
           <span class="flex-1 font-display text-[12px] font-bold text-lm-ink">{{ el.label }}</span>
-          <span v-if="getInteraction(el.id)" class="font-mono text-[9px] text-lm-ink-3">
+          <span v-if="el.kind === 'line'" class="font-mono text-[9px] text-lm-ink-3">
+            flow: {{ el.flow || 'none' }}
+          </span>
+          <span v-else-if="getInteraction(el.id)" class="font-mono text-[9px] text-lm-ink-3">
             → {{ zones.find(z => z.id === getInteraction(el.id).targetZoneId)?.label || '?' }}
           </span>
           <button @click.stop="deleteElement(el.id)" class="grid place-items-center w-6 h-6 rounded-[6px] border border-lm-line-soft bg-transparent cursor-pointer text-lm-ink-3 shrink-0">
@@ -595,9 +770,241 @@ function clearSelection() {
   highlightZone.value = null
 }
 
+const drag = ref(null)
+
+function startMoveDrag(item, kind, e) {
+  if (tool.value !== 'select') return
+  e.preventDefault()
+  const svg = e.currentTarget.ownerSVGElement || e.currentTarget
+  const rect = svg.getBoundingClientRect()
+  const clickX = ((e.clientX - rect.left) / rect.width) * 900
+  const clickY = ((e.clientY - rect.top) / rect.height) * 520
+  drag.value = {
+    type: 'move',
+    kind: kind,
+    id: item.id,
+    startX: clickX,
+    startY: clickY,
+    initX: item.x,
+    initY: item.y
+  }
+  e.currentTarget.setPointerCapture(e.pointerId)
+}
+
+function startResizeDrag(item, kind, e) {
+  e.preventDefault()
+  const svg = e.currentTarget.ownerSVGElement || e.currentTarget
+  const rect = svg.getBoundingClientRect()
+  const clickX = ((e.clientX - rect.left) / rect.width) * 900
+  const clickY = ((e.clientY - rect.top) / rect.height) * 520
+  drag.value = {
+    type: 'resize',
+    kind: kind,
+    id: item.id,
+    startX: clickX,
+    startY: clickY,
+    initWidth: item.width,
+    initHeight: item.height
+  }
+  e.currentTarget.setPointerCapture(e.pointerId)
+}
+
+function startLineDrag(item, point, e) {
+  e.preventDefault()
+  const svg = e.currentTarget.ownerSVGElement || e.currentTarget
+  const rect = svg.getBoundingClientRect()
+  const clickX = ((e.clientX - rect.left) / rect.width) * 900
+  const clickY = ((e.clientY - rect.top) / rect.height) * 520
+  const defaultQx = (item.x1 + item.x2) / 2
+  const defaultQy = (item.y1 + item.y2) / 2
+  drag.value = {
+    type: 'line',
+    point: point,
+    id: item.id,
+    startX: clickX,
+    startY: clickY,
+    initX1: item.x1,
+    initY1: item.y1,
+    initX2: item.x2,
+    initY2: item.y2,
+    initQx: item.qx !== undefined ? item.qx : defaultQx,
+    initQy: item.qy !== undefined ? item.qy : defaultQy
+  }
+  e.currentTarget.setPointerCapture(e.pointerId)
+}
+
+function onPointerMove(e) {
+  if (!drag.value) return
+  const svg = e.currentTarget.ownerSVGElement || e.currentTarget
+  const rect = e.currentTarget.getBoundingClientRect()
+  const clickX = ((e.clientX - rect.left) / rect.width) * 900
+  const clickY = ((e.clientY - rect.top) / rect.height) * 520
+  const dx = Math.round(clickX - drag.value.startX)
+  const dy = Math.round(clickY - drag.value.startY)
+
+  if (drag.value.type === 'move') {
+    if (drag.value.kind === 'zone') {
+      const item = zones.value.find(z => z.id === drag.value.id)
+      if (item) {
+        item.x = drag.value.initX + dx
+        item.y = drag.value.initY + dy
+      }
+    } else {
+      const item = elements.value.find(el => el.id === drag.value.id)
+      if (item) {
+        item.x = drag.value.initX + dx
+        item.y = drag.value.initY + dy
+      }
+    }
+  } else if (drag.value.type === 'resize') {
+    if (drag.value.kind === 'zone') {
+      const item = zones.value.find(z => z.id === drag.value.id)
+      if (item) {
+        const newW = Math.max(20, drag.value.initWidth + dx)
+        const newH = Math.max(20, drag.value.initHeight + dy)
+        item.width = newW
+        if (item.shape === 'circle') {
+          item.height = newW
+        } else {
+          item.height = newH
+        }
+      }
+    } else {
+      const item = elements.value.find(el => el.id === drag.value.id)
+      if (item) {
+        const newW = Math.max(20, drag.value.initWidth + dx)
+        const newH = Math.max(20, drag.value.initHeight + dy)
+        item.width = newW
+        if (item.kind === 'hotspot') {
+          item.height = newW
+        } else {
+          item.height = newH
+        }
+      }
+    }
+  } else if (drag.value.type === 'line') {
+    const item = elements.value.find(el => el.id === drag.value.id)
+    if (item) {
+      if (drag.value.point === 'start') {
+        item.x1 = drag.value.initX1 + dx
+        item.y1 = drag.value.initY1 + dy
+      } else if (drag.value.point === 'end') {
+        item.x2 = drag.value.initX2 + dx
+        item.y2 = drag.value.initY2 + dy
+      } else if (drag.value.point === 'curve') {
+        item.qx = drag.value.initQx + dx
+        item.qy = drag.value.initQy + dy
+      }
+    }
+  }
+  emitChange()
+}
+
+function onPointerUp(e) {
+  if (!drag.value) return
+  try {
+    e.target.releasePointerCapture(e.pointerId)
+  } catch (err) {}
+  drag.value = null
+}
+
 function onCanvasClick(e) {
-  if (e.target.tagName === 'svg' || e.target.tagName === 'rect' && e.target.getAttribute('width') === '900') {
-    clearSelection()
+  const rect = e.currentTarget.getBoundingClientRect()
+  const clickX = Math.round(((e.clientX - rect.left) / rect.width) * 900)
+  const clickY = Math.round(((e.clientY - rect.top) / rect.height) * 520)
+
+  if (tool.value === 'select') {
+    if (e.target.tagName === 'svg' || e.target.tagName === 'rect' && e.target.getAttribute('width') === '900') {
+      clearSelection()
+    }
+    return
+  }
+
+  if (tool.value === 'zone-circle') {
+    const idx = zones.value.length
+    const newZone = {
+      id: `zone_${Date.now()}`,
+      label: String.fromCharCode(65 + idx),
+      shape: 'circle',
+      x: clickX - 110,
+      y: clickY - 110,
+      width: 220,
+      height: 220,
+      color: VL_COLORS[idx % VL_COLORS.length],
+      highlightColor: VL_COLORS[idx % VL_COLORS.length],
+      highlightOpacity: 0.82
+    }
+    zones.value.push(newZone)
+    selectZone(newZone.id)
+    tool.value = 'select'
+    emitChange()
+  } else if (tool.value === 'zone-rect') {
+    const idx = zones.value.length
+    const newZone = {
+      id: `zone_${Date.now()}`,
+      label: String.fromCharCode(65 + idx),
+      shape: 'rectangle',
+      x: clickX - 95,
+      y: clickY - 85,
+      width: 190,
+      height: 170,
+      color: VL_COLORS[idx % VL_COLORS.length],
+      highlightColor: VL_COLORS[idx % VL_COLORS.length],
+      highlightOpacity: 0.82
+    }
+    zones.value.push(newZone)
+    selectZone(newZone.id)
+    tool.value = 'select'
+    emitChange()
+  } else if (tool.value === 'button') {
+    const newEl = {
+      id: `btn_${Date.now()}`,
+      label: 'New Button',
+      kind: 'button',
+      x: clickX - 75,
+      y: clickY - 22,
+      width: 150,
+      height: 44
+    }
+    elements.value.push(newEl)
+    selectElement(newEl.id)
+    tool.value = 'select'
+    emitChange()
+  } else if (tool.value === 'hotspot') {
+    const newEl = {
+      id: `hot_${Date.now()}`,
+      label: 'New Hotspot',
+      kind: 'hotspot',
+      x: clickX - 25,
+      y: clickY - 25,
+      width: 50,
+      height: 50
+    }
+    elements.value.push(newEl)
+    selectElement(newEl.id)
+    tool.value = 'select'
+    emitChange()
+  } else if (tool.value === 'line') {
+    const newEl = {
+      id: `line_${Date.now()}`,
+      label: 'Line',
+      kind: 'line',
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0,
+      x1: clickX,
+      y1: clickY,
+      x2: clickX + 100,
+      y2: clickY,
+      flow: 'forward',
+      color: '#1a1814',
+      strokeWidth: 3
+    }
+    elements.value.push(newEl)
+    selectElement(newEl.id)
+    tool.value = 'select'
+    emitChange()
   }
 }
 
@@ -730,3 +1137,25 @@ const exactRegions = computed(() => {
   return exact.map(r => ({ ...r, center: vlRegionCenter(r.zoneIds, sourceZones) }))
 })
 </script>
+
+<style scoped>
+@keyframes flow-forward {
+  to {
+    stroke-dashoffset: -28;
+  }
+}
+
+@keyframes flow-backward {
+  to {
+    stroke-dashoffset: 28;
+  }
+}
+
+.animate-flow-forward {
+  animation: flow-forward 1.2s linear infinite;
+}
+
+.animate-flow-backward {
+  animation: flow-backward 1.2s linear infinite;
+}
+</style>
