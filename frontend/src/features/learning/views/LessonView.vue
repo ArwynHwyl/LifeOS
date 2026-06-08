@@ -92,7 +92,6 @@ const currentChallengeObjective = computed(() => {
   if (current.interactionType === 'VISUAL_LAYER') return 'Build or inspect the set diagram to master the concept.'
   return 'Complete this activity to master the concept.'
 })
-const isQuizActivity = computed(() => selectedSubTopic.value?.interactionType === 'QUIZ')
 
 /* ── Clever #1: Estimated reading time ── */
 const estimatedReadTime = computed(() => {
@@ -359,69 +358,39 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
       <div v-else-if="!selectedSubTopic" class="lesson-state">No lesson content is available.</div>
 
       <Transition :name="contentTransitionDir === 'next' ? 'slide-next' : 'slide-prev'" mode="out-in">
-        <article v-if="selectedSubTopic" :key="selectedSubTopic.id" class="lesson-content" :class="{ 'lesson-content--quiz': isQuizActivity }">
-          <template v-if="isQuizActivity">
-            <header class="lesson-content__header">
-              <div class="lesson-hero-copy">
-                <span>{{ selectedModule?.title }} • LESSON {{ selectedIndex + 1 }}</span>
-                <div class="lesson-hero-title-wrap">
-                  <h1>{{ selectedSubTopic.title }}</h1>
-                </div>
+        <article v-if="selectedSubTopic" :key="selectedSubTopic.id" class="lesson-content">
+          <header class="lesson-content__header">
+            <div class="lesson-hero-copy">
+              <span>{{ selectedModule?.title }} • LESSON {{ selectedIndex + 1 }}</span>
+              <div class="lesson-hero-title-wrap">
+                <h1>{{ selectedSubTopic.title }}</h1>
               </div>
-              <div class="lesson-mascot">
-                <p>{{ mascotPrompt }}</p>
-                <div class="lesson-mascot__avatar">
-                  <img :src="toraMascotUrl" alt="" />
-                </div>
-              </div>
-            </header>
-
-            <section v-if="selectedLessonHtml" class="lesson-body lesson-body--quiz" v-html="selectedLessonHtml" />
-
-            <div class="quiz-preview-frame">
-              <InteractivePreview
-                :config="interactiveConfig"
-                :server-feedback="interactiveServerFeedback"
-                @started="handleInteractiveStarted"
-                @checked="handleInteractiveChecked"
-              />
             </div>
-          </template>
-
-          <template v-else>
-            <header class="lesson-content__header">
-              <div class="lesson-hero-copy">
-                <span>{{ selectedModule?.title }} • LESSON {{ selectedIndex + 1 }}</span>
-                <div class="lesson-hero-title-wrap">
-                  <h1>{{ selectedSubTopic.title }}</h1>
-                </div>
+            <div class="lesson-mascot">
+              <p>{{ mascotPrompt }}</p>
+              <div class="lesson-mascot__avatar">
+                <img :src="toraMascotUrl" alt="" />
               </div>
-              <div class="lesson-mascot">
-                <p>{{ mascotPrompt }}</p>
-                <div class="lesson-mascot__avatar">
-                  <img :src="toraMascotUrl" alt="" />
-                </div>
-              </div>
-            </header>
+            </div>
+          </header>
 
-            <!-- Lesson body — open flow, no box wrapper -->
-            <section class="lesson-body" v-html="selectedLessonHtml" />
+          <!-- Lesson body — open flow, no box wrapper -->
+          <section class="lesson-body" v-html="selectedLessonHtml" />
 
-            <InteractiveChallengeShell
-              v-if="selectedSubTopic.interactionType !== 'NONE'"
-              :interaction-type="selectedSubTopic.interactionType"
-              :objective="currentChallengeObjective"
-              :status="currentProgressStatus"
-              :mode="currentInteractiveMode"
-            >
-              <InteractivePreview
-                :config="interactiveConfig"
-                :server-feedback="interactiveServerFeedback"
-                @started="handleInteractiveStarted"
-                @checked="handleInteractiveChecked"
-              />
-            </InteractiveChallengeShell>
-          </template>
+          <InteractiveChallengeShell
+            v-if="selectedSubTopic.interactionType !== 'NONE'"
+            :interaction-type="selectedSubTopic.interactionType"
+            :objective="currentChallengeObjective"
+            :status="currentProgressStatus"
+            :mode="currentInteractiveMode"
+          >
+            <InteractivePreview
+              :config="interactiveConfig"
+              :server-feedback="interactiveServerFeedback"
+              @started="handleInteractiveStarted"
+              @checked="handleInteractiveChecked"
+            />
+          </InteractiveChallengeShell>
 
           <!-- Pagination Dots inside the card -->
           <div class="lesson-pagination">
@@ -737,10 +706,7 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   padding: 3.5rem;
   box-shadow: 4px 4px 0px 0px #1d1b17;
 }
-.lesson-content--quiz {
-  width: min(calc(100% - 12rem), 1200px);
-  align-content: start;
-}
+
 .lesson-content__header {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(270px, 420px);
@@ -834,15 +800,7 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   padding: 0;
   box-shadow: none;
 }
-.lesson-body--quiz {
-  width: min(100%, 860px);
-  margin: 0 auto;
-  border: 1.5px solid #d4cec6;
-  border-radius: 12px;
-  background: #fffdf8;
-  padding: 1.25rem 1.5rem;
-  box-shadow: none;
-}
+
 .progress-marker {
   display: inline-grid;
   width: 0.85rem;
@@ -1037,8 +995,7 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
 }
 
 @media (max-width: 900px) {
-  .lesson-content,
-  .lesson-content--quiz {
+  .lesson-content {
     width: min(calc(100% - 2rem), 640px);
     margin: 5.2rem auto 6rem;
     padding: 2rem;
