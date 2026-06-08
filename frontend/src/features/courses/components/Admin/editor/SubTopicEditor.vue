@@ -7,7 +7,17 @@
     
     <div>
       <MonoLabel :style="{ marginBottom: '6px' }">Content</MonoLabel>
-      <RichTextEditor v-model="contentHtml" />
+      <RichTextEditor v-model="contentHtml" :sub-topic-id="subTopic?.id" />
+    </div>
+
+    <div>
+      <MonoLabel :style="{ marginBottom: '6px' }">Mascot prompt</MonoLabel>
+      <textarea
+        v-model="mascotPrompt"
+        class="w-full min-h-[76px] box-border resize-y font-display text-[14px] px-3.5 py-2.5 border-2 border-lm-line-soft rounded-[10px] bg-lm-bg-soft outline-none text-lm-ink"
+        maxlength="1000"
+        placeholder="Short quote shown beside the mascot in the learner lesson."
+      />
     </div>
 
     <div v-if="intType !== 'NONE'">
@@ -51,6 +61,7 @@ const emit = defineEmits(['save', 'cancel'])
 
 const title = ref(props.subTopic?.title ?? '')
 const contentHtml = ref(props.subTopic?.contentHtml || props.subTopic?.content || '')
+const mascotPrompt = ref(props.subTopic?.mascotPrompt ?? '')
 const intType = ref(props.subTopic?.interactionType ?? 'NONE')
 const prompt = ref(props.subTopic?.interactionPrompt ?? '')
 const intConfig = ref(props.subTopic?.interactionConfig ? JSON.parse(JSON.stringify(props.subTopic.interactionConfig)) : null)
@@ -58,6 +69,7 @@ const intConfig = ref(props.subTopic?.interactionConfig ? JSON.parse(JSON.string
 watch(() => props.subTopic, (newVal) => {
   title.value = newVal?.title ?? ''
   contentHtml.value = newVal?.contentHtml || newVal?.content || ''
+  mascotPrompt.value = newVal?.mascotPrompt ?? ''
   intType.value = newVal?.interactionType ?? 'NONE'
   prompt.value = newVal?.interactionPrompt ?? ''
   intConfig.value = newVal?.interactionConfig ? JSON.parse(JSON.stringify(newVal.interactionConfig)) : null
@@ -78,10 +90,10 @@ function onSave() {
     ...props.subTopic,
     title: title.value,
     contentHtml: contentHtml.value,
+    mascotPrompt: mascotPrompt.value,
     interactionType: intType.value,
     interactionPrompt: prompt.value,
     interactionConfig: intConfig.value
   })
 }
 </script>
-

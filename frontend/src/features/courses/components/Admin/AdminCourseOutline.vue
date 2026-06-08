@@ -177,6 +177,7 @@ function closeLessonEditor() {
 async function saveLessonSubTopic(subTopic: AdminSubTopicDto, payload: {
   title: string
   content: string
+  mascotPrompt: string | null
   interactionType: InteractionType
   interactionPrompt: string | null
   interactionConfig: string | null
@@ -187,6 +188,7 @@ async function saveLessonSubTopic(subTopic: AdminSubTopicDto, payload: {
     const updated = await updateModuleSubTopic(subTopic.id, {
       title: payload.title,
       content: payload.content,
+      mascotPrompt: payload.mascotPrompt,
       sortOrder: subTopic.sortOrder,
       pageStart: subTopic.pageStart,
       pageEnd: subTopic.pageEnd,

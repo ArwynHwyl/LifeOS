@@ -14,6 +14,7 @@ const emit = defineEmits<{
   save: [{
     title: string
     content: string
+    mascotPrompt: string | null
     interactionType: InteractionType
     interactionPrompt: string | null
     interactionConfig: string | null
@@ -32,12 +33,14 @@ function handleSave(payload: {
   contentHtml?: string
   content?: string
   interactionType: InteractionType
+  mascotPrompt?: string | null
   interactionPrompt?: string | null
   interactionConfig?: unknown
 }) {
   emit('save', {
     title: payload.title.trim(),
     content: payload.contentHtml ?? payload.content ?? '',
+    mascotPrompt: payload.mascotPrompt?.trim() || null,
     interactionType: payload.interactionType,
     interactionPrompt: payload.interactionType === 'NONE' ? null : payload.interactionPrompt?.trim() || null,
     interactionConfig: payload.interactionType === 'NONE' ? null : stringifyConfig(payload.interactionConfig),

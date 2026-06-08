@@ -49,6 +49,7 @@ export interface AdminSubTopicDto {
   title: string
   content: string
   contentHtml: string
+  mascotPrompt: string | null
   assets: AdminSubTopicAssetDto[]
   sortOrder: number
   sourceType: string
@@ -231,6 +232,7 @@ export async function createCourseModule(courseId: number | string, payload: {
 export async function createModuleSubTopic(moduleId: number | string, payload: {
   title: string
   content?: string | null
+  mascotPrompt?: string | null
   sortOrder: number
   pageStart?: number | null
   pageEnd?: number | null
@@ -238,6 +240,7 @@ export async function createModuleSubTopic(moduleId: number | string, payload: {
   const { data } = await api.post<AdminSubTopicDto>(`/v1/admin/modules/${moduleId}/subtopics`, {
     title: payload.title,
     content: payload.content?.trim() || null,
+    mascotPrompt: payload.mascotPrompt?.trim() || null,
     sortOrder: payload.sortOrder,
     pageStart: payload.pageStart ?? null,
     pageEnd: payload.pageEnd ?? null,
@@ -248,6 +251,7 @@ export async function createModuleSubTopic(moduleId: number | string, payload: {
 export async function updateModuleSubTopic(subTopicId: number | string, payload: {
   title: string
   content?: string | null
+  mascotPrompt?: string | null
   sortOrder: number
   pageStart?: number | null
   pageEnd?: number | null
@@ -258,6 +262,7 @@ export async function updateModuleSubTopic(subTopicId: number | string, payload:
   const { data } = await api.put<AdminSubTopicDto>(`/v1/admin/subtopics/${subTopicId}`, {
     title: payload.title,
     content: payload.content?.trim() || null,
+    mascotPrompt: payload.mascotPrompt?.trim() || null,
     sortOrder: payload.sortOrder,
     pageStart: payload.pageStart ?? null,
     pageEnd: payload.pageEnd ?? null,
