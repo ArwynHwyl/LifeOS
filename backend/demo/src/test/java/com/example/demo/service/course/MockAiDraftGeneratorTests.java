@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 class MockAiDraftGeneratorTests {
 
     private final MockAiDraftGenerator generator = new MockAiDraftGenerator();
-    private final InteractiveConfigService configService = new InteractiveConfigService(new ObjectMapper());
+    private final InteractiveConfigService configService = new InteractiveConfigService(new ObjectMapper(), new LogicExpressionService());
 
     @Test
     void moduleDraftIncludesValidInteractiveConfigs() {

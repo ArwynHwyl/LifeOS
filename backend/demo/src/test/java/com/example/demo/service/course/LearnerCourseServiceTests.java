@@ -9,6 +9,8 @@ import static org.mockito.Mockito.when;
 
 import com.example.demo.dto.course.InteractiveProgressDto;
 import com.example.demo.dto.course.InteractiveProgressUpdateRequest;
+import com.example.demo.dto.course.LogicAttemptRequest;
+import com.example.demo.dto.course.LogicAttemptResponse;
 import com.example.demo.dto.course.PublishedCourseDetailDto;
 import com.example.demo.entity.User;
 import com.example.demo.entity.UserRole;
@@ -24,6 +26,8 @@ import com.example.demo.entity.course.SubTopicSourceType;
 import com.example.demo.repository.course.CourseRepository;
 import com.example.demo.repository.course.LearnerInteractiveProgressRepository;
 import com.example.demo.service.exception.ResourceNotFoundException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.TextNode;
 import jakarta.persistence.EntityManager;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +58,15 @@ class LearnerCourseServiceTests {
 
     @Mock
     private CourseInputValidator validator;
+
+    @Mock
+    private ObjectMapper objectMapper;
+
+    @Mock
+    private LogicExpressionService logicExpressionService;
+
+    @Mock
+    private MathExpressionService mathExpressionService;
 
     @InjectMocks
     private LearnerCourseService service;
@@ -161,6 +174,43 @@ class LearnerCourseServiceTests {
         assertThat(captor.getValue()).doesNotContainKey(13L);
     }
 
+    @Test
+    void submitLogicAttemptGradesSimplifyAndRecordsMastered() {
+        User user = learner();
+        SubTopic subTopic = logicSubTopic(11L, """
+                {"type":"LOGIC_FLOW","kind":"SIMPLIFY","mode":"PRACTICE","title":"Logic","start":"P -> Q","target":"¬P ∨ Q","feedback":{"success":"Correct","failure":"Try again"}}
+                """);
+        Course course = publishedCourseWithSubTopics(subTopic);
+        LearnerCourseService realService = new LearnerCourseService(
+                courseRepository,
+                progressRepository,
+                entityManager,
+                mapper,
+                validator,
+                new ObjectMapper(),
+                new LogicExpressionService(),
+                new MathExpressionService()
+        );
+        when(validator.requiredId(1L, "courseId")).thenReturn(1L);
+        when(validator.requiredId(11L, "subTopicId")).thenReturn(11L);
+        when(courseRepository.findById(1L)).thenReturn(Optional.of(course));
+        when(progressRepository.findByUserUserIdAndSubTopicId(user.getUserId(), 11L)).thenReturn(Optional.empty());
+        when(entityManager.getReference(User.class, user.getUserId())).thenReturn(user);
+        when(progressRepository.save(any(LearnerInteractiveProgress.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        LogicAttemptResponse response = realService.submitLogicAttempt(
+                user.getUserId(),
+                1L,
+                11L,
+                new LogicAttemptRequest("SIMPLIFY", TextNode.valueOf("!P | Q"), null, null)
+        );
+
+        assertThat(response.correct()).isTrue();
+        assertThat(response.status()).isEqualTo(InteractiveProgressStatus.MASTERED);
+        assertThat(response.attemptCount()).isEqualTo(1);
+        assertThat(response.feedback()).isEqualTo("Correct");
+    }
+
     private User learner() {
         return new User("learner@example.com", "learner", "hash", "Learn", "Er", UserRole.ROLE_LEARNER, UserStatus.VERIFY);
     }
@@ -190,6 +240,22 @@ class LearnerCourseServiceTests {
                 InteractionType.QUIZ,
                 "Try it",
                 "{\"type\":\"QUIZ\"}"
+        );
+        ReflectionTestUtils.setField(subTopic, "id", id);
+        return subTopic;
+    }
+
+    private SubTopic logicSubTopic(Long id, String config) {
+        SubTopic subTopic = new SubTopic(
+                "Logic",
+                "Content",
+                id.intValue(),
+                SubTopicSourceType.MANUAL,
+                null,
+                null,
+                InteractionType.LOGIC_FLOW,
+                "Try it",
+                config
         );
         ReflectionTestUtils.setField(subTopic, "id", id);
         return subTopic;

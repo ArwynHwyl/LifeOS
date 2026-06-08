@@ -5,6 +5,7 @@ public enum InteractionType {
     GRAPH_2D,
     FORMULA_EXPLORER,
     VISUAL_LAYER,
+    LOGIC_FLOW,
     QUIZ,
     OTHER
 }

@@ -22,7 +22,7 @@ class AiGenerationWorkerInteractionTests {
             null,
             new CourseInputValidator(objectMapper),
             null,
-            new InteractiveConfigService(objectMapper)
+            new InteractiveConfigService(objectMapper, new LogicExpressionService())
     );
 
     @Test

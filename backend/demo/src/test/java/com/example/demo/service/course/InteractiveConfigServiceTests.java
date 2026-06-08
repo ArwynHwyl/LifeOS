@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 class InteractiveConfigServiceTests {
 
-    private final InteractiveConfigService service = new InteractiveConfigService(new ObjectMapper());
+    private final InteractiveConfigService service = new InteractiveConfigService(new ObjectMapper(), new LogicExpressionService());
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
@@ -39,6 +39,9 @@ class InteractiveConfigServiceTests {
         assertThat(service.validateAndNormalize(InteractionType.QUIZ, """
                 {"type":"QUIZ","title":"Quiz","question":"Pick one","options":[{"id":"a","label":"A","correct":true},{"id":"b","label":"B","correct":false}],"explanation":"Because."}
                 """)).contains("\"type\":\"QUIZ\"").contains("\"mode\":\"PRACTICE\"");
+        assertThat(service.validateAndNormalize(InteractionType.LOGIC_FLOW, """
+                {"type":"LOGIC_FLOW","kind":"SIMPLIFY","mode":"PRACTICE","title":"Logic","start":"P -> Q","target":"¬P ∨ Q","allowedLaws":["IMPLICATION"],"feedback":{"success":"Correct","failure":"Try again"}}
+                """)).contains("\"type\":\"LOGIC_FLOW\"").contains("\"kind\":\"SIMPLIFY\"");
     }
 
     @Test
@@ -184,5 +187,14 @@ class InteractiveConfigServiceTests {
                 .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("successCondition.kind must be QUIZ_CORRECT_OPTION");
 
+    }
+
+    @Test
+    void rejectsInvalidLogicExpression() {
+        assertThatThrownBy(() -> service.validateAndNormalize(InteractionType.LOGIC_FLOW, """
+                {"type":"LOGIC_FLOW","kind":"SIMPLIFY","mode":"PRACTICE","title":"Logic","start":"P ->","feedback":{"success":"Correct","failure":"Try again"}}
+                """))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("unexpectedly");
     }
 }

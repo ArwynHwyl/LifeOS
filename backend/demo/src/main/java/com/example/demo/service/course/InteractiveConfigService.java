@@ -52,14 +52,24 @@ public class InteractiveConfigService {
             "type", "mode", "title", "question", "options", "explanation", "prompt", "successCondition", "feedback"
     );
     private static final Set<String> QUIZ_OPTION_FIELDS = Set.of("id", "label", "correct");
+    private static final Set<String> LOGIC_FIELDS = Set.of(
+            "type", "kind", "mode", "title", "start", "target", "steps", "allowedLaws", "expression", "variables", "goal", "feedback"
+    );
+    private static final Set<String> LOGIC_STEP_FIELDS = Set.of("law", "lawId", "result", "from", "to", "note");
+    private static final Set<String> LOGIC_LAW_IDS = Set.of(
+            "DOUBLE_NEGATION", "DE_MORGAN", "DISTRIBUTIVE", "IDENTITY", "DOMINATION", "IDEMPOTENT",
+            "COMPLEMENT", "ABSORPTION", "COMMUTATIVE", "ASSOCIATIVE", "IMPLICATION"
+    );
     private static final Set<String> CONTROL_FIELDS = Set.of("min", "max", "step", "initial");
     private static final Set<String> SUCCESS_CONDITION_FIELDS = Set.of("kind", "target", "tolerance", "correctOptionId");
     private static final Set<String> FEEDBACK_FIELDS = Set.of("success", "failure");
 
     private final ObjectMapper objectMapper;
+    private final LogicExpressionService logicExpressionService;
 
-    public InteractiveConfigService(ObjectMapper objectMapper) {
+    public InteractiveConfigService(ObjectMapper objectMapper, LogicExpressionService logicExpressionService) {
         this.objectMapper = objectMapper;
+        this.logicExpressionService = logicExpressionService;
     }
 
     public String validateAndNormalize(InteractionType interactionType, String interactionConfig) {
@@ -86,6 +96,7 @@ public class InteractiveConfigService {
             case GRAPH_2D -> validateGraph(root, practice);
             case FORMULA_EXPLORER -> validateFormula(root, practice);
             case VISUAL_LAYER -> validateVisualLayer(root, practice);
+            case LOGIC_FLOW -> validateLogicFlow(root, practice);
             case QUIZ -> validateQuiz(root, practice);
             default -> throw new ValidationException("Unsupported interactionType: " + type);
         }
@@ -100,6 +111,8 @@ public class InteractiveConfigService {
         Map<String, Object> visualLayer = visualLayerDefault();
         Map<String, Object> visualLayerPractice = visualLayerPracticeDefault();
         Map<String, Object> quizPractice = quizPracticeDefault();
+        Map<String, Object> logicCircuitPractice = logicCircuitPracticeDefault();
+        Map<String, Object> logicSimplifyPractice = logicSimplifyPracticeDefault();
         return List.of(
                 new InteractiveTemplateDto(
                         InteractionType.GRAPH_2D,
@@ -158,6 +171,21 @@ public class InteractiveConfigService {
                                 field("question", "Question", "textarea", true, null, null, 500, null),
                                 field("options", "Options", "quiz-options", true, null, null, null, null),
                                 field("explanation", "Explanation", "textarea", false, null, null, 1000, null)
+                        )
+                ),
+                new InteractiveTemplateDto(
+                        InteractionType.LOGIC_FLOW,
+                        "Logic Flow",
+                        "Grade propositional logic circuits and equivalence simplification on the server.",
+                        logicCircuitPractice,
+                        logicCircuitPractice,
+                        logicSimplifyPractice,
+                        List.of(
+                                field("title", "Title", "text", true, null, null, 120, null),
+                                field("kind", "Kind", "select", true, null, null, null, List.of("CIRCUIT", "SIMPLIFY")),
+                                field("expression", "Expression", "text", false, null, null, 1000, null),
+                                field("start", "Starting expression", "text", false, null, null, 1000, null),
+                                field("target", "Target expression", "text", false, null, null, 1000, null)
                         )
                 )
         );
@@ -368,6 +396,31 @@ public class InteractiveConfigService {
         );
     }
 
+    private Map<String, Object> logicCircuitPracticeDefault() {
+        return Map.of(
+                "type", "LOGIC_FLOW",
+                "kind", "CIRCUIT",
+                "mode", "PRACTICE",
+                "title", "Evaluate a logic statement",
+                "expression", "P ∧ ¬Q",
+                "goal", "MATCH_OUTPUT",
+                "feedback", Map.of("success", "Correct.", "failure", "Not yet. Recheck each truth value.")
+        );
+    }
+
+    private Map<String, Object> logicSimplifyPracticeDefault() {
+        return Map.of(
+                "type", "LOGIC_FLOW",
+                "kind", "SIMPLIFY",
+                "mode", "PRACTICE",
+                "title", "Simplify an implication",
+                "start", "P -> Q",
+                "target", "¬P ∨ Q",
+                "allowedLaws", List.of("IMPLICATION", "DOUBLE_NEGATION", "DE_MORGAN"),
+                "feedback", Map.of("success", "Correct. The expression is logically equivalent.", "failure", "Not yet. Check the implication law.")
+        );
+    }
+
     private InteractiveFieldDto field(
             String path,
             String label,
@@ -385,6 +438,7 @@ public class InteractiveConfigService {
         return type == InteractionType.GRAPH_2D
                 || type == InteractionType.FORMULA_EXPLORER
                 || type == InteractionType.VISUAL_LAYER
+                || type == InteractionType.LOGIC_FLOW
                 || type == InteractionType.QUIZ;
     }
 
@@ -1018,6 +1072,146 @@ public class InteractiveConfigService {
             }
         } else {
             rejectVisualizationPracticeFields(root);
+        }
+    }
+
+    private void validateLogicFlow(ObjectNode root, boolean practice) {
+        rejectUnknownFields(root, LOGIC_FIELDS, "interactionConfig");
+        requiredText(root, "title", 120);
+        String kind = requiredText(root, "kind", 20);
+        if (!Set.of("CIRCUIT", "SIMPLIFY").contains(kind)) {
+            throw new ValidationException("kind must be CIRCUIT or SIMPLIFY");
+        }
+        if ("CIRCUIT".equals(kind)) {
+            validateLogicCircuit(root, practice);
+        } else {
+            validateLogicSimplify(root, practice);
+        }
+    }
+
+    private void validateLogicCircuit(ObjectNode root, boolean practice) {
+        String expression = requiredText(root, "expression", 1000);
+        LogicExpressionService.Node ast = logicExpressionService.parse(expression);
+        if (logicExpressionService.variables(ast).size() > 8) {
+            throw new ValidationException("logic expression can contain at most 8 variables");
+        }
+        JsonNode variables = root.get("variables");
+        if (variables != null && !variables.isNull()) {
+            if (!variables.isArray() || variables.size() > 8) {
+                throw new ValidationException("variables must contain 0 to 8 items");
+            }
+            Set<String> expressionVariables = logicExpressionService.variables(ast);
+            for (JsonNode variable : variables) {
+                if (!variable.isTextual() || !expressionVariables.contains(variable.asText())) {
+                    throw new ValidationException("variables must match expression variables");
+                }
+            }
+        }
+        String goal = optionalText(root, "goal", 40);
+        if (goal != null && !Set.of("MATCH_OUTPUT", "TRUE", "FALSE", "EXPLORE").contains(goal)) {
+            throw new ValidationException("goal must be MATCH_OUTPUT, TRUE, FALSE, or EXPLORE");
+        }
+        if (root.has("start") || root.has("target") || root.has("steps") || root.has("allowedLaws")) {
+            throw new ValidationException("SIMPLIFY fields are not supported for CIRCUIT");
+        }
+        if (practice) {
+            validateLogicFeedback(root);
+        } else {
+            rejectLogicPracticeFields(root);
+        }
+    }
+
+    private void validateLogicSimplify(ObjectNode root, boolean practice) {
+        String start = requiredText(root, "start", 1000);
+        LogicExpressionService.Node startAst = logicExpressionService.parse(start);
+        if (logicExpressionService.variables(startAst).size() > 8) {
+            throw new ValidationException("logic expression can contain at most 8 variables");
+        }
+        String target = optionalText(root, "target", 1000);
+        if (target != null) {
+            LogicExpressionService.Node targetAst = logicExpressionService.parse(target);
+            if (logicExpressionService.variables(targetAst).size() > 8) {
+                throw new ValidationException("logic expression can contain at most 8 variables");
+            }
+        }
+        validateLogicSteps(root);
+        validateAllowedLogicLaws(root);
+        if (root.has("expression") || root.has("variables") || root.has("goal")) {
+            throw new ValidationException("CIRCUIT fields are not supported for SIMPLIFY");
+        }
+        if (practice) {
+            validateLogicFeedback(root);
+        } else {
+            throw new ValidationException("SIMPLIFY supports PRACTICE mode only");
+        }
+    }
+
+    private void validateLogicFeedback(ObjectNode root) {
+        JsonNode feedback = root.get("feedback");
+        if (feedback == null || !feedback.isObject()) {
+            throw new ValidationException("feedback is required for LOGIC_FLOW practice interactions");
+        }
+        ObjectNode feedbackObject = (ObjectNode) feedback;
+        rejectUnknownFields(feedbackObject, FEEDBACK_FIELDS, "feedback");
+        requiredText(feedbackObject, "success", 500);
+        requiredText(feedbackObject, "failure", 500);
+    }
+
+    private void rejectLogicPracticeFields(ObjectNode root) {
+        if (root.has("feedback")) {
+            throw new ValidationException("feedback is only supported when mode is PRACTICE");
+        }
+    }
+
+    private void validateLogicSteps(ObjectNode root) {
+        JsonNode steps = root.get("steps");
+        if (steps == null || steps.isNull()) {
+            return;
+        }
+        if (!steps.isArray() || steps.size() > 20) {
+            throw new ValidationException("steps must contain 0 to 20 items");
+        }
+        for (JsonNode step : steps) {
+            if (!step.isObject()) {
+                throw new ValidationException("steps must contain objects");
+            }
+            ObjectNode stepObject = (ObjectNode) step;
+            rejectUnknownFields(stepObject, LOGIC_STEP_FIELDS, "steps");
+            String law = optionalText(stepObject, "law", 80);
+            String lawId = optionalText(stepObject, "lawId", 80);
+            if (law != null && !LOGIC_LAW_IDS.contains(law)) {
+                throw new ValidationException("steps law must be a known logic law id");
+            }
+            if (lawId != null && !LOGIC_LAW_IDS.contains(lawId)) {
+                throw new ValidationException("steps lawId must be a known logic law id");
+            }
+            validateOptionalLogicExpression(stepObject, "result");
+            validateOptionalLogicExpression(stepObject, "from");
+            validateOptionalLogicExpression(stepObject, "to");
+            optionalText(stepObject, "note", 500);
+        }
+    }
+
+    private void validateAllowedLogicLaws(ObjectNode root) {
+        JsonNode allowedLaws = root.get("allowedLaws");
+        if (allowedLaws == null || allowedLaws.isNull()) {
+            return;
+        }
+        if (!allowedLaws.isArray() || allowedLaws.size() > LOGIC_LAW_IDS.size()) {
+            throw new ValidationException("allowedLaws must contain known logic law ids");
+        }
+        Set<String> ids = new HashSet<>();
+        for (JsonNode law : allowedLaws) {
+            if (!law.isTextual() || !LOGIC_LAW_IDS.contains(law.asText()) || !ids.add(law.asText())) {
+                throw new ValidationException("allowedLaws must contain unique known logic law ids");
+            }
+        }
+    }
+
+    private void validateOptionalLogicExpression(ObjectNode node, String fieldName) {
+        String expression = optionalText(node, fieldName, 1000);
+        if (expression != null) {
+            logicExpressionService.parse(expression);
         }
     }
 

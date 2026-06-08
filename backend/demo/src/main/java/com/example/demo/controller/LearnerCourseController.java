@@ -1,7 +1,11 @@
 package com.example.demo.controller;
 
+import com.example.demo.dto.course.InteractiveAttemptRequest;
+import com.example.demo.dto.course.InteractiveAttemptResponse;
 import com.example.demo.dto.course.InteractiveProgressDto;
 import com.example.demo.dto.course.InteractiveProgressUpdateRequest;
+import com.example.demo.dto.course.LogicAttemptRequest;
+import com.example.demo.dto.course.LogicAttemptResponse;
 import com.example.demo.dto.course.PublishedCourseDetailDto;
 import com.example.demo.dto.course.PublishedCourseSummaryDto;
 import com.example.demo.entity.User;
@@ -12,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -46,5 +51,25 @@ public class LearnerCourseController {
             @Valid @RequestBody InteractiveProgressUpdateRequest request
     ) {
         return learnerCourseService.updateInteractiveProgress(CurrentUser.id(user), courseId, subTopicId, request);
+    }
+
+    @PostMapping("/{courseId}/subtopics/{subTopicId}/logic-attempts")
+    public LogicAttemptResponse submitLogicAttempt(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long courseId,
+            @PathVariable Long subTopicId,
+            @Valid @RequestBody LogicAttemptRequest request
+    ) {
+        return learnerCourseService.submitLogicAttempt(CurrentUser.id(user), courseId, subTopicId, request);
+    }
+
+    @PostMapping("/{courseId}/subtopics/{subTopicId}/interactive-attempts")
+    public InteractiveAttemptResponse submitInteractiveAttempt(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long courseId,
+            @PathVariable Long subTopicId,
+            @Valid @RequestBody InteractiveAttemptRequest request
+    ) {
+        return learnerCourseService.submitInteractiveAttempt(CurrentUser.id(user), courseId, subTopicId, request);
     }
 }
