@@ -715,6 +715,7 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   margin-bottom: 2rem;
 }
 .lesson-hero-copy span {
+  display: block;
   color: #8f887e;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 11px;
