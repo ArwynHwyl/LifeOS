@@ -112,7 +112,7 @@ export interface QuizConfig {
 }
 
 export type VisualLayerShape = 'rectangle' | 'circle'
-export type VisualLayerElementKind = 'button' | 'hotspot'
+export type VisualLayerElementKind = 'button' | 'hotspot' | 'line'
 export type VisualLayerEffect = 'HIGHLIGHT_ZONE' | 'SHOW_FEEDBACK'
 
 export interface VisualLayerZone {
@@ -139,6 +139,16 @@ export interface VisualLayerElement {
   y: number
   width: number
   height: number
+  // Line-specific properties
+  x1?: number
+  y1?: number
+  x2?: number
+  y2?: number
+  qx?: number
+  qy?: number
+  flow?: 'none' | 'forward' | 'backward'
+  color?: string
+  strokeWidth?: number
 }
 
 export interface VisualLayerInteraction {
