@@ -25,6 +25,7 @@ export interface PublishedSubTopicDto {
   title: string
   content: string | null
   contentHtml: string | null
+  mascotPrompt: string | null
   sortOrder: number
   interactionType: InteractionType
   interactionPrompt: string | null
