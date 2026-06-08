@@ -891,7 +891,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
             <span>{{ zone.label }}</span>
           </button>
           <button
-            v-for="element in (config as VisualLayerConfig).elements"
+            v-for="element in (config as VisualLayerConfig).elements.filter(e => e.kind !== 'line')"
             :key="element.id"
             type="button"
             class="visual-trigger"
@@ -902,16 +902,77 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
             {{ element.label }}
           </button>
           <svg
-            v-if="visualOverlapRegions.length"
+            v-if="visualOverlapRegions.length || (config as VisualLayerConfig).elements?.some(e => e.kind === 'line')"
             class="visual-overlap-svg"
             :viewBox="`0 0 ${(config as VisualLayerConfig).canvas.width} ${(config as VisualLayerConfig).canvas.height}`"
             aria-hidden="true"
+            style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none;"
           >
+            <defs>
+              <marker
+                id="vl-arrow"
+                viewBox="0 0 10 10"
+                refX="6"
+                refY="5"
+                markerWidth="6"
+                markerHeight="6"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 2 L 8 5 L 0 8 z" fill="currentColor" />
+              </marker>
+            </defs>
+
+            <!-- Lines (Student Interactive View) -->
+            <g
+              v-for="element in (config as VisualLayerConfig).elements.filter(e => e.kind === 'line')"
+              :key="element.id"
+              :style="{ color: element.color || '#1a1814' }"
+            >
+              <!-- Base path for click/trigger (if they have interaction) -->
+              <path
+                :d="`M ${element.x1 ?? 0} ${element.y1 ?? 0} Q ${element.qx !== undefined ? element.qx : (((element.x1 ?? 0) + (element.x2 ?? 0))/2)} ${element.qy !== undefined ? element.qy : (((element.y1 ?? 0) + (element.y2 ?? 0))/2)} ${element.x2 ?? 0} ${element.y2 ?? 0}`"
+                fill="none"
+                stroke="transparent"
+                stroke-width="16"
+                style="pointer-events: auto; cursor: pointer;"
+                @click="runVisualInteraction(element.id)"
+              />
+              <!-- Visible path -->
+              <path
+                :d="`M ${element.x1 ?? 0} ${element.y1 ?? 0} Q ${element.qx !== undefined ? element.qx : (((element.x1 ?? 0) + (element.x2 ?? 0))/2)} ${element.qy !== undefined ? element.qy : (((element.y1 ?? 0) + (element.y2 ?? 0))/2)} ${element.x2 ?? 0} ${element.y2 ?? 0}`"
+                fill="none"
+                stroke="currentColor"
+                :stroke-width="element.strokeWidth || 3"
+                :stroke-dasharray="element.flow && element.flow !== 'none' ? '8 6' : 'none'"
+                :class="{
+                  'animate-flow-forward': element.flow === 'forward',
+                  'animate-flow-backward': element.flow === 'backward'
+                }"
+                :marker-end="element.flow === 'forward' ? 'url(#vl-arrow)' : 'none'"
+                :marker-start="element.flow === 'backward' ? 'url(#vl-arrow)' : 'none'"
+                stroke-linecap="round"
+                style="pointer-events: auto; cursor: pointer;"
+                @click="runVisualInteraction(element.id)"
+              />
+              <text
+                v-if="element.label && element.label !== 'Line'"
+                :x="0.25 * (element.x1 ?? 0) + 0.5 * (element.qx !== undefined ? element.qx : (((element.x1 ?? 0) + (element.x2 ?? 0))/2)) + 0.25 * (element.x2 ?? 0)"
+                :y="0.25 * (element.y1 ?? 0) + 0.5 * (element.qy !== undefined ? element.qy : (((element.y1 ?? 0) + (element.y2 ?? 0))/2)) + 0.25 * (element.y2 ?? 0) - 10"
+                text-anchor="middle"
+                class="font-display text-[11px] font-bold fill-lm-ink pointer-events-none"
+                style="user-select: none;"
+              >
+                {{ element.label }}
+              </text>
+            </g>
+
+            <!-- Overlaps -->
             <path
               v-for="region in visualOverlapRegions"
               :key="`${region.id}-hit`"
               :d="region.maskPath"
               class="visual-overlap-hit"
+              style="pointer-events: auto;"
               @click.stop="runVisualOverlapRegion(region.id)"
             />
             <path
@@ -927,6 +988,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
               class="visual-overlap-label"
               :class="{ 'visual-overlap-label--active': highlightedOverlapId === region.id }"
               :transform="`translate(${region.center.x}, ${region.center.y})`"
+              style="pointer-events: auto;"
               @click.stop="runVisualOverlapRegion(region.id)"
             >
               <rect x="-26" y="-16" width="52" height="32" rx="8" />
@@ -1653,5 +1715,22 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
     width: 100%;
     margin-left: 0;
   }
+}
+
+@keyframes flow-forward {
+  to {
+    stroke-dashoffset: -28;
+  }
+}
+@keyframes flow-backward {
+  to {
+    stroke-dashoffset: 28;
+  }
+}
+.animate-flow-forward {
+  animation: flow-forward 1.2s linear infinite;
+}
+.animate-flow-backward {
+  animation: flow-backward 1.2s linear infinite;
 }
 </style>
