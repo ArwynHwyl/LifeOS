@@ -55,12 +55,32 @@ const currentInteractiveMode = computed(() => {
   if (selectedSubTopic.value?.interactionType === 'QUIZ') return 'PRACTICE'
   return interactiveConfig.value?.mode ?? 'VISUALIZATION'
 })
-const selectedLessonHtml = computed(() => selectedSubTopic.value?.contentHtml || selectedSubTopic.value?.content || '')
+const selectedLessonHtml = computed(() => {
+  let html = selectedSubTopic.value?.contentHtml || selectedSubTopic.value?.content || ''
+  // Safe replacement of discrete/continuous words outside HTML tags
+  html = html.replace(/(?<!<[^>]*)\bdiscrete\b(?![^<>]*>)/gi, '<span class="math-word-discrete">discrete</span>')
+  html = html.replace(/(?<!<[^>]*)\bcontinuous\b(?![^<>]*>)/gi, '<span class="math-word-continuous">continuous</span>')
+  return html
+})
 const mascotPrompt = computed(() => {
   const current = selectedSubTopic.value
   const prompt = current?.mascotPrompt?.trim()
   if (prompt) return prompt
   return current ? `Think about how "${current.title}" connects to this lesson.` : ''
+})
+
+const isSidebarOpen = ref(false)
+function toggleSidebar() {
+  isSidebarOpen.value = !isSidebarOpen.value
+}
+
+const currentModuleSubTopics = computed(() => {
+  return selectedModule.value?.subTopics ?? []
+})
+const currentSubTopicIndexInModule = computed(() => {
+  const current = selectedSubTopic.value
+  if (!current) return 0
+  return Math.max(0, currentModuleSubTopics.value.findIndex((subTopic) => subTopic.id === current.id))
 })
 const currentProgressStatus = computed<InteractiveProgressStatus>(() => selectedSubTopic.value?.interactiveProgress?.status ?? 'NOT_STARTED')
 const currentChallengeObjective = computed(() => {
@@ -245,7 +265,8 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
 
 <template>
   <main class="lesson-player">
-    <aside class="lesson-sidebar">
+    <!-- Collapsible Sidebar -->
+    <aside class="lesson-sidebar" :class="{ 'lesson-sidebar--open': isSidebarOpen }">
       <div class="lesson-sidebar__header">
         <span>Course Outline</span>
         <h1>{{ course?.title ?? 'Lesson' }}</h1>
@@ -269,7 +290,7 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
             type="button"
             class="lesson-topic"
             :class="{ 'lesson-topic--active': selectedSubTopic?.id === subTopic.id }"
-            @click="selectSubTopic(subTopic)"
+            @click="selectSubTopic(subTopic); isSidebarOpen = false"
           >
             <span v-if="subTopic.interactionType !== 'NONE'" :class="progressMarkerClass(subTopic)">
               <span v-if="subTopic.interactiveProgress?.status === 'MASTERED'">✓</span>
@@ -281,8 +302,48 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
       </div>
     </aside>
 
-    <section ref="canvasEl" class="lesson-canvas">
+    <!-- Main Canvas Area -->
+    <section ref="canvasEl" class="lesson-canvas" @click="isSidebarOpen = false">
       <div class="lesson-canvas__bg" />
+
+      <!-- Top level headers outside the card -->
+      <div class="lesson-top-bar" @click.stop>
+        <div class="lesson-top-left">
+          <button type="button" class="sidebar-toggle-btn" @click="toggleSidebar" aria-label="Toggle Outline">
+            <svg v-if="isSidebarOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="toggle-icon"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="toggle-icon"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <span class="reading-time">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" class="clock-icon"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.5V8l2.5 1.5"/></svg>
+            {{ estimatedReadTime }} MIN READ
+          </span>
+        </div>
+        
+        <button type="button" class="lesson-exit-button" @click="router.back()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="exit-icon"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          EXIT
+        </button>
+      </div>
+
+      <!-- Floating Prev/Next Buttons outside the card -->
+      <button
+        type="button"
+        class="floating-nav-btn floating-nav-btn--prev"
+        :disabled="selectedIndex <= 0"
+        @click.stop="goToOffset(-1)"
+        aria-label="Previous Page"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="nav-arrow-icon"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <button
+        type="button"
+        class="floating-nav-btn floating-nav-btn--next"
+        :disabled="selectedIndex >= allSubTopics.length - 1"
+        @click.stop="goToOffset(1)"
+        aria-label="Next Page"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="nav-arrow-icon"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
 
       <!-- Mastery celebration overlay -->
       <Transition name="mastery-flash">
@@ -301,18 +362,12 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
 
       <Transition :name="contentTransitionDir === 'next' ? 'slide-next' : 'slide-prev'" mode="out-in">
         <article v-if="selectedSubTopic" :key="selectedSubTopic.id" class="lesson-content" :class="{ 'lesson-content--quiz': isQuizActivity }">
-          <button type="button" class="lesson-exit-button" @click="router.back()">
-            <LmIcon name="close" :size="14" />
-            Exit
-          </button>
-
           <template v-if="isQuizActivity">
             <header class="lesson-content__header">
               <div class="lesson-hero-copy">
-                <span>{{ selectedModule?.title }}</span>
-                <h1>{{ selectedSubTopic.title }}</h1>
-                <div class="lesson-meta">
-                  <span class="lesson-meta__badge">Quiz</span>
+                <span>{{ selectedModule?.title }} • LESSON {{ selectedIndex + 1 }}</span>
+                <div class="lesson-hero-title-wrap">
+                  <h1>{{ selectedSubTopic.title }}</h1>
                 </div>
               </div>
               <div class="lesson-mascot">
@@ -338,17 +393,9 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
           <template v-else>
             <header class="lesson-content__header">
               <div class="lesson-hero-copy">
-                <span>{{ selectedModule?.title }}</span>
-                <h1>{{ selectedSubTopic.title }}</h1>
-                <div class="lesson-meta">
-                  <span v-if="estimatedReadTime" class="lesson-meta__item">
-                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.5V8l2.5 1.5"/></svg>
-                    {{ estimatedReadTime }} min read
-                  </span>
-                  <span v-if="selectedSubTopic.interactionType !== 'NONE'" class="lesson-meta__item lesson-meta__item--activity">
-                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1L1 4.5 8 8l7-3.5L8 1zM1 11.5l7 3.5 7-3.5M1 8l7 3.5L15 8"/></svg>
-                    Has activity
-                  </span>
+                <span>{{ selectedModule?.title }} • LESSON {{ selectedIndex + 1 }}</span>
+                <div class="lesson-hero-title-wrap">
+                  <h1>{{ selectedSubTopic.title }}</h1>
                 </div>
               </div>
               <div class="lesson-mascot">
@@ -377,43 +424,56 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
               />
             </InteractiveChallengeShell>
           </template>
+
+          <!-- Pagination Dots inside the card -->
+          <div class="lesson-pagination">
+            <button
+              v-for="(subTopic, idx) in currentModuleSubTopics"
+              :key="subTopic.id"
+              type="button"
+              class="pagination-dot"
+              :class="{ 'pagination-dot--active': currentSubTopicIndexInModule === idx }"
+              @click.stop="selectSubTopic(subTopic)"
+              :aria-label="`Go to step ${idx + 1}`"
+            />
+          </div>
         </article>
       </Transition>
     </section>
-
-    <footer class="lesson-footer">
-      <button class="nav-button" :disabled="selectedIndex <= 0" @click="goToOffset(-1)">
-        <LmIcon name="arrow" :size="16" style="transform: rotate(180deg)" />
-        Previous
-      </button>
-      <div class="lesson-footer__spacer" />
-      <button class="nav-button nav-button--primary" :disabled="selectedIndex >= allSubTopics.length - 1" @click="goToOffset(1)">
-        {{ currentInteractiveMastered ? 'Mastered · Next' : 'Next' }}
-        <LmIcon name="arrow" :size="16" />
-      </button>
-    </footer>
   </main>
 </template>
 
 <style scoped>
 .lesson-player {
+  position: relative;
   display: grid;
-  grid-template-columns: 275px minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
   flex: 1;
   min-height: 0;
   overflow: hidden;
   border-top: 2px solid #1a1814;
-  background: #f6f0e7;
+  background: #eae5da;
   color: #1a1814;
 }
 .lesson-sidebar {
-  grid-row: 1 / span 2;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 275px;
+  z-index: 100;
   display: flex;
   min-height: 0;
   flex-direction: column;
   border-right: 2px solid #1a1814;
   background: #f6f0e7;
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 4px 0 24px rgba(26, 24, 20, 0.15);
+}
+.lesson-sidebar--open {
+  transform: translateX(0);
 }
 .lesson-sidebar__header {
   display: grid;
@@ -540,32 +600,147 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   position: relative;
   min-height: 0;
   overflow: auto;
-  background: #fffdf8;
+  background: #eae5da;
 }
 .lesson-canvas__bg {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle, rgba(26, 24, 20, 0.08) 1px, transparent 1.5px),
-    #fffdf8;
-  background-size: 18px 18px;
+    radial-gradient(circle, rgba(26, 24, 20, 0.12) 1px, transparent 1.5px),
+    #eae5da;
+  background-size: 20px 20px;
   pointer-events: none;
+}
+.lesson-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: absolute;
+  top: 1.5rem;
+  left: 2rem;
+  right: 2rem;
+  z-index: 50;
+}
+.lesson-top-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.sidebar-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 2px solid #1d1b17;
+  border-radius: 50%;
+  background: #fffdf8;
+  color: #1d1b17;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 #1d1b17;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.sidebar-toggle-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 3px 3px 0 #1d1b17;
+}
+.toggle-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+.reading-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #6b6660;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+.clock-icon {
+  width: 14px;
+  height: 14px;
+}
+.lesson-exit-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.25rem;
+  border: 2px solid #1d1b17;
+  border-radius: 999px;
+  background: #fffdf8;
+  padding: 0 1.25rem;
+  color: #1d1b17;
+  font-size: 0.8rem;
+  font-weight: 900;
+  box-shadow: 2px 2px 0 #1d1b17;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  text-transform: uppercase;
+}
+.lesson-exit-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 3px 3px 0 #1d1b17;
+}
+.exit-icon {
+  width: 12px;
+  height: 12px;
+}
+.floating-nav-btn {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border: 2px solid #1d1b17;
+  border-radius: 50%;
+  background: #fffdf8;
+  color: #1d1b17;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 #1d1b17;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
+  opacity: 0.7;
+}
+.floating-nav-btn:hover:not(:disabled) {
+  transform: translateY(-50%) translateY(-2px);
+  box-shadow: 4px 4px 0 #1d1b17;
+  opacity: 1;
+}
+.floating-nav-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.15;
+  box-shadow: none;
+}
+.floating-nav-btn--prev {
+  left: 2rem;
+}
+.floating-nav-btn--next {
+  right: 2rem;
+}
+.nav-arrow-icon {
+  width: 1.4rem;
+  height: 1.4rem;
 }
 .lesson-content {
   position: relative;
   z-index: 1;
   display: grid;
-  gap: 1.9rem;
-  width: min(calc(100% - 6rem), 900px);
-  margin: 6.2rem auto 7rem;
-  border: 2px solid #1a1814;
-  border-radius: 22px;
+  gap: 1.5rem;
+  width: min(calc(100% - 12rem), 1000px);
+  margin: 6.5rem auto 4rem;
+  border: 2.5px solid #1d1b17;
+  border-radius: 32px;
   background: #fffdf8;
-  padding: 4rem 3.1rem 3rem;
-  box-shadow: 6px 6px 0 #1a1814;
+  padding: 3.5rem;
+  box-shadow: 4px 4px 0px 0px #1d1b17;
 }
 .lesson-content--quiz {
-  width: min(calc(100% - 6rem), 940px);
+  width: min(calc(100% - 12rem), 1000px);
   align-content: start;
 }
 .lesson-content__header {
@@ -573,6 +748,7 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   grid-template-columns: minmax(0, 1fr) minmax(270px, 420px);
   align-items: center;
   gap: 2rem;
+  margin-bottom: 2rem;
 }
 .lesson-hero-copy span {
   color: #8f887e;
@@ -581,122 +757,78 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   font-weight: 900;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+.lesson-hero-title-wrap {
+  display: inline-block;
+  background: #ffd333;
+  border: 2px solid #1d1b17;
+  padding: 0.6rem 1.25rem;
+  border-radius: 12px;
+  margin-bottom: 0.75rem;
+  box-shadow: 2px 2px 0px 0px #1d1b17;
 }
 .lesson-hero-copy h1 {
-  margin: 0.25rem 0 0;
-  color: #1a1814;
+  margin: 0;
+  color: #1d1b17;
   font-size: clamp(2.35rem, 5vw, 4rem);
   font-weight: 950;
   line-height: 0.96;
 }
 .lesson-mascot {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 78px;
+  display: flex;
   align-items: center;
+  gap: 1rem;
   justify-self: end;
-  width: min(100%, 390px);
+  align-self: flex-end;
 }
 .lesson-mascot p {
   position: relative;
   min-width: 0;
   margin: 0;
-  border: 2px solid #1a1814;
-  border-radius: 14px;
-  background: #fffdf8;
-  padding: 1rem 1.2rem;
-  color: #1a1814;
-  font-size: 0.9rem;
+  border: 2px solid #1d1b17;
+  border-radius: 16px;
+  background: #ffffff;
+  padding: 1rem;
+  color: #1d1b17;
+  font-size: 0.75rem;
   font-style: italic;
   font-weight: 650;
   line-height: 1.45;
-  box-shadow: 4px 4px 0 #1a1814;
+  box-shadow: 2px 2px 0px 0px #1d1b17;
+  max-width: 240px;
 }
 .lesson-mascot p::after {
   content: "";
   position: absolute;
   top: 50%;
-  right: -12px;
-  width: 18px;
-  height: 18px;
-  border-top: 2px solid #1a1814;
-  border-right: 2px solid #1a1814;
-  background: #fffdf8;
+  right: -8px;
+  width: 12px;
+  height: 12px;
+  border-top: 2px solid #1d1b17;
+  border-right: 2px solid #1d1b17;
+  background: #ffffff;
   transform: translateY(-50%) rotate(45deg);
 }
 .lesson-mascot__avatar {
   display: grid;
-  width: 78px;
-  height: 78px;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
   place-items: center;
   overflow: hidden;
-  border: 2px solid #1a1814;
+  border: 2px solid #1d1b17;
   border-radius: 50%;
   background: #ffd333;
+  padding: 4px;
+  box-shadow: 2px 2px 0px 0px #1d1b17;
 }
 .lesson-mascot__avatar img {
-  width: 76px;
-  height: 88px;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
-  object-position: center 15px;
 }
 
-/* ── Lesson meta (reading time + activity badge) ── */
-.lesson-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
-}
-.lesson-meta__item {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  color: #8f887e;
-  font-size: 12px;
-  font-weight: 700;
-}
-.lesson-meta__item svg {
-  width: 13px;
-  height: 13px;
-}
-.lesson-meta__item--activity {
-  color: #a37c2b;
-}
-.lesson-meta__badge {
-  display: inline-flex;
-  align-items: center;
-  border: 2px solid #1a1814;
-  border-radius: 6px;
-  background: #ffd333;
-  padding: 0.15rem 0.5rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #1a1814;
-}
-
-.lesson-exit-button {
-  position: absolute;
-  top: -4.55rem;
-  right: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  min-height: 2.25rem;
-  border: 2px solid #1a1814;
-  border-radius: 999px;
-  background: #fffdf8;
-  padding: 0 1rem;
-  color: #1a1814;
-  font-size: 0.8rem;
-  font-weight: 900;
-  box-shadow: 3px 3px 0 #1a1814;
-}
-
-/* ── Lesson body — open, no outer box ── */
 .lesson-body {
   border: none;
   border-radius: 0;
@@ -712,47 +844,6 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   background: #fffdf8;
   padding: 1.25rem 1.5rem;
   box-shadow: none;
-}
-.lesson-footer {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  border-top: 2px solid #1a1814;
-  background: rgba(255, 240, 168, 0.78);
-  padding: 1.35rem 2rem;
-  backdrop-filter: blur(10px);
-}
-.lesson-footer__spacer {
-  flex: 1;
-}
-
-.nav-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  border: 2px solid #1a1814;
-  border-radius: 10px;
-  background: #fbf7ef;
-  min-width: 140px;
-  justify-content: center;
-  padding: 0.85rem 1.35rem;
-  color: #1a1814;
-  font-size: 15px;
-  font-weight: 800;
-  box-shadow: 2px 2px 0 #1a1814;
-  transition: transform 150ms ease, box-shadow 150ms ease;
-}
-.nav-button:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 3px 3px 0 #1a1814;
-}
-.nav-button--primary {
-  background: #1a1814;
-  color: #fbf7ef;
-}
-.nav-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.45;
 }
 .progress-marker {
   display: inline-grid;
@@ -779,6 +870,35 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   background: #dff4df;
   color: #245e3e;
   font-weight: 900;
+}
+
+/* ── Pagination Dots ── */
+.lesson-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 2.5rem;
+  padding-top: 1rem;
+}
+.pagination-dot {
+  display: block;
+  padding: 0;
+  border: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #d4cec6;
+  cursor: pointer;
+  transition: width 0.2s ease, border-radius 0.2s ease, background-color 0.2s ease;
+}
+.pagination-dot:hover {
+  background: #9e9892;
+}
+.pagination-dot--active {
+  width: 24px;
+  border-radius: 4px;
+  background: #1d1b17;
 }
 
 /* ── Mastery celebration overlay ── */
@@ -845,22 +965,32 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
 
 /* ── Typography for lesson body content ── */
 :deep(.lesson-body h2) {
-  margin: 1.5rem 0 0.5rem;
-  font-size: 1.35rem;
-  font-weight: 900;
+  margin-top: 2.5rem;
+  margin-bottom: 1.5rem;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.2;
+  border-bottom: 1px solid #e2e0db;
+  padding-bottom: 0.5rem;
 }
 :deep(.lesson-body h3) {
-  margin: 1.1rem 0 0.35rem;
-  font-size: 1.05rem;
-  font-weight: 900;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.3;
 }
 :deep(.lesson-body p),
 :deep(.lesson-body ul),
 :deep(.lesson-body ol),
 :deep(.lesson-body figure) {
-  margin: 0.7rem 0;
-  color: #3b3630;
-  line-height: 1.7;
+  margin: 1.25rem 0;
+  color: rgba(29, 27, 23, 0.9);
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 1.125rem;
+  line-height: 1.6;
 }
 :deep(.lesson-body ul),
 :deep(.lesson-body ol) {
@@ -889,28 +1019,32 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   font-size: 0.86rem;
   font-weight: 700;
 }
+
+/* ── Inline math word highlights ── */
+:deep(.lesson-body .math-word-discrete) {
+  color: #a63a13;
+  font-weight: 900;
+  text-decoration: underline;
+  text-decoration-color: #a63a13;
+  text-decoration-thickness: 2.5px;
+  text-underline-offset: 4px;
+}
+:deep(.lesson-body .math-word-continuous) {
+  color: #2563eb;
+  font-weight: 900;
+  text-decoration: underline;
+  text-decoration-color: #2563eb;
+  text-decoration-thickness: 2.5px;
+  text-underline-offset: 4px;
+}
+
 @media (max-width: 900px) {
-  .lesson-player {
-    grid-template-columns: 1fr;
-  }
-  .lesson-sidebar {
-    grid-row: auto;
-    max-height: 42vh;
-    border-right: 0;
-    border-bottom: 2px solid #1a1814;
-  }
-  .lesson-sidebar__header {
-    padding: 1rem;
-  }
-  .lesson-topic {
-    padding-left: 1rem;
-  }
   .lesson-content,
   .lesson-content--quiz {
     width: min(calc(100% - 2rem), 640px);
     margin: 5.2rem auto 6rem;
-    padding: 2rem 1.2rem 1.5rem;
-    border-radius: 18px;
+    padding: 2rem;
+    border-radius: 32px;
   }
   .lesson-content__header {
     grid-template-columns: 1fr;
@@ -919,22 +1053,53 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   .lesson-mascot {
     justify-self: stretch;
     width: 100%;
-    grid-template-columns: minmax(0, 1fr) 64px;
+    display: flex;
+    gap: 1rem;
+  }
+  .lesson-mascot p {
+    flex: 1;
+    max-width: none;
   }
   .lesson-mascot__avatar {
     width: 64px;
     height: 64px;
   }
   .lesson-mascot__avatar img {
-    width: 64px;
-    height: 76px;
+    width: 100%;
+    height: 100%;
   }
-  .lesson-footer {
-    padding: 0.8rem 1rem;
+  .floating-nav-btn {
+    width: 3rem;
+    height: 3rem;
   }
-  .nav-button {
-    min-width: 0;
-    flex: 1;
+  .floating-nav-btn--prev {
+    left: 0.5rem;
   }
+  .floating-nav-btn--next {
+    right: 0.5rem;
+  }
+}
+
+:deep(.material-symbols-outlined) {
+  font-family: 'Material Symbols Outlined', sans-serif;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "liga";
+}
+
+:deep(.math-var) {
+  font-family: 'Literata', serif;
+  font-style: italic;
 }
 </style>
