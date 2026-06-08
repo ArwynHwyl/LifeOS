@@ -175,6 +175,7 @@ class AiGenerationWorker {
                     interaction.prompt(),
                     interaction.config()
             );
+            subTopic.updateMascotPrompt(validator.optionalText(generated.mascotPrompt(), "generated mascotPrompt", 1_000));
             generatedSubTopics.add(subTopic);
         }
 
@@ -214,7 +215,7 @@ class AiGenerationWorker {
             int subTopicSortOrder = 0;
             for (GeneratedSubTopicDraft generatedSubTopic : generatedSubTopics) {
                 NormalizedGeneratedInteraction interaction = normalizeGeneratedSubTopicInteraction(generatedSubTopic);
-                module.addSubTopic(new SubTopic(
+                SubTopic subTopic = new SubTopic(
                         validator.requiredText(generatedSubTopic.title(), "generated sub-topic title", 255),
                         lessonHtmlService.sanitizeForStorage(validator.requiredText(generatedSubTopic.content(), "generated sub-topic content", 50_000)),
                         subTopicSortOrder++,
@@ -224,7 +225,9 @@ class AiGenerationWorker {
                         interaction.type(),
                         interaction.prompt(),
                         interaction.config()
-                ));
+                );
+                subTopic.updateMascotPrompt(validator.optionalText(generatedSubTopic.mascotPrompt(), "generated mascotPrompt", 1_000));
+                module.addSubTopic(subTopic);
             }
             course.addModule(module);
         }

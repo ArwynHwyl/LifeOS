@@ -115,6 +115,7 @@ public class CourseDtoMapper {
                         subTopic.getAssets(),
                         asset -> storageService.presignRead(asset.getStoragePath(), ASSET_READ_URL_TTL)
                 ),
+                subTopic.getMascotPrompt(),
                 subTopic.getAssets().stream()
                         .map(this::toSubTopicAssetDto)
                         .toList(),
@@ -280,6 +281,7 @@ public class CourseDtoMapper {
                         subTopic.getAssets(),
                         asset -> storageService.presignRead(asset.getStoragePath(), ASSET_READ_URL_TTL)
                 ),
+                subTopic.getMascotPrompt(),
                 subTopic.getSortOrder(),
                 subTopic.getInteractionType(),
                 subTopic.getInteractionPrompt(),

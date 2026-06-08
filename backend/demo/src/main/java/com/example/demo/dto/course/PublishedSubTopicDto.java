@@ -7,6 +7,7 @@ public record PublishedSubTopicDto(
         String title,
         String content,
         String contentHtml,
+        String mascotPrompt,
         Integer sortOrder,
         InteractionType interactionType,
         String interactionPrompt,

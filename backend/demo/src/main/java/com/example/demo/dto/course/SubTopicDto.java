@@ -11,6 +11,7 @@ public record SubTopicDto(
         String title,
         String content,
         String contentHtml,
+        String mascotPrompt,
         List<SubTopicAssetDto> assets,
         Integer sortOrder,
         SubTopicSourceType sourceType,

@@ -23,11 +23,12 @@ class GeminiAiDraftGeneratorTests {
     void parsesSubTopicInteractionConfig() throws Exception {
         @SuppressWarnings("unchecked")
         List<GeneratedSubTopicDraft> subTopics = ReflectionTestUtils.invokeMethod(generator, "parseSubTopics", """
-                {"subTopics":[{"title":"Quiz topic","content":"Lesson content","interactionType":"QUIZ","interactionPrompt":"Check understanding","interactionConfig":{"type":"QUIZ","title":"Quiz","question":"Pick one","options":[{"id":"a","label":"A","correct":true},{"id":"b","label":"B","correct":false}],"explanation":"Because."}}]}
+                {"subTopics":[{"title":"Quiz topic","content":"Lesson content","mascotPrompt":"Use the variable as a lens for the experiment.","interactionType":"QUIZ","interactionPrompt":"Check understanding","interactionConfig":{"type":"QUIZ","title":"Quiz","question":"Pick one","options":[{"id":"a","label":"A","correct":true},{"id":"b","label":"B","correct":false}],"explanation":"Because."}}]}
                 """);
 
         assertThat(subTopics).hasSize(1);
         GeneratedSubTopicDraft subTopic = subTopics.get(0);
+        assertThat(subTopic.mascotPrompt()).isEqualTo("Use the variable as a lens for the experiment.");
         assertThat(subTopic.interactionType()).isEqualTo(InteractionType.QUIZ);
         assertThat(subTopic.interactionPrompt()).isEqualTo("Check understanding");
         assertThat(objectMapper.readTree(subTopic.interactionConfig()).path("type").asText()).isEqualTo("QUIZ");

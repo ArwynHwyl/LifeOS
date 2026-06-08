@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
 public record SubTopicCreateRequest(
         @NotBlank String title,
         String content,
+        String mascotPrompt,
         @NotNull @Min(0) Integer sortOrder,
         Integer pageStart,
         Integer pageEnd,

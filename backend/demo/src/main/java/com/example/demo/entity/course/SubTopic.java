@@ -37,6 +37,9 @@ public class SubTopic extends BaseTimestampEntity {
     @Column(columnDefinition = "text")
     private String content;
 
+    @Column(length = 1000)
+    private String mascotPrompt;
+
     @Column(nullable = false)
     private Integer sortOrder;
 
@@ -134,6 +137,10 @@ public class SubTopic extends BaseTimestampEntity {
         this.interactionConfig = interactionConfig;
     }
 
+    public void updateMascotPrompt(String mascotPrompt) {
+        this.mascotPrompt = mascotPrompt;
+    }
+
     public void addAsset(SubTopicAsset asset) {
         assets.add(asset);
         asset.assignToSubTopic(this);
@@ -153,6 +160,10 @@ public class SubTopic extends BaseTimestampEntity {
 
     public String getContent() {
         return content;
+    }
+
+    public String getMascotPrompt() {
+        return mascotPrompt;
     }
 
     public Integer getSortOrder() {

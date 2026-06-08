@@ -42,6 +42,7 @@ class GeminiAiDraftGenerator implements AiDraftGenerator {
                     {
                       "title": "short learner-facing title",
                       "content": "bite-size lesson content grounded in the extracted source text",
+                      "mascotPrompt": "one short friendly quote that helps the learner frame this subtopic",
                       "interactionType": "NONE | GRAPH_2D | FORMULA_EXPLORER | VISUAL_LAYER | QUIZ | LOGIC_FLOW",
                       "interactionPrompt": "optional implementation idea for the interaction",
                       "interactionConfig": {
@@ -72,6 +73,7 @@ class GeminiAiDraftGenerator implements AiDraftGenerator {
                   LOGIC_FLOW (CIRCUIT): {"type":"LOGIC_FLOW","kind":"CIRCUIT","mode":"PRACTICE","title":"Gate circuit","expression":"(A & B) | !C","variables":["A","B","C"],"goal":"MATCH_OUTPUT","feedback":{"success":"Correct!","failure":"Incorrect inputs."}}
                 - Use the selected source text as the factual basis.
                 - Keep each content field concise and readable for learners.
+                - Keep mascotPrompt to one concise sentence, without markdown.
                 - Do not include markdown fences or any text outside JSON.
                 """;
 
@@ -102,6 +104,7 @@ class GeminiAiDraftGenerator implements AiDraftGenerator {
                         {
                           "title": "short learner-facing subtopic title",
                           "content": "bite-size lesson content grounded in the extracted source text",
+                          "mascotPrompt": "one short friendly quote that helps the learner frame this subtopic",
                           "interactionType": "NONE | GRAPH_2D | FORMULA_EXPLORER | VISUAL_LAYER | QUIZ | LOGIC_FLOW",
                           "interactionPrompt": "optional implementation idea for the interaction",
                           "interactionConfig": {
@@ -134,6 +137,7 @@ class GeminiAiDraftGenerator implements AiDraftGenerator {
                   LOGIC_FLOW (SIMPLIFY): {"type":"LOGIC_FLOW","kind":"SIMPLIFY","mode":"PRACTICE","title":"Simplify logic","start":"P -> Q","target":"!P | Q","allowedLaws":["IMPLICATION"],"feedback":{"success":"Correct!","failure":"Try again!"}}
                   LOGIC_FLOW (CIRCUIT): {"type":"LOGIC_FLOW","kind":"CIRCUIT","mode":"PRACTICE","title":"Gate circuit","expression":"(A & B) | !C","variables":["A","B","C"],"goal":"MATCH_OUTPUT","feedback":{"success":"Correct!","failure":"Incorrect inputs."}}
                 - Use the selected source text as the factual basis.
+                - Keep mascotPrompt to one concise sentence, without markdown.
                 - Do not include markdown fences or any text outside JSON.
                 """;
 
@@ -194,6 +198,7 @@ class GeminiAiDraftGenerator implements AiDraftGenerator {
                     subTopics.add(new GeneratedSubTopicDraft(
                             title,
                             content,
+                            blankToNull(subTopicNode.path("mascotPrompt").asText("")),
                             parseInteractionType(subTopicNode.path("interactionType").asText("NONE")),
                             blankToNull(subTopicNode.path("interactionPrompt").asText("")),
                             parseInteractionConfig(subTopicNode.get("interactionConfig"))
@@ -252,6 +257,7 @@ class GeminiAiDraftGenerator implements AiDraftGenerator {
                 subTopics.add(new GeneratedSubTopicDraft(
                         title,
                         content,
+                        blankToNull(subTopicNode.path("mascotPrompt").asText("")),
                         parseInteractionType(subTopicNode.path("interactionType").asText("NONE")),
                         blankToNull(subTopicNode.path("interactionPrompt").asText("")),
                         parseInteractionConfig(subTopicNode.get("interactionConfig"))

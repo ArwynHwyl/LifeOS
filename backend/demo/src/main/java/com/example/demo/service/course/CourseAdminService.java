@@ -203,6 +203,7 @@ public class CourseAdminService {
                 request.pageStart(),
                 request.pageEnd()
         );
+        subTopic.updateMascotPrompt(validator.optionalText(request.mascotPrompt(), "mascotPrompt", 1_000));
         subTopic.updateInteraction(
                 defaultInteractionType(request.interactionType()),
                 validator.optionalText(request.interactionPrompt(), "interactionPrompt", 10_000),
@@ -255,7 +256,7 @@ public class CourseAdminService {
 
     private SubTopic toSubTopic(SubTopicCreateRequest request) {
         requireRequest(request, "Sub-topic create request is required");
-        return new SubTopic(
+        SubTopic subTopic = new SubTopic(
                 validator.requiredText(request.title(), "title", 255),
                 lessonHtmlService.sanitizeForStorage(validator.optionalText(request.content(), "content", 100_000)),
                 validator.requiredSortOrder(request.sortOrder(), "sortOrder"),
@@ -266,6 +267,8 @@ public class CourseAdminService {
                 validator.optionalText(request.interactionPrompt(), "interactionPrompt", 10_000),
                 validateInteractionConfig(request.interactionType(), request.interactionConfig())
         );
+        subTopic.updateMascotPrompt(validator.optionalText(request.mascotPrompt(), "mascotPrompt", 1_000));
+        return subTopic;
     }
 
     private void validateReadyForReview(Course course) {
