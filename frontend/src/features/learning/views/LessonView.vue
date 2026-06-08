@@ -6,7 +6,9 @@ import InteractivePreview from '@/features/courses/components/interactive/Intera
 import { parseInteractiveConfig } from '@/features/courses/types/interactive'
 import {
   getPublishedCourse,
+  submitInteractiveAttempt,
   updateInteractiveProgress,
+  type InteractiveAttemptRequest,
   type InteractiveProgressDto,
   type InteractiveProgressStatus,
   type PublishedCourseDetailDto,
@@ -21,6 +23,7 @@ const course = ref<PublishedCourseDetailDto | null>(null)
 const selectedSubTopicId = ref<number | null>(null)
 const loading = ref(true)
 const error = ref('')
+const interactiveServerFeedback = ref('')
 
 const allSubTopics = computed(() => course.value?.modules.flatMap((module) => module.subTopics) ?? [])
 const selectedSubTopic = computed(() => {
@@ -78,6 +81,7 @@ onMounted(async () => {
 
 function selectSubTopic(subTopic: PublishedSubTopicDto) {
   selectedSubTopicId.value = subTopic.id
+  interactiveServerFeedback.value = ''
 }
 
 function goToOffset(offset: number) {
@@ -140,9 +144,15 @@ async function persistInteractiveProgress(status: Exclude<InteractiveProgressSta
 }
 
 function handleInteractiveStarted() {
+  if (selectedSubTopic.value?.interactionType === 'LOGIC_FLOW') {
+    if (currentProgressStatus.value === 'NOT_STARTED') {
+      void persistInteractiveProgress('TRIED')
+    }
+    return
+  }
   if (currentInteractiveMode.value !== 'PRACTICE') {
-    if (currentProgressStatus.value !== 'MASTERED') {
-      void persistInteractiveProgress('MASTERED')
+    if (currentProgressStatus.value === 'NOT_STARTED') {
+      void persistInteractiveProgress('TRIED')
     }
     return
   }
@@ -151,7 +161,30 @@ function handleInteractiveStarted() {
   }
 }
 
-function handleInteractiveChecked(payload: { passed: boolean }) {
+async function persistServerGradedAttempt(payload: InteractiveAttemptRequest) {
+  const current = selectedSubTopic.value
+  if (!current || current.interactionType === 'NONE') return
+  try {
+    const saved = await submitInteractiveAttempt(String(route.params.courseId), current.id, payload)
+    interactiveServerFeedback.value = saved.feedback
+    setSubTopicProgress(current.id, {
+      subTopicId: saved.subTopicId,
+      status: saved.status,
+      attemptCount: saved.attemptCount,
+      masteredAt: saved.masteredAt,
+      updatedAt: saved.updatedAt,
+    })
+  } catch (err) {
+    interactiveServerFeedback.value = ''
+    error.value = err instanceof Error ? err.message : 'Unable to submit logic attempt.'
+  }
+}
+
+function handleInteractiveChecked(payload: { passed: boolean; attempt?: InteractiveAttemptRequest }) {
+  if (payload.attempt) {
+    void persistServerGradedAttempt(payload.attempt)
+    return
+  }
   void persistInteractiveProgress(payload.passed ? 'MASTERED' : 'TRIED')
 }
 </script>
@@ -210,6 +243,7 @@ function handleInteractiveChecked(payload: { passed: boolean }) {
           <section v-if="selectedLessonHtml" class="lesson-body lesson-body--quiz" v-html="selectedLessonHtml" />
           <InteractivePreview
             :config="interactiveConfig"
+            :server-feedback="interactiveServerFeedback"
             @started="handleInteractiveStarted"
             @checked="handleInteractiveChecked"
           />
@@ -232,6 +266,7 @@ function handleInteractiveChecked(payload: { passed: boolean }) {
           >
             <InteractivePreview
               :config="interactiveConfig"
+              :server-feedback="interactiveServerFeedback"
               @started="handleInteractiveStarted"
               @checked="handleInteractiveChecked"
             />

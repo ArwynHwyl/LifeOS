@@ -1,6 +1,6 @@
 import type { InteractionType } from '@/features/courses/services/adminCourses'
 
-export type TemplateInteractionType = 'GRAPH_2D' | 'FORMULA_EXPLORER' | 'VISUAL_LAYER' | 'QUIZ'
+export type TemplateInteractionType = 'GRAPH_2D' | 'FORMULA_EXPLORER' | 'VISUAL_LAYER' | 'LOGIC_FLOW' | 'QUIZ'
 export type InteractiveMode = 'VISUALIZATION' | 'PRACTICE'
 export type SuccessConditionKind = 'QUIZ_CORRECT_OPTION' | 'EXPRESSION_EQUALS' | 'POINT_ON_GRAPH'
 
@@ -187,7 +187,31 @@ export interface VisualLayerConfig {
   feedback?: PracticeFeedback
 }
 
-export type InteractiveConfig = Graph2DConfig | FormulaExplorerConfig | VisualLayerConfig | QuizConfig
+export interface LogicStepConfig {
+  law?: string
+  lawId?: string
+  result?: string
+  from?: string
+  to?: string
+  note?: string
+}
+
+export interface LogicFlowConfig {
+  type: 'LOGIC_FLOW'
+  kind: 'CIRCUIT' | 'SIMPLIFY'
+  mode?: InteractiveMode
+  title: string
+  expression?: string
+  variables?: string[]
+  goal?: 'MATCH_OUTPUT' | 'TRUE' | 'FALSE' | 'EXPLORE'
+  start?: string
+  target?: string
+  steps?: LogicStepConfig[]
+  allowedLaws?: string[]
+  feedback?: PracticeFeedback
+}
+
+export type InteractiveConfig = Graph2DConfig | FormulaExplorerConfig | VisualLayerConfig | LogicFlowConfig | QuizConfig
 
 export interface InteractiveTemplate {
   type: TemplateInteractionType
@@ -208,7 +232,7 @@ export interface InteractiveTemplate {
   }>
 }
 
-export const TEMPLATE_TYPES: TemplateInteractionType[] = ['GRAPH_2D', 'FORMULA_EXPLORER', 'VISUAL_LAYER', 'QUIZ']
+export const TEMPLATE_TYPES: TemplateInteractionType[] = ['GRAPH_2D', 'FORMULA_EXPLORER', 'VISUAL_LAYER', 'LOGIC_FLOW', 'QUIZ']
 
 export const DEFAULT_INTERACTIVE_CONFIGS: Record<TemplateInteractionType, InteractiveConfig> = {
   GRAPH_2D: {
@@ -253,6 +277,15 @@ export const DEFAULT_INTERACTIVE_CONFIGS: Record<TemplateInteractionType, Intera
     interactions: [
       { triggerId: 'choice_a', effect: 'HIGHLIGHT_ZONE', targetZoneId: 'zone_a', feedback: 'Zone A highlighted.' },
     ],
+  },
+  LOGIC_FLOW: {
+    type: 'LOGIC_FLOW',
+    kind: 'CIRCUIT',
+    mode: 'PRACTICE',
+    title: 'Evaluate a logic statement',
+    expression: 'P ∧ ¬Q',
+    goal: 'MATCH_OUTPUT',
+    feedback: { success: 'Correct.', failure: 'Not yet. Recheck each truth value.' },
   },
   QUIZ: {
     type: 'QUIZ',
@@ -331,6 +364,16 @@ export const PRACTICE_DEFAULT_CONFIGS: Record<TemplateInteractionType, Interacti
     feedback: { success: 'Correct. The regions match the expected values.', failure: 'Not yet. Check that every required overlap exists and each region value is correct.' },
   },
   QUIZ: DEFAULT_INTERACTIVE_CONFIGS.QUIZ,
+  LOGIC_FLOW: {
+    type: 'LOGIC_FLOW',
+    kind: 'SIMPLIFY',
+    mode: 'PRACTICE',
+    title: 'Simplify an implication',
+    start: 'P -> Q',
+    target: '¬P ∨ Q',
+    allowedLaws: ['IMPLICATION', 'DOUBLE_NEGATION', 'DE_MORGAN'],
+    feedback: { success: 'Correct. The expression is logically equivalent.', failure: 'Not yet. Check the implication law.' },
+  },
 }
 
 export function isTemplateInteractionType(value: InteractionType): value is TemplateInteractionType {

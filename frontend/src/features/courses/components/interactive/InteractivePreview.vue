@@ -6,19 +6,23 @@ import type {
   GeneratedOverlapRegion,
   Graph2DConfig,
   InteractiveConfig,
+  LogicFlowConfig,
   QuizConfig,
   VisualLayerConfig,
   VisualLayerZone,
 } from '@/features/courses/types/interactive'
 import { evaluateExpression } from '@/features/courses/utils/expression'
+import { Logic } from '@/features/courses/utils/logic-engine.js'
+import type { InteractiveAttemptRequest, LogicAttemptRequest } from '@/features/learning/services/learnerCourses'
 
 const props = defineProps<{
   config: InteractiveConfig | null
+  serverFeedback?: string
 }>()
 
 const emit = defineEmits<{
   started: []
-  checked: [payload: { passed: boolean }]
+  checked: [payload: { passed: boolean; attempt?: InteractiveAttemptRequest }]
 }>()
 
 const selectedAnswer = ref<string | null>(null)
@@ -35,6 +39,8 @@ const visualFeedback = ref('')
 const learnerZones = ref<VisualLayerZone[]>([])
 const selectedLearnerZoneId = ref<string | null>(null)
 const learnerRegionAnswers = ref<Record<string, string>>({})
+const logicAnswer = ref('')
+const logicInputs = ref<Record<string, boolean>>({})
 type LearnerResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w'
 const learnerResizeHandles: LearnerResizeHandle[] = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w']
 const learnerVisualDrag = ref<{
@@ -60,6 +66,8 @@ watch(
     learnerZones.value = []
     selectedLearnerZoneId.value = null
     learnerRegionAnswers.value = {}
+    logicAnswer.value = ''
+    logicInputs.value = {}
     learnerVisualDrag.value = null
     if (config?.type === 'FORMULA_EXPLORER') {
       formulaValues.value = Object.fromEntries(config.variables.map((variable) => [variable.name, variable.initial]))
@@ -68,6 +76,11 @@ watch(
     }
     if (config?.type === 'GRAPH_2D') {
       graphValues.value = Object.fromEntries(Object.entries(config.controls ?? {}).map(([name, control]) => [name, control.initial]))
+    }
+    if (config?.type === 'LOGIC_FLOW' && config.kind === 'CIRCUIT') {
+      const parsed = Logic.tryParse(config.expression ?? '')
+      const vars = parsed.ast ? Logic.variables(parsed.ast) as string[] : []
+      logicInputs.value = Object.fromEntries(vars.map((name) => [name, true]))
     }
   },
   { immediate: true, deep: true },
@@ -137,14 +150,28 @@ const practicePassed = computed(() => {
     }
   }
   if (config.type === 'VISUAL_LAYER') return visualPracticePassed()
+  if (config.type === 'LOGIC_FLOW') return false
   return false
 })
 
 const activeFeedback = computed(() => {
   const config = props.config
   if (!config || (config.mode !== 'PRACTICE' && config.type !== 'QUIZ') || !checked.value) return ''
+  if (config.type === 'LOGIC_FLOW') return props.serverFeedback || ''
   if (!('feedback' in config)) return ''
   return practicePassed.value ? config.feedback?.success : config.feedback?.failure
+})
+
+const logicExpressionParse = computed(() => {
+  if (props.config?.type !== 'LOGIC_FLOW' || props.config.kind !== 'CIRCUIT') return { ast: null, error: null }
+  return Logic.tryParse(props.config.expression ?? '')
+})
+
+const logicVariables = computed<string[]>(() => logicExpressionParse.value.ast ? Logic.variables(logicExpressionParse.value.ast) : [])
+
+const logicCircuitOutput = computed(() => {
+  if (!logicExpressionParse.value.ast) return null
+  return Boolean(Logic.evaluate(logicExpressionParse.value.ast, logicInputs.value))
 })
 
 const targetGraphPoint = computed(() => {
@@ -256,7 +283,63 @@ function markStarted() {
 function runCheck() {
   markStarted()
   checked.value = true
-  emit('checked', { passed: practicePassed.value })
+  const logicAttempt = buildLogicAttempt()
+  const attempt = logicAttempt ?? buildInteractiveAttempt()
+  emit('checked', attempt ? { passed: practicePassed.value, attempt } : { passed: practicePassed.value })
+}
+
+function buildInteractiveAttempt(): InteractiveAttemptRequest | null {
+  const config = props.config
+  if (!config) return null
+  if (config.type === 'QUIZ' && selectedAnswer.value) {
+    return { answer: selectedAnswer.value }
+  }
+  if (config.type === 'FORMULA_EXPLORER') {
+    return { values: formulaValues.value }
+  }
+  if (config.type === 'GRAPH_2D') {
+    return { values: graphValues.value }
+  }
+  if (config.type === 'VISUAL_LAYER') {
+    return {
+      regionAnswers: Object.fromEntries(
+        Object.entries(learnerRegionAnswers.value)
+          .map(([id, value]) => [id, Number(value)] as const)
+          .filter(([, value]) => Number.isFinite(value)),
+      ),
+    }
+  }
+  return null
+}
+
+function buildLogicAttempt(): LogicAttemptRequest | null {
+  const config = props.config
+  if (config?.type !== 'LOGIC_FLOW') return null
+  if (config.kind === 'SIMPLIFY') {
+    return {
+      kind: 'SIMPLIFY',
+      answer: logicAnswer.value,
+      steps: (config.steps ?? []).map((step) => ({
+        lawId: step.lawId ?? step.law,
+        from: step.from,
+        to: step.to ?? step.result,
+      })),
+    }
+  }
+  if (logicCircuitOutput.value === null) return null
+  return {
+    kind: 'CIRCUIT',
+    inputs: logicInputs.value,
+    answer: logicCircuitOutput.value,
+  }
+}
+
+function updateLogicInput(name: string, event: Event) {
+  logicInputs.value = {
+    ...logicInputs.value,
+    [name]: (event.target as HTMLInputElement).checked,
+  }
+  checked.value = false
 }
 
 function selectFormulaOption(optionId: string) {
@@ -651,6 +734,42 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
         <button type="button" class="check-button" @click="runCheck">Check</button>
         <p v-if="checked" class="feedback">{{ activeFeedback }}</p>
       </template>
+    </div>
+
+    <div v-else-if="config.type === 'LOGIC_FLOW'" class="space-y-3">
+      <header class="interactive-header">
+        <h3>{{ (config as LogicFlowConfig).title }}</h3>
+        <code>{{ (config as LogicFlowConfig).kind === 'CIRCUIT' ? (config as LogicFlowConfig).expression : (config as LogicFlowConfig).start }}</code>
+      </header>
+
+      <div v-if="(config as LogicFlowConfig).kind === 'CIRCUIT'" class="space-y-3">
+        <p v-if="!logicExpressionParse.ast" class="feedback">{{ logicExpressionParse.error }}</p>
+        <div v-else class="logic-input-grid">
+          <label v-for="name in logicVariables" :key="name" class="logic-toggle">
+            <span>{{ name }}</span>
+            <input type="checkbox" :checked="logicInputs[name]" @change="updateLogicInput(name, $event)" />
+            <strong>{{ logicInputs[name] ? 'T' : 'F' }}</strong>
+          </label>
+          <div class="logic-output">
+            <span>OUT</span>
+            <strong>{{ logicCircuitOutput ? 'T' : 'F' }}</strong>
+          </div>
+        </div>
+        <button type="button" class="check-button" :disabled="!logicExpressionParse.ast" @click="runCheck">Check</button>
+        <p v-if="checked && activeFeedback" class="feedback">{{ activeFeedback }}</p>
+      </div>
+
+      <div v-else class="space-y-3">
+        <p v-if="(config as LogicFlowConfig).target" class="practice-prompt">
+          Target: <code>{{ (config as LogicFlowConfig).target }}</code>
+        </p>
+        <label class="logic-answer">
+          <span>Final expression</span>
+          <input v-model="logicAnswer" placeholder="¬P ∨ Q" @input="checked = false" />
+        </label>
+        <button type="button" class="check-button" @click="runCheck">Check</button>
+        <p v-if="checked && activeFeedback" class="feedback">{{ activeFeedback }}</p>
+      </div>
     </div>
 
     <div v-else-if="config.type === 'VISUAL_LAYER'" class="space-y-3">
@@ -1471,6 +1590,42 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   color: #4f4942;
   font-size: 13px;
   font-weight: 700;
+}
+.logic-input-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+.logic-toggle,
+.logic-output,
+.logic-answer {
+  display: grid;
+  gap: 0.35rem;
+  border: 2px solid #e4ded6;
+  border-radius: 8px;
+  background: #fffdf8;
+  padding: 0.75rem;
+  font-size: 13px;
+  font-weight: 800;
+}
+.logic-toggle {
+  grid-template-columns: auto auto auto;
+  align-items: center;
+}
+.logic-output {
+  min-width: 5.5rem;
+  text-align: center;
+}
+.logic-answer input {
+  width: min(100%, 32rem);
+  border: 2px solid #1a1814;
+  border-radius: 8px;
+  background: #fbf7ef;
+  padding: 0.65rem 0.75rem;
+  font-family: Georgia, serif;
+  font-size: 1rem;
+  font-weight: 800;
 }
 @media (max-width: 700px) {
   .quiz-stage {

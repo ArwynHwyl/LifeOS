@@ -3,7 +3,11 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { AxiosError } from 'axios'
 import { useRoute, useRouter } from 'vue-router'
 import AdminNavbar from '@/features/courses/components/Admin/AdminNavbar.vue'
+import AdminIcon from '@/features/courses/components/Admin/AdminIcon.vue'
 import AdminCourseOutline from '@/features/courses/components/Admin/AdminCourseOutline.vue'
+import ITypeBadge from '@/features/courses/components/Admin/ITypeBadge.vue'
+import MonoLabel from '@/features/courses/components/Admin/MonoLabel.vue'
+import StatusBadge from '@/features/courses/components/Admin/StatusBadge.vue'
 import SubTopicLessonEditor from '@/features/courses/components/Admin/SubTopicLessonEditor.vue'
 import { DEFAULT_COVER_ID, getCoverPreset } from '@/features/courses/constants/courseCoverPresets'
 import {
@@ -19,6 +23,9 @@ import {
   type DocumentPreviewDto,
   type InteractionType,
 } from '@/features/courses/services/adminCourses'
+import type { CourseStatus } from '@/types/types'
+
+const COURSE_COVER_STORAGE_KEY = 'lifeosCourseCovers'
 
 const route  = useRoute()
 const router = useRouter()
@@ -54,13 +61,24 @@ const centreSaving        = ref(false)
 const centreMessage       = ref('')
 
 // ── Computed ──────────────────────────────────────────────────────────────
-const cover = computed(() => getCoverPreset(course.value?.coverId ?? DEFAULT_COVER_ID))
+const cover = computed(() => {
+  if (!course.value) return getCoverPreset(DEFAULT_COVER_ID)
+  return getCoverPreset(readCourseCover(course.value.id))
+})
+
+const uiStatus = computed<CourseStatus>(() => {
+  const status = course.value?.status
+  if (status === 'PUBLISHED') return 'published'
+  if (status === 'PENDING_REVIEW') return 'pending'
+  if (status === 'NEED_REVISION') return 'revision'
+  return 'draft'
+})
 
 const statusDisplay = computed(() => {
   const s = course.value?.status
   if (s === 'PUBLISHED')      return { label: 'Published',     classes: 'bg-lm-green-soft text-lm-green border-2 border-lm-line shadow-stamp-sm', dot: 'bg-lm-green'  }
   if (s === 'PENDING_REVIEW') return { label: 'Pending Review', classes: 'bg-lm-yellow text-lm-ink border-2 border-lm-line shadow-stamp-sm', dot: 'bg-lm-ink'    }
-  if (s === 'NEEDS_REVISION') return { label: 'Needs Revision', classes: 'bg-lm-red-soft text-lm-red border-2 border-lm-line shadow-stamp-sm', dot: 'bg-lm-red'    }
+  if (s === 'NEED_REVISION') return { label: 'Needs Revision', classes: 'bg-lm-red-soft text-lm-red border-2 border-lm-line shadow-stamp-sm', dot: 'bg-lm-red'    }
   return                             { label: 'Draft',           classes: 'bg-lm-bg-soft text-lm-ink-3 border-2 border-lm-line-soft', dot: 'bg-lm-ink-3' }
 })
 
@@ -235,11 +253,6 @@ function formatFileSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-function formatInteractionType(value: string | null | undefined) {
-  if (!value || value === 'NONE') return ''
-  return value.toLowerCase().split('_').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ')
-}
-
 function lessonHtml(subTopic: AdminSubTopicDto) {
   if (subTopic.contentHtml) return subTopic.contentHtml
   return textToHtml(subTopic.content || '')
@@ -251,6 +264,17 @@ function textToHtml(value: string) {
 
 function escapeHtml(value: string) {
   return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+function readCourseCover(courseId: number) {
+  const raw = localStorage.getItem(COURSE_COVER_STORAGE_KEY)
+  if (!raw) return DEFAULT_COVER_ID
+  try {
+    const covers = JSON.parse(raw) as Record<string, string>
+    return covers[String(courseId)] ?? DEFAULT_COVER_ID
+  } catch {
+    return DEFAULT_COVER_ID
+  }
 }
 
 function getErrorMessage(error: unknown, fallback: string) {
@@ -269,24 +293,21 @@ function getErrorMessage(error: unknown, fallback: string) {
 
     <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
 
-      <!-- ── Rich page header ─────────────────────────────────────── -->
-      <header class="admin-page-header">
-        <div class="admin-page-header__inner">
+      <header class="flex shrink-0 items-center gap-3.5 border-b-2 border-lm-line bg-lm-surface px-5 py-3">
+        <div class="flex min-w-0 flex-1 items-center gap-3.5">
           <div class="flex min-w-0 items-center gap-4">
             <button
               type="button"
-              class="admin-page-header__control inline-flex shrink-0 items-center gap-2 rounded-full border-2 border-lm-line bg-lm-bg-soft px-5 text-[14px] font-extrabold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-md"
+              class="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full border-2 border-lm-line bg-lm-bg-soft px-3.5 py-1.5 font-display text-[12px] font-semibold text-lm-ink shadow-stamp-sm"
               @click="router.push('/admin/courses')"
             >
-              <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M19 12H5M11 18l-6-6 6-6" />
-              </svg>
+              <AdminIcon name="back" :size="13" />
               All Courses
             </button>
 
             <div
               v-if="course"
-              class="admin-page-header__control flex w-10 shrink-0 items-center justify-center rounded-xl border-2 border-lm-line font-math text-[20px] font-bold italic shadow-stamp-sm"
+              class="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-[10px] border-2 border-lm-line font-math text-[18px] font-bold italic shadow-stamp-sm"
               :class="[cover.bgClass, cover.textClass]"
             >
               {{ cover.symbol }}
@@ -294,32 +315,20 @@ function getErrorMessage(error: unknown, fallback: string) {
 
             <div class="min-w-0">
               <div class="flex min-w-0 items-center gap-2">
-                <h1 class="admin-page-header__title truncate">{{ course?.title ?? 'Course' }}</h1>
-                <span
-                  v-if="course"
-                  class="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full px-2.5 font-mono text-[10px] font-bold uppercase tracking-[0.04em]"
-                  :class="statusDisplay.classes"
-                >
-                  <span class="h-1.5 w-1.5 rounded-full" :class="statusDisplay.dot" />
-                  {{ statusDisplay.label }}
-                </span>
+                <h1 class="m-0 truncate font-display text-[18px] font-bold text-lm-ink">{{ course?.title ?? 'Course' }}</h1>
+                <StatusBadge v-if="course" :status="uiStatus" />
               </div>
-              <p v-if="course?.description" class="admin-page-header__subtitle">
-                {{ course.description }}
-              </p>
+              <MonoLabel v-if="course?.description" class="mt-[1px] truncate">{{ course.description }}</MonoLabel>
             </div>
           </div>
-
-          <span
-            v-if="course"
-            class="admin-page-header__control inline-flex shrink-0 items-center gap-2 rounded-full border-2 border-lm-green bg-lm-green-soft px-5 font-display text-[14px] font-bold text-lm-green"
-          >
-            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M20 6 9 17l-5-5" />
-            </svg>
-            {{ statusDisplay.label }}
-          </span>
         </div>
+        <span
+          v-if="course"
+          class="inline-flex shrink-0 items-center gap-2 rounded-full border-2 border-lm-green bg-lm-green-soft px-4 py-2 font-display text-[13px] font-bold text-lm-green"
+        >
+          <AdminIcon name="check" :size="15" />
+          {{ statusDisplay.label }}
+        </span>
       </header>
 
       <!-- Error banner -->
@@ -346,7 +355,7 @@ function getErrorMessage(error: unknown, fallback: string) {
               class="flex h-11 shrink-0 items-center border-b-2 border-lm-line-soft"
             :class="outlineOpen ? 'justify-between px-4' : 'justify-center'"
           >
-            <p v-if="outlineOpen" class="font-mono text-[11px] font-bold uppercase tracking-[0.24em] text-lm-ink-3">Outline</p>
+            <MonoLabel v-if="outlineOpen">Outline</MonoLabel>
             <button
               type="button"
               class="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] border-2 border-lm-line bg-lm-surface text-lm-ink shadow-stamp-xs transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-sm"
@@ -378,17 +387,7 @@ function getErrorMessage(error: unknown, fallback: string) {
                 @click="selectSubTopic(subTopic.id)"
               >
                 <span class="flex-1 min-w-0 truncate">{{ subTopic.title }}</span>
-                <span
-                  v-if="subTopic.interactionType && subTopic.interactionType !== 'NONE'"
-                  class="shrink-0 rounded-full px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.04em]"
-                  :class="{
-                    'bg-lm-blue-soft text-lm-blue':     subTopic.interactionType === 'QUIZ',
-                    'bg-lm-purple-soft text-lm-purple':  subTopic.interactionType === 'GRAPH_2D' || subTopic.interactionType === 'FORMULA_EXPLORER',
-                    'bg-lm-green-soft text-lm-green':    subTopic.interactionType === 'VISUAL_LAYER',
-                  }"
-                >
-                  {{ subTopic.interactionType === 'GRAPH_2D' ? 'Graph' : subTopic.interactionType === 'FORMULA_EXPLORER' ? 'Formula' : subTopic.interactionType === 'VISUAL_LAYER' ? 'Visual' : subTopic.interactionType }}
-                </span>
+                <ITypeBadge :type="subTopic.interactionType" />
               </button>
             </div>
             <div v-if="!modules.length" class="px-4 py-10 text-center">
@@ -423,23 +422,14 @@ function getErrorMessage(error: unknown, fallback: string) {
             <template v-if="!editingInCentre">
               <div class="mb-5 flex items-start justify-between gap-4">
                 <div>
-                  <p class="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-lm-ink-3">
-                    {{ selectedSubTopic.moduleTitle }}
-                  </p>
+                  <MonoLabel>{{ selectedSubTopic.moduleTitle }}</MonoLabel>
                   <h2 class="mt-2 font-display text-[30px] font-extrabold leading-tight text-lm-ink">
                     {{ selectedSubTopic.title }}
                   </h2>
-                  <span
-                    v-if="selectedSubTopic.interactionType && selectedSubTopic.interactionType !== 'NONE'"
-                    class="mt-2 inline-flex rounded-full px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-normal"
-                    :class="{
-                      'bg-lm-blue-soft text-lm-blue':     selectedSubTopic.interactionType === 'QUIZ',
-                      'bg-lm-purple-soft text-lm-purple':  selectedSubTopic.interactionType === 'GRAPH_2D' || selectedSubTopic.interactionType === 'FORMULA_EXPLORER',
-                      'bg-lm-green-soft text-lm-green':    selectedSubTopic.interactionType === 'VISUAL_LAYER',
-                    }"
-                  >
-                    {{ formatInteractionType(selectedSubTopic.interactionType) }}
-                  </span>
+                  <div class="mt-2 flex gap-1.5">
+                    <ITypeBadge :type="selectedSubTopic.interactionType" />
+                    <span v-if="selectedSubTopic.interactionType !== 'NONE'" class="font-mono text-[10px] text-lm-ink-3">Topic #{{ selectedSubTopic.id }}</span>
+                  </div>
                 </div>
                 <button
                   v-if="course.status !== 'PENDING_REVIEW'"
@@ -447,9 +437,7 @@ function getErrorMessage(error: unknown, fallback: string) {
                   class="inline-flex h-10 shrink-0 items-center gap-2 rounded-full border-2 border-lm-line bg-lm-surface px-5 py-2.5 text-[14px] font-bold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-md"
                   @click="editingInCentre = true; centreMessage = ''"
                 >
-                  <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                  </svg>
+                  <AdminIcon name="edit" :size="14" />
                   Edit
                 </button>
               </div>
@@ -470,11 +458,9 @@ function getErrorMessage(error: unknown, fallback: string) {
               <div v-if="selectedSubTopic.interactionType && selectedSubTopic.interactionType !== 'NONE'" class="mt-4 overflow-hidden rounded-[12px] border-2 border-lm-line-soft">
                 <div class="flex items-center gap-2 border-b border-lm-line-soft bg-lm-bg-soft px-4 py-2.5">
                   <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-[6px] border-2 border-lm-line bg-lm-yellow">
-                    <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z" />
-                    </svg>
+                    <AdminIcon name="spark" :size="13" />
                   </div>
-                  <p class="font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-lm-ink-3">
+                  <p class="font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-lm-ink-3">
                     Interactive · {{ selectedSubTopic.interactionType }}
                   </p>
                 </div>
@@ -494,7 +480,7 @@ function getErrorMessage(error: unknown, fallback: string) {
             <!-- Edit mode -->
             <template v-else>
               <div class="mb-4 flex items-center gap-2">
-                <p class="font-mono text-[9px] font-bold uppercase tracking-[0.14em] text-lm-ink-3">{{ selectedSubTopic.moduleTitle }}</p>
+                <MonoLabel>{{ selectedSubTopic.moduleTitle }}</MonoLabel>
                 <span class="text-lm-line-soft">/</span>
                 <span class="font-display text-[13px] font-semibold text-lm-ink">{{ selectedSubTopic.title }}</span>
               </div>
@@ -730,6 +716,6 @@ function getErrorMessage(error: unknown, fallback: string) {
 .lesson-preview :deep(ol) { list-style: decimal; padding-left: 1.25rem; }
 .lesson-preview :deep(strong) { font-weight: 700; color: #1a1814; }
 .lesson-preview :deep(em) { font-style: italic; }
-.lesson-preview :deep(code) { border-radius: 4px; background: #f0ece4; padding: 0.1rem 0.3rem; font-size: 0.85em; }
+.lesson-preview :deep(code) { border-radius: 4px; background: #f0ece4; color: #1a1814; padding: 0.1rem 0.3rem; font-size: 0.85em; }
 .lesson-preview :deep(img) { max-width: 100%; border-radius: 0.5rem; }
 </style>

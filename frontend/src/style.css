@@ -104,6 +104,26 @@
 /* ── Vue starter scaffold (wrapped in @layer base so Tailwind utilities win) ── */
 @layer base {
   :root {
+    --lm-bg: #fbf7ef;
+    --lm-bg-soft: #f3eee2;
+    --lm-surface: #ffffff;
+    --lm-ink: #1a1814;
+    --lm-ink-2: #5b544a;
+    --lm-ink-3: #8a8276;
+    --lm-line: #1a1814;
+    --lm-line-soft: #e3ddce;
+    --lm-yellow: #ffd333;
+    --lm-yellow-soft: #fff0a8;
+    --lm-rust: #c44a1a;
+    --lm-rust-soft: #ffd7c1;
+    --lm-blue: #3b6cb5;
+    --lm-blue-soft: #cfe0ff;
+    --lm-green: #3a7d44;
+    --lm-green-soft: #d3edc9;
+    --lm-red: #d64545;
+    --lm-red-soft: #ffd5d0;
+    --lm-purple: #6b4ec1;
+    --lm-purple-soft: #e3d8ff;
     --font-sans: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
     --font-serif: 'Lora', Georgia, 'Times New Roman', serif;
     --text: #6b6375;
@@ -124,7 +144,7 @@
 
     font: 18px/145% var(--sans);
     letter-spacing: 0.18px;
-    color-scheme: light dark;
+    color-scheme: light;
     color: var(--text);
     background: var(--bg);
     font-synthesis: none;
