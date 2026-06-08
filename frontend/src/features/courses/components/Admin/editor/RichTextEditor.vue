@@ -64,10 +64,11 @@
       <button
         type="button"
         @mousedown.prevent="insertImage"
-        class="h-8 min-w-[32px] px-2 rounded-[6px] border-none bg-transparent text-lm-ink-2 font-display text-[12px] font-bold cursor-pointer transition-colors duration-120 hover:bg-lm-line-soft"
+        class="h-8 min-w-[32px] px-2 rounded-[6px] border-none bg-transparent text-lm-ink-2 font-display text-[12px] font-bold cursor-pointer transition-colors duration-120 hover:bg-lm-line-soft disabled:cursor-not-allowed disabled:opacity-50"
+        :disabled="isUploading"
         title="Insert image"
       >
-        Img
+        {{ isUploading ? 'Uploading...' : 'Img' }}
       </button>
     </div>
     <!-- Editable area -->
@@ -80,20 +81,35 @@
       class="min-h-[200px] px-4 py-3.5 outline-none text-[13px] leading-[1.7] text-lm-ink-2 text-left empty:before:content-[attr(data-placeholder)] empty:before:text-lm-ink-3 empty:before:cursor-text"
       data-placeholder="Write lesson content here…"
     />
+    <input
+      type="file"
+      ref="fileInputRef"
+      accept="image/png, image/jpeg, image/webp"
+      class="hidden"
+      @change="handleImageFileChange"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
+import { uploadSubTopicImage } from '@/features/courses/services/adminCourses'
 
 const props = defineProps({
   modelValue: {
     type: String,
     default: ''
+  },
+  subTopicId: {
+    type: [Number, String],
+    default: null
   }
 })
 
 const emit = defineEmits(['update:modelValue'])
+
+const fileInputRef = ref(null)
+const isUploading = ref(false)
 
 const editorRef = ref(null)
 const activeFormats = ref({
@@ -143,7 +159,54 @@ function insertLink() {
 }
 
 function insertImage() {
-  window.alert('Image upload connects to backend S3')
+  if (isUploading.value) return
+  fileInputRef.value?.click()
+}
+
+async function handleImageFileChange(event) {
+  const file = event.target?.files?.[0]
+  if (!file) return
+
+  // Reset file input value so same file can be selected again
+  event.target.value = ''
+
+  // Local client validation
+  const allowedTypes = ['image/png', 'image/jpeg', 'image/webp']
+  if (!allowedTypes.includes(file.type)) {
+    window.alert('Only PNG, JPEG, and WebP images are supported')
+    return
+  }
+
+  const maxSizeBytes = 10 * 1024 * 1024
+  if (file.size > maxSizeBytes) {
+    window.alert('Subtopic images must be 10MB or smaller')
+    return
+  }
+
+  const subTopicId = props.subTopicId
+  if (!subTopicId) {
+    window.alert('Cannot upload image: Subtopic ID is missing. Please save the subtopic first.')
+    return
+  }
+
+  isUploading.value = true
+  try {
+    const asset = await uploadSubTopicImage(subTopicId, file)
+    if (asset && asset.id && asset.fileUrl) {
+      // Focus editor back
+      editorRef.value?.focus()
+      // Insert image with data-asset-id to prevent sanitize check removal on backend
+      const imgHtml = `<img data-asset-id="${asset.id}" src="${asset.fileUrl}" alt="${file.name.replace(/\.[^/.]+$/, '')}" style="max-width: 100%; height: auto; border-radius: 8px;" />`
+      exec('insertHTML', imgHtml)
+    } else {
+      throw new Error('Upload succeeded but asset details are incomplete')
+    }
+  } catch (error) {
+    console.error('Image upload failed:', error)
+    window.alert(`Image upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  } finally {
+    isUploading.value = false
+  }
 }
 
 function onInput() {

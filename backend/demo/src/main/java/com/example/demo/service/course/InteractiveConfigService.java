@@ -817,7 +817,17 @@ public class InteractiveConfigService {
         if (enabled == null || !enabled.isBoolean()) {
             throw new ValidationException("overlap.enabled must be a boolean");
         }
-        List<String> sourceZoneIds = requiredIdArray(overlapObject, "sourceZoneIds", "overlap.sourceZoneIds", 1, 5);
+        List<String> sourceZoneIds = requiredIdArray(overlapObject, "sourceZoneIds", "overlap.sourceZoneIds", 0, 5);
+        if (!enabled.booleanValue()) {
+            if (sourceZoneIds.isEmpty()) {
+                root.remove("overlap");
+                return;
+            }
+        } else {
+            if (sourceZoneIds.isEmpty()) {
+                throw new ValidationException("overlap.sourceZoneIds must contain 1 to 5 ids when enabled");
+            }
+        }
         Set<String> sourceSet = new LinkedHashSet<>(sourceZoneIds);
         if (sourceSet.size() != sourceZoneIds.size()) {
             throw new ValidationException("overlap.sourceZoneIds must be unique");
@@ -1187,9 +1197,7 @@ public class InteractiveConfigService {
     }
 
     private void rejectLogicPracticeFields(ObjectNode root) {
-        if (root.has("feedback")) {
-            throw new ValidationException("feedback is only supported when mode is PRACTICE");
-        }
+        root.remove("feedback");
     }
 
     private void validateLogicSteps(ObjectNode root) {
@@ -1289,13 +1297,9 @@ public class InteractiveConfigService {
 
     private void rejectVisualizationPracticeFields(ObjectNode root) {
         for (String field : PRACTICE_FIELDS) {
-            if (root.has(field)) {
-                throw new ValidationException(field + " is only supported when mode is PRACTICE");
-            }
+            root.remove(field);
         }
-        if (root.has("controls")) {
-            throw new ValidationException("controls is only supported when mode is PRACTICE");
-        }
+        root.remove("controls");
     }
 
     private Map<String, double[]> validateControls(ObjectNode root, Set<String> allowedNames, int minCount, int maxCount) {

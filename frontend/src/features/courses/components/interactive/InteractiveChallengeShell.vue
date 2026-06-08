@@ -11,14 +11,6 @@ const props = defineProps<{
   mode?: InteractiveMode
 }>()
 
-const typeLabel = computed(() => {
-  if (props.interactionType === 'GRAPH_2D') return 'Graph'
-  if (props.interactionType === 'FORMULA_EXPLORER') return 'Formula'
-  if (props.interactionType === 'VISUAL_LAYER') return 'Set / Diagram'
-  if (props.interactionType === 'QUIZ') return 'Quiz'
-  return 'Activity'
-})
-
 const effectiveMode = computed(() => props.interactionType === 'QUIZ' ? 'PRACTICE' : props.mode)
 
 const eyebrowLabel = computed(() => effectiveMode.value === 'PRACTICE' ? 'Challenge' : 'Explore')

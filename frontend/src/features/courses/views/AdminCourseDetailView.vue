@@ -9,6 +9,9 @@ import ITypeBadge from '@/features/courses/components/Admin/ITypeBadge.vue'
 import MonoLabel from '@/features/courses/components/Admin/MonoLabel.vue'
 import StatusBadge from '@/features/courses/components/Admin/StatusBadge.vue'
 import SubTopicLessonEditor from '@/features/courses/components/Admin/SubTopicLessonEditor.vue'
+import { parseInteractiveConfig } from '@/features/courses/types/interactive'
+import InteractiveChallengeShell from '@/features/courses/components/interactive/InteractiveChallengeShell.vue'
+import InteractivePreview from '@/features/courses/components/interactive/InteractivePreview.vue'
 import { DEFAULT_COVER_ID, getCoverPreset } from '@/features/courses/constants/courseCoverPresets'
 import {
   getAdminCourse,
@@ -92,6 +95,38 @@ const allSubTopicsFlat = computed(() =>
 const selectedSubTopic = computed(() =>
   allSubTopicsFlat.value.find(t => t.id === selectedSubTopicId.value) ?? null
 )
+
+const interactiveServerFeedback = ref('')
+
+const interactiveConfig = computed(() => {
+  const current = selectedSubTopic.value
+  if (!current) return null
+  return parseInteractiveConfig(current.interactionType, current.interactionConfig)
+})
+
+const currentInteractiveMode = computed(() => {
+  if (selectedSubTopic.value?.interactionType === 'QUIZ') return 'PRACTICE'
+  return interactiveConfig.value?.mode ?? 'VISUALIZATION'
+})
+
+const currentChallengeObjective = computed(() => {
+  const current = selectedSubTopic.value
+  if (!current) return 'Complete this activity to master the concept.'
+  if (current.interactionPrompt?.trim()) return current.interactionPrompt
+  if (current.interactionType === 'QUIZ') return 'Answer the quiz to check your understanding.'
+  if (current.interactionType === 'GRAPH_2D') return 'Use the graph to match the target behavior.'
+  if (current.interactionType === 'FORMULA_EXPLORER') return 'Adjust the formula inputs to reach the target.'
+  if (current.interactionType === 'VISUAL_LAYER') return 'Build or inspect the set diagram to master the concept.'
+  return 'Complete this activity to master the concept.'
+})
+
+function handleInteractiveStarted() {
+  console.log('Interactive started in admin preview mode')
+}
+
+function handleInteractiveChecked(payload: any) {
+  console.log('Interactive checked in admin preview mode:', payload)
+}
 
 // ── Auto-select first subtopic on load ───────────────────────────────────
 watch(modules, (mods) => {
@@ -444,33 +479,59 @@ function getErrorMessage(error: unknown, fallback: string) {
                 </button>
               </div>
 
-              <!-- Content HTML -->
-              <div
-                v-if="lessonHtml(selectedSubTopic)"
-                class="lesson-preview rounded-[12px] border-2 border-lm-line bg-white px-7 py-6 text-[15px] leading-[1.7] text-[#3b3630] shadow-stamp-sm"
-                v-html="lessonHtml(selectedSubTopic)"
-              />
-              <div v-else class="rounded-[14px] border-2 border-dashed border-lm-line-soft py-14 text-center">
-                <p class="font-mono text-[11px] uppercase tracking-[0.06em] text-lm-ink-3">
-                  No content yet — click Edit to add
-                </p>
+              <!-- Content HTML & Interactive Previews -->
+              <div v-if="selectedSubTopic.interactionType === 'QUIZ'">
+                <!-- Quiz layout -->
+                <div
+                  v-if="lessonHtml(selectedSubTopic)"
+                  class="lesson-preview mb-6 rounded-[12px] border-2 border-lm-line bg-white px-7 py-6 text-[15.5px] leading-[1.75] text-[#3b3630] shadow-stamp-sm"
+                  v-html="lessonHtml(selectedSubTopic)"
+                />
+                <div class="rounded-xl border-2 border-lm-line bg-white p-6 shadow-stamp-sm">
+                  <div class="mb-4 flex items-center gap-2">
+                    <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-[6px] border-2 border-lm-line bg-lm-yellow">
+                      <AdminIcon name="spark" :size="13" />
+                    </div>
+                    <p class="font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-lm-ink-3">
+                      Quiz Preview (Learner View)
+                    </p>
+                  </div>
+                  <InteractivePreview
+                    :config="interactiveConfig"
+                    :server-feedback="interactiveServerFeedback"
+                    @started="handleInteractiveStarted"
+                    @checked="handleInteractiveChecked"
+                  />
+                </div>
               </div>
 
-              <!-- Interaction badge -->
-              <div v-if="selectedSubTopic.interactionType && selectedSubTopic.interactionType !== 'NONE'" class="mt-4 overflow-hidden rounded-[12px] border-2 border-lm-line-soft">
-                <div class="flex items-center gap-2 border-b border-lm-line-soft bg-lm-bg-soft px-4 py-2.5">
-                  <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-[6px] border-2 border-lm-line bg-lm-yellow">
-                    <AdminIcon name="spark" :size="13" />
-                  </div>
-                  <p class="font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-lm-ink-3">
-                    Interactive · {{ selectedSubTopic.interactionType }}
+              <div v-else>
+                <!-- Standard lesson layout -->
+                <div
+                  v-if="lessonHtml(selectedSubTopic)"
+                  class="lesson-preview rounded-[12px] border-2 border-lm-line bg-white px-7 py-6 text-[15.5px] leading-[1.75] text-[#3b3630] shadow-stamp-sm"
+                  v-html="lessonHtml(selectedSubTopic)"
+                />
+                <div v-else class="rounded-[14px] border-2 border-dashed border-lm-line-soft py-14 text-center">
+                  <p class="font-mono text-[11px] uppercase tracking-[0.06em] text-lm-ink-3">
+                    No content yet — click Edit to add
                   </p>
                 </div>
-                <div class="px-4 py-3">
-                  <p v-if="selectedSubTopic.interactionPrompt" class="mb-1 text-[13px] font-semibold text-lm-ink">
-                    {{ selectedSubTopic.interactionPrompt }}
-                  </p>
-                  <p class="text-[11px] italic text-lm-ink-3">Renders in the learner app. Click Edit to configure.</p>
+
+                <div v-if="selectedSubTopic.interactionType !== 'NONE'" class="mt-6">
+                  <InteractiveChallengeShell
+                    :interaction-type="selectedSubTopic.interactionType"
+                    :objective="currentChallengeObjective"
+                    status="NOT_STARTED"
+                    :mode="currentInteractiveMode"
+                  >
+                    <InteractivePreview
+                      :config="interactiveConfig"
+                      :server-feedback="interactiveServerFeedback"
+                      @started="handleInteractiveStarted"
+                      @checked="handleInteractiveChecked"
+                    />
+                  </InteractiveChallengeShell>
                 </div>
               </div>
 

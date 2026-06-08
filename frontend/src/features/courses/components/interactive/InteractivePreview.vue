@@ -15,6 +15,8 @@ import { evaluateExpression } from '@/features/courses/utils/expression'
 import { Logic } from '@/features/courses/utils/logic-engine.js'
 import type { InteractiveAttemptRequest, LogicAttemptRequest } from '@/features/learning/services/learnerCourses'
 
+const instanceId = 'vl-' + Math.random().toString(36).substring(2, 9)
+
 const props = defineProps<{
   config: InteractiveConfig | null
   serverFeedback?: string
@@ -950,7 +952,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
               </marker>
 
               <!-- Zone ClipPaths -->
-              <clipPath v-for="zone in (config as VisualLayerConfig).zones" :key="`clip-${zone.id}`" :id="`clip-${zone.id}`">
+              <clipPath v-for="zone in (config as VisualLayerConfig).zones" :key="`clip-${zone.id}`" :id="`${instanceId}-clip-${zone.id}`">
                 <ellipse
                   v-if="zone.shape === 'circle'"
                   :cx="zone.x + zone.width / 2"
@@ -969,7 +971,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
               </clipPath>
 
               <!-- Region Masks -->
-              <mask v-for="region in visualOverlapRegions" :key="`mask-${region.id}`" :id="`mask-${region.id}`">
+              <mask v-for="region in visualOverlapRegions" :key="`mask-${region.id}`" :id="`${instanceId}-mask-${region.id}`">
                 <rect x="0" y="0" :width="(config as VisualLayerConfig).canvas.width" :height="(config as VisualLayerConfig).canvas.height" fill="black" />
                 <!-- Included intersection -->
                 <ellipse
@@ -989,7 +991,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
                   fill="white"
                 />
 
-                <g v-else-if="region.zones.length === 2" :clip-path="`url(#clip-${region.zones[1].id})`">
+                <g v-else-if="region.zones.length === 2" :clip-path="`url(#${instanceId}-clip-${region.zones[1].id})`">
                   <ellipse
                     v-if="region.zones[0].shape === 'circle'"
                     :cx="region.zones[0].x + region.zones[0].width / 2"
@@ -1008,8 +1010,8 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
                   />
                 </g>
 
-                <g v-else-if="region.zones.length === 3" :clip-path="`url(#clip-${region.zones[2].id})`">
-                  <g :clip-path="`url(#clip-${region.zones[1].id})`">
+                <g v-else-if="region.zones.length === 3" :clip-path="`url(#${instanceId}-clip-${region.zones[2].id})`">
+                  <g :clip-path="`url(#${instanceId}-clip-${region.zones[1].id})`">
                     <ellipse
                       v-if="region.zones[0].shape === 'circle'"
                       :cx="region.zones[0].x + region.zones[0].width / 2"
@@ -1110,7 +1112,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
               :key="`${region.id}-active`"
               width="100%"
               height="100%"
-              :mask="`url(#mask-${region.id})`"
+              :mask="`url(#${instanceId}-mask-${region.id})`"
               class="visual-overlap-active"
             />
             <template v-if="config.overlap?.enabled">

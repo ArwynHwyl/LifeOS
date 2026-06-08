@@ -15,7 +15,6 @@ import {
   type PublishedSubTopicDto,
 } from '@/features/learning/services/learnerCourses'
 import toraMascotUrl from '@/assets/tora-mascot.svg'
-import LmIcon from '../components/LmIcon.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -93,7 +92,6 @@ const currentChallengeObjective = computed(() => {
   if (current.interactionType === 'VISUAL_LAYER') return 'Build or inspect the set diagram to master the concept.'
   return 'Complete this activity to master the concept.'
 })
-const currentInteractiveMastered = computed(() => selectedSubTopic.value?.interactionType !== 'NONE' && currentProgressStatus.value === 'MASTERED')
 const isQuizActivity = computed(() => selectedSubTopic.value?.interactionType === 'QUIZ')
 
 /* ── Clever #1: Estimated reading time ── */
@@ -731,7 +729,7 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   z-index: 1;
   display: grid;
   gap: 1.5rem;
-  width: min(calc(100% - 12rem), 1000px);
+  width: min(calc(100% - 12rem), 1200px);
   margin: 6.5rem auto 4rem;
   border: 2.5px solid #1d1b17;
   border-radius: 32px;
@@ -740,7 +738,7 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   box-shadow: 4px 4px 0px 0px #1d1b17;
 }
 .lesson-content--quiz {
-  width: min(calc(100% - 12rem), 1000px);
+  width: min(calc(100% - 12rem), 1200px);
   align-content: start;
 }
 .lesson-content__header {

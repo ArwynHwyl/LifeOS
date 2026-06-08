@@ -49,6 +49,7 @@ import MonoLabel from '../MonoLabel.vue'
 import AdminIcon from '../AdminIcon.vue'
 import RichTextEditor from './RichTextEditor.vue'
 import InteractiveEditor from './InteractiveEditor.vue'
+import { cloneDefaultConfig } from '@/features/courses/types/interactive'
 
 const props = defineProps({
   subTopic: {
@@ -64,7 +65,13 @@ const contentHtml = ref(props.subTopic?.contentHtml || props.subTopic?.content |
 const mascotPrompt = ref(props.subTopic?.mascotPrompt ?? '')
 const intType = ref(props.subTopic?.interactionType ?? 'NONE')
 const prompt = ref(props.subTopic?.interactionPrompt ?? '')
-const intConfig = ref(props.subTopic?.interactionConfig ? JSON.parse(JSON.stringify(props.subTopic.interactionConfig)) : null)
+const intConfig = ref(
+  props.subTopic?.interactionConfig
+    ? JSON.parse(JSON.stringify(props.subTopic.interactionConfig))
+    : (props.subTopic?.interactionType && props.subTopic.interactionType !== 'NONE'
+        ? cloneDefaultConfig(props.subTopic.interactionType)
+        : null)
+)
 
 watch(() => props.subTopic, (newVal) => {
   title.value = newVal?.title ?? ''
@@ -72,20 +79,57 @@ watch(() => props.subTopic, (newVal) => {
   mascotPrompt.value = newVal?.mascotPrompt ?? ''
   intType.value = newVal?.interactionType ?? 'NONE'
   prompt.value = newVal?.interactionPrompt ?? ''
-  intConfig.value = newVal?.interactionConfig ? JSON.parse(JSON.stringify(newVal.interactionConfig)) : null
+  intConfig.value = newVal?.interactionConfig
+    ? JSON.parse(JSON.stringify(newVal.interactionConfig))
+    : (newVal?.interactionType && newVal.interactionType !== 'NONE'
+        ? cloneDefaultConfig(newVal.interactionType)
+        : null)
 }, { deep: true })
 
 function onConfigChange(newConfig) {
   intConfig.value = newConfig
+  if (newConfig && typeof newConfig === 'object' && newConfig.prompt && !prompt.value?.trim()) {
+    prompt.value = newConfig.prompt
+  }
 }
 
 function onTypeChange(newType) {
   intType.value = newType
-  intConfig.value = null
+  if (newType === 'NONE') {
+    intConfig.value = null
+  } else {
+    try {
+      intConfig.value = cloneDefaultConfig(newType)
+      if (intConfig.value && intConfig.value.prompt) {
+        prompt.value = intConfig.value.prompt
+      }
+    } catch (e) {
+      intConfig.value = null
+    }
+  }
 }
 
 function onSave() {
   if (!title.value.trim()) return
+  
+  let finalConfig = intConfig.value
+  if (intType.value !== 'NONE') {
+    if (!finalConfig) {
+      try {
+        finalConfig = cloneDefaultConfig(intType.value)
+      } catch (e) {
+        finalConfig = {}
+      }
+    }
+    if (finalConfig && typeof finalConfig === 'object') {
+      finalConfig = {
+        title: finalConfig.title || title.value.trim() || 'Interactive Activity',
+        ...finalConfig,
+        prompt: prompt.value?.trim() || null
+      }
+    }
+  }
+
   emit('save', {
     ...props.subTopic,
     title: title.value,
@@ -93,7 +137,7 @@ function onSave() {
     mascotPrompt: mascotPrompt.value,
     interactionType: intType.value,
     interactionPrompt: prompt.value,
-    interactionConfig: intConfig.value
+    interactionConfig: finalConfig
   })
 }
 </script>
