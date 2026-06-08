@@ -43,7 +43,7 @@
       <div class="flex items-center gap-1 flex-wrap">
         <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mr-1.5 tracking-wider mb-0">Tools</p>
         <button
-          v-for="[t, l] in [['select', 'Select'], ['zone-circle', '○ Circle'], ['zone-rect', '□ Rect'], ['button', 'Button'], ['hotspot', 'Hotspot'], ['line', '⏤ Line']]"
+          v-for="[t, l] in [['select', 'Select'], ['zone-circle', '○ Circle'], ['zone-rect', '□ Rect'], ['button', 'Button'], ['hotspot', 'Hotspot'], ['line', '⏤ Line'], ['region', '✏ Region']]"
           :key="t"
           @click="tool = t"
           class="h-7 px-2.5 rounded-[7px] border-2 border-transparent bg-transparent font-display text-[11px] font-bold text-lm-ink cursor-pointer transition-all duration-100"
@@ -90,6 +90,107 @@
             >
               <path d="M 0 2 L 8 5 L 0 8 z" fill="currentColor" />
             </marker>
+
+            <!-- Zone ClipPaths -->
+            <clipPath v-for="zone in zones" :key="`clip-${zone.id}`" :id="`clip-${zone.id}`">
+              <ellipse
+                v-if="zone.shape === 'circle'"
+                :cx="zone.x + zone.width / 2"
+                :cy="zone.y + zone.height / 2"
+                :rx="zone.width / 2"
+                :ry="zone.height / 2"
+              />
+              <rect
+                v-else
+                :x="zone.x"
+                :y="zone.y"
+                :width="zone.width"
+                :height="zone.height"
+                :rx="10"
+              />
+            </clipPath>
+
+            <!-- Region Masks -->
+            <mask v-for="region in exactRegions" :key="`mask-${region.id}`" :id="`mask-${region.id}`">
+              <rect x="0" y="0" width="900" height="520" fill="black" />
+              <!-- Included intersection -->
+              <ellipse
+                v-if="region.zones.length === 1 && region.zones[0].shape === 'circle'"
+                :cx="region.zones[0].x + region.zones[0].width / 2"
+                :cy="region.zones[0].y + region.zones[0].height / 2"
+                :rx="region.zones[0].width / 2"
+                :ry="region.zones[0].height / 2"
+                fill="white"
+              />
+              <rect
+                v-else-if="region.zones.length === 1 && region.zones[0].shape === 'rectangle'"
+                :x="region.zones[0].x"
+                :y="region.zones[0].y"
+                :width="region.zones[0].width"
+                :height="region.zones[0].height"
+                fill="white"
+              />
+
+              <g v-else-if="region.zones.length === 2" :clip-path="`url(#clip-${region.zones[1].id})`">
+                <ellipse
+                  v-if="region.zones[0].shape === 'circle'"
+                  :cx="region.zones[0].x + region.zones[0].width / 2"
+                  :cy="region.zones[0].y + region.zones[0].height / 2"
+                  :rx="region.zones[0].width / 2"
+                  :ry="region.zones[0].height / 2"
+                  fill="white"
+                />
+                <rect
+                  v-else
+                  :x="region.zones[0].x"
+                  :y="region.zones[0].y"
+                  :width="region.zones[0].width"
+                  :height="region.zones[0].height"
+                  fill="white"
+                />
+              </g>
+
+              <g v-else-if="region.zones.length === 3" :clip-path="`url(#clip-${region.zones[2].id})`">
+                <g :clip-path="`url(#clip-${region.zones[1].id})`">
+                  <ellipse
+                    v-if="region.zones[0].shape === 'circle'"
+                    :cx="region.zones[0].x + region.zones[0].width / 2"
+                    :cy="region.zones[0].y + region.zones[0].height / 2"
+                    :rx="region.zones[0].width / 2"
+                    :ry="region.zones[0].height / 2"
+                    fill="white"
+                  />
+                  <rect
+                    v-else
+                    :x="region.zones[0].x"
+                    :y="region.zones[0].y"
+                    :width="region.zones[0].width"
+                    :height="region.zones[0].height"
+                    fill="white"
+                  />
+                </g>
+              </g>
+
+              <!-- Excluded subtracts -->
+              <template v-for="exZone in region.excludedZones" :key="`ex-${exZone.id}`">
+                <ellipse
+                  v-if="exZone.shape === 'circle'"
+                  :cx="exZone.x + exZone.width / 2"
+                  :cy="exZone.y + exZone.height / 2"
+                  :rx="exZone.width / 2"
+                  :ry="exZone.height / 2"
+                  fill="black"
+                />
+                <rect
+                  v-else
+                  :x="exZone.x"
+                  :y="exZone.y"
+                  :width="exZone.width"
+                  :height="exZone.height"
+                  fill="black"
+                />
+              </template>
+            </mask>
           </defs>
           <rect width="900" height="520" fill="url(#vl-dots)" />
 
@@ -304,32 +405,58 @@
             </template>
           </g>
 
+          <!-- Overlaps (clickable regions) -->
+          <path
+            v-for="region in exactRegions"
+            :key="`${region.id}-hit`"
+            :d="region.maskPath"
+            :style="{
+              pointerEvents: tool === 'region' ? 'auto' : 'none',
+              cursor: tool === 'region' ? 'pointer' : 'default',
+              fill: 'rgba(255, 211, 51, 0.01)'
+            }"
+            @click.stop="selectRegion(region.id)"
+          />
+          <rect
+            v-for="region in exactRegions"
+            v-show="(selectedId === region.id && selectedKind === 'region') || highlightZone === region.id"
+            :key="`${region.id}-active`"
+            width="900"
+            height="520"
+            :mask="`url(#mask-${region.id})`"
+            style="fill: rgba(225, 95, 65, 0.48); pointer-events: none;"
+          />
+
           <!-- Overlap badges -->
-          <g
-            v-for="r in exactRegions"
-            :key="r.id"
-            :transform="`translate(${r.center.x}, ${r.center.y})`"
-          >
-            <rect
-              x="-26"
-              y="-16"
-              width="52"
-              height="32"
-              rx="9"
-              fill="var(--lm-surface)"
-              :stroke="r.value < 0 ? 'var(--lm-red)' : 'var(--lm-line)'"
-              stroke-width="2"
-              class="[filter:drop-shadow(1px_2px_0_rgba(26,24,20,0.15))]"
-            />
-            <text
-              text-anchor="middle"
-              dominant-baseline="central"
-              class="font-display text-[15px] font-[800] fill-lm-ink"
-              :class="{ 'fill-lm-red': r.value < 0 }"
+          <template v-if="overlap.enabled">
+            <g
+              v-for="r in exactRegions"
+              :key="r.id"
+              :transform="`translate(${r.center.x}, ${r.center.y})`"
+              style="pointer-events: auto; cursor: pointer;"
+              @click.stop="selectRegion(r.id)"
             >
-              {{ r.value }}
-            </text>
-          </g>
+              <rect
+                x="-26"
+                y="-16"
+                width="52"
+                height="32"
+                rx="9"
+                :fill="selectedId === r.id && selectedKind === 'region' ? 'var(--lm-yellow)' : 'var(--lm-surface)'"
+                :stroke="selectedId === r.id && selectedKind === 'region' ? 'var(--lm-ink)' : (r.value < 0 ? 'var(--lm-red)' : 'var(--lm-line)')"
+                :stroke-width="selectedId === r.id && selectedKind === 'region' ? 3 : 2"
+                class="[filter:drop-shadow(1px_2px_0_rgba(26,24,20,0.15))]"
+              />
+              <text
+                text-anchor="middle"
+                dominant-baseline="central"
+                class="font-display text-[15px] font-[800] fill-lm-ink"
+                :class="{ 'fill-lm-red': r.value < 0 }"
+              >
+                {{ r.value }}
+              </text>
+            </g>
+          </template>
 
           <!-- Empty state -->
           <text
@@ -346,7 +473,7 @@
       </div>
 
     <!-- Properties Panel -->
-    <div v-if="selectedZone || selectedElement" class="border-2 border-lm-line-soft rounded-[14px] bg-lm-surface p-4 flex flex-col gap-3.5 text-left">
+    <div v-if="selectedZone || selectedElement || selectedRegion" class="border-2 border-lm-line-soft rounded-[14px] bg-lm-surface p-4 flex flex-col gap-3.5 text-left">
       <!-- Header -->
       <div class="flex items-center justify-between border-b-2 border-lm-line-soft pb-2.5">
         <div class="flex items-center gap-2">
@@ -359,6 +486,10 @@
           <div v-else-if="selectedElement" class="flex items-center gap-1.5">
             <span class="font-display text-[12px] font-bold text-lm-ink">{{ selectedElement.label }}</span>
             <span class="font-mono text-[9px] text-lm-ink-3">({{ selectedElement.kind }})</span>
+          </div>
+          <div v-else-if="selectedRegion" class="flex items-center gap-1.5">
+            <span class="font-display text-[12px] font-bold text-lm-ink">{{ selectedRegion.label }}</span>
+            <span class="font-mono text-[9px] text-lm-ink-3">(Exact Region)</span>
           </div>
         </div>
         <button @click="clearSelection" class="font-display text-[10px] font-bold text-lm-ink-3 hover:text-lm-ink bg-transparent border-none cursor-pointer">✕ Close</button>
@@ -500,7 +631,12 @@
             <div>
               <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">On click → Highlight</p>
               <select v-model="selectedElementInteraction.targetZoneId" @change="onInteractionChange" class="w-full box-border font-display text-[12px] px-2.5 py-1.75 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink">
-                <option v-for="z in zones" :key="z.id" :value="z.id">{{ z.label }}</option>
+                <optgroup label="Zones">
+                  <option v-for="z in zones" :key="z.id" :value="z.id">{{ z.label }}</option>
+                </optgroup>
+                <optgroup v-if="exactRegions.length > 0" label="Overlap Regions">
+                  <option v-for="r in exactRegions" :key="r.id" :value="r.id">{{ r.label }}</option>
+                </optgroup>
               </select>
             </div>
           </template>
@@ -523,20 +659,55 @@
           </button>
         </div>
       </div>
+
+      <!-- Region Properties Grid -->
+      <div v-else-if="selectedRegion" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Col 1: Basic Info -->
+        <div class="flex flex-col gap-3">
+          <div>
+            <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Label</p>
+            <input
+              :value="selectedRegion.label"
+              @input="updateRegionLabel(selectedRegion.id, $event.target.value)"
+              class="w-full box-border font-display text-[12px] px-2.5 py-1.75 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink"
+            />
+          </div>
+          <div>
+            <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Value (Computed)</p>
+            <div class="w-full box-border font-display text-[12px] px-2.5 py-1.75 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft text-lm-ink-3 select-none">
+              {{ selectedRegion.value }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Col 2 & 3: Feedback -->
+        <div class="flex flex-col gap-3 md:col-span-2">
+          <div>
+            <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Region feedback</p>
+            <textarea
+              :value="selectedRegion.feedback || ''"
+              @input="updateRegionFeedback(selectedRegion.id, $event.target.value)"
+              rows="3"
+              placeholder="Shown when this overlap region is clicked…"
+              class="w-full box-border font-display text-[12px] px-2.5 py-1.75 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink resize-y"
+            />
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Overlap values section -->
-    <div v-if="overlap?.enabled && overlap.inputs?.length > 0" class="border-2 border-lm-line-soft rounded-[14px] bg-[#fffdf8] overflow-hidden">
+    <div v-if="overlap?.sourceZoneIds?.length > 0" class="border-2 border-lm-line-soft rounded-[14px] bg-[#fffdf8] overflow-hidden">
       <div class="flex items-center justify-between p-[10px_14px] border-b-2 border-lm-line-soft bg-lm-bg-soft">
         <div class="flex items-center gap-2">
           <span class="w-[22px] h-[22px] rounded-[7px] bg-lm-purple-soft border-2 border-lm-line grid place-items-center font-math text-[13px] font-bold italic text-lm-purple">∩</span>
           <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-0">Overlap values</p>
         </div>
-        <span class="font-mono text-[9px] text-lm-ink-3">Inclusion-exclusion</span>
+        <span v-if="overlap.enabled" class="font-mono text-[9px] text-lm-ink-3">Inclusion-exclusion</span>
       </div>
 
       <div class="p-3.5">
-        <div class="flex flex-wrap gap-2.5 mb-3.5">
+        <div v-if="overlap.enabled" class="flex flex-wrap gap-2.5 mb-3.5">
           <div
             v-for="inp_item in overlap.inputs"
             :key="inp_item.id"
@@ -564,8 +735,12 @@
             <div
               v-for="r in exactRegions"
               :key="r.id"
-              class="flex items-center gap-2 p-[6px_12px] border-2 border-lm-line-soft rounded-[10px] bg-lm-bg-soft"
-              :class="{ 'border-lm-red bg-lm-red-soft': r.value < 0 }"
+              class="flex items-center gap-2 p-[6px_12px] border-2 border-lm-line-soft rounded-[10px] cursor-pointer transition-all duration-120 bg-lm-surface"
+              :class="{
+                'border-lm-line bg-lm-yellow shadow-stamp-sm': selectedId === r.id && selectedKind === 'region',
+                'border-lm-red bg-lm-red-soft': r.value < 0 && !(selectedId === r.id && selectedKind === 'region')
+              }"
+              @click="selectRegion(r.id)"
             >
               <!-- Zone dots -->
               <div class="flex">
@@ -691,7 +866,7 @@
 import { ref, computed, watch } from 'vue'
 import MonoLabel from '../MonoLabel.vue'
 import AdminIcon from '../AdminIcon.vue'
-import { ensureVisualOverlapValues } from '@/features/courses/types/interactive'
+import { ensureVisualOverlapValues, generatedOverlapRegions } from '@/features/courses/types/interactive'
 
 const props = defineProps({
   config: {
@@ -712,8 +887,8 @@ const VL_PRESETS = [
     ], elements:[], interactions:[],
     overlap:{ enabled:true, sourceZoneIds:['zone_a','zone_b'],
       inputs:[
-        { id:'A', label:'n(A)', zoneIds:['zone_a'], value:11, kind:'total' },
-        { id:'B', label:'n(B)', zoneIds:['zone_b'], value:9, kind:'total' },
+        { id:'A_ONLY', label:'n(A)', zoneIds:['zone_a'], value:11, kind:'total' },
+        { id:'B_ONLY', label:'n(B)', zoneIds:['zone_b'], value:9, kind:'total' },
         { id:'A_AND_B', label:'n(A∩B)', zoneIds:['zone_a','zone_b'], value:3, kind:'intersection' },
       ]},
     feedback:{ success:'Correct! The Venn regions match.', failure:'Check set totals and the intersection.' },
@@ -726,13 +901,13 @@ const VL_PRESETS = [
     ], elements:[], interactions:[],
     overlap:{ enabled:true, sourceZoneIds:['zone_a','zone_b','zone_c'],
       inputs:[
-        { id:'A', label:'n(A)', zoneIds:['zone_a'], value:15, kind:'total' },
-        { id:'B', label:'n(B)', zoneIds:['zone_b'], value:12, kind:'total' },
-        { id:'C', label:'n(C)', zoneIds:['zone_c'], value:10, kind:'total' },
+        { id:'A_ONLY', label:'n(A)', zoneIds:['zone_a'], value:15, kind:'total' },
+        { id:'B_ONLY', label:'n(B)', zoneIds:['zone_b'], value:12, kind:'total' },
+        { id:'C_ONLY', label:'n(C)', zoneIds:['zone_c'], value:10, kind:'total' },
         { id:'A_AND_B', label:'n(A∩B)', zoneIds:['zone_a','zone_b'], value:4, kind:'intersection' },
         { id:'A_AND_C', label:'n(A∩C)', zoneIds:['zone_a','zone_c'], value:3, kind:'intersection' },
         { id:'B_AND_C', label:'n(B∩C)', zoneIds:['zone_b','zone_c'], value:2, kind:'intersection' },
-        { id:'ABC', label:'n(A∩B∩C)', zoneIds:['zone_a','zone_b','zone_c'], value:1, kind:'intersection' },
+        { id:'A_AND_B_AND_C', label:'n(A∩B∩C)', zoneIds:['zone_a','zone_b','zone_c'], value:1, kind:'intersection' },
       ]},
     feedback:{ success:'All regions match!', failure:'Check totals and intersections carefully.' },
   },
@@ -788,6 +963,7 @@ watch(() => props.config, (newVal) => {
 const selectedZone = computed(() => selectedKind.value === 'zone' ? zones.value.find(z => z.id === selectedId.value) : null)
 const selectedElement = computed(() => selectedKind.value === 'element' ? elements.value.find(e => e.id === selectedId.value) : null)
 const selectedElementInteraction = computed(() => selectedElement.value ? interactions.value.find(i => i.triggerId === selectedElement.value.id) : null)
+const selectedRegion = computed(() => selectedKind.value === 'region' ? exactRegions.value.find(r => r.id === selectedId.value) : null)
 
 function applyPreset(preset) {
   activePreset.value = preset.id
@@ -804,14 +980,46 @@ function applyPreset(preset) {
 }
 
 function emitChange() {
+  const sourceZoneIds = overlap.value?.sourceZoneIds?.length
+    ? overlap.value.sourceZoneIds
+    : zones.value.slice(0, 5).map(z => z.id)
+
+  const updatedOverlap = overlap.value ? {
+    ...overlap.value,
+    sourceZoneIds
+  } : {
+    enabled: false,
+    sourceZoneIds,
+    inputs: [],
+    values: []
+  }
+
+  if (sourceZoneIds.length > 0 && (!updatedOverlap.values || updatedOverlap.values.length === 0)) {
+    const tempConfig = {
+      type: 'VISUAL_LAYER',
+      canvas: { width: 900, height: 520 },
+      zones: zones.value,
+      elements: elements.value,
+      interactions: interactions.value,
+      overlap: updatedOverlap
+    }
+    const tempOverlap = ensureVisualOverlapValues(tempConfig, sourceZoneIds)
+    updatedOverlap.values = tempOverlap.values.map(v => ({
+      ...v,
+      feedback: v.feedback ?? ''
+    }))
+    updatedOverlap.inputs = tempOverlap.inputs
+    overlap.value = updatedOverlap
+  }
+
   emit('change', {
     type: 'VISUAL_LAYER',
-    mode: overlap.value?.enabled ? 'PRACTICE' : 'VISUALIZATION',
+    mode: updatedOverlap.enabled ? 'PRACTICE' : 'VISUALIZATION',
     canvas: { width: 900, height: 520, backgroundText: '' },
     zones: zones.value,
     elements: elements.value,
     interactions: interactions.value,
-    overlap: overlap.value,
+    overlap: updatedOverlap,
     feedback: feedback.value
   })
 }
@@ -819,6 +1027,12 @@ function emitChange() {
 function selectZone(id) {
   selectedId.value = id
   selectedKind.value = 'zone'
+  highlightZone.value = null
+}
+
+function selectRegion(id) {
+  selectedId.value = id
+  selectedKind.value = 'region'
   highlightZone.value = null
 }
 
@@ -1120,11 +1334,15 @@ function updateSelectedZoneColor(c) {
 }
 
 function onZoneChange() {
-  if (overlap.value?.enabled) {
-    overlap.value = ensureVisualOverlapValues({
-      zones: zones.value,
-      overlap: overlap.value
-    }, overlap.value.sourceZoneIds)
+  if (overlap.value) {
+    const isEnabled = overlap.value.enabled ?? false
+    overlap.value = {
+      ...ensureVisualOverlapValues({
+        zones: zones.value,
+        overlap: overlap.value
+      }, overlap.value.sourceZoneIds),
+      enabled: isEnabled
+    }
   }
   emitChange()
 }
@@ -1132,14 +1350,16 @@ function onZoneChange() {
 function deleteZone(id) {
   zones.value = zones.value.filter(z => z.id !== id)
   interactions.value = interactions.value.filter(i => i.targetZoneId !== id)
-  if (overlap.value?.sourceZoneIds) {
-    overlap.value.sourceZoneIds = overlap.value.sourceZoneIds.filter(s => s !== id)
-  }
-  if (overlap.value?.enabled) {
-    overlap.value = ensureVisualOverlapValues({
-      zones: zones.value,
-      overlap: overlap.value
-    }, overlap.value.sourceZoneIds)
+  if (overlap.value) {
+    const nextSources = (overlap.value.sourceZoneIds || []).filter(s => s !== id)
+    const isEnabled = overlap.value.enabled ?? false
+    overlap.value = {
+      ...ensureVisualOverlapValues({
+        zones: zones.value,
+        overlap: overlap.value
+      }, nextSources),
+      enabled: isEnabled
+    }
   }
   if (selectedId.value === id) clearSelection()
   emitChange()
@@ -1160,11 +1380,16 @@ function addZone() {
     highlightOpacity: 0.82
   }
   zones.value.push(newZone)
-  if (overlap.value?.enabled) {
-    overlap.value = ensureVisualOverlapValues({
-      zones: zones.value,
-      overlap: overlap.value
-    }, overlap.value.sourceZoneIds)
+  if (overlap.value) {
+    const nextSources = [...(overlap.value.sourceZoneIds || []), newZone.id].slice(0, 5)
+    const isEnabled = overlap.value.enabled ?? false
+    overlap.value = {
+      ...ensureVisualOverlapValues({
+        zones: zones.value,
+        overlap: overlap.value
+      }, nextSources),
+      enabled: isEnabled
+    }
   }
   selectZone(newZone.id)
   emitChange()
@@ -1232,10 +1457,14 @@ function toggleOverlapSource(zoneId, enabled) {
   // Keep unique and limit to max 5
   nextSources = [...new Set(nextSources)].slice(0, 5)
 
-  overlap.value = ensureVisualOverlapValues({
-    zones: zones.value,
-    overlap: overlap.value
-  }, nextSources)
+  const isEnabled = overlap.value?.enabled ?? false
+  overlap.value = {
+    ...ensureVisualOverlapValues({
+      zones: zones.value,
+      overlap: overlap.value
+    }, nextSources),
+    enabled: isEnabled
+  }
 
   emitChange()
 }
@@ -1248,53 +1477,62 @@ function onFeedbackChange() {
   emitChange()
 }
 
-// Overlap math
-function vlCombinations(ids) {
-  const r = []
-  for (let m = 1; m < (1 << ids.length); m++) {
-    r.push(ids.filter((_, i) => m & (1 << i)))
-  }
-  return r
-}
-
-function vlExactValues(inputs, sourceIds, zonesList) {
-  const combos = vlCombinations(sourceIds)
-  return combos.map(zids => {
-    let val = 0
-    combos.forEach(other => {
-      if (zids.every(id => other.includes(id))) {
-         const inp = inputs.find(i => i.zoneIds.length === other.length && other.every(id => i.zoneIds.includes(id)))
-         val += ((other.length - zids.length) % 2 === 0 ? 1 : -1) * (inp ? inp.value : 0)
+function updateRegionLabel(regionId, newLabel) {
+  if (!overlap.value) return
+  if (!overlap.value.values) overlap.value.values = []
+  
+  let rVal = overlap.value.values.find(v => v.id === regionId)
+  if (!rVal) {
+    const exReg = exactRegions.value.find(r => r.id === regionId)
+    if (exReg) {
+      rVal = {
+        id: regionId,
+        label: newLabel,
+        zoneIds: [...exReg.zoneIds],
+        value: exReg.value,
+        feedback: ''
       }
-    })
-    const labels = zids.map(id => zonesList.find(z => z.id === id)?.label || id.replace('zone_', '').toUpperCase())
-    const label = labels.length === 1 ? `${labels[0]} only` : labels.join(' ∩ ')
-    return { zoneIds: zids, value: val, label, id: zids.join('_') }
-  })
+      overlap.value.values.push(rVal)
+    }
+  } else {
+    rVal.label = newLabel
+  }
+  emitChange()
 }
 
-function vlRegionCenter(regionIds, allZones) {
-  const inc = allZones.filter(z => regionIds.includes(z.id))
-  const exc = allZones.filter(z => !regionIds.includes(z.id))
-  if (!inc.length) return { x: 450, y: 260 }
-  const cx = inc.reduce((s, z) => s + z.x + z.width / 2, 0) / inc.length
-  const cy = inc.reduce((s, z) => s + z.y + z.height / 2, 0) / inc.length
-  if (!exc.length) return { x: cx, y: cy }
-  const ex = exc.reduce((s, z) => s + z.x + z.width / 2, 0) / exc.length
-  const ey = exc.reduce((s, z) => s + z.y + z.height / 2, 0) / exc.length
-  const dx = cx - ex
-  const dy = cy - ey
-  const len = Math.sqrt(dx * dx + dy * dy) || 1
-  const push = inc.length === 1 ? 55 : 22
-  return { x: cx + (dx / len) * push, y: cy + (dy / len) * push }
+function updateRegionFeedback(regionId, newFeedback) {
+  if (!overlap.value) return
+  if (!overlap.value.values) overlap.value.values = []
+  
+  let rVal = overlap.value.values.find(v => v.id === regionId)
+  if (!rVal) {
+    const exReg = exactRegions.value.find(r => r.id === regionId)
+    if (exReg) {
+      rVal = {
+        id: regionId,
+        label: exReg.label,
+        zoneIds: [...exReg.zoneIds],
+        value: exReg.value,
+        feedback: newFeedback
+      }
+      overlap.value.values.push(rVal)
+    }
+  } else {
+    rVal.feedback = newFeedback
+  }
+  emitChange()
 }
 
 const exactRegions = computed(() => {
-  if (!overlap.value?.enabled || !overlap.value.inputs?.length) return []
-  const sourceZones = zones.value.filter(z => overlap.value.sourceZoneIds?.includes(z.id))
-  if (!sourceZones.length) return []
-  const exact = vlExactValues(overlap.value.inputs, overlap.value.sourceZoneIds, zones.value)
-  return exact.map(r => ({ ...r, center: vlRegionCenter(r.zoneIds, sourceZones) }))
+  if (!overlap.value || !overlap.value.sourceZoneIds?.length) return []
+  return generatedOverlapRegions({
+    type: 'VISUAL_LAYER',
+    canvas: { width: 900, height: 520 },
+    zones: zones.value,
+    elements: elements.value,
+    interactions: interactions.value,
+    overlap: overlap.value
+  })
 })
 </script>
 
