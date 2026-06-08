@@ -378,11 +378,33 @@ function quizOptionLetter(option: QuizConfig['options'][number], index: number) 
 function runVisualInteraction(triggerId: string) {
   if (props.config?.type !== 'VISUAL_LAYER') return
   const interaction = props.config.interactions.find((item) => item.triggerId === triggerId)
-  const targetZoneId = interaction?.effect === 'HIGHLIGHT_ZONE' ? interaction.targetZoneId ?? null : null
-  const targetZone = props.config.zones.find((zone) => zone.id === targetZoneId)
-  highlightedZoneId.value = targetZoneId
-  highlightedOverlapId.value = null
-  visualFeedback.value = interaction?.feedback || targetZone?.feedback || ''
+  const targetId = interaction?.effect === 'HIGHLIGHT_ZONE' ? interaction.targetZoneId ?? null : null
+
+  if (targetId) {
+    const isZone = props.config.zones.some((zone) => zone.id === targetId)
+    if (isZone) {
+      highlightedZoneId.value = targetId
+      highlightedOverlapId.value = null
+      const targetZone = props.config.zones.find((zone) => zone.id === targetId)
+      visualFeedback.value = interaction?.feedback || targetZone?.feedback || ''
+    } else {
+      const regions = generatedOverlapRegions(props.config)
+      const targetRegion = regions.find((region) => region.id === targetId)
+      if (targetRegion) {
+        highlightedZoneId.value = null
+        highlightedOverlapId.value = targetId
+        visualFeedback.value = interaction?.feedback || targetRegion.feedback || targetRegion.label
+      } else {
+        highlightedZoneId.value = null
+        highlightedOverlapId.value = null
+        visualFeedback.value = interaction?.feedback || ''
+      }
+    }
+  } else {
+    highlightedZoneId.value = null
+    highlightedOverlapId.value = null
+    visualFeedback.value = interaction?.feedback || ''
+  }
 }
 
 function runVisualOverlapRegion(regionId: string) {
@@ -926,6 +948,107 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
               >
                 <path d="M 0 2 L 8 5 L 0 8 z" fill="currentColor" />
               </marker>
+
+              <!-- Zone ClipPaths -->
+              <clipPath v-for="zone in (config as VisualLayerConfig).zones" :key="`clip-${zone.id}`" :id="`clip-${zone.id}`">
+                <ellipse
+                  v-if="zone.shape === 'circle'"
+                  :cx="zone.x + zone.width / 2"
+                  :cy="zone.y + zone.height / 2"
+                  :rx="zone.width / 2"
+                  :ry="zone.height / 2"
+                />
+                <rect
+                  v-else
+                  :x="zone.x"
+                  :y="zone.y"
+                  :width="zone.width"
+                  :height="zone.height"
+                  :rx="10"
+                />
+              </clipPath>
+
+              <!-- Region Masks -->
+              <mask v-for="region in visualOverlapRegions" :key="`mask-${region.id}`" :id="`mask-${region.id}`">
+                <rect x="0" y="0" :width="(config as VisualLayerConfig).canvas.width" :height="(config as VisualLayerConfig).canvas.height" fill="black" />
+                <!-- Included intersection -->
+                <ellipse
+                  v-if="region.zones.length === 1 && region.zones[0].shape === 'circle'"
+                  :cx="region.zones[0].x + region.zones[0].width / 2"
+                  :cy="region.zones[0].y + region.zones[0].height / 2"
+                  :rx="region.zones[0].width / 2"
+                  :ry="region.zones[0].height / 2"
+                  fill="white"
+                />
+                <rect
+                  v-else-if="region.zones.length === 1 && region.zones[0].shape === 'rectangle'"
+                  :x="region.zones[0].x"
+                  :y="region.zones[0].y"
+                  :width="region.zones[0].width"
+                  :height="region.zones[0].height"
+                  fill="white"
+                />
+
+                <g v-else-if="region.zones.length === 2" :clip-path="`url(#clip-${region.zones[1].id})`">
+                  <ellipse
+                    v-if="region.zones[0].shape === 'circle'"
+                    :cx="region.zones[0].x + region.zones[0].width / 2"
+                    :cy="region.zones[0].y + region.zones[0].height / 2"
+                    :rx="region.zones[0].width / 2"
+                    :ry="region.zones[0].height / 2"
+                    fill="white"
+                  />
+                  <rect
+                    v-else
+                    :x="region.zones[0].x"
+                    :y="region.zones[0].y"
+                    :width="region.zones[0].width"
+                    :height="region.zones[0].height"
+                    fill="white"
+                  />
+                </g>
+
+                <g v-else-if="region.zones.length === 3" :clip-path="`url(#clip-${region.zones[2].id})`">
+                  <g :clip-path="`url(#clip-${region.zones[1].id})`">
+                    <ellipse
+                      v-if="region.zones[0].shape === 'circle'"
+                      :cx="region.zones[0].x + region.zones[0].width / 2"
+                      :cy="region.zones[0].y + region.zones[0].height / 2"
+                      :rx="region.zones[0].width / 2"
+                      :ry="region.zones[0].height / 2"
+                      fill="white"
+                    />
+                    <rect
+                      v-else
+                      :x="region.zones[0].x"
+                      :y="region.zones[0].y"
+                      :width="region.zones[0].width"
+                      :height="region.zones[0].height"
+                      fill="white"
+                    />
+                  </g>
+                </g>
+
+                <!-- Excluded subtracts -->
+                <template v-for="exZone in region.excludedZones" :key="`ex-${exZone.id}`">
+                  <ellipse
+                    v-if="exZone.shape === 'circle'"
+                    :cx="exZone.x + exZone.width / 2"
+                    :cy="exZone.y + exZone.height / 2"
+                    :rx="exZone.width / 2"
+                    :ry="exZone.height / 2"
+                    fill="black"
+                  />
+                  <rect
+                    v-else
+                    :x="exZone.x"
+                    :y="exZone.y"
+                    :width="exZone.width"
+                    :height="exZone.height"
+                    fill="black"
+                  />
+                </template>
+              </mask>
             </defs>
 
             <!-- Lines (Student Interactive View) -->
@@ -981,25 +1104,29 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
               style="pointer-events: auto;"
               @click.stop="runVisualOverlapRegion(region.id)"
             />
-            <path
+            <rect
               v-for="region in visualOverlapRegions"
               v-show="highlightedOverlapId === region.id"
               :key="`${region.id}-active`"
-              :d="region.maskPath"
+              width="100%"
+              height="100%"
+              :mask="`url(#mask-${region.id})`"
               class="visual-overlap-active"
             />
-            <g
-              v-for="region in visualOverlapRegions"
-              :key="`${region.id}-label`"
-              class="visual-overlap-label"
-              :class="{ 'visual-overlap-label--active': highlightedOverlapId === region.id }"
-              :transform="`translate(${region.center.x}, ${region.center.y})`"
-              style="pointer-events: auto;"
-              @click.stop="runVisualOverlapRegion(region.id)"
-            >
-              <rect x="-26" y="-16" width="52" height="32" rx="8" />
-              <text text-anchor="middle" dominant-baseline="central">{{ region.value }}</text>
-            </g>
+            <template v-if="config.overlap?.enabled">
+              <g
+                v-for="region in visualOverlapRegions"
+                :key="`${region.id}-label`"
+                class="visual-overlap-label"
+                :class="{ 'visual-overlap-label--active': highlightedOverlapId === region.id }"
+                :transform="`translate(${region.center.x}, ${region.center.y})`"
+                style="pointer-events: auto;"
+                @click.stop="runVisualOverlapRegion(region.id)"
+              >
+                <rect x="-26" y="-16" width="52" height="32" rx="8" />
+                <text text-anchor="middle" dominant-baseline="central">{{ region.value }}</text>
+              </g>
+            </template>
           </svg>
         </div>
       </div>

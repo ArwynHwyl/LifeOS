@@ -635,14 +635,31 @@ export function overlapRegionMaskPath(regionZoneIds: string[], sourceZones: Visu
 }
 
 export function generatedOverlapRegions(config: VisualLayerConfig): GeneratedOverlapRegion[] {
-  if (!config.overlap?.enabled) return []
-  const values = config.overlap.inputs?.length
-    ? deriveExactOverlapValues(config.overlap.inputs, config.overlap.sourceZoneIds, config.zones, config.overlap.values)
-    : config.overlap.values
-  const sourceZones = config.overlap.sourceZoneIds
+  if (!config.overlap) return []
+  const sourceZoneIds = config.overlap.sourceZoneIds
+  if (!sourceZoneIds || sourceZoneIds.length === 0) return []
+
+  const sources = sourceZoneIds.filter((zoneId, index, all) => all.indexOf(zoneId) === index && config.zones.some((zone) => zone.id === zoneId)).slice(0, 5)
+  const combinations = overlapCombinations(sources)
+
+  let values = config.overlap.values
+  if (!values || values.length === 0 || config.overlap.enabled) {
+    const inputs = config.overlap.inputs?.length
+      ? config.overlap.inputs
+      : combinations.map((zoneIds) => ({
+          id: overlapRegionId(zoneIds),
+          label: overlapInputLabel(zoneIds, config.zones),
+          zoneIds,
+          value: 0,
+          kind: zoneIds.length === 1 ? 'total' as const : 'intersection' as const,
+        }))
+    values = deriveExactOverlapValues(inputs, sources, config.zones, config.overlap.values)
+  }
+
+  const sourceZones = sources
     .map((zoneId) => config.zones.find((zone) => zone.id === zoneId))
     .filter((zone): zone is VisualLayerZone => Boolean(zone))
-    .slice(0, 5)
+
   const maskPathById = new Map(values.map((value) => [
     value.id,
     overlapRegionMaskPath(value.zoneIds, sourceZones, config.canvas),
