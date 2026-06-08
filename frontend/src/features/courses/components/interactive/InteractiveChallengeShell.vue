@@ -21,18 +21,8 @@ const typeLabel = computed(() => {
 
 const effectiveMode = computed(() => props.interactionType === 'QUIZ' ? 'PRACTICE' : props.mode)
 
-const statusLabel = computed(() => {
-  if (effectiveMode.value !== 'PRACTICE') {
-    if (props.status === 'MASTERED') return 'Explored'
-    if (props.status === 'TRIED') return 'Explored'
-    return 'Not explored'
-  }
-  if (props.status === 'MASTERED') return 'Mastered'
-  if (props.status === 'TRIED') return 'In progress'
-  return 'Not started'
-})
-
 const eyebrowLabel = computed(() => effectiveMode.value === 'PRACTICE' ? 'Challenge' : 'Explore')
+const headingLabel = computed(() => `${eyebrowLabel.value}: ${typeLabel.value}`)
 
 const feedbackLabel = computed(() => effectiveMode.value === 'PRACTICE'
   ? 'Mastered. You can keep exploring or move to the next lesson.'
@@ -41,95 +31,152 @@ const feedbackLabel = computed(() => effectiveMode.value === 'PRACTICE'
 </script>
 
 <template>
-  <section class="challenge-card" :class="`challenge-card--${status.toLowerCase().replace('_', '-')}`">
-    <header class="challenge-card__header">
-      <div>
-        <span class="challenge-card__eyebrow">{{ eyebrowLabel }}</span>
-        <h2>{{ typeLabel }}</h2>
+  <section class="challenge-section" :class="`challenge-section--${status.toLowerCase().replace('_', '-')}`">
+    <header class="challenge-section__header">
+      <div class="challenge-section__title-row">
+        <span class="challenge-section__type">{{ headingLabel }}</span>
       </div>
-      <span class="challenge-card__status">{{ statusLabel }}</span>
+      <span class="challenge-section__status">Interactive</span>
     </header>
-    <p class="challenge-card__objective">{{ objective }}</p>
-    <slot />
-    <p v-if="status === 'MASTERED'" class="challenge-card__feedback">{{ feedbackLabel }}</p>
+
+    <div class="challenge-section__body">
+      <p class="challenge-section__objective">{{ objective }}</p>
+
+      <div class="challenge-section__content">
+        <slot />
+      </div>
+
+      <div v-if="status === 'MASTERED'" class="challenge-section__feedback">
+        <svg class="challenge-section__check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+        <p>{{ feedbackLabel }}</p>
+      </div>
+    </div>
   </section>
 </template>
 
 <style scoped>
-.challenge-card {
+.challenge-section {
   display: grid;
-  gap: 0.85rem;
   width: 100%;
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
   overflow: hidden;
   border: 2px solid #1a1814;
-  border-radius: 10px;
-  background: #fffdf8;
-  padding: 1rem;
+  border-radius: 22px;
+  background: #f4eee6;
   color: #1a1814;
-  box-shadow: 3px 3px 0 #1a1814;
+  box-shadow: 6px 6px 0 #1a1814;
 }
-.challenge-card--mastered {
-  border-color: #2f7d4f;
-  box-shadow: 3px 3px 0 #2f7d4f;
-}
-.challenge-card__header {
+
+.challenge-section__header {
   display: flex;
-  min-width: 0;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  min-height: 4.8rem;
+  border-bottom: 2px solid #1a1814;
+  background: #c94718;
+  padding: 1.15rem 1.55rem;
+  color: #fffdf8;
 }
-.challenge-card__header > div {
+.challenge-section__title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   min-width: 0;
 }
-.challenge-card__eyebrow {
-  display: block;
-  color: #6b6660;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 11px;
+.challenge-section__type {
+  font-family: "Bricolage Grotesque", "Plus Jakarta Sans", system-ui, sans-serif;
+  font-size: clamp(1.35rem, 2.6vw, 1.8rem);
   font-weight: 900;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  line-height: 1.1;
 }
-.challenge-card h2 {
-  margin: 0.1rem 0 0;
-  font-size: 1.05rem;
-  font-weight: 900;
-}
-.challenge-card__status {
-  flex: 0 0 auto;
-  border: 2px solid #1a1814;
+
+.challenge-section__status {
+  flex-shrink: 0;
   border-radius: 999px;
-  background: #fbf7ef;
-  padding: 0.22rem 0.65rem;
-  font-size: 12px;
+  background: rgba(255, 253, 248, 0.22);
+  padding: 0.35rem 0.8rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
   font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #fffdf8;
 }
-.challenge-card--tried .challenge-card__status {
-  background: #ffd333;
+.challenge-section__body {
+  display: grid;
+  gap: 1.3rem;
+  padding: 2.1rem 1.7rem 2rem;
 }
-.challenge-card--mastered .challenge-card__status {
-  background: #dff4df;
+
+.challenge-section__objective {
+  margin: 0;
+  color: #1a1814;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1.45;
+}
+
+.challenge-section__content {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.challenge-section__feedback {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 8px;
+  background: #edfbf2;
+  padding: 0.6rem 0.85rem;
+}
+.challenge-section__check-icon {
+  width: 0.95rem;
+  height: 0.95rem;
   color: #245e3e;
+  flex-shrink: 0;
 }
-.challenge-card__objective,
-.challenge-card__feedback {
+.challenge-section__feedback p {
   min-width: 0;
   margin: 0;
-  color: #4f4942;
-  font-size: 13px;
-  font-weight: 750;
-  line-height: 1.55;
+  color: #245e3e;
+  font-size: 12.5px;
+  font-weight: 800;
+  line-height: 1.5;
 }
-.challenge-card :slotted(*) {
+
+/* Strip borders from nested interactive preview */
+.challenge-section :slotted(*) {
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
 }
-.challenge-card__feedback {
-  color: #245e3e;
+.challenge-section :deep(.interactive-preview) {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 720px) {
+  .challenge-section {
+    border-radius: 16px;
+  }
+  .challenge-section__header {
+    min-height: 0;
+    padding: 1rem;
+  }
+  .challenge-section__body {
+    padding: 1.35rem 1rem 1.2rem;
+  }
+  .challenge-section__status {
+    font-size: 9px;
+    padding: 0.3rem 0.55rem;
+  }
 }
 </style>
