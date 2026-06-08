@@ -268,9 +268,27 @@ public class DevSeedConfig {
                 0,
                 1,
                 1,
-                InteractionType.NONE,
-                null,
-                null
+                InteractionType.QUIZ,
+                "Classify the random variable.",
+                validate(interactiveConfigService, InteractionType.QUIZ, """
+                        {
+                          "type": "QUIZ",
+                          "mode": "PRACTICE",
+                          "title": "Classify variables",
+                          "prompt": "Classify the random variable.",
+                          "question": "The number of emails you receive tomorrow.",
+                          "options": [
+                            { "id": "discrete", "label": "Discrete", "correct": true },
+                            { "id": "continuous", "label": "Continuous", "correct": false }
+                          ],
+                          "explanation": "The number of emails is countable (0, 1, 2, ...), so it is a discrete random variable.",
+                          "successCondition": { "kind": "QUIZ_CORRECT_OPTION" },
+                          "feedback": {
+                            "success": "Correct. Since you can count the number of emails, it is discrete.",
+                            "failure": "Not quite. Can you receive 1.5 emails, or is it countable?"
+                          }
+                        }
+                        """)
         ));
         probabilityModule.addSubTopic(subTopic(
                 "Discrete Probability Distributions",
