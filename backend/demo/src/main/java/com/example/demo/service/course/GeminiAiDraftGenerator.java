@@ -42,7 +42,7 @@ class GeminiAiDraftGenerator implements AiDraftGenerator {
                     {
                       "title": "short learner-facing title",
                       "content": "bite-size lesson content grounded in the extracted source text",
-                      "interactionType": "NONE | GRAPH_2D | FORMULA_EXPLORER | VISUAL_LAYER | QUIZ",
+                      "interactionType": "NONE | GRAPH_2D | FORMULA_EXPLORER | VISUAL_LAYER | QUIZ | LOGIC_FLOW",
                       "interactionPrompt": "optional implementation idea for the interaction",
                       "interactionConfig": {
                         "type": "QUIZ",
@@ -61,13 +61,14 @@ class GeminiAiDraftGenerator implements AiDraftGenerator {
                 Requirements:
                 - Create 3 to 6 subTopics unless the admin requirements ask for another count.
                 - Add an interaction only when it improves the lesson; otherwise use interactionType NONE and omit interactionConfig.
-                - Use only these generated interaction types: QUIZ, GRAPH_2D, FORMULA_EXPLORER, VISUAL_LAYER, or NONE.
+                - Use only these generated interaction types: QUIZ, GRAPH_2D, FORMULA_EXPLORER, VISUAL_LAYER, LOGIC_FLOW, or NONE.
                 - interactionConfig.type must exactly match interactionType.
                 - Compact config examples:
                   QUIZ: {"type":"QUIZ","title":"Quiz","question":"Pick one","options":[{"id":"a","label":"A","correct":true},{"id":"b","label":"B","correct":false}],"explanation":"Because."}
                   GRAPH_2D: {"type":"GRAPH_2D","title":"Graph","expression":"2 * x + 1","xMin":-5,"xMax":5,"yMin":-10,"yMax":10,"sampleCount":100}
                   FORMULA_EXPLORER: {"type":"FORMULA_EXPLORER","title":"Formula","formula":"a * b","variables":[{"name":"a","label":"A","min":1,"max":10,"step":1,"initial":2},{"name":"b","label":"B","min":1,"max":10,"step":1,"initial":3}],"precision":2}
                   VISUAL_LAYER: {"type":"VISUAL_LAYER","title":"Venn visual","canvas":{"width":900,"height":520},"zones":[{"id":"zone_a","label":"A","shape":"circle","x":260,"y":130,"width":260,"height":260,"color":"#ffd333"},{"id":"zone_b","label":"B","shape":"circle","x":380,"y":130,"width":260,"height":260,"color":"#8fb3ff"}],"elements":[],"interactions":[],"overlap":{"enabled":true,"sourceZoneIds":["zone_a","zone_b"],"inputs":[{"id":"A_ONLY","label":"A","zoneIds":["zone_a"],"value":11,"kind":"total"},{"id":"B_ONLY","label":"B","zoneIds":["zone_b"],"value":9,"kind":"total"},{"id":"A_AND_B","label":"A intersect B","zoneIds":["zone_a","zone_b"],"value":3,"kind":"intersection"}]}}
+                  LOGIC_FLOW: {"type":"LOGIC_FLOW","kind":"SIMPLIFY","mode":"PRACTICE","title":"Simplify logic","start":"P -> Q","target":"!P | Q","allowedLaws":["IMPLICATION"],"feedback":{"success":"Correct!","failure":"Try again!"}}
                 - Use the selected source text as the factual basis.
                 - Keep each content field concise and readable for learners.
                 - Do not include markdown fences or any text outside JSON.
@@ -94,13 +95,13 @@ class GeminiAiDraftGenerator implements AiDraftGenerator {
                     {
                       "title": "short learner-facing module title",
                       "description": "brief module description",
-                      "interactionType": "NONE | GRAPH_2D | FORMULA_EXPLORER | VISUAL_LAYER | QUIZ | OTHER",
+                      "interactionType": "NONE | GRAPH_2D | FORMULA_EXPLORER | VISUAL_LAYER | QUIZ | LOGIC_FLOW | OTHER",
                       "interactionPrompt": "optional implementation idea for the interaction",
                       "subTopics": [
                         {
                           "title": "short learner-facing subtopic title",
                           "content": "bite-size lesson content grounded in the extracted source text",
-                          "interactionType": "NONE | GRAPH_2D | FORMULA_EXPLORER | VISUAL_LAYER | QUIZ",
+                          "interactionType": "NONE | GRAPH_2D | FORMULA_EXPLORER | VISUAL_LAYER | QUIZ | LOGIC_FLOW",
                           "interactionPrompt": "optional implementation idea for the interaction",
                           "interactionConfig": {
                             "type": "QUIZ",
@@ -122,13 +123,14 @@ class GeminiAiDraftGenerator implements AiDraftGenerator {
                 - Create 4 to 8 modules unless the admin prompt asks for another count.
                 - Create 3 to 6 subTopics per module unless the admin prompt asks for another count.
                 - Add subtopic interactions only when they improve the lesson; otherwise use interactionType NONE and omit interactionConfig.
-                - Use only these generated subtopic interaction types: QUIZ, GRAPH_2D, FORMULA_EXPLORER, VISUAL_LAYER, or NONE. Do not invent interaction types.
+                - Use only these generated subtopic interaction types: QUIZ, GRAPH_2D, FORMULA_EXPLORER, VISUAL_LAYER, LOGIC_FLOW, or NONE. Do not invent interaction types.
                 - interactionConfig.type must exactly match interactionType.
                 - Compact subtopic config examples:
                   QUIZ: {"type":"QUIZ","title":"Quiz","question":"Pick one","options":[{"id":"a","label":"A","correct":true},{"id":"b","label":"B","correct":false}],"explanation":"Because."}
                   GRAPH_2D: {"type":"GRAPH_2D","title":"Graph","expression":"2 * x + 1","xMin":-5,"xMax":5,"yMin":-10,"yMax":10,"sampleCount":100}
                   FORMULA_EXPLORER: {"type":"FORMULA_EXPLORER","title":"Formula","formula":"a * b","variables":[{"name":"a","label":"A","min":1,"max":10,"step":1,"initial":2},{"name":"b","label":"B","min":1,"max":10,"step":1,"initial":3}],"precision":2}
                   VISUAL_LAYER: {"type":"VISUAL_LAYER","title":"Venn visual","canvas":{"width":900,"height":520},"zones":[{"id":"zone_a","label":"A","shape":"circle","x":260,"y":130,"width":260,"height":260,"color":"#ffd333"},{"id":"zone_b","label":"B","shape":"circle","x":380,"y":130,"width":260,"height":260,"color":"#8fb3ff"}],"elements":[],"interactions":[],"overlap":{"enabled":true,"sourceZoneIds":["zone_a","zone_b"],"inputs":[{"id":"A_ONLY","label":"A","zoneIds":["zone_a"],"value":11,"kind":"total"},{"id":"B_ONLY","label":"B","zoneIds":["zone_b"],"value":9,"kind":"total"},{"id":"A_AND_B","label":"A intersect B","zoneIds":["zone_a","zone_b"],"value":3,"kind":"intersection"}]}}
+                  LOGIC_FLOW: {"type":"LOGIC_FLOW","kind":"SIMPLIFY","mode":"PRACTICE","title":"Simplify logic","start":"P -> Q","target":"!P | Q","allowedLaws":["IMPLICATION"],"feedback":{"success":"Correct!","failure":"Try again!"}}
                 - Use the selected source text as the factual basis.
                 - Do not include markdown fences or any text outside JSON.
                 """;

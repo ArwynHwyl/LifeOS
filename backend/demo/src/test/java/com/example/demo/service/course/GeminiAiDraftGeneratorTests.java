@@ -44,4 +44,19 @@ class GeminiAiDraftGeneratorTests {
         assertThat(subTopic.interactionType()).isEqualTo(InteractionType.GRAPH_2D);
         assertThat(objectMapper.readTree(subTopic.interactionConfig()).path("expression").asText()).isEqualTo("2 * x");
     }
+
+    @Test
+    void parsesSubTopicLogicFlowConfig() throws Exception {
+        @SuppressWarnings("unchecked")
+        List<GeneratedSubTopicDraft> subTopics = ReflectionTestUtils.invokeMethod(generator, "parseSubTopics", """
+                {"subTopics":[{"title":"Logic topic","content":"Lesson content","interactionType":"LOGIC_FLOW","interactionPrompt":"Simplify it","interactionConfig":{"type":"LOGIC_FLOW","kind":"SIMPLIFY","mode":"PRACTICE","title":"Simplify logic","start":"P -> Q","target":"!P | Q","allowedLaws":["IMPLICATION"],"feedback":{"success":"Correct!","failure":"Try again!"}}}]}
+                """);
+
+        assertThat(subTopics).hasSize(1);
+        GeneratedSubTopicDraft subTopic = subTopics.get(0);
+        assertThat(subTopic.interactionType()).isEqualTo(InteractionType.LOGIC_FLOW);
+        assertThat(subTopic.interactionPrompt()).isEqualTo("Simplify it");
+        assertThat(objectMapper.readTree(subTopic.interactionConfig()).path("kind").asText()).isEqualTo("SIMPLIFY");
+        assertThat(objectMapper.readTree(subTopic.interactionConfig()).path("start").asText()).isEqualTo("P -> Q");
+    }
 }
