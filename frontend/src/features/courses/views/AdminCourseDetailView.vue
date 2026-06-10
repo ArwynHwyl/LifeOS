@@ -22,6 +22,9 @@ import {
   createCourseModule,
   createModuleSubTopic,
   deleteAdminSubTopic,
+  listAiGenerationLogs,
+  requestCourseOutlineGeneration,
+  type AiGenerationLogDto,
   type AdminCourseDetailDto,
   type AdminDocumentSourceDto,
   type AdminModuleDto,
@@ -53,6 +56,8 @@ const aiRequirements     = ref('')
 const aiSubmitting       = ref(false)
 const aiPolling          = ref(false)
 const aiMessage          = ref('')
+const outlineGenerationLog = ref<AiGenerationLogDto | null>(null)
+const pollingOutline       = ref(false)
 
 // ── Layout state ──────────────────────────────────────────────────────────
 const outlineOpen  = ref(true)
@@ -154,7 +159,10 @@ watch(modules, (mods) => {
   }
 }, { immediate: true })
 
-onMounted(loadCourse)
+onMounted(async () => {
+  await loadCourse()
+  await checkActiveOutlineGeneration()
+})
 
 // ── Data loading (unchanged) ──────────────────────────────────────────────
 async function loadCourse() {
@@ -344,6 +352,97 @@ async function pollAiGeneration(logId: number) {
     aiMessage.value = 'AI generation is still running. Refresh this page in a moment.'
   } finally {
     aiPolling.value = false
+  }
+}
+
+async function checkActiveOutlineGeneration() {
+  try {
+    const logs = await listAiGenerationLogs(courseId.value)
+    const activeLog = logs.find(
+      (log) =>
+        log.type === 'COURSE_OUTLINE' &&
+        (log.status === 'PENDING' || log.status === 'RUNNING'),
+    )
+    if (activeLog) {
+      outlineGenerationLog.value = activeLog
+      pollOutlineGeneration(activeLog.id)
+    } else {
+      outlineGenerationLog.value = null
+    }
+  } catch (error) {
+    console.error('Error checking outline generation logs:', error)
+  }
+}
+
+async function pollOutlineGeneration(logId: number) {
+  pollingOutline.value = true
+  try {
+    for (let attempt = 0; attempt < 60; attempt += 1) {
+      await wait(1500)
+      const log = await getAiGenerationLog(logId)
+      outlineGenerationLog.value = log
+      if (log.status === 'SUCCESS') {
+        await loadCourse()
+        outlineGenerationLog.value = null
+        return
+      }
+      if (log.status === 'FAILED') {
+        return
+      }
+    }
+    if (
+      outlineGenerationLog.value &&
+      (outlineGenerationLog.value.status === 'PENDING' ||
+        outlineGenerationLog.value.status === 'RUNNING')
+    ) {
+      outlineGenerationLog.value.status = 'FAILED'
+      outlineGenerationLog.value.errorMessage =
+        'AI outline generation timed out. Please refresh or try again.'
+    }
+  } catch (error) {
+    console.error('Error polling outline generation:', error)
+  } finally {
+    pollingOutline.value = false
+  }
+}
+
+const retryingOutlineGen = ref(false)
+
+const isAiBusyError = computed(() => {
+  const msg = outlineGenerationLog.value?.errorMessage?.toLowerCase() || ''
+  return msg.includes('429') ||
+         msg.includes('503') ||
+         msg.includes('resource_exhausted') ||
+         msg.includes('quota') ||
+         msg.includes('rate limit') ||
+         msg.includes('too many requests') ||
+         msg.includes('service unavailable') ||
+         msg.includes('overloaded') ||
+         msg.includes('busy')
+})
+
+async function retryOutlineGeneration() {
+  if (!outlineGenerationLog.value) return
+  retryingOutlineGen.value = true
+  try {
+    const prev = outlineGenerationLog.value
+    const result = await requestCourseOutlineGeneration({
+      courseId: courseId.value,
+      documentSourceId: prev.documentSourceId,
+      prompt: prev.requirements || prev.prompt,
+      pageStart: prev.pageStart,
+      pageEnd: prev.pageEnd,
+    })
+    outlineGenerationLog.value = result
+    pollOutlineGeneration(result.id)
+  } catch (error) {
+    outlineGenerationLog.value = {
+      ...(outlineGenerationLog.value || {}),
+      status: 'FAILED',
+      errorMessage: getErrorMessage(error, 'Unable to restart AI generation.'),
+    } as AiGenerationLogDto
+  } finally {
+    retryingOutlineGen.value = false
   }
 }
 
@@ -647,8 +746,103 @@ function getErrorMessage(error: unknown, fallback: string) {
         <section class="relative flex flex-1 min-w-0 flex-col overflow-y-auto" style="background:#fffdf8">
           <div class="pointer-events-none absolute inset-0 bg-dot-grid opacity-40" />
 
+          <!-- AI Outline Generation Status Container -->
+          <div v-if="outlineGenerationLog" class="relative flex flex-1 items-center justify-center p-7 z-10">
+            <div class="w-full max-w-lg rounded-[18px] border-2 border-lm-line bg-white p-8 shadow-stamp-md text-center">
+              
+              <!-- State: PENDING or RUNNING -->
+              <div v-if="outlineGenerationLog.status === 'PENDING' || outlineGenerationLog.status === 'RUNNING'">
+                <!-- Pulsing AI Brain/Spark Icon -->
+                <div class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-[20px] border-2 border-lm-line bg-lm-yellow shadow-stamp-sm animate-bounce">
+                  <svg class="h-8 w-8 text-lm-ink animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z" />
+                  </svg>
+                </div>
+                
+                <h3 class="font-display text-[20px] font-extrabold text-lm-ink">AI Course Generation in Progress</h3>
+                <p class="mt-2 font-mono text-[11px] uppercase tracking-[0.1em] text-lm-ink-3">
+                  Status: <span class="rounded bg-lm-yellow-soft px-1.5 py-0.5 font-bold text-lm-ink">{{ outlineGenerationLog.status }}</span>
+                </p>
+
+                <!-- Animated loading bar -->
+                <div class="my-6 h-3 w-full overflow-hidden rounded-full border border-lm-line bg-lm-bg-soft relative">
+                  <div class="h-full bg-lm-yellow w-1/2 rounded-full absolute top-0 left-0 animate-loading-bar"></div>
+                </div>
+
+                <div class="space-y-3.5 text-left border-t border-lm-line-soft pt-5">
+                  <div>
+                    <span class="block font-mono text-[10px] font-bold uppercase tracking-[0.08em] text-lm-ink-3">Prompt / Requirements</span>
+                    <p class="mt-1 text-[12px] text-lm-ink-2 line-clamp-3 italic">"{{ outlineGenerationLog.prompt || outlineGenerationLog.requirements }}"</p>
+                  </div>
+                  <div class="flex justify-between text-[11px]">
+                    <div>
+                      <span class="block font-mono text-[9px] font-bold uppercase tracking-[0.08em] text-lm-ink-3">Pages analyzed</span>
+                      <span class="font-semibold text-lm-ink">{{ outlineGenerationLog.pageStart }} - {{ outlineGenerationLog.pageEnd }}</span>
+                    </div>
+                    <div>
+                      <span class="block font-mono text-[9px] font-bold uppercase tracking-[0.08em] text-lm-ink-3">Log Reference</span>
+                      <span class="font-mono text-lm-ink">#{{ outlineGenerationLog.id }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- State: FAILED -->
+              <div v-else-if="outlineGenerationLog.status === 'FAILED'">
+                <div class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-[20px] border-2 border-lm-line bg-lm-red-soft text-lm-red shadow-stamp-sm">
+                  <svg class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </div>
+                
+                <h3 class="font-display text-[20px] font-extrabold text-lm-ink">AI Course Outline Generation Failed</h3>
+                <p class="mt-1.5 text-[13px] text-lm-red font-medium leading-relaxed mb-4">{{ outlineGenerationLog.errorMessage || 'An unknown error occurred during generation.' }}</p>
+                
+                <!-- Busy/Rate-limited special prompt -->
+                <div v-if="isAiBusyError" class="mb-4 rounded-xl border-2 border-lm-rust bg-lm-rust-soft/50 p-4 text-left text-[12.5px] leading-relaxed text-lm-rust">
+                  <span class="font-bold flex items-center gap-1">⚠️ บริการ AI กำลังหนาแน่น (Gemini is overloaded)</span>
+                  <p class="mt-1 text-lm-ink-2 font-sans">ระบบ Google Gemini มีผู้ใช้งานจำนวนมากในขณะนี้ ทำให้เกินอัตราที่กำหนด (Rate Limit) กรุณารอสักครู่ (ประมาณ 1 นาที) แล้วกดปุ่ม <b>"Retry Gen Outline"</b> ด้านล่างเพื่อเริ่มสร้างอีกครั้งครับ</p>
+                </div>
+
+                <div class="mt-6 flex flex-wrap gap-2.5">
+                  <button 
+                    type="button" 
+                    class="h-10 flex-1 min-w-[80px] rounded-full border-2 border-lm-line bg-lm-surface px-4 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
+                    @click="outlineGenerationLog = null"
+                  >
+                    Close
+                  </button>
+                  <button 
+                    type="button" 
+                    class="h-10 flex-1 min-w-[100px] rounded-full border-2 border-lm-line bg-lm-bg-soft px-4 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
+                    @click="checkActiveOutlineGeneration"
+                  >
+                    Retry Check
+                  </button>
+                  <button 
+                    v-if="!retryingOutlineGen"
+                    type="button" 
+                    class="h-10 flex-1 min-w-[140px] rounded-full border-2 border-lm-line bg-lm-yellow px-4 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
+                    @click="retryOutlineGeneration"
+                  >
+                    Retry Gen Outline
+                  </button>
+                  <button 
+                    v-else
+                    disabled
+                    type="button" 
+                    class="h-10 flex-1 min-w-[140px] rounded-full border-2 border-lm-line bg-lm-yellow px-4 text-[13px] font-bold text-lm-ink opacity-50 cursor-not-allowed"
+                  >
+                    Retrying...
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
           <!-- Subtopic viewer / editor -->
-          <div v-if="selectedSubTopic" class="relative mx-auto w-full max-w-[840px] px-7 py-8">
+          <div v-else-if="selectedSubTopic" class="relative mx-auto w-full max-w-[840px] px-7 py-8">
 
             <!-- View mode -->
             <template v-if="!editingInCentre">
@@ -971,4 +1165,12 @@ function getErrorMessage(error: unknown, fallback: string) {
 .lesson-preview :deep(em) { font-style: italic; }
 .lesson-preview :deep(code) { border-radius: 4px; background: #f0ece4; color: #1a1814; padding: 0.1rem 0.3rem; font-size: 0.85em; }
 .lesson-preview :deep(img) { max-width: 100%; border-radius: 0.5rem; }
+
+@keyframes loading-bar {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+.animate-loading-bar {
+  animation: loading-bar 1.8s infinite linear;
+}
 </style>
