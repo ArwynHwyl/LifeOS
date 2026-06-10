@@ -120,6 +120,12 @@ async function loadCourse() {
 
 async function handleApprove() {
   if (!course.value || approving.value) return
+  if (newComments.value.length > 0) {
+    const proceed = window.confirm(
+      `You have ${newComments.value.length} draft comment${newComments.value.length === 1 ? '' : 's'} that will be discarded if you approve. Comments are only sent with a revision request (Reject).\n\nApprove anyway?`,
+    )
+    if (!proceed) return
+  }
   approving.value = true
   try {
     await approveTeacherCourse(course.value.id)
@@ -197,6 +203,16 @@ function getErrorMessage(error: unknown, fallback: string) {
 
         <!-- Approve / Reject -->
         <div v-if="course" class="flex items-center gap-2">
+          <span
+            v-if="newComments.length > 0"
+            class="inline-flex items-center gap-1.5 rounded-full border-2 border-dashed border-lm-rust bg-lm-surface px-2.5 py-1 font-mono text-[10px] font-bold text-lm-rust"
+            title="Draft comments are sent with your revision request (Reject)"
+          >
+            <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            {{ newComments.length }} draft{{ newComments.length === 1 ? '' : 's' }}
+          </span>
           <button
             type="button"
             class="inline-flex items-center gap-1.5 cursor-pointer rounded-lg border-2 border-lm-green bg-lm-green-soft px-3 py-1.5 text-[12px] font-semibold text-lm-green shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md disabled:cursor-not-allowed disabled:opacity-50"

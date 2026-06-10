@@ -756,7 +756,7 @@ function getErrorMessage(error: unknown, fallback: string) {
             <p class="font-mono text-[11px] uppercase tracking-[0.06em] text-lm-ink-3">Select a topic from the outline</p>
           </div>
 
-          <!-- ── Module Discussions (collapsible, always accessible) ── -->
+          <!-- ── Reviewer Feedback (collapsible, always accessible) ── -->
           <div class="relative mx-auto w-full max-w-[740px] shrink-0 px-7 pb-10">
             <button
               type="button"
@@ -764,7 +764,7 @@ function getErrorMessage(error: unknown, fallback: string) {
               @click="manageOpen = !manageOpen"
             >
               <div class="flex-1 border-t-2 border-lm-line-soft" />
-              <span class="font-mono text-[9px] font-bold uppercase tracking-[0.14em] text-lm-ink-3">Module Discussions</span>
+              <span class="font-mono text-[9px] font-bold uppercase tracking-[0.14em] text-lm-ink-3">Reviewer Feedback</span>
               <svg
                 class="h-3 w-3 text-lm-ink-3 transition-transform duration-200"
                 :class="manageOpen ? 'rotate-180' : ''"

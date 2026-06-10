@@ -36,7 +36,6 @@ watch(
 )
 
 const commentsMap = ref<Record<string, Comment[]>>({})
-const discussionOpenMap = ref<Record<number, boolean>>({})
 
 onMounted(loadComments)
 
@@ -106,13 +105,25 @@ function initials(name: string): string {
   return name.split(' ').map(w => w[0] ?? '').slice(0, 2).join('').toUpperCase()
 }
 
-function openDiscussion(modId: number) {
-  discussionOpenMap.value[modId] = true
+function moduleLevelComments(moduleId: number): Comment[] {
+  return (commentsMap.value[String(moduleId)] ?? []).filter((comment) => !comment.subTopicId)
 }
 
-function getSubTopicTitle(module: AdminModuleDto, subTopicId: number): string {
-  const st = module.subTopics?.find(s => s.id === subTopicId)
-  return st ? st.title : `Subtopic #${subTopicId}`
+function subTopicGroups(module: AdminModuleDto): Array<{ id: number; title: string; index: number; comments: Comment[] }> {
+  const comments = commentsMap.value[String(module.id)] ?? []
+  const sorted = [...(module.subTopics ?? [])].sort((a, b) => a.sortOrder - b.sortOrder)
+  const groups: Array<{ id: number; title: string; index: number; comments: Comment[] }> = []
+  sorted.forEach((subTopic, index) => {
+    const subTopicComments = comments.filter((comment) => comment.subTopicId === subTopic.id)
+    if (subTopicComments.length) {
+      groups.push({ id: subTopic.id, title: subTopic.title, index: index + 1, comments: subTopicComments })
+    }
+  })
+  return groups
+}
+
+function moduleCommentCount(moduleId: number): number {
+  return (commentsMap.value[String(moduleId)] ?? []).length
 }
 </script>
 
@@ -120,9 +131,9 @@ function getSubTopicTitle(module: AdminModuleDto, subTopicId: number): string {
   <section class="mb-5 rounded-[18px] border-2 border-lm-line bg-lm-surface p-5 shadow-stamp-sm">
     <!-- Header -->
     <div class="mb-4">
-      <h2 class="font-display text-[14px] font-bold text-lm-ink">Module Discussions</h2>
+      <h2 class="font-display text-[14px] font-bold text-lm-ink">Reviewer Feedback</h2>
       <p class="mt-1 font-mono text-[12px] font-medium text-lm-ink-3">
-        Discuss and add comments for each module
+        Comments from teacher reviews, grouped by module and subtopic
       </p>
     </div>
 
@@ -143,64 +154,39 @@ function getSubTopicTitle(module: AdminModuleDto, subTopicId: number): string {
           <span class="min-w-0 flex-1">
             <span class="block truncate font-display text-[13px] font-bold text-lm-ink">{{ module.title }}</span>
           </span>
+          <span
+            v-if="moduleCommentCount(module.id) > 0"
+            class="inline-flex items-center gap-1.5 rounded-full border-2 border-lm-line bg-lm-yellow/40 px-2.5 py-0.5 font-mono text-[10px] font-bold text-lm-ink"
+          >
+            <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            {{ moduleCommentCount(module.id) }}
+          </span>
         </div>
 
-        <!-- Discussion panel (always shown at bottom of each module card) -->
-        <div class="bg-lm-bg-soft" @click.stop>
-          <!-- "Open Discussion" button when closed -->
-          <div v-if="!discussionOpenMap[module.id]" class="px-4 py-3">
-            <button
-              type="button"
-              class="flex cursor-pointer items-center gap-2 rounded-[12px] border-2 border-dashed border-lm-line-soft px-4 py-2.5 text-[12px] font-semibold text-lm-ink-3 transition-all duration-200 hover:border-lm-line hover:bg-lm-surface hover:text-lm-ink"
-              @click.stop="openDiscussion(module.id)"
-            >
-              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              </svg>
-              Open Discussion
-            </button>
+        <!-- Reviewer feedback (read-only) -->
+        <div class="bg-lm-bg-soft px-4 py-3" @click.stop>
+          <div v-if="moduleCommentCount(module.id) === 0" class="flex items-center gap-2 rounded-[12px] border-2 border-dashed border-lm-line-soft px-4 py-3">
+            <svg class="h-3.5 w-3.5 text-lm-line-soft" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            <p class="text-[12px] text-lm-ink-3">No reviewer feedback yet.</p>
           </div>
 
-          <!-- Full discussion panel when open -->
-          <div v-else class="bg-lm-bg-soft">
-            <!-- Header -->
-            <div class="flex items-center justify-between px-4 py-3">
-              <div class="flex items-center gap-2">
-                <svg class="h-3.5 w-3.5 text-lm-ink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
-                <span class="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-lm-ink">Discussion</span>
-                <span v-if="(commentsMap[String(module.id)] ?? []).length > 0"
-                  class="rounded-full border border-lm-line-soft bg-lm-yellow/30 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-lm-ink">
-                  {{ (commentsMap[String(module.id)] ?? []).length }}
-                </span>
-              </div>
-            </div>
-
-            <!-- Comments list -->
-            <div class="px-4 pb-4">
-              <div v-if="!(commentsMap[String(module.id)] ?? []).length" class="flex flex-col items-center gap-1 rounded-[12px] border-2 border-dashed border-lm-line-soft py-6 text-center">
-                <svg class="h-6 w-6 text-lm-line-soft" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
-                <p class="text-[12px] text-lm-ink-3">No comments yet.</p>
-              </div>
-              <div v-else class="flex flex-col gap-3">
-                <div v-for="comment in (commentsMap[String(module.id)] ?? [])" :key="comment.id" class="flex gap-3">
+          <div v-else class="flex flex-col gap-3">
+            <!-- Module-level comments -->
+            <div v-if="moduleLevelComments(module.id).length" class="rounded-[12px] border-2 border-lm-line-soft bg-lm-surface px-4 py-3">
+              <p class="mb-2 font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-lm-ink-3">Whole module</p>
+              <div class="flex flex-col gap-3">
+                <div v-for="comment in moduleLevelComments(module.id)" :key="comment.id" class="flex gap-3">
                   <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white" :class="avatarBg(comment.authorName)">
                     {{ initials(comment.authorName) }}
                   </div>
-                  <div class="group/c flex-1 min-w-0">
-                    <div class="mb-1 flex items-center gap-2">
+                  <div class="min-w-0 flex-1">
+                    <div class="mb-0.5 flex items-center gap-2">
                       <span class="text-[12px] font-semibold text-lm-ink">{{ comment.authorName }}</span>
                       <span class="text-[11px] text-lm-ink-3">· {{ comment.createdAt }}</span>
-                      <span
-                        v-if="comment.subTopicId"
-                        class="rounded-full border border-lm-line-soft bg-lm-surface px-2 py-0.5 font-mono text-[9px] font-bold text-lm-purple max-w-[150px] truncate"
-                        :title="getSubTopicTitle(module, comment.subTopicId)"
-                      >
-                        {{ getSubTopicTitle(module, comment.subTopicId) }}
-                      </span>
                     </div>
                     <p class="text-[12.5px] leading-relaxed text-lm-ink-2">{{ comment.text }}</p>
                   </div>
@@ -208,6 +194,31 @@ function getSubTopicTitle(module: AdminModuleDto, subTopicId: number): string {
               </div>
             </div>
 
+            <!-- Per-subtopic comment groups -->
+            <div
+              v-for="group in subTopicGroups(module)"
+              :key="group.id"
+              class="rounded-[12px] border-2 border-lm-line-soft bg-lm-surface px-4 py-3"
+            >
+              <p class="mb-2 flex items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-lm-purple">
+                <span class="rounded-md border border-lm-line-soft bg-lm-bg-soft px-1.5 py-px">{{ moduleIndex + 1 }}.{{ group.index }}</span>
+                <span class="truncate normal-case tracking-normal">{{ group.title }}</span>
+              </p>
+              <div class="flex flex-col gap-3">
+                <div v-for="comment in group.comments" :key="comment.id" class="flex gap-3">
+                  <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white" :class="avatarBg(comment.authorName)">
+                    {{ initials(comment.authorName) }}
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <div class="mb-0.5 flex items-center gap-2">
+                      <span class="text-[12px] font-semibold text-lm-ink">{{ comment.authorName }}</span>
+                      <span class="text-[11px] text-lm-ink-3">· {{ comment.createdAt }}</span>
+                    </div>
+                    <p class="text-[12.5px] leading-relaxed text-lm-ink-2">{{ comment.text }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </article>
