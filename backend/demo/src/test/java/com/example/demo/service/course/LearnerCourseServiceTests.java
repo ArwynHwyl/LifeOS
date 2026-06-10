@@ -27,6 +27,7 @@ import com.example.demo.repository.course.CourseRepository;
 import com.example.demo.repository.course.LearnerInteractiveProgressRepository;
 import com.example.demo.service.exception.ResourceNotFoundException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import jakarta.persistence.EntityManager;
 import java.util.List;
@@ -209,6 +210,82 @@ class LearnerCourseServiceTests {
         assertThat(response.status()).isEqualTo(InteractiveProgressStatus.MASTERED);
         assertThat(response.attemptCount()).isEqualTo(1);
         assertThat(response.feedback()).isEqualTo("Correct");
+    }
+
+    @Test
+    void submitLogicAttemptGradesCircuitAgainstGoal() {
+        User user = learner();
+        SubTopic subTopic = logicSubTopic(11L, """
+                {"type":"LOGIC_FLOW","kind":"CIRCUIT","mode":"PRACTICE","title":"Make it flow","expression":"P ∧ ¬Q","goal":"TRUE","feedback":{"success":"Correct","failure":"Try again"}}
+                """);
+        Course course = publishedCourseWithSubTopics(subTopic);
+        LearnerCourseService realService = new LearnerCourseService(
+                courseRepository,
+                progressRepository,
+                entityManager,
+                mapper,
+                validator,
+                new ObjectMapper(),
+                new LogicExpressionService(),
+                new MathExpressionService()
+        );
+        when(validator.requiredId(1L, "courseId")).thenReturn(1L);
+        when(validator.requiredId(11L, "subTopicId")).thenReturn(11L);
+        when(courseRepository.findById(1L)).thenReturn(Optional.of(course));
+        when(progressRepository.findByUserUserIdAndSubTopicId(user.getUserId(), 11L)).thenReturn(Optional.empty());
+        when(entityManager.getReference(User.class, user.getUserId())).thenReturn(user);
+        when(progressRepository.save(any(LearnerInteractiveProgress.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        LogicAttemptResponse failing = realService.submitLogicAttempt(
+                user.getUserId(),
+                1L,
+                11L,
+                new LogicAttemptRequest("CIRCUIT", BooleanNode.FALSE, Map.of("P", true, "Q", true), null)
+        );
+
+        assertThat(failing.correct()).isFalse();
+        assertThat(failing.status()).isEqualTo(InteractiveProgressStatus.TRIED);
+        assertThat(failing.feedback()).isEqualTo("Try again");
+
+        LogicAttemptResponse passing = realService.submitLogicAttempt(
+                user.getUserId(),
+                1L,
+                11L,
+                new LogicAttemptRequest("CIRCUIT", BooleanNode.TRUE, Map.of("P", true, "Q", false), null)
+        );
+
+        assertThat(passing.correct()).isTrue();
+        assertThat(passing.status()).isEqualTo(InteractiveProgressStatus.MASTERED);
+        assertThat(passing.feedback()).isEqualTo("Correct");
+    }
+
+    @Test
+    void submitLogicAttemptRejectsMismatchedCircuitInputs() {
+        User user = learner();
+        SubTopic subTopic = logicSubTopic(11L, """
+                {"type":"LOGIC_FLOW","kind":"CIRCUIT","mode":"PRACTICE","title":"Make it flow","expression":"P ∧ ¬Q","goal":"TRUE","feedback":{"success":"Correct","failure":"Try again"}}
+                """);
+        Course course = publishedCourseWithSubTopics(subTopic);
+        LearnerCourseService realService = new LearnerCourseService(
+                courseRepository,
+                progressRepository,
+                entityManager,
+                mapper,
+                validator,
+                new ObjectMapper(),
+                new LogicExpressionService(),
+                new MathExpressionService()
+        );
+        when(validator.requiredId(1L, "courseId")).thenReturn(1L);
+        when(validator.requiredId(11L, "subTopicId")).thenReturn(11L);
+        when(courseRepository.findById(1L)).thenReturn(Optional.of(course));
+
+        assertThatThrownBy(() -> realService.submitLogicAttempt(
+                user.getUserId(),
+                1L,
+                11L,
+                new LogicAttemptRequest("CIRCUIT", BooleanNode.TRUE, Map.of("P", true, "Z", false), null)
+        )).hasMessageContaining("inputs must exactly match expression variables");
     }
 
     private User learner() {

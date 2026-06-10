@@ -131,7 +131,7 @@ class InteractiveConfigServiceTests {
                 {"type":"VISUAL_LAYER","title":"Venn visual","canvas":{"width":900,"height":520},"zones":[{"id":"zone_a","label":"A","shape":"circle","x":20,"y":20,"width":100,"height":100,"color":"#ffd333"},{"id":"zone_b","label":"B","shape":"circle","x":130,"y":20,"width":100,"height":100,"color":"#ffd333"},{"id":"zone_c","label":"C","shape":"circle","x":240,"y":20,"width":100,"height":100,"color":"#ffd333"},{"id":"zone_d","label":"D","shape":"circle","x":350,"y":20,"width":100,"height":100,"color":"#ffd333"},{"id":"zone_e","label":"E","shape":"circle","x":460,"y":20,"width":100,"height":100,"color":"#ffd333"},{"id":"zone_f","label":"F","shape":"circle","x":570,"y":20,"width":100,"height":100,"color":"#ffd333"}],"elements":[],"interactions":[],"overlap":{"enabled":true,"sourceZoneIds":["zone_a","zone_b","zone_c","zone_d","zone_e","zone_f"],"values":[]}}
                 """))
                 .isInstanceOf(ValidationException.class)
-                .hasMessageContaining("sourceZoneIds must contain 1 to 5 ids");
+                .hasMessageContaining("sourceZoneIds must contain 0 to 5 ids");
 
         assertThatThrownBy(() -> service.validateAndNormalize(InteractionType.VISUAL_LAYER, """
                 {"type":"VISUAL_LAYER","title":"Venn visual","canvas":{"width":900,"height":520},"zones":[{"id":"zone_a","label":"A","shape":"circle","x":270,"y":150,"width":220,"height":220,"color":"#ffd333"},{"id":"zone_b","label":"B","shape":"circle","x":410,"y":150,"width":220,"height":220,"color":"#8fb3ff"}],"elements":[],"interactions":[],"overlap":{"enabled":true,"sourceZoneIds":["zone_a","zone_b"],"values":[{"id":"A_ONLY","label":"A only","zoneIds":["zone_a"],"value":8},{"id":"A_ONLY","label":"B only","zoneIds":["zone_b"],"value":6}]}}
@@ -187,6 +187,83 @@ class InteractiveConfigServiceTests {
                 .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("successCondition.kind must be QUIZ_CORRECT_OPTION");
 
+    }
+
+    @Test
+    void acceptsLogicFlowConfigsWithPrompt() {
+        assertThat(service.validateAndNormalize(InteractionType.LOGIC_FLOW, """
+                {"type":"LOGIC_FLOW","kind":"CIRCUIT","mode":"PRACTICE","title":"Make it flow","prompt":"Flip the valves so the output is true.","expression":"P ∧ ¬Q","goal":"TRUE","feedback":{"success":"Correct","failure":"Try again"}}
+                """)).contains("\"prompt\":\"Flip the valves so the output is true.\"");
+        assertThat(service.validateAndNormalize(InteractionType.LOGIC_FLOW, """
+                {"type":"LOGIC_FLOW","kind":"SIMPLIFY","mode":"PRACTICE","title":"Simplify","prompt":"Rewrite the implication.","start":"P -> Q","target":"¬P ∨ Q","feedback":{"success":"Correct","failure":"Try again"}}
+                """)).contains("\"prompt\":\"Rewrite the implication.\"");
+        assertThat(service.validateAndNormalize(InteractionType.LOGIC_FLOW, """
+                {"type":"LOGIC_FLOW","kind":"CIRCUIT","mode":"PRACTICE","title":"Make it flow","prompt":null,"expression":"P ∧ ¬Q","goal":"TRUE","feedback":{"success":"Correct","failure":"Try again"}}
+                """)).contains("\"kind\":\"CIRCUIT\"");
+    }
+
+    @Test
+    void acceptsValidLogicCircuitConfigs() {
+        assertThat(service.validateAndNormalize(InteractionType.LOGIC_FLOW, """
+                {"type":"LOGIC_FLOW","kind":"CIRCUIT","mode":"PRACTICE","title":"Circuit","expression":"(A & B) | !C","variables":["A","B","C"],"goal":"MATCH_OUTPUT","feedback":{"success":"Correct","failure":"Try again"}}
+                """)).contains("\"goal\":\"MATCH_OUTPUT\"");
+        assertThat(service.validateAndNormalize(InteractionType.LOGIC_FLOW, """
+                {"type":"LOGIC_FLOW","kind":"CIRCUIT","mode":"VISUALIZATION","title":"Explore","expression":"(P ∧ Q) ∨ ¬R","goal":"EXPLORE"}
+                """)).contains("\"mode\":\"VISUALIZATION\"");
+    }
+
+    @Test
+    void rejectsInvalidLogicCircuitConfigs() {
+        assertThatThrownBy(() -> service.validateAndNormalize(InteractionType.LOGIC_FLOW, """
+                {"type":"LOGIC_FLOW","kind":"CIRCUIT","mode":"PRACTICE","title":"Circuit","expression":"P ∧ Q","goal":"SOMETIMES","feedback":{"success":"Correct","failure":"Try again"}}
+                """))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("goal must be MATCH_OUTPUT, TRUE, FALSE, or EXPLORE");
+
+        assertThatThrownBy(() -> service.validateAndNormalize(InteractionType.LOGIC_FLOW, """
+                {"type":"LOGIC_FLOW","kind":"CIRCUIT","mode":"PRACTICE","title":"Circuit","expression":"P ∧ Q","goal":"TRUE","start":"P -> Q","feedback":{"success":"Correct","failure":"Try again"}}
+                """))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("SIMPLIFY fields are not supported for CIRCUIT");
+
+        assertThatThrownBy(() -> service.validateAndNormalize(InteractionType.LOGIC_FLOW, """
+                {"type":"LOGIC_FLOW","kind":"CIRCUIT","mode":"PRACTICE","title":"Circuit","expression":"P ∧ Q","variables":["P","Z"],"goal":"TRUE","feedback":{"success":"Correct","failure":"Try again"}}
+                """))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("variables must match expression variables");
+
+        assertThatThrownBy(() -> service.validateAndNormalize(InteractionType.LOGIC_FLOW, """
+                {"type":"LOGIC_FLOW","kind":"CIRCUIT","mode":"PRACTICE","title":"Circuit","expression":"P ∧ Q","goal":"TRUE"}
+                """))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("feedback is required");
+    }
+
+    @Test
+    void rejectsInvalidLogicSimplifyConfigs() {
+        assertThatThrownBy(() -> service.validateAndNormalize(InteractionType.LOGIC_FLOW, """
+                {"type":"LOGIC_FLOW","kind":"SIMPLIFY","mode":"PRACTICE","title":"Simplify","start":"P -> Q","expression":"P ∧ Q","feedback":{"success":"Correct","failure":"Try again"}}
+                """))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("CIRCUIT fields are not supported for SIMPLIFY");
+
+        assertThatThrownBy(() -> service.validateAndNormalize(InteractionType.LOGIC_FLOW, """
+                {"type":"LOGIC_FLOW","kind":"SIMPLIFY","mode":"VISUALIZATION","title":"Simplify","start":"P -> Q"}
+                """))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("SIMPLIFY supports PRACTICE mode only");
+
+        assertThatThrownBy(() -> service.validateAndNormalize(InteractionType.LOGIC_FLOW, """
+                {"type":"LOGIC_FLOW","kind":"SIMPLIFY","mode":"PRACTICE","title":"Simplify","start":"P -> Q","steps":[{"law":"MADE_UP_LAW","result":"¬P ∨ Q"}],"feedback":{"success":"Correct","failure":"Try again"}}
+                """))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("steps law must be a known logic law id");
+
+        assertThatThrownBy(() -> service.validateAndNormalize(InteractionType.LOGIC_FLOW, """
+                {"type":"LOGIC_FLOW","kind":"BRIDGE","mode":"PRACTICE","title":"Logic","start":"P","feedback":{"success":"Correct","failure":"Try again"}}
+                """))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("kind must be CIRCUIT or SIMPLIFY");
     }
 
     @Test
