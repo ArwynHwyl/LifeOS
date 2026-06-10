@@ -19,6 +19,9 @@ import {
   requestModuleAiGeneration,
   getAiGenerationLog,
   updateModuleSubTopic,
+  createCourseModule,
+  createModuleSubTopic,
+  deleteAdminSubTopic,
   type AdminCourseDetailDto,
   type AdminDocumentSourceDto,
   type AdminModuleDto,
@@ -62,6 +65,18 @@ const selectedSubTopicId  = ref<number | null>(null)
 const editingInCentre     = ref(false)
 const centreSaving        = ref(false)
 const centreMessage       = ref('')
+
+// ── Sidebar structure management state ────────────────────────────────────
+const newModuleTitle = ref('')
+const moduleCreating = ref(false)
+const moduleError = ref('')
+
+const addingSubTopicModuleId = ref<number | null>(null)
+const newSubTopicTitle = ref('')
+const subTopicCreating = ref(false)
+
+const deletingSubTopicId = ref<number | null>(null)
+const subTopicDeleting = ref(false)
 
 // ── Computed ──────────────────────────────────────────────────────────────
 const cover = computed(() => {
@@ -130,6 +145,9 @@ function handleInteractiveChecked(payload: any) {
 
 // ── Auto-select first subtopic on load ───────────────────────────────────
 watch(modules, (mods) => {
+  if (!selectedModuleId.value && mods.length) {
+    selectedModuleId.value = mods[0].id
+  }
   if (!selectedSubTopicId.value) {
     const first = mods[0]?.subTopics[0]
     if (first) selectedSubTopicId.value = first.id
@@ -162,6 +180,70 @@ function selectSubTopic(id: number) {
   selectedSubTopicId.value = id
   editingInCentre.value    = false
   centreMessage.value      = ''
+}
+
+// ── Inline outline structure management methods ───────────────────────────
+async function addModuleInline() {
+  const title = newModuleTitle.value.trim()
+  if (!title) return
+  moduleCreating.value = true
+  moduleError.value = ''
+  try {
+    const newMod = await createCourseModule(courseId.value, {
+      title,
+      sortOrder: modules.value.length,
+      contentDepth: 'MEDIUM',
+    })
+    await loadCourse()
+    selectedModuleId.value = newMod.id
+    newModuleTitle.value = ''
+  } catch (error) {
+    moduleError.value = getErrorMessage(error, 'Unable to create module.')
+  } finally {
+    moduleCreating.value = false
+  }
+}
+
+async function addSubTopicInline(moduleId: number) {
+  const title = newSubTopicTitle.value.trim()
+  if (!title) return
+  subTopicCreating.value = true
+  try {
+    const module = modules.value.find(m => m.id === moduleId)
+    const sortOrder = module ? module.subTopics.length : 0
+    const subTopic = await createModuleSubTopic(moduleId, {
+      title,
+      content: '',
+      sortOrder,
+      pageStart: selectedDocument.value ? pageStart.value : null,
+      pageEnd: selectedDocument.value ? pageEnd.value : null,
+    })
+    await loadCourse()
+    addingSubTopicModuleId.value = null
+    newSubTopicTitle.value = ''
+    selectSubTopic(subTopic.id)
+    editingInCentre.value = true
+  } catch (error) {
+    console.error(error)
+  } finally {
+    subTopicCreating.value = false
+  }
+}
+
+async function confirmDeleteSubTopic(moduleId: number, subTopicId: number) {
+  subTopicDeleting.value = true
+  try {
+    await deleteAdminSubTopic(subTopicId)
+    if (selectedSubTopicId.value === subTopicId) {
+      selectedSubTopicId.value = null
+    }
+    await loadCourse()
+    deletingSubTopicId.value = null
+  } catch (error) {
+    console.error(error)
+  } finally {
+    subTopicDeleting.value = false
+  }
 }
 
 // ── Centre editor save ────────────────────────────────────────────────────
@@ -408,25 +490,140 @@ function getErrorMessage(error: unknown, fallback: string) {
 
           <!-- Module/subtopic list (expanded) -->
           <div v-if="outlineOpen" class="flex-1 overflow-y-auto py-2">
-            <div v-for="module in modules" :key="module.id" class="mb-1">
+            <div v-for="module in modules" :key="module.id" class="mb-3">
+              <!-- Module Header -->
               <div class="flex items-center justify-between px-5 py-2">
                 <p class="truncate font-display text-[13px] font-extrabold text-lm-ink">{{ module.title }}</p>
                 <span class="ml-2 shrink-0 font-mono text-[10px] font-bold text-lm-ink-3">{{ module.subTopics.length }}</span>
               </div>
-              <button
-                v-for="subTopic in module.subTopics"
-                :key="subTopic.id"
-                type="button"
-                class="flex min-h-[38px] w-full items-center gap-2 border-l-[3px] py-2 pl-6 pr-4 text-left font-display text-[13px] transition-all duration-150"
-                :class="selectedSubTopicId === subTopic.id
-                  ? 'border-lm-line bg-lm-yellow font-bold text-lm-ink'
-                  : 'border-transparent font-semibold text-lm-ink-2 hover:bg-lm-bg-soft'"
-                @click="selectSubTopic(subTopic.id)"
-              >
-                <span class="flex-1 min-w-0 truncate">{{ subTopic.title }}</span>
-                <ITypeBadge :type="subTopic.interactionType" />
-              </button>
+
+              <!-- Subtopics -->
+              <div class="space-y-[1px]">
+                <div
+                  v-for="subTopic in module.subTopics"
+                  :key="subTopic.id"
+                  class="group relative flex min-h-[38px] w-full items-center justify-between border-l-[3px] py-2 pl-6 pr-4 transition-all duration-150"
+                  :class="selectedSubTopicId === subTopic.id
+                    ? 'border-lm-line bg-lm-yellow font-bold text-lm-ink'
+                    : 'border-transparent font-semibold text-lm-ink-2 hover:bg-lm-bg-soft'"
+                >
+                  <!-- Normal Navigation Mode -->
+                  <button
+                    v-if="deletingSubTopicId !== subTopic.id"
+                    type="button"
+                    class="flex flex-1 min-w-0 items-center justify-between text-left font-display text-[13px]"
+                    @click="selectSubTopic(subTopic.id)"
+                  >
+                    <span class="flex-1 min-w-0 truncate pr-2">{{ subTopic.title }}</span>
+                    <ITypeBadge :type="subTopic.interactionType" class="shrink-0 mr-2" />
+                  </button>
+
+                  <!-- Delete Trash Button (always visible) -->
+                  <button
+                    v-if="deletingSubTopicId !== subTopic.id && course.status !== 'PENDING_REVIEW'"
+                    type="button"
+                    class="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-lm-surface border border-lm-line-soft text-lm-ink-3 hover:text-lm-red hover:border-lm-red transition-all duration-150 shadow-stamp-xs"
+                    title="Delete subtopic"
+                    @click.stop="deletingSubTopicId = subTopic.id"
+                  >
+                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                  </button>
+
+                  <!-- Delete Confirmation Mode -->
+                  <div v-if="deletingSubTopicId === subTopic.id" class="flex w-full items-center justify-between font-mono text-[11px] text-lm-red">
+                    <span class="truncate">Delete?</span>
+                    <div class="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        class="px-1.5 py-0.5 font-bold text-lm-green hover:underline"
+                        :disabled="subTopicDeleting"
+                        @click.stop="confirmDeleteSubTopic(module.id, subTopic.id)"
+                      >
+                        ✓
+                      </button>
+                      <button
+                        type="button"
+                        class="px-1.5 py-0.5 font-bold text-lm-red hover:underline"
+                        @click.stop="deletingSubTopicId = null"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- "+ Add subtopic" row at the end of each module's subtopic list -->
+              <div v-if="course.status !== 'PENDING_REVIEW'" class="px-5 py-1.5">
+                <!-- Click to open inline form -->
+                <button
+                  v-if="addingSubTopicModuleId !== module.id"
+                  type="button"
+                  class="flex w-full items-center gap-1.5 font-mono text-[10px] font-bold text-lm-ink-3 transition-colors duration-150 hover:text-lm-ink"
+                  @click="addingSubTopicModuleId = module.id; newSubTopicTitle = ''"
+                >
+                  <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  Add subtopic
+                </button>
+
+                <!-- Inline form -->
+                <div v-else class="mt-1 flex items-center gap-1.5">
+                  <input
+                    v-model="newSubTopicTitle"
+                    type="text"
+                    placeholder="New subtopic title"
+                    class="h-8 flex-1 rounded border border-lm-line-soft bg-lm-bg-soft px-2 font-display text-[12px] text-lm-ink outline-none placeholder:text-lm-ink-3 focus:border-lm-line"
+                    @keydown.enter="addSubTopicInline(module.id)"
+                    @keydown.escape="addingSubTopicModuleId = null"
+                  />
+                  <div class="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      class="h-8 rounded bg-lm-ink border border-lm-ink px-2 font-mono text-[10px] font-bold text-lm-bg hover:opacity-90 disabled:opacity-50"
+                      :disabled="subTopicCreating || !newSubTopicTitle.trim()"
+                      @click="addSubTopicInline(module.id)"
+                    >
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      class="h-8 rounded bg-lm-surface border border-lm-line-soft px-2 font-mono text-[10px] font-bold text-lm-ink-2 hover:bg-lm-bg-soft"
+                      @click="addingSubTopicModuleId = null"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
+
+            <!-- "Add module" input+button at the bottom of the module list -->
+            <div v-if="course.status !== 'PENDING_REVIEW'" class="border-t border-lm-line-soft px-5 py-3 mt-4">
+              <p class="mb-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.08em] text-lm-ink-3">New Module</p>
+              <div class="flex items-center gap-2">
+                <input
+                  v-model="newModuleTitle"
+                  type="text"
+                  placeholder="Module title"
+                  class="h-8 flex-1 rounded border border-lm-line-soft bg-lm-bg-soft px-2 font-display text-[12px] text-lm-ink outline-none placeholder:text-lm-ink-3 focus:border-lm-line"
+                  @keydown.enter="addModuleInline"
+                />
+                <button
+                  type="button"
+                  class="h-8 rounded bg-lm-ink border border-lm-ink px-2 font-mono text-[10px] font-bold text-lm-bg hover:opacity-90 disabled:opacity-50 shrink-0 shadow-stamp-xs"
+                  :disabled="moduleCreating || !newModuleTitle.trim()"
+                  @click="addModuleInline"
+                >
+                  {{ moduleCreating ? '...' : '+ Add' }}
+                </button>
+              </div>
+              <p v-if="moduleError" class="mt-1.5 font-mono text-[10px] text-lm-red">{{ moduleError }}</p>
+            </div>
+
             <div v-if="!modules.length" class="px-4 py-10 text-center">
               <p class="font-mono text-[10px] uppercase tracking-[0.06em] text-lm-ink-3">No modules yet</p>
             </div>
@@ -561,7 +758,7 @@ function getErrorMessage(error: unknown, fallback: string) {
             <p class="font-mono text-[11px] uppercase tracking-[0.06em] text-lm-ink-3">Select a topic from the outline</p>
           </div>
 
-          <!-- ── Manage Course Outline (collapsible, always accessible) ── -->
+          <!-- ── Module Discussions (collapsible, always accessible) ── -->
           <div class="relative mx-auto w-full max-w-[740px] shrink-0 px-7 pb-10">
             <button
               type="button"
@@ -569,7 +766,7 @@ function getErrorMessage(error: unknown, fallback: string) {
               @click="manageOpen = !manageOpen"
             >
               <div class="flex-1 border-t-2 border-lm-line-soft" />
-              <span class="font-mono text-[9px] font-bold uppercase tracking-[0.14em] text-lm-ink-3">Manage Course Outline</span>
+              <span class="font-mono text-[9px] font-bold uppercase tracking-[0.14em] text-lm-ink-3">Module Discussions</span>
               <svg
                 class="h-3 w-3 text-lm-ink-3 transition-transform duration-200"
                 :class="manageOpen ? 'rotate-180' : ''"
@@ -641,7 +838,7 @@ function getErrorMessage(error: unknown, fallback: string) {
                 <option v-for="module in modules" :key="module.id" :value="module.id">{{ module.title }}</option>
               </select>
               <div v-else class="rounded-lg border-2 border-lm-yellow bg-lm-yellow/20 px-3 py-2 text-[12px] text-lm-ink">
-                Add a module in "Manage Course Outline" first.
+                Add a module in the sidebar first.
               </div>
             </div>
 
