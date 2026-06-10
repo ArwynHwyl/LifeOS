@@ -3,11 +3,12 @@ import { computed, ref } from 'vue'
 import type { AdminSubTopicDto } from '@/features/courses/services/adminCourses'
 
 export type Comment = {
-  id: string
+  id: string | number
   authorId: string
   authorName: string
   text: string
   createdAt: string
+  subTopicId?: number | null
 }
 
 const props = defineProps<{
@@ -20,18 +21,13 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  'add-comment': [text: string]
-  'edit-comment': [payload: { id: string; text: string }]
-  'delete-comment': [id: string]
-  'end-discussion': []
+  'add-comment': [payload: { text: string; subTopicId: number | null }]
 }>()
 
 const expanded = ref(false)
 const discussionOpen = ref(false)
-const confirmEnd = ref(false)
 const newComment = ref('')
-const editingId = ref<string | null>(null)
-const editText = ref('')
+const newCommentSubTopicId = ref<number | null>(null)
 
 const renderedContent = computed(() => {
   if (/<[a-z][\s\S]*?>/i.test(props.content)) return props.content
@@ -44,39 +40,14 @@ const renderedContent = computed(() => {
 
 function openDiscussion() {
   discussionOpen.value = true
-  confirmEnd.value = false
-}
-
-function onEndDiscussion() {
-  emit('end-discussion')
-  discussionOpen.value = false
-  confirmEnd.value = false
-  newComment.value = ''
-  editingId.value = null
 }
 
 function submitComment() {
   const text = newComment.value.trim()
   if (!text) return
-  emit('add-comment', text)
+  emit('add-comment', { text, subTopicId: newCommentSubTopicId.value })
   newComment.value = ''
-}
-
-function startEdit(comment: Comment) {
-  editingId.value = comment.id
-  editText.value = comment.text
-}
-
-function saveEdit() {
-  if (!editingId.value || !editText.value.trim()) return
-  emit('edit-comment', { id: editingId.value, text: editText.value.trim() })
-  editingId.value = null
-  editText.value = ''
-}
-
-function cancelEdit() {
-  editingId.value = null
-  editText.value = ''
+  newCommentSubTopicId.value = null
 }
 
 const AVATAR_PALETTE = ['bg-violet-500', 'bg-blue-500', 'bg-teal-500', 'bg-amber-500', 'bg-rose-500', 'bg-indigo-500']
@@ -99,6 +70,11 @@ function lessonHtml(subTopic: AdminSubTopicDto): string {
 function formatInteractionType(value: string | null | undefined): string {
   if (!value || value === 'NONE') return ''
   return value.toLowerCase().split('_').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ')
+}
+
+function getSubTopicTitle(subTopicId: number): string {
+  const st = props.subTopics?.find(s => s.id === subTopicId)
+  return st ? st.title : `Subtopic #${subTopicId}`
 }
 </script>
 
@@ -213,38 +189,6 @@ function formatInteractionType(value: string | null | undefined): string {
                   {{ comments.length }}
                 </span>
               </div>
-
-              <!-- Normal End Discussion button -->
-              <button
-                v-if="!confirmEnd"
-                type="button"
-                class="flex items-center gap-1.5 cursor-pointer rounded-lg px-2.5 py-1.5 text-[11px] font-semibold text-lm-ink-3 transition hover:bg-lm-red-soft hover:text-lm-red"
-                @click="confirmEnd = true"
-              >
-                <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M18 6 6 18M6 6l12 12" />
-                </svg>
-                End Discussion
-              </button>
-
-              <!-- Inline confirmation -->
-              <div v-else class="flex items-center gap-2">
-                <span class="text-[11px] text-lm-ink-2">Clear all comments?</span>
-                <button
-                  type="button"
-                  class="rounded-lg border-2 cursor-pointer border-lm-red bg-lm-red px-2.5 py-1 text-[11px] font-semibold text-lm-bg transition hover:opacity-90"
-                  @click="onEndDiscussion"
-                >
-                  End it
-                </button>
-                <button
-                  type="button"
-                  class="rounded-lg border-2 cursor-pointer border-lm-line bg-lm-surface px-2.5 py-1 text-[11px] font-semibold text-lm-ink transition hover:bg-lm-bg"
-                  @click="confirmEnd = false"
-                >
-                  Cancel
-                </button>
-              </div>
             </div>
 
             <!-- Comments list -->
@@ -271,82 +215,66 @@ function formatInteractionType(value: string | null | undefined): string {
                     <div class="mb-1 flex items-center gap-2">
                       <span class="text-[12px] font-semibold text-lm-ink">{{ comment.authorName }}</span>
                       <span class="text-[11px] text-lm-ink-3">· {{ comment.createdAt }}</span>
-                      <div
-                        v-if="comment.authorId === currentUserId && editingId !== comment.id"
-                        class="ml-auto flex items-center gap-0.5 opacity-0 transition-opacity group-hover/c:opacity-100"
+                      <span
+                        v-if="comment.subTopicId"
+                        class="rounded-full border border-lm-line-soft bg-lm-surface px-2 py-0.5 font-mono text-[9px] font-bold text-lm-purple max-w-[150px] truncate"
+                        :title="getSubTopicTitle(comment.subTopicId)"
                       >
-                        <button type="button"
-                          class="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-lm-ink-3 transition hover:bg-lm-bg hover:text-lm-ink"
-                          title="Edit"
-                          @click="startEdit(comment)">
-                          <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                          </svg>
-                        </button>
-                        <button type="button"
-                          class="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-lm-ink-3 transition hover:bg-lm-red-soft hover:text-lm-red"
-                          title="Delete"
-                          @click="emit('delete-comment', comment.id)">
-                          <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                          </svg>
-                        </button>
-                      </div>
+                        {{ getSubTopicTitle(comment.subTopicId) }}
+                      </span>
                     </div>
 
                     <!-- Text -->
-                    <p v-if="editingId !== comment.id" class="text-[12.5px] leading-relaxed text-lm-ink-2">
+                    <p class="text-[12.5px] leading-relaxed text-lm-ink-2">
                       {{ comment.text }}
                     </p>
-
-                    <!-- Inline edit -->
-                    <div v-else>
-                      <textarea
-                        v-model="editText"
-                        rows="2"
-                        class="w-full resize-none rounded-[10px] border-2 border-lm-line bg-lm-surface px-3 py-2 text-[12.5px] leading-relaxed text-lm-ink outline-none ring-2 ring-lm-yellow/20"
-                        @keydown.enter.ctrl="saveEdit"
-                        @keydown.escape="cancelEdit"
-                      />
-                      <div class="mt-1.5 flex gap-2">
-                        <button type="button"
-                          class="rounded-lg border-2 cursor-pointer border-lm-ink bg-lm-ink px-3 py-1 text-[11px] font-semibold text-lm-bg transition hover:opacity-90"
-                          @click="saveEdit">Save</button>
-                        <button type="button"
-                          class="rounded-lg border-2 cursor-pointer border-lm-line bg-lm-surface px-3 py-1 text-[11px] font-semibold text-lm-ink transition hover:bg-lm-bg"
-                          @click="cancelEdit">Cancel</button>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
             <!-- Add comment form -->
-            <div class="flex items-start gap-3 border-t-2 border-lm-line-soft px-5 py-4">
-              <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-lm-line bg-lm-yellow font-display text-[10px] font-bold text-lm-ink shadow-stamp-sm">
-                TC
-              </div>
-              <div class="flex flex-1 items-end gap-2">
-                <textarea
-                  v-model="newComment"
-                  rows="1"
-                  placeholder="Add a comment…"
-                  class="flex-1 resize-none rounded-[10px] border-2 border-lm-line-soft bg-lm-surface px-3 py-2 text-[12.5px] leading-relaxed text-lm-ink outline-none transition placeholder:text-lm-ink-3 focus:border-lm-line focus:ring-2 focus:ring-lm-yellow/40"
-                  @keydown.enter.prevent="submitComment"
-                />
-                <button
-                  type="button"
-                  class="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-[10px] border-2 border-lm-ink bg-lm-ink text-lm-bg shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md disabled:opacity-40"
-                  :disabled="!newComment.trim()"
-                  @click="submitComment"
+            <div class="flex flex-col border-t-2 border-lm-line-soft px-5 py-4 gap-3">
+              <div v-if="subTopics && subTopics.length > 0" class="flex items-center gap-2">
+                <label class="font-mono text-[10px] font-bold uppercase tracking-[0.1em] text-lm-ink-3">Target:</label>
+                <select
+                  v-model="newCommentSubTopicId"
+                  class="rounded-[10px] border-2 border-lm-line bg-lm-surface px-2.5 py-1 text-[12px] font-medium text-lm-ink outline-none focus:border-lm-line"
                 >
-                  <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <line x1="22" y1="2" x2="11" y2="13" />
-                    <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                  </svg>
-                </button>
+                  <option :value="null">Whole module</option>
+                  <option
+                    v-for="subTopic in subTopics"
+                    :key="subTopic.id"
+                    :value="subTopic.id"
+                  >
+                    Subtopic: {{ subTopic.title }}
+                  </option>
+                </select>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-lm-line bg-lm-yellow font-display text-[10px] font-bold text-lm-ink shadow-stamp-sm">
+                  TC
+                </div>
+                <div class="flex flex-1 items-end gap-2">
+                  <textarea
+                    v-model="newComment"
+                    rows="1"
+                    placeholder="Add a comment…"
+                    class="flex-1 resize-none rounded-[10px] border-2 border-lm-line-soft bg-lm-surface px-3 py-2 text-[12.5px] leading-relaxed text-lm-ink outline-none transition placeholder:text-lm-ink-3 focus:border-lm-line focus:ring-2 focus:ring-lm-yellow/40"
+                    @keydown.enter.prevent="submitComment"
+                  />
+                  <button
+                    type="button"
+                    class="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-[10px] border-2 border-lm-ink bg-lm-ink text-lm-bg shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md disabled:opacity-40"
+                    :disabled="!newComment.trim()"
+                    @click="submitComment"
+                  >
+                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <line x1="22" y1="2" x2="11" y2="13" />
+                      <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
 

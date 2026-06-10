@@ -6,7 +6,7 @@ import TeacherNavbar from '@/features/courses/components/Teacher/TeacherNavbar.v
 import TeacherTopicCard, { type Comment } from '@/features/courses/components/Teacher/TeacherTopicCard.vue'
 import { DEFAULT_COVER_ID, getCoverPreset } from '@/features/courses/constants/courseCoverPresets'
 import {
-  getTeacherCourse,
+  getTeacherCourseReviewDetail,
   approveTeacherCourse,
   rejectTeacherCourse,
 } from '@/features/courses/services/teacherCourses'
@@ -43,6 +43,7 @@ const coverPreset = computed(() => {
 const modules = computed(() => course.value?.modules ?? [])
 
 const commentsMap = ref<Record<string, Comment[]>>({})
+const newComments = ref<Array<{ moduleId: number | null; subTopicId: number | null; feedback: string }>>([])
 
 const courseStatus = computed<CourseStatus>(() => {
   if (!course.value) return 'draft'
@@ -55,11 +56,61 @@ const courseStatus = computed<CourseStatus>(() => {
 
 onMounted(loadCourse)
 
+function formatDate(value: string) {
+  const date = new Date(value)
+  const time = date.getTime()
+  if (Number.isNaN(time)) return 'recently'
+
+  const diffMs = Date.now() - time
+  const minute = 60 * 1000
+  const hour = 60 * minute
+  const day = 24 * hour
+
+  if (diffMs < minute) return 'just now'
+  if (diffMs < hour) return `${Math.floor(diffMs / minute)} min ago`
+  if (diffMs < day) return `${Math.floor(diffMs / hour)} hours ago`
+  if (diffMs < 2 * day) return 'yesterday'
+  if (diffMs < 7 * day) return `${Math.floor(diffMs / day)} days ago`
+
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
 async function loadCourse() {
   loading.value = true
   loadError.value = ''
   try {
-    course.value = await getTeacherCourse(courseId.value)
+    const detail = await getTeacherCourseReviewDetail(courseId.value)
+    course.value = detail.course
+
+    const moduleIdBySubTopicId = new Map<number, number>()
+    for (const mod of detail.course.modules ?? []) {
+      for (const subTopic of mod.subTopics ?? []) {
+        moduleIdBySubTopicId.set(subTopic.id, mod.id)
+      }
+    }
+    const tempMap: Record<string, Comment[]> = {}
+    if (detail.reviews) {
+      for (const review of detail.reviews) {
+        for (const comment of review.comments ?? []) {
+          const moduleId = comment.moduleId
+            ?? (comment.subTopicId !== null ? moduleIdBySubTopicId.get(comment.subTopicId) : undefined)
+          if (moduleId === undefined || moduleId === null) continue
+          const modIdStr = String(moduleId)
+          if (!tempMap[modIdStr]) {
+            tempMap[modIdStr] = []
+          }
+          tempMap[modIdStr].push({
+            id: comment.id,
+            authorId: review.reviewerId,
+            authorName: review.reviewerName || 'Reviewer',
+            text: comment.feedback,
+            createdAt: formatDate(comment.createdAt),
+            subTopicId: comment.subTopicId,
+          })
+        }
+      }
+    }
+    commentsMap.value = tempMap
   } catch (error) {
     loadError.value = getErrorMessage(error, 'Unable to load course.')
   } finally {
@@ -82,38 +133,33 @@ async function handleReject() {
   if (!course.value || rejecting.value) return
   rejecting.value = true
   try {
-    await rejectTeacherCourse(course.value.id)
+    await rejectTeacherCourse(course.value.id, {
+      feedback: 'Revision requested',
+      comments: newComments.value,
+    })
     router.push('/teacher/courses')
   } catch {
     rejecting.value = false
   }
 }
 
-function addComment(modId: string, text: string) {
+function addComment(modId: string, payload: { text: string; subTopicId: number | null }) {
   if (!commentsMap.value[modId]) commentsMap.value[modId] = []
   commentsMap.value[modId].push({
-    id: `c-${Date.now()}`,
+    id: `temp-${Date.now()}`,
     authorId: currentUser.value.userId,
     authorName: currentUser.value.username,
-    text,
+    text: payload.text,
     createdAt: 'just now',
+    subTopicId: payload.subTopicId,
   })
-}
 
-function editComment(modId: string, payload: { id: string; text: string }) {
-  const list = commentsMap.value[modId]
-  if (!list) return
-  const i = list.findIndex((c) => c.id === payload.id)
-  if (i !== -1) list[i] = { ...list[i], text: payload.text }
-}
-
-function deleteComment(modId: string, commentId: string) {
-  if (!commentsMap.value[modId]) return
-  commentsMap.value[modId] = commentsMap.value[modId].filter((c) => c.id !== commentId)
-}
-
-function endDiscussion(modId: string) {
-  commentsMap.value[modId] = []
+  // Backend requires exactly one target: module XOR subtopic.
+  newComments.value.push({
+    moduleId: payload.subTopicId !== null ? null : Number(modId),
+    subTopicId: payload.subTopicId,
+    feedback: payload.text,
+  })
 }
 
 function getErrorMessage(error: unknown, fallback: string) {
@@ -267,9 +313,6 @@ function getErrorMessage(error: unknown, fallback: string) {
                 :comments="commentsMap[String(mod.id)] ?? []"
                 :current-user-id="currentUser.userId"
                 @add-comment="addComment(String(mod.id), $event)"
-                @edit-comment="editComment(String(mod.id), $event)"
-                @delete-comment="deleteComment(String(mod.id), $event)"
-                @end-discussion="endDiscussion(String(mod.id))"
               />
             </div>
 
