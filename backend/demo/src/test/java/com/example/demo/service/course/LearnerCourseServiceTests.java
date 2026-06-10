@@ -162,7 +162,7 @@ class LearnerCourseServiceTests {
         progress.recordAttempt(InteractiveProgressStatus.TRIED);
         when(validator.requiredId(1L, "courseId")).thenReturn(1L);
         when(courseRepository.findById(1L)).thenReturn(Optional.of(course));
-        when(progressRepository.findByUserUserIdAndSubTopicIdIn(user.getUserId(), List.of(11L, 12L))).thenReturn(List.of(progress));
+        when(progressRepository.findByUserUserIdAndSubTopicIdIn(user.getUserId(), List.of(11L, 12L, 13L))).thenReturn(List.of(progress));
         when(mapper.toPublishedDetailDto(eq(course), any())).thenReturn(new PublishedCourseDetailDto(1L, "Course", "Description", null, course.getPublishedAt(), List.of()));
 
         service.getPublishedCourse(user.getUserId(), 1L);
@@ -172,7 +172,7 @@ class LearnerCourseServiceTests {
         verify(mapper).toPublishedDetailDto(eq(course), captor.capture());
         assertThat(captor.getValue().get(11L).status()).isEqualTo(InteractiveProgressStatus.TRIED);
         assertThat(captor.getValue().get(12L).status()).isEqualTo(InteractiveProgressStatus.NOT_STARTED);
-        assertThat(captor.getValue()).doesNotContainKey(13L);
+        assertThat(captor.getValue().get(13L).status()).isEqualTo(InteractiveProgressStatus.NOT_STARTED);
     }
 
     @Test

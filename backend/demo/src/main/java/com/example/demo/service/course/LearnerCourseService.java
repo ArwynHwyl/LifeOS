@@ -79,7 +79,10 @@ public class LearnerCourseService {
         Course course = courseRepository.findById(validator.requiredId(courseId, "courseId"))
                 .filter(foundCourse -> foundCourse.getStatus() == CourseStatus.PUBLISHED)
                 .orElseThrow(() -> new ResourceNotFoundException("Published course not found: " + courseId));
-        return mapper.toPublishedDetailDto(course, progressBySubTopicId(userId, interactiveSubTopics(course)));
+        List<SubTopic> allTopics = course.getModules().stream()
+                .flatMap(module -> module.getSubTopics().stream())
+                .toList();
+        return mapper.toPublishedDetailDto(course, progressBySubTopicId(userId, allTopics));
     }
 
     @Transactional
@@ -99,10 +102,11 @@ public class LearnerCourseService {
         Course course = courseRepository.findById(courseId)
                 .filter(foundCourse -> foundCourse.getStatus() == CourseStatus.PUBLISHED)
                 .orElseThrow(() -> new ResourceNotFoundException("Published course not found: " + courseId));
-        SubTopic subTopic = interactiveSubTopics(course).stream()
+        SubTopic subTopic = course.getModules().stream()
+                .flatMap(module -> module.getSubTopics().stream())
                 .filter(item -> item.getId().equals(subTopicId))
                 .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("Interactive subtopic not found in published course: " + subTopicId));
+                .orElseThrow(() -> new ResourceNotFoundException("Subtopic not found in published course: " + subTopicId));
         if (requestedStatus == InteractiveProgressStatus.MASTERED && isServerGradable(subTopic.getInteractionType())) {
             throw new InvalidWorkflowStateException(subTopic.getInteractionType() + " mastery must be recorded through interactive-attempts");
         }
