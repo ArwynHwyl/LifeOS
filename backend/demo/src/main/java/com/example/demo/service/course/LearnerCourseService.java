@@ -470,11 +470,17 @@ public class LearnerCourseService {
             throw new ValidationException("inputs must exactly match expression variables");
         }
         boolean expected = logicExpressionService.evaluate(expression, request.inputs());
-        boolean correct = expected == request.answer().asBoolean();
+        boolean answerMatchesCircuit = expected == request.answer().asBoolean();
+        String goal = config.path("goal").asText("MATCH_OUTPUT");
+        boolean correct = switch (goal) {
+            case "TRUE" -> answerMatchesCircuit && expected;
+            case "FALSE" -> answerMatchesCircuit && !expected;
+            default -> answerMatchesCircuit;
+        };
         return new GradeResult(
                 correct,
                 feedback(config, correct),
-                Map.of("expected", expected, "normalizedAnswer", request.answer().asBoolean())
+                Map.of("expected", expected, "goal", goal, "normalizedAnswer", request.answer().asBoolean())
         );
     }
 
