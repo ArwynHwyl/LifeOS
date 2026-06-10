@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 type Comment = {
-  id: string
+  id: string | number
   authorId: string
   authorName: string
   text: string
   createdAt: string
+  subTopicId?: number | null
 }
 import {
   type AdminModuleDto,
   type BackendCourseStatus,
+  getReviewComments,
 } from '@/features/courses/services/adminCourses'
 
 const props = defineProps<{
@@ -27,27 +29,72 @@ const localModules = ref<AdminModuleDto[]>([...props.modules])
 
 watch(
   () => props.modules,
-  (newModules) => { localModules.value = [...newModules] },
+  (newModules) => {
+    localModules.value = [...newModules]
+    void loadComments()
+  },
 )
 
 const commentsMap = ref<Record<string, Comment[]>>({})
 const discussionOpenMap = ref<Record<number, boolean>>({})
-const confirmEndMap = ref<Record<number, boolean>>({})
-const newCommentMap = ref<Record<number, string>>({})
-const editingCommentId = ref<string | null>(null)
-const editCommentText = ref('')
 
-const currentUserId = computed(() => {
-  const raw = localStorage.getItem('authUser')
-  if (!raw) return 'admin'
-  try { return (JSON.parse(raw) as { userId?: string }).userId ?? 'admin' } catch { return 'admin' }
-})
+onMounted(loadComments)
 
-const currentUserName = computed(() => {
-  const raw = localStorage.getItem('authUser')
-  if (!raw) return 'Admin'
-  try { return (JSON.parse(raw) as { username?: string }).username ?? 'Admin' } catch { return 'Admin' }
-})
+function formatDate(value: string) {
+  const date = new Date(value)
+  const time = date.getTime()
+  if (Number.isNaN(time)) return 'recently'
+
+  const diffMs = Date.now() - time
+  const minute = 60 * 1000
+  const hour = 60 * minute
+  const day = 24 * hour
+
+  if (diffMs < minute) return 'just now'
+  if (diffMs < hour) return `${Math.floor(diffMs / minute)} min ago`
+  if (diffMs < day) return `${Math.floor(diffMs / hour)} hours ago`
+  if (diffMs < 2 * day) return 'yesterday'
+  if (diffMs < 7 * day) return `${Math.floor(diffMs / day)} days ago`
+
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+async function loadComments() {
+  try {
+    const reviews = await getReviewComments(props.courseId)
+    const moduleIdBySubTopicId = new Map<number, number>()
+    for (const mod of localModules.value) {
+      for (const subTopic of mod.subTopics ?? []) {
+        moduleIdBySubTopicId.set(subTopic.id, mod.id)
+      }
+    }
+    const tempMap: Record<string, Comment[]> = {}
+    if (reviews) {
+      for (const review of reviews) {
+        for (const comment of review.comments ?? []) {
+          const moduleId = comment.moduleId
+            ?? (comment.subTopicId !== null ? moduleIdBySubTopicId.get(comment.subTopicId) : undefined)
+          if (moduleId === undefined || moduleId === null) continue
+          const modIdStr = String(moduleId)
+          if (!tempMap[modIdStr]) {
+            tempMap[modIdStr] = []
+          }
+          tempMap[modIdStr].push({
+            id: comment.id,
+            authorId: review.reviewerId,
+            authorName: review.reviewerName || 'Reviewer',
+            text: comment.feedback,
+            createdAt: formatDate(comment.createdAt),
+            subTopicId: comment.subTopicId,
+          })
+        }
+      }
+    }
+    commentsMap.value = tempMap
+  } catch (err) {
+    console.error('Failed to load review comments', err)
+  }
+}
 
 const AVATAR_PALETTE = ['bg-violet-500', 'bg-blue-500', 'bg-teal-500', 'bg-amber-500', 'bg-rose-500', 'bg-indigo-500']
 function avatarBg(name: string): string {
@@ -61,43 +108,11 @@ function initials(name: string): string {
 
 function openDiscussion(modId: number) {
   discussionOpenMap.value[modId] = true
-  confirmEndMap.value[modId] = false
 }
-function addComment(modId: number) {
-  const text = (newCommentMap.value[modId] ?? '').trim()
-  if (!text) return
-  const key = String(modId)
-  if (!commentsMap.value[key]) commentsMap.value[key] = []
-  commentsMap.value[key].push({ id: `c-${Date.now()}`, authorId: currentUserId.value, authorName: currentUserName.value, text, createdAt: 'just now' })
-  newCommentMap.value[modId] = ''
-}
-function endDiscussion(modId: number) {
-  commentsMap.value[String(modId)] = []
-  discussionOpenMap.value[modId] = false
-  confirmEndMap.value[modId] = false
-}
-function startEditComment(comment: Comment) {
-  editingCommentId.value = comment.id
-  editCommentText.value = comment.text
-}
-function saveEditComment(modId: number) {
-  const key = String(modId)
-  if (!editingCommentId.value || !editCommentText.value.trim()) return
-  const list = commentsMap.value[key]
-  if (!list) return
-  const i = list.findIndex(c => c.id === editingCommentId.value)
-  if (i !== -1) list[i] = { ...list[i], text: editCommentText.value.trim() }
-  editingCommentId.value = null
-  editCommentText.value = ''
-}
-function cancelEditComment() {
-  editingCommentId.value = null
-  editCommentText.value = ''
-}
-function deleteComment(modId: number, commentId: string) {
-  const key = String(modId)
-  if (!commentsMap.value[key]) return
-  commentsMap.value[key] = commentsMap.value[key].filter(c => c.id !== commentId)
+
+function getSubTopicTitle(module: AdminModuleDto, subTopicId: number): string {
+  const st = module.subTopics?.find(s => s.id === subTopicId)
+  return st ? st.title : `Subtopic #${subTopicId}`
 }
 </script>
 
@@ -160,30 +175,17 @@ function deleteComment(modId: number, commentId: string) {
                   {{ (commentsMap[String(module.id)] ?? []).length }}
                 </span>
               </div>
-              <button v-if="!confirmEndMap[module.id]" type="button"
-                class="flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold text-lm-ink-3 transition hover:bg-lm-red-soft hover:text-lm-red"
-                @click.stop="confirmEndMap[module.id] = true">
-                <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M18 6 6 18M6 6l12 12" />
-                </svg>
-                End Discussion
-              </button>
-              <div v-else class="flex items-center gap-2">
-                <span class="text-[11px] text-lm-ink-2">Clear all comments?</span>
-                <button type="button" class="cursor-pointer rounded-lg border-2 border-lm-red bg-lm-red px-2.5 py-1 text-[11px] font-semibold text-lm-bg transition hover:opacity-90" @click.stop="endDiscussion(module.id)">End it</button>
-                <button type="button" class="cursor-pointer rounded-lg border-2 border-lm-line bg-lm-surface px-2.5 py-1 text-[11px] font-semibold text-lm-ink transition hover:bg-lm-bg" @click.stop="confirmEndMap[module.id] = false">Cancel</button>
-              </div>
             </div>
 
             <!-- Comments list -->
-            <div class="px-4">
-              <div v-if="!(commentsMap[String(module.id)] ?? []).length" class="mb-4 flex flex-col items-center gap-1 rounded-[12px] border-2 border-dashed border-lm-line-soft py-6 text-center">
+            <div class="px-4 pb-4">
+              <div v-if="!(commentsMap[String(module.id)] ?? []).length" class="flex flex-col items-center gap-1 rounded-[12px] border-2 border-dashed border-lm-line-soft py-6 text-center">
                 <svg class="h-6 w-6 text-lm-line-soft" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                 </svg>
-                <p class="text-[12px] text-lm-ink-3">No comments yet. Start the discussion.</p>
+                <p class="text-[12px] text-lm-ink-3">No comments yet.</p>
               </div>
-              <div v-else class="mb-4 flex flex-col gap-3">
+              <div v-else class="flex flex-col gap-3">
                 <div v-for="comment in (commentsMap[String(module.id)] ?? [])" :key="comment.id" class="flex gap-3">
                   <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white" :class="avatarBg(comment.authorName)">
                     {{ initials(comment.authorName) }}
@@ -192,52 +194,20 @@ function deleteComment(modId: number, commentId: string) {
                     <div class="mb-1 flex items-center gap-2">
                       <span class="text-[12px] font-semibold text-lm-ink">{{ comment.authorName }}</span>
                       <span class="text-[11px] text-lm-ink-3">· {{ comment.createdAt }}</span>
-                      <div v-if="comment.authorId === currentUserId && editingCommentId !== comment.id" class="ml-auto flex items-center gap-0.5 opacity-0 transition-opacity group-hover/c:opacity-100">
-                        <button type="button" class="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-lm-ink-3 transition hover:bg-lm-bg hover:text-lm-ink" @click.stop="startEditComment(comment)">
-                          <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
-                        </button>
-                        <button type="button" class="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-lm-ink-3 transition hover:bg-lm-red-soft hover:text-lm-red" @click.stop="deleteComment(module.id, comment.id)">
-                          <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
-                        </button>
-                      </div>
+                      <span
+                        v-if="comment.subTopicId"
+                        class="rounded-full border border-lm-line-soft bg-lm-surface px-2 py-0.5 font-mono text-[9px] font-bold text-lm-purple max-w-[150px] truncate"
+                        :title="getSubTopicTitle(module, comment.subTopicId)"
+                      >
+                        {{ getSubTopicTitle(module, comment.subTopicId) }}
+                      </span>
                     </div>
-                    <p v-if="editingCommentId !== comment.id" class="text-[12.5px] leading-relaxed text-lm-ink-2">{{ comment.text }}</p>
-                    <div v-else>
-                      <textarea v-model="editCommentText" rows="2" class="w-full resize-none rounded-[10px] border-2 border-lm-line bg-lm-surface px-3 py-2 text-[12.5px] leading-relaxed text-lm-ink outline-none ring-2 ring-lm-yellow/20" @keydown.enter.ctrl="saveEditComment(module.id)" @keydown.escape="cancelEditComment" />
-                      <div class="mt-1.5 flex gap-2">
-                        <button type="button" class="cursor-pointer rounded-lg border-2 border-lm-ink bg-lm-ink px-3 py-1 text-[11px] font-semibold text-lm-bg transition hover:opacity-90" @click.stop="saveEditComment(module.id)">Save</button>
-                        <button type="button" class="cursor-pointer rounded-lg border-2 border-lm-line bg-lm-surface px-3 py-1 text-[11px] font-semibold text-lm-ink transition hover:bg-lm-bg" @click.stop="cancelEditComment">Cancel</button>
-                      </div>
-                    </div>
+                    <p class="text-[12.5px] leading-relaxed text-lm-ink-2">{{ comment.text }}</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Add comment input -->
-            <div class="flex items-start gap-3 border-t-2 border-lm-line-soft px-4 py-4">
-              <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-lm-line bg-lm-yellow font-display text-[10px] font-bold text-lm-ink">
-                {{ initials(currentUserName) }}
-              </div>
-              <div class="flex flex-1 items-end gap-2">
-                <textarea
-                  :value="newCommentMap[module.id] ?? ''"
-                  rows="1"
-                  placeholder="Add a comment…"
-                  class="flex-1 resize-none rounded-[10px] border-2 border-lm-line-soft bg-lm-surface px-3 py-2 text-[12.5px] leading-relaxed text-lm-ink outline-none transition placeholder:text-lm-ink-3 focus:border-lm-line focus:ring-2 focus:ring-lm-yellow/40"
-                  @input="newCommentMap[module.id] = ($event.target as HTMLTextAreaElement).value"
-                  @keydown.enter.prevent="addComment(module.id)"
-                />
-                <button type="button"
-                  class="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-[10px] border-2 border-lm-ink bg-lm-ink text-lm-bg shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md disabled:cursor-not-allowed disabled:opacity-40"
-                  :disabled="!(newCommentMap[module.id] ?? '').trim()"
-                  @click.stop="addComment(module.id)">
-                  <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
-                  </svg>
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       </article>
