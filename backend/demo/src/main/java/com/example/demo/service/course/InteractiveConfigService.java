@@ -56,7 +56,7 @@ public class InteractiveConfigService {
     );
     private static final Set<String> QUIZ_OPTION_FIELDS = Set.of("id", "label", "correct");
     private static final Set<String> LOGIC_FIELDS = Set.of(
-            "type", "kind", "mode", "title", "start", "target", "steps", "allowedLaws", "expression", "variables", "goal", "feedback"
+            "type", "kind", "mode", "title", "prompt", "start", "target", "steps", "allowedLaws", "expression", "variables", "goal", "feedback"
     );
     private static final Set<String> LOGIC_STEP_FIELDS = Set.of("law", "lawId", "result", "from", "to", "note");
     private static final Set<String> LOGIC_LAW_IDS = Set.of(
@@ -1117,6 +1117,7 @@ public class InteractiveConfigService {
     private void validateLogicFlow(ObjectNode root, boolean practice) {
         rejectUnknownFields(root, LOGIC_FIELDS, "interactionConfig");
         requiredText(root, "title", 120);
+        optionalText(root, "prompt", 500);
         String kind = requiredText(root, "kind", 20);
         if (!Set.of("CIRCUIT", "SIMPLIFY").contains(kind)) {
             throw new ValidationException("kind must be CIRCUIT or SIMPLIFY");
