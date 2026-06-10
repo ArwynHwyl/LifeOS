@@ -932,6 +932,152 @@ public class DevSeedConfig {
                 null
         ));
         publishSeedCourse(courseRepository, vectorCourse, vectorModule);
+
+        Course logicCourse = seedCourse(
+                courseRepository,
+                "Logic",
+                "Seed course covering propositional logic: statements, connectives, truth tables, valve circuits, and equivalence simplification with logic laws.",
+                admin
+        );
+        CourseModule logicModule = new CourseModule(
+                "Logic",
+                "Propositional logic: connectives, truth tables, valve circuits, and simplification with logic laws.",
+                0,
+                ContentDepth.HIGH
+        );
+        logicModule.addSubTopic(subTopic(
+                "Statements and Connectives",
+                """
+                        <h2>Statements and Connectives</h2>
+                        <p>A proposition is a statement that is either true (T) or false (F). Compound statements are built with connectives: negation <code>¬</code>, conjunction <code>∧</code>, disjunction <code>∨</code>, implication <code>→</code>, and biconditional <code>↔</code>.</p>
+                        <p>A truth table lists the output of a compound statement for every combination of truth values of its variables.</p>
+                        """,
+                0,
+                1,
+                4,
+                InteractionType.NONE,
+                null,
+                null
+        ));
+        logicModule.addSubTopic(subTopic(
+                "Valve Circuit: Free Explore",
+                """
+                        <h2>Valve Circuit: Free Explore</h2>
+                        <p>Think of each variable as a valve: open means true, closed means false. Water flows through an AND gate only when both inputs flow, and through an OR gate when at least one input flows. A NOT gate inverts the flow.</p>
+                        <p>Flip the valves and watch how the output tank responds for <code>(P ∧ Q) ∨ ¬R</code>.</p>
+                        """,
+                1,
+                5,
+                8,
+                InteractionType.LOGIC_FLOW,
+                "Flip the valves freely and observe how the output changes.",
+                validate(interactiveConfigService, InteractionType.LOGIC_FLOW, """
+                        {
+                          "type": "LOGIC_FLOW",
+                          "kind": "CIRCUIT",
+                          "mode": "VISUALIZATION",
+                          "title": "Explore a valve circuit",
+                          "prompt": "Flip the valves freely and observe how the output changes.",
+                          "expression": "(P ∧ Q) ∨ ¬R",
+                          "goal": "EXPLORE"
+                        }
+                        """)
+        ));
+        logicModule.addSubTopic(subTopic(
+                "Valve Circuit Practice",
+                """
+                        <h2>Valve Circuit Practice</h2>
+                        <p>The statement <code>P ∧ ¬Q</code> is true only when <code>P</code> is true and <code>Q</code> is false.</p>
+                        <p>Set each valve so the water reaches the output tank, then check your answer.</p>
+                        """,
+                2,
+                5,
+                8,
+                InteractionType.LOGIC_FLOW,
+                "Flip the valves so the statement evaluates to true and the water flows.",
+                validate(interactiveConfigService, InteractionType.LOGIC_FLOW, """
+                        {
+                          "type": "LOGIC_FLOW",
+                          "kind": "CIRCUIT",
+                          "mode": "PRACTICE",
+                          "title": "Make the water flow",
+                          "prompt": "Flip the valves so the statement evaluates to true and the water flows.",
+                          "expression": "P ∧ ¬Q",
+                          "goal": "TRUE",
+                          "feedback": {
+                            "success": "Correct. With P true and Q false, the water reaches the tank.",
+                            "failure": "Not yet. Recheck each truth value: ¬Q needs Q to be false."
+                          }
+                        }
+                        """)
+        ));
+        logicModule.addSubTopic(subTopic(
+                "Simplify an Implication",
+                """
+                        <h2>Simplify an Implication</h2>
+                        <p>Logical equivalence laws let you rewrite a statement without changing its truth table. The implication law states <code>P → Q ≡ ¬P ∨ Q</code>.</p>
+                        <p>Apply the allowed laws step by step to rewrite the starting statement, then enter the final simplified expression.</p>
+                        """,
+                3,
+                9,
+                14,
+                InteractionType.LOGIC_FLOW,
+                "Rewrite P → Q using the implication law and enter the equivalent expression.",
+                validate(interactiveConfigService, InteractionType.LOGIC_FLOW, """
+                        {
+                          "type": "LOGIC_FLOW",
+                          "kind": "SIMPLIFY",
+                          "mode": "PRACTICE",
+                          "title": "Simplify an implication",
+                          "prompt": "Rewrite P → Q using the implication law and enter the equivalent expression.",
+                          "start": "P → Q",
+                          "target": "¬P ∨ Q",
+                          "allowedLaws": ["IMPLICATION", "DOUBLE_NEGATION", "DE_MORGAN"],
+                          "steps": [
+                            { "law": "IMPLICATION", "result": "¬P ∨ Q", "note": "An implication is false only when P is true and Q is false, which matches ¬P ∨ Q." }
+                          ],
+                          "feedback": {
+                            "success": "Correct. The expression is logically equivalent — the truth table never changed.",
+                            "failure": "Not yet. Apply the implication law: P → Q ≡ ¬P ∨ Q."
+                          }
+                        }
+                        """)
+        ));
+        logicModule.addSubTopic(subTopic(
+                "Simplify with Distribution",
+                """
+                        <h2>Simplify with Distribution</h2>
+                        <p>Combine the distributive, complement, and identity laws to reduce <code>(P ∧ ¬Q) ∨ (P ∧ Q)</code> to a single variable.</p>
+                        <p>Work through the steps, then enter the final simplified expression.</p>
+                        """,
+                4,
+                15,
+                20,
+                InteractionType.LOGIC_FLOW,
+                "Simplify the statement step by step and enter the final expression.",
+                validate(interactiveConfigService, InteractionType.LOGIC_FLOW, """
+                        {
+                          "type": "LOGIC_FLOW",
+                          "kind": "SIMPLIFY",
+                          "mode": "PRACTICE",
+                          "title": "Simplify with distribution",
+                          "prompt": "Simplify the statement step by step and enter the final expression.",
+                          "start": "(P ∧ ¬Q) ∨ (P ∧ Q)",
+                          "target": "P",
+                          "allowedLaws": ["DISTRIBUTIVE", "COMPLEMENT", "IDENTITY"],
+                          "steps": [
+                            { "law": "DISTRIBUTIVE", "result": "P ∧ (¬Q ∨ Q)", "note": "Factor P out of both parts." },
+                            { "law": "COMPLEMENT", "result": "P ∧ T", "note": "¬Q ∨ Q is always true." },
+                            { "law": "IDENTITY", "result": "P", "note": "P ∧ T is just P." }
+                          ],
+                          "feedback": {
+                            "success": "Correct. Different pipes — same water. The truth table never changed.",
+                            "failure": "Not yet. Factor P out first, then use the complement and identity laws."
+                          }
+                        }
+                        """)
+        ));
+        publishSeedCourse(courseRepository, logicCourse, logicModule);
     }
 
     private Course seedCourse(CourseRepository courseRepository, String title, String description, User admin) {
