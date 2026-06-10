@@ -463,3 +463,29 @@ function formatRelativeDate(value: string) {
 
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
 }
+
+export interface CourseReviewCommentDto {
+  id: number
+  moduleId: number | null
+  subTopicId: number | null
+  feedback: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CourseReviewDto {
+  id: number
+  courseId: number
+  reviewerId: string
+  reviewerName: string
+  decision: string
+  feedback: string | null
+  createdAt: string
+  updatedAt: string
+  comments: CourseReviewCommentDto[]
+}
+
+export async function getReviewComments(courseId: number | string): Promise<CourseReviewDto[]> {
+  const { data } = await api.get<CourseReviewDto[]>(`/v1/admin/courses/${courseId}/reviews`)
+  return data
+}
