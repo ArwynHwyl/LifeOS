@@ -2,6 +2,7 @@ package com.example.demo.service.course;
 
 import com.example.demo.dto.course.CourseCreateRequest;
 import com.example.demo.dto.course.CourseDetailDto;
+import com.example.demo.dto.course.CourseReviewDto;
 import com.example.demo.dto.course.CourseSummaryDto;
 import com.example.demo.dto.course.CourseUpdateRequest;
 import com.example.demo.dto.course.ModuleCreateRequest;
@@ -80,6 +81,14 @@ public class CourseAdminService {
     public CourseDetailDto getCourse(UUID adminUserId, Long courseId) {
         userAccessService.requireAdmin(validator.requiredUserId(adminUserId));
         return mapper.toDetailDto(findCourse(courseId));
+    }
+
+    @Transactional(readOnly = true)
+    public List<CourseReviewDto> getCourseReviews(UUID adminUserId, Long courseId) {
+        userAccessService.requireAdmin(validator.requiredUserId(adminUserId));
+        return courseReviewRepository.findByCourseIdOrderByCreatedAtDescIdDesc(validator.requiredId(courseId, "courseId")).stream()
+                .map(mapper::toCourseReviewDto)
+                .toList();
     }
 
     @Transactional

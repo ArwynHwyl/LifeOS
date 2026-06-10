@@ -5,6 +5,7 @@ import com.example.demo.dto.course.AiGenerationRequest;
 import com.example.demo.dto.course.AiGenerationResultDto;
 import com.example.demo.dto.course.CourseCreateRequest;
 import com.example.demo.dto.course.CourseDetailDto;
+import com.example.demo.dto.course.CourseReviewDto;
 import com.example.demo.dto.course.CourseSummaryDto;
 import com.example.demo.dto.course.CourseUpdateRequest;
 import com.example.demo.dto.course.DocumentCompleteRequest;
@@ -94,6 +95,11 @@ public class AdminCourseController {
     @GetMapping("/courses/{courseId}")
     public CourseDetailDto getCourse(@AuthenticationPrincipal User user, @PathVariable Long courseId) {
         return courseAdminService.getCourse(CurrentUser.id(user), courseId);
+    }
+
+    @GetMapping("/courses/{courseId}/reviews")
+    public List<CourseReviewDto> getCourseReviews(@AuthenticationPrincipal User user, @PathVariable Long courseId) {
+        return courseAdminService.getCourseReviews(CurrentUser.id(user), courseId);
     }
 
     @PutMapping("/courses/{courseId}")
