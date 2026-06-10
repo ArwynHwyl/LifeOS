@@ -11,6 +11,7 @@ export interface AdminCourseSummaryDto {
   id: number
   title: string
   description: string | null
+  coverId: string | null
   status: BackendCourseStatus
   createdById: string
   createdByName: string
@@ -168,11 +169,9 @@ export async function createAdminCourse(payload: CourseCreatePayload) {
   const { data } = await api.post<AdminCourseDetailDto>('/v1/admin/courses', {
     title: payload.title,
     description: payload.description?.trim() || null,
+    coverId: payload.coverId ?? null,
     modules: [],
   })
-  if (payload.coverId) {
-    saveCourseCover(data.id, payload.coverId)
-  }
   if (payload.pdfFile) {
     const documentSource = await uploadCourseDocument(data.id, payload.pdfFile)
     data.documentSources = [documentSource, ...data.documentSources]
@@ -400,8 +399,8 @@ export async function updateAdminCourse(courseId: number | string, payload: { ti
   const { data } = await api.put<AdminCourseSummaryDto>(`/v1/admin/courses/${courseId}`, {
     title: payload.title,
     description: payload.description?.trim() || null,
+    coverId: payload.coverId ?? null,
   })
-  if (payload.coverId) saveCourseCover(Number(courseId), payload.coverId)
   return data
 }
 
@@ -410,7 +409,7 @@ export function toAdminCourseCard(course: AdminCourseSummaryDto | AdminCourseDet
     id: String(course.id),
     title: course.title,
     description: course.description ?? '',
-    coverId: getCourseCover(course.id),
+    coverId: course.coverId ?? getCourseCover(course.id),
     status: toCourseStatus(course.status),
     moduleCount: 'modules' in course ? course.modules.length : 0,
     lastEdited: formatRelativeDate(course.updatedAt),

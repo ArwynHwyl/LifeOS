@@ -91,6 +91,19 @@ export interface InteractiveAttemptResponse {
   details: Record<string, unknown>
 }
 
+export interface PublishedCourseSummaryDto {
+  id: number
+  title: string
+  description: string | null
+  coverId: string | null
+  publishedAt: string
+}
+
+export async function listPublishedCourses() {
+  const { data } = await api.get<PublishedCourseSummaryDto[]>('/v1/learner/courses')
+  return data
+}
+
 export async function getPublishedCourse(courseId: number | string) {
   const { data } = await api.get<PublishedCourseDetailDto>(`/v1/learner/courses/${courseId}`)
   return data
