@@ -361,9 +361,7 @@ function clampPageRange() {
   pageEnd.value   = Math.min(Math.max(pageStart.value, pageEnd.value), max)
 }
 
-function onModulesUpdated(newModules: AdminModuleDto[]) {
-  if (course.value) course.value.modules = newModules
-}
+
 
 function wait(ms: number) { return new Promise(resolve => window.setTimeout(resolve, ms)) }
 
@@ -782,11 +780,6 @@ function getErrorMessage(error: unknown, fallback: string) {
                 :course-id="courseId"
                 :course-status="course.status"
                 :modules="modules"
-                :selected-document="selectedDocument"
-                :page-start="pageStart"
-                :page-end="pageEnd"
-                @module-selected="selectedModuleId = $event"
-                @modules-updated="onModulesUpdated"
                 @reload="loadCourse"
               />
             </div>

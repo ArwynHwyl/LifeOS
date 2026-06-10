@@ -9,7 +9,6 @@ type Comment = {
   createdAt: string
 }
 import {
-  type AdminDocumentSourceDto,
   type AdminModuleDto,
   type BackendCourseStatus,
 } from '@/features/courses/services/adminCourses'
@@ -18,15 +17,9 @@ const props = defineProps<{
   courseId: string
   courseStatus: BackendCourseStatus
   modules: AdminModuleDto[]
-  selectedDocument?: AdminDocumentSourceDto | null
-  pageStart?: number
-  pageEnd?: number
 }>()
 
 const emit = defineEmits<{
-  'module-selected': [id: number | null]
-  'module-edit': [id: number]
-  'modules-updated': [modules: AdminModuleDto[]]
   reload: []
 }>()
 
