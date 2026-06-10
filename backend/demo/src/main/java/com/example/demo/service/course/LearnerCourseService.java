@@ -107,7 +107,7 @@ public class LearnerCourseService {
                 .filter(item -> item.getId().equals(subTopicId))
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("Subtopic not found in published course: " + subTopicId));
-        if (requestedStatus == InteractiveProgressStatus.MASTERED && isServerGradable(subTopic.getInteractionType())) {
+        if (requestedStatus == InteractiveProgressStatus.MASTERED && isServerGradable(subTopic.getInteractionType()) && !isVisualizationMode(subTopic)) {
             throw new InvalidWorkflowStateException(subTopic.getInteractionType() + " mastery must be recorded through interactive-attempts");
         }
 
@@ -537,6 +537,24 @@ public class LearnerCourseService {
             }
         }
         return correct ? "Correct." : "Not yet. Try again.";
+    }
+
+    private boolean isVisualizationMode(SubTopic subTopic) {
+        if (subTopic.getInteractionType() == InteractionType.QUIZ) {
+            return false;
+        }
+        if (subTopic.getInteractionConfig() == null || subTopic.getInteractionConfig().isBlank()) {
+            return true;
+        }
+        try {
+            JsonNode config = objectMapper.readTree(subTopic.getInteractionConfig());
+            if (config.has("mode")) {
+                return !"PRACTICE".equalsIgnoreCase(config.get("mode").asText());
+            }
+            return true;
+        } catch (Exception e) {
+            return true;
+        }
     }
 
     private record GradeResult(boolean correct, String feedback, Map<String, Object> details) {

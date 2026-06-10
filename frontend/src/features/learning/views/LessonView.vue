@@ -234,8 +234,27 @@ function handleInteractiveStarted() {
 async function persistServerGradedAttempt(payload: InteractiveAttemptRequest) {
   const current = selectedSubTopic.value
   if (!current || current.interactionType === 'NONE') return
+
+  let finalPayload = payload
+  if (
+    current.interactionType === 'LOGIC_FLOW' &&
+    'kind' in payload &&
+    payload.kind === 'CIRCUIT'
+  ) {
+    const values: Record<string, number> = {}
+    if (payload.inputs) {
+      for (const [key, val] of Object.entries(payload.inputs)) {
+        values[key] = val ? 1 : 0
+      }
+    }
+    finalPayload = {
+      ...payload,
+      values,
+    } as any
+  }
+
   try {
-    const saved = await submitInteractiveAttempt(String(route.params.courseId), current.id, payload)
+    const saved = await submitInteractiveAttempt(String(route.params.courseId), current.id, finalPayload)
     interactiveServerFeedback.value = saved.feedback
     setSubTopicProgress(current.id, {
       subTopicId: saved.subTopicId,
@@ -390,9 +409,9 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
             />
           </InteractiveChallengeShell>
 
-          <!-- Mark as Completed button for reading-only lessons -->
+          <!-- Mark as Completed button for reading-only lessons or visualization-only interactives -->
           <div
-            v-if="selectedSubTopic.interactionType === 'NONE'"
+            v-if="selectedSubTopic.interactionType === 'NONE' || currentInteractiveMode !== 'PRACTICE'"
             class="reading-complete-section"
           >
             <button

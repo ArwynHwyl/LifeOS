@@ -153,6 +153,45 @@ class LearnerCourseServiceTests {
     }
 
     @Test
+    void progressUpdateAllowsMasteredForServerGradableInVisualizationMode() throws Exception {
+        User user = learner();
+        SubTopic subTopic = new SubTopic(
+                "Interactive Graph",
+                "Content",
+                11,
+                SubTopicSourceType.MANUAL,
+                null,
+                null,
+                InteractionType.GRAPH_2D,
+                "Explore",
+                "{\"type\":\"GRAPH_2D\",\"mode\":\"VISUALIZATION\"}"
+        );
+        ReflectionTestUtils.setField(subTopic, "id", 11L);
+        Course course = publishedCourseWithSubTopics(subTopic);
+        when(validator.requiredId(1L, "courseId")).thenReturn(1L);
+        when(validator.requiredId(11L, "subTopicId")).thenReturn(11L);
+        when(courseRepository.findById(1L)).thenReturn(Optional.of(course));
+        when(progressRepository.findByUserUserIdAndSubTopicId(user.getUserId(), 11L)).thenReturn(Optional.empty());
+        when(entityManager.getReference(User.class, user.getUserId())).thenReturn(user);
+        when(progressRepository.save(any(LearnerInteractiveProgress.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        com.fasterxml.jackson.databind.node.ObjectNode configNode = new ObjectMapper().createObjectNode();
+        configNode.put("type", "GRAPH_2D");
+        configNode.put("mode", "VISUALIZATION");
+        when(objectMapper.readTree(subTopic.getInteractionConfig())).thenReturn(configNode);
+
+        InteractiveProgressDto dto = service.updateInteractiveProgress(
+                user.getUserId(),
+                1L,
+                11L,
+                new InteractiveProgressUpdateRequest(InteractiveProgressStatus.MASTERED)
+        );
+
+        assertThat(dto.subTopicId()).isEqualTo(11L);
+        assertThat(dto.status()).isEqualTo(InteractiveProgressStatus.MASTERED);
+    }
+
+    @Test
     void getPublishedCourseIncludesPerUserProgressBySubtopic() {
         User user = learner();
         SubTopic triedSubTopic = interactiveSubTopic(11L);

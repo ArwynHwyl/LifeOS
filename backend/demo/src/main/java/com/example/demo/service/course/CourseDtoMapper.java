@@ -290,7 +290,7 @@ public class CourseDtoMapper {
                 subTopic.getInteractionType(),
                 subTopic.getInteractionPrompt(),
                 subTopic.getInteractionConfig(),
-                subTopic.getInteractionType() == InteractionType.NONE ? null : progressBySubTopicId.get(subTopic.getId())
+                progressBySubTopicId.get(subTopic.getId())
         );
     }
 
