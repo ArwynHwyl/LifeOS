@@ -66,7 +66,7 @@ async function loadCourses() {
     courses.value = summaries.map((summary, index) => {
       const detail = details[index]
       const subTopics = detail?.modules.flatMap((module) => module.subTopics) ?? []
-      const trackable = subTopics.filter((subTopic) => subTopic.interactionType !== 'NONE')
+      const trackable = subTopics
       const done = trackable.filter((subTopic) => subTopic.interactiveProgress?.status === 'MASTERED').length
       const cover = summary.coverId ? getCoverPreset(summary.coverId) : null
       return {

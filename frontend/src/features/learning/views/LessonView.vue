@@ -154,7 +154,6 @@ function goToOffset(offset: number) {
 }
 
 function progressMarkerClass(subTopic: PublishedSubTopicDto) {
-  if (subTopic.interactionType === 'NONE') return ''
   const status = subTopic.interactiveProgress?.status ?? 'NOT_STARTED'
   if (status === 'MASTERED') return 'progress-marker progress-marker--mastered'
   if (status === 'TRIED') return 'progress-marker progress-marker--tried'
@@ -203,7 +202,7 @@ function optimisticProgress(status: Exclude<InteractiveProgressStatus, 'NOT_STAR
 
 async function persistInteractiveProgress(status: Exclude<InteractiveProgressStatus, 'NOT_STARTED'>) {
   const current = selectedSubTopic.value
-  if (!current || current.interactionType === 'NONE') return
+  if (!current) return
   if (current.interactiveProgress?.status === 'MASTERED' && status === 'TRIED') return
   optimisticProgress(status)
   try {
@@ -289,10 +288,9 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
             :class="{ 'lesson-topic--active': selectedSubTopic?.id === subTopic.id }"
             @click="selectSubTopic(subTopic); isSidebarOpen = false"
           >
-            <span v-if="subTopic.interactionType !== 'NONE'" :class="progressMarkerClass(subTopic)">
+            <span :class="progressMarkerClass(subTopic)">
               <span v-if="subTopic.interactiveProgress?.status === 'MASTERED'">✓</span>
             </span>
-            <span v-else class="progress-marker progress-marker--not-started" />
             <span>{{ subTopic.title }}</span>
           </button>
         </section>
@@ -391,6 +389,33 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
               @checked="handleInteractiveChecked"
             />
           </InteractiveChallengeShell>
+
+          <!-- Mark as Completed button for reading-only lessons -->
+          <div
+            v-if="selectedSubTopic.interactionType === 'NONE'"
+            class="reading-complete-section"
+          >
+            <button
+              v-if="currentProgressStatus !== 'MASTERED'"
+              type="button"
+              class="complete-btn complete-btn--uncompleted"
+              @click="persistInteractiveProgress('MASTERED')"
+            >
+              <svg class="complete-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Mark as Completed
+            </button>
+            <div
+              v-else
+              class="complete-btn complete-btn--completed"
+            >
+              <svg class="complete-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Completed
+            </div>
+          </div>
 
           <!-- Pagination Dots inside the card -->
           <div class="lesson-pagination">
@@ -1057,5 +1082,48 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
 :deep(.math-var) {
   font-family: 'Literata', serif;
   font-style: italic;
+}
+/* ── Mark as Completed Button ── */
+.reading-complete-section {
+  display: flex;
+  justify-content: center;
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 2px dashed #e4ded6;
+}
+.complete-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  border: 2px solid #1d1b17;
+  border-radius: 999px;
+  padding: 0 1.75rem;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease;
+  box-shadow: 3px 3px 0 #1d1b17;
+}
+.complete-btn--uncompleted {
+  background: #ffd333;
+  color: #1d1b17;
+}
+.complete-btn--uncompleted:hover {
+  transform: translateY(-1px);
+  box-shadow: 4px 4px 0 #1d1b17;
+  background: #ffdb58;
+}
+.complete-btn--completed {
+  border-color: #245e3e;
+  background: #dff4df;
+  color: #245e3e;
+  box-shadow: 3px 3px 0 #245e3e;
+  cursor: default;
+}
+.complete-btn-icon {
+  width: 1rem;
+  height: 1rem;
 }
 </style>
