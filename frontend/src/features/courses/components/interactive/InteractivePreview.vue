@@ -13,6 +13,8 @@ import type {
 } from '@/features/courses/types/interactive'
 import { evaluateExpression } from '@/features/courses/utils/expression'
 import { Logic } from '@/features/courses/utils/logic-engine.js'
+import LogicCircuit from '@/features/courses/components/Admin/interactives/LogicCircuit.vue'
+import LogicSimplify from '@/features/courses/components/Admin/interactives/LogicSimplify.vue'
 import type { InteractiveAttemptRequest, LogicAttemptRequest } from '@/features/learning/services/learnerCourses'
 
 const instanceId = 'vl-' + Math.random().toString(36).substring(2, 9)
@@ -174,8 +176,6 @@ const logicExpressionParse = computed(() => {
   if (props.config?.type !== 'LOGIC_FLOW' || props.config.kind !== 'CIRCUIT') return { ast: null, error: null }
   return Logic.tryParse(props.config.expression ?? '')
 })
-
-const logicVariables = computed<string[]>(() => logicExpressionParse.value.ast ? Logic.variables(logicExpressionParse.value.ast) : [])
 
 const logicCircuitOutput = computed(() => {
   if (!logicExpressionParse.value.ast) return null
@@ -342,10 +342,11 @@ function buildLogicAttempt(): LogicAttemptRequest | null {
   }
 }
 
-function updateLogicInput(name: string, event: Event) {
+function toggleLogicValve(name: string) {
+  markStarted()
   logicInputs.value = {
     ...logicInputs.value,
-    [name]: (event.target as HTMLInputElement).checked,
+    [name]: !logicInputs.value[name],
   }
   checked.value = false
 }
@@ -774,22 +775,27 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
 
       <div v-if="(config as LogicFlowConfig).kind === 'CIRCUIT'" class="space-y-3">
         <p v-if="!logicExpressionParse.ast" class="feedback">{{ logicExpressionParse.error }}</p>
-        <div v-else class="logic-input-grid">
-          <label v-for="name in logicVariables" :key="name" class="logic-toggle">
-            <span>{{ name }}</span>
-            <input type="checkbox" :checked="logicInputs[name]" @change="updateLogicInput(name, $event)" />
-            <strong>{{ logicInputs[name] ? 'T' : 'F' }}</strong>
-          </label>
-          <div class="logic-output">
-            <span>OUT</span>
-            <strong>{{ logicCircuitOutput ? 'T' : 'F' }}</strong>
-          </div>
-        </div>
-        <button type="button" class="check-button" :disabled="!logicExpressionParse.ast" @click="runCheck">Check</button>
-        <p v-if="checked && activeFeedback" class="feedback">{{ activeFeedback }}</p>
+        <template v-else>
+          <p class="practice-prompt">Click the valves to toggle them open (T) or shut (F).</p>
+          <LogicCircuit
+            :ast="logicExpressionParse.ast"
+            :env="logicInputs"
+            :goal="(config as LogicFlowConfig).goal ?? null"
+            @toggle="toggleLogicValve"
+          />
+        </template>
+        <template v-if="config.mode === 'PRACTICE'">
+          <button type="button" class="check-button" :disabled="!logicExpressionParse.ast" @click="runCheck">Check</button>
+          <p v-if="checked && activeFeedback" class="feedback">{{ activeFeedback }}</p>
+        </template>
       </div>
 
       <div v-else class="space-y-3">
+        <LogicSimplify
+          :start="(config as LogicFlowConfig).start ?? ''"
+          :steps="(config as LogicFlowConfig).steps ?? []"
+          :success-text="(config as LogicFlowConfig).feedback?.success ?? ''"
+        />
         <p v-if="(config as LogicFlowConfig).target" class="practice-prompt">
           Target: <code>{{ (config as LogicFlowConfig).target }}</code>
         </p>
