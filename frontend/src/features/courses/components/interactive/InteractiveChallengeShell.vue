@@ -20,6 +20,7 @@ const actionLabel = computed(() => {
   if (props.interactionType === 'GRAPH_2D') return 'GRAPH'
   if (props.interactionType === 'FORMULA_EXPLORER') return 'FORMULA'
   if (props.interactionType === 'VISUAL_LAYER') return 'DIAGRAM'
+  if (props.interactionType === 'LOGIC_FLOW') return 'LOGIC'
   return 'ACTIVITY'
 })
 
