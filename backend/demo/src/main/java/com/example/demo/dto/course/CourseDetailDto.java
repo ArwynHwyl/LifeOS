@@ -9,6 +9,7 @@ public record CourseDetailDto(
         Long id,
         String title,
         String description,
+        String coverId,
         CourseStatus status,
         UUID createdById,
         String createdByName,

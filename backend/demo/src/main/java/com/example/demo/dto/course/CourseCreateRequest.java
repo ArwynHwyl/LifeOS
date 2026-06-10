@@ -7,6 +7,7 @@ import java.util.List;
 public record CourseCreateRequest(
         @NotBlank String title,
         String description,
+        String coverId,
         @Valid List<ModuleCreateRequest> modules
 ) {
 }

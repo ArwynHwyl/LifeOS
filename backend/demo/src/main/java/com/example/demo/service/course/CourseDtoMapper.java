@@ -49,6 +49,7 @@ public class CourseDtoMapper {
                 course.getId(),
                 course.getTitle(),
                 course.getDescription(),
+                course.getCoverId(),
                 course.getStatus(),
                 course.getCreatedBy().getUserId(),
                 displayName(course.getCreatedBy()),
@@ -66,6 +67,7 @@ public class CourseDtoMapper {
                 course.getId(),
                 course.getTitle(),
                 course.getDescription(),
+                course.getCoverId(),
                 course.getStatus(),
                 course.getCreatedBy().getUserId(),
                 displayName(course.getCreatedBy()),
@@ -222,6 +224,7 @@ public class CourseDtoMapper {
                 course.getId(),
                 course.getTitle(),
                 course.getDescription(),
+                course.getCoverId(),
                 course.getPublishedAt()
         );
     }
@@ -235,6 +238,7 @@ public class CourseDtoMapper {
                 course.getId(),
                 course.getTitle(),
                 course.getDescription(),
+                course.getCoverId(),
                 course.getPublishedAt(),
                 course.getModules().stream()
                         .sorted(Comparator.comparing(CourseModule::getSortOrder).thenComparing(CourseModule::getId))

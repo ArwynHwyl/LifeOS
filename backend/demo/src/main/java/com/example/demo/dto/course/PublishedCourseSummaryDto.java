@@ -6,6 +6,7 @@ public record PublishedCourseSummaryDto(
         Long id,
         String title,
         String description,
+        String coverId,
         Instant publishedAt
 ) {
 }

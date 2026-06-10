@@ -7,6 +7,7 @@ public record PublishedCourseDetailDto(
         Long id,
         String title,
         String description,
+        String coverId,
         Instant publishedAt,
         List<PublishedModuleDto> modules
 ) {

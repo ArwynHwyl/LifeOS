@@ -87,6 +87,7 @@ public class DevSeedConfig {
                 "Seed course from course_source_for_seed_reference/Matrix.pdf covering matrices, multiplication, determinants, inverses, matrix equations, augmented matrices, and linear systems.",
                 admin
         );
+        matrixCourse.updateCover("matrix_violet");
         CourseModule matrixModule = new CourseModule(
                 "Matrix",
                 "Based on Matrix.pdf: matrices, multiplication, determinants, inverses, matrix equations, and linear systems.",
@@ -252,6 +253,7 @@ public class DevSeedConfig {
                 "Seed course from course_source_for_seed_reference/PrbDst.pdf covering random variables, probability distributions, expected value, standard deviation, binomial distribution, and normal distribution.",
                 admin
         );
+        probabilityCourse.updateCover("prob_rose");
         CourseModule probabilityModule = new CourseModule(
                 "Probability",
                 "Based on PrbDst.pdf: random variables, probability distributions, expected value, standard deviation, and major distributions.",
@@ -435,6 +437,7 @@ public class DevSeedConfig {
                 "Seed course from course_source_for_seed_reference/SetAdv.pdf covering set basics, power sets, subset counts, and Venn diagram counting.",
                 admin
         );
+        setCourse.updateCover("union_green");
         CourseModule setModule = new CourseModule(
                 "Set",
                 "Based on SetAdv.pdf: set basics, power sets, subset counts, and counting members in Venn regions.",
@@ -804,6 +807,7 @@ public class DevSeedConfig {
                 "Seed course from course_source_for_seed_reference/Vector.pdf covering vector quantities, coordinate vectors, unit vectors, dot product, cross product, area, and volume.",
                 admin
         );
+        vectorCourse.updateCover("nabla_sky");
         CourseModule vectorModule = new CourseModule(
                 "Vector",
                 "Based on Vector.pdf: vector quantities, coordinate vectors, unit vectors, dot products, cross products, area, and volume.",
@@ -939,6 +943,7 @@ public class DevSeedConfig {
                 "Seed course covering propositional logic: statements, connectives, truth tables, valve circuits, and equivalence simplification with logic laws.",
                 admin
         );
+        logicCourse.updateCover("forall_amber");
         CourseModule logicModule = new CourseModule(
                 "Logic",
                 "Propositional logic: connectives, truth tables, valve circuits, and simplification with logic laws.",

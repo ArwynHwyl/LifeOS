@@ -100,6 +100,7 @@ public class CourseAdminService {
                 validator.optionalText(request.description(), "description", 10_000),
                 admin
         );
+        course.updateCover(validator.optionalText(request.coverId(), "coverId", 80));
         for (ModuleCreateRequest moduleRequest : nullToList(request.modules())) {
             course.addModule(toModule(moduleRequest));
         }
@@ -116,6 +117,9 @@ public class CourseAdminService {
                 validator.requiredText(request.title(), "title", 255),
                 validator.optionalText(request.description(), "description", 10_000)
         );
+        if (request.coverId() != null) {
+            course.updateCover(validator.optionalText(request.coverId(), "coverId", 80));
+        }
         return mapper.toDetailDto(course);
     }
 

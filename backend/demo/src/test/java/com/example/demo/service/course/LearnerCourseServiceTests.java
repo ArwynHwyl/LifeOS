@@ -163,7 +163,7 @@ class LearnerCourseServiceTests {
         when(validator.requiredId(1L, "courseId")).thenReturn(1L);
         when(courseRepository.findById(1L)).thenReturn(Optional.of(course));
         when(progressRepository.findByUserUserIdAndSubTopicIdIn(user.getUserId(), List.of(11L, 12L))).thenReturn(List.of(progress));
-        when(mapper.toPublishedDetailDto(eq(course), any())).thenReturn(new PublishedCourseDetailDto(1L, "Course", "Description", course.getPublishedAt(), List.of()));
+        when(mapper.toPublishedDetailDto(eq(course), any())).thenReturn(new PublishedCourseDetailDto(1L, "Course", "Description", null, course.getPublishedAt(), List.of()));
 
         service.getPublishedCourse(user.getUserId(), 1L);
 

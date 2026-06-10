@@ -35,6 +35,9 @@ public class Course extends BaseTimestampEntity {
     @Column(columnDefinition = "text")
     private String description;
 
+    @Column(length = 80)
+    private String coverId;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private CourseStatus status;
@@ -70,6 +73,14 @@ public class Course extends BaseTimestampEntity {
     public void updateDetails(String title, String description) {
         this.title = title;
         this.description = description;
+    }
+
+    public void updateCover(String coverId) {
+        this.coverId = coverId;
+    }
+
+    public String getCoverId() {
+        return coverId;
     }
 
     public void submitForReview() {

@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 
 public record CourseUpdateRequest(
         @NotBlank String title,
-        String description
+        String description,
+        String coverId
 ) {
 }
