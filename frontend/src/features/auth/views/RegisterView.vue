@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { AxiosError } from 'axios'
 import AuthPageLayout from '@/features/auth/components/AuthPageLayout.vue'
 import { register } from '@/features/auth/services/auth'
@@ -23,8 +23,21 @@ function getErrorMessage(error: unknown) {
   return 'Unable to create your account. Please try again.'
 }
 
+const passwordRules = computed(() => ({
+  length: password.value.length >= 8,
+  cases: /[a-z]/.test(password.value) && /[A-Z]/.test(password.value),
+  number: /\d/.test(password.value),
+  symbol: /[^a-zA-Z0-9\s]/.test(password.value),
+}))
+
+const passwordValid = computed(() => Object.values(passwordRules.value).every(Boolean))
+
 async function handleRegister() {
   formError.value = ''
+  if (!passwordValid.value) {
+    formError.value = 'Password does not meet all the requirements below.'
+    return
+  }
   if (password.value !== confirmPassword.value) {
     formError.value = 'Passwords do not match.'
     return
@@ -99,6 +112,30 @@ async function handleRegister() {
             <svg v-if="showPassword" class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
             <svg v-else class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
           </button>
+        </div>
+      </div>
+
+      <!-- Password checklist -->
+      <div class="grid grid-cols-2 gap-1 rounded-xl border-2 border-dashed border-lm-line bg-lm-bg-soft p-2.5 text-[12px]">
+        <div class="flex items-center gap-1.5" :class="passwordRules.length ? 'text-lm-green' : 'text-lm-ink-3'">
+          <svg v-if="passwordRules.length" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 13l5 5L20 6" /></svg>
+          <span v-else class="inline-block h-3.5 w-3.5 rounded-full border-[1.5px] border-lm-ink-3" />
+          8+ characters
+        </div>
+        <div class="flex items-center gap-1.5" :class="passwordRules.number ? 'text-lm-green' : 'text-lm-ink-3'">
+          <svg v-if="passwordRules.number" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 13l5 5L20 6" /></svg>
+          <span v-else class="inline-block h-3.5 w-3.5 rounded-full border-[1.5px] border-lm-ink-3" />
+          One number
+        </div>
+        <div class="flex items-center gap-1.5" :class="passwordRules.cases ? 'text-lm-green' : 'text-lm-ink-3'">
+          <svg v-if="passwordRules.cases" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 13l5 5L20 6" /></svg>
+          <span v-else class="inline-block h-3.5 w-3.5 rounded-full border-[1.5px] border-lm-ink-3" />
+          Upper &amp; lowercase
+        </div>
+        <div class="flex items-center gap-1.5" :class="passwordRules.symbol ? 'text-lm-green' : 'text-lm-ink-3'">
+          <svg v-if="passwordRules.symbol" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 13l5 5L20 6" /></svg>
+          <span v-else class="inline-block h-3.5 w-3.5 rounded-full border-[1.5px] border-lm-ink-3" />
+          One symbol (!@#$)
         </div>
       </div>
 

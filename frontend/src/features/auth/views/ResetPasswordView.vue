@@ -48,6 +48,7 @@ function getErrorMessage(errorValue: unknown) {
 async function handleSubmit() {
   error.value = ''
   if (!getToken()) { error.value = 'Reset token is missing.'; return }
+  if (strengthLevel.value < 4) { error.value = 'Password does not meet all the requirements below.'; return }
   if (password.value !== confirmPassword.value) { error.value = 'Passwords do not match.'; return }
   isSubmitting.value = true
   try {
@@ -99,19 +100,6 @@ async function handleSubmit() {
         </div>
       </div>
 
-      <div class="flex flex-col gap-1.5">
-        <label class="font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-lm-ink-3" for="reset-confirm">Confirm Password</label>
-        <input
-          id="reset-confirm"
-          v-model="confirmPassword"
-          type="password"
-          autocomplete="new-password"
-          required
-          minlength="8"
-          class="w-full rounded-xl border-2 border-lm-line-soft bg-lm-bg-soft px-3.5 py-3 text-[14px] font-medium text-lm-ink outline-none transition focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
-        />
-      </div>
-
       <!-- Checklist -->
       <div class="grid grid-cols-2 gap-1 rounded-xl border-2 border-dashed border-lm-line bg-lm-bg-soft p-2.5 text-[12px]">
         <div class="flex items-center gap-1.5" :class="password.length >= 8 ? 'text-lm-green' : 'text-lm-ink-3'">
@@ -134,6 +122,19 @@ async function handleSubmit() {
           <span v-else class="inline-block h-3.5 w-3.5 rounded-full border-[1.5px] border-lm-ink-3" />
           One symbol (!@#$)
         </div>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label class="font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-lm-ink-3" for="reset-confirm">Confirm Password</label>
+        <input
+          id="reset-confirm"
+          v-model="confirmPassword"
+          type="password"
+          autocomplete="new-password"
+          required
+          minlength="8"
+          class="w-full rounded-xl border-2 border-lm-line-soft bg-lm-bg-soft px-3.5 py-3 text-[14px] font-medium text-lm-ink outline-none transition focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
+        />
       </div>
 
       <button
