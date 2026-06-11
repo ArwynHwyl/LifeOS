@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { AxiosError } from 'axios'
 import { useRoute, useRouter } from 'vue-router'
 import TeacherNavbar from '@/features/courses/components/Teacher/TeacherNavbar.vue'
@@ -24,6 +24,21 @@ const loading = ref(false)
 const loadError = ref('')
 const approving = ref(false)
 const rejecting = ref(false)
+const showDiscardConfirm = ref(false)
+
+watch(showDiscardConfirm, (open) => {
+  if (open) {
+    window.addEventListener('keydown', handleGlobalKeydown)
+  } else {
+    window.removeEventListener('keydown', handleGlobalKeydown)
+  }
+})
+
+function handleGlobalKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape') {
+    showDiscardConfirm.value = false
+  }
+}
 
 const currentUser = computed(() => {
   const raw = localStorage.getItem('authUser')
@@ -121,11 +136,14 @@ async function loadCourse() {
 async function handleApprove() {
   if (!course.value || approving.value) return
   if (newComments.value.length > 0) {
-    const proceed = window.confirm(
-      `You have ${newComments.value.length} draft comment${newComments.value.length === 1 ? '' : 's'} that will be discarded if you approve. Comments are only sent with a revision request (Reject).\n\nApprove anyway?`,
-    )
-    if (!proceed) return
+    showDiscardConfirm.value = true
+  } else {
+    await proceedApprove()
   }
+}
+
+async function proceedApprove() {
+  if (!course.value || approving.value) return
   approving.value = true
   try {
     await approveTeacherCourse(course.value.id)
@@ -366,4 +384,96 @@ function getErrorMessage(error: unknown, fallback: string) {
       </main>
     </div>
   </div>
+
+  <!-- Discard comments confirmation modal -->
+  <Teleport to="body">
+    <Transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition duration-150 ease-in"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div v-if="showDiscardConfirm" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-lm-ink/60 backdrop-blur-sm" aria-hidden="true" @click="showDiscardConfirm = false" />
+
+        <Transition
+          enter-active-class="transition duration-200 ease-out"
+          enter-from-class="opacity-0 scale-95 translate-y-2"
+          enter-to-class="opacity-100 scale-100 translate-y-0"
+          leave-active-class="transition duration-150 ease-in"
+          leave-from-class="opacity-100 scale-100 translate-y-0"
+          leave-to-class="opacity-0 scale-95 translate-y-2"
+        >
+          <div
+            v-if="showDiscardConfirm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirm-discard-title"
+            class="relative z-10 flex w-full max-w-md flex-col overflow-hidden rounded-[18px] border-2 border-lm-line bg-lm-surface shadow-stamp-md"
+            @click.stop
+          >
+            <!-- Header -->
+            <header class="shrink-0 border-b-2 border-lm-line px-6 py-5">
+              <div class="flex items-start justify-between gap-4">
+                <div class="flex items-center gap-3">
+                  <div class="flex h-9 w-9 items-center justify-center rounded-[10px] border-2 border-lm-line bg-lm-rust-soft text-lm-rust shadow-stamp-sm">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                      <line x1="12" y1="9" x2="12" y2="13" />
+                      <line x1="12" y1="17" x2="12.01" y2="17" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 id="confirm-discard-title" class="font-display text-[15px] font-bold text-lm-ink">Discard Draft Comments?</h2>
+                    <p class="mt-1 text-[11px] text-lm-ink-3">Confirm approval action</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-lm-ink-3 transition hover:bg-lm-bg hover:text-lm-ink"
+                  aria-label="Close"
+                  @click="showDiscardConfirm = false"
+                >
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6 6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </header>
+
+            <!-- Body -->
+            <div class="px-6 py-5">
+              <p class="text-[13px] leading-relaxed text-lm-ink-2">
+                You have <strong class="text-lm-rust">{{ newComments.length }} draft comment{{ newComments.length === 1 ? '' : 's' }}</strong> that will be discarded if you approve.
+                Comments are only sent with a revision request (Reject).
+              </p>
+              <p class="mt-3 text-[13px] font-semibold text-lm-ink">
+                Approve anyway?
+              </p>
+            </div>
+
+            <!-- Footer -->
+            <footer class="flex shrink-0 gap-2.5 border-t-2 border-lm-line px-6 py-4">
+              <button
+                type="button"
+                class="h-10 flex-1 rounded-full border-2 border-lm-line bg-lm-surface px-4 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
+                @click="showDiscardConfirm = false"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                class="h-10 flex-1 rounded-full border-2 border-lm-line bg-lm-rust px-4 text-[13px] font-bold text-lm-bg shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
+                @click="() => { showDiscardConfirm = false; proceedApprove(); }"
+              >
+                Discard & Approve
+              </button>
+            </footer>
+          </div>
+        </Transition>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
