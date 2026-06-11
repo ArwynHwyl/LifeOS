@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { AxiosError } from 'axios'
 import { useRouter } from 'vue-router'
 import AppSidebar from '@/features/courses/components/Admin/AdminNavbar.vue'
@@ -36,6 +36,11 @@ const showEditModal = ref(false)
 const editingCourse = ref<AdminCourseCardModel | null>(null)
 const updatingCourse = ref(false)
 const updateError = ref('')
+
+const showDeleteConfirm = ref(false)
+const deleteTargetId = ref<string | null>(null)
+const deleteTargetTitle = ref('')
+const deletingCourseFlag = ref(false)
 
 const courses = ref<AdminCourseCardModel[]>([])
 
@@ -97,12 +102,37 @@ function closeAddModal() {
   createError.value = ''
 }
 
-async function deleteCourse(id: string) {
+function confirmDeleteCourse(course: AdminCourseCardModel) {
+  deleteTargetId.value = course.id
+  deleteTargetTitle.value = course.title
+  showDeleteConfirm.value = true
+}
+
+async function proceedDeleteCourse() {
+  if (!deleteTargetId.value || deletingCourseFlag.value) return
+  deletingCourseFlag.value = true
   try {
-    await deleteAdminCourse(id)
-    courses.value = courses.value.filter((c) => c.id !== id)
+    await deleteAdminCourse(deleteTargetId.value)
+    courses.value = courses.value.filter((c) => c.id !== deleteTargetId.value)
+    showDeleteConfirm.value = false
   } catch (error) {
     loadError.value = getErrorMessage(error, 'Unable to delete course.')
+  } finally {
+    deletingCourseFlag.value = false
+  }
+}
+
+watch(showDeleteConfirm, (open) => {
+  if (open) {
+    window.addEventListener('keydown', handleGlobalKeydown)
+  } else {
+    window.removeEventListener('keydown', handleGlobalKeydown)
+  }
+})
+
+function handleGlobalKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape') {
+    showDeleteConfirm.value = false
   }
 }
 
@@ -244,7 +274,7 @@ function getErrorMessage(error: unknown, fallback: string) {
               :created-by="course.createdBy"
               @open="router.push(`/admin/courses/${course.id}`)"
               @edit="openEditModal(course)"
-              @delete="deleteCourse(course.id)"
+              @delete="confirmDeleteCourse(course)"
               @submit="submitCourseForReview(course.id)"
             />
           </div>
@@ -292,5 +322,95 @@ function getErrorMessage(error: unknown, fallback: string) {
       @close="closeEditModal"
       @save="handleUpdateCourse"
     />
+
+    <!-- Confirm delete course modal -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div v-if="showDeleteConfirm" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div class="absolute inset-0 bg-lm-ink/60 backdrop-blur-sm" aria-hidden="true" @click="showDeleteConfirm = false" />
+
+          <Transition
+            enter-active-class="transition duration-200 ease-out"
+            enter-from-class="opacity-0 scale-95 translate-y-2"
+            enter-to-class="opacity-100 scale-100 translate-y-0"
+            leave-active-class="transition duration-150 ease-in"
+            leave-from-class="opacity-100 scale-100 translate-y-0"
+            leave-to-class="opacity-0 scale-95 translate-y-2"
+          >
+            <div
+              v-if="showDeleteConfirm"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="confirm-delete-course-title"
+              class="relative z-10 flex w-full max-w-md flex-col overflow-hidden rounded-[18px] border-2 border-lm-line bg-lm-surface shadow-stamp-md"
+              @click.stop
+            >
+              <!-- Header -->
+              <header class="shrink-0 border-b-2 border-lm-line px-6 py-5">
+                <div class="flex items-start justify-between gap-4">
+                  <div class="flex items-center gap-3">
+                    <div class="flex h-9 w-9 items-center justify-center rounded-[10px] border-2 border-lm-line bg-lm-red-soft text-lm-red shadow-stamp-sm">
+                      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                        <line x1="12" y1="9" x2="12" y2="13" />
+                        <line x1="12" y1="17" x2="12.01" y2="17" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 id="confirm-delete-course-title" class="font-display text-[15px] font-bold text-lm-ink">Delete Course?</h2>
+                      <p class="mt-1 text-[11px] text-lm-ink-3">This action cannot be undone</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-lm-ink-3 transition hover:bg-lm-bg hover:text-lm-ink"
+                    aria-label="Close"
+                    @click="showDeleteConfirm = false"
+                  >
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M18 6 6 18M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </header>
+
+              <!-- Body -->
+              <div class="px-6 py-5">
+                <p class="text-[13px] leading-relaxed text-lm-ink-2">
+                  Are you sure you want to delete the course <strong class="text-lm-red">"{{ deleteTargetTitle }}"</strong>?
+                  All modules, topics, and configurations associated with this course will be permanently removed.
+                </p>
+              </div>
+
+              <!-- Footer -->
+              <footer class="flex shrink-0 gap-2.5 border-t-2 border-lm-line px-6 py-4">
+                <button
+                  type="button"
+                  class="h-10 flex-1 rounded-full border-2 border-lm-line bg-lm-surface px-4 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
+                  @click="showDeleteConfirm = false"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  class="h-10 flex-1 rounded-full border-2 border-lm-line bg-lm-red text-white px-4 text-[13px] font-bold shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md disabled:cursor-not-allowed disabled:opacity-50"
+                  :disabled="deletingCourseFlag"
+                  @click="proceedDeleteCourse"
+                >
+                  {{ deletingCourseFlag ? 'Deleting...' : 'Delete' }}
+                </button>
+              </footer>
+            </div>
+          </Transition>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>

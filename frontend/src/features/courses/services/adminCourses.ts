@@ -503,3 +503,7 @@ export async function setReviewCommentResolved(
   )
   return data
 }
+
+export async function deleteAdminModule(moduleId: number | string): Promise<void> {
+  await api.delete(`/v1/admin/modules/${moduleId}`)
+}

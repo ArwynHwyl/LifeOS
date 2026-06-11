@@ -24,6 +24,7 @@ import {
   deleteAdminSubTopic,
   listAiGenerationLogs,
   requestCourseOutlineGeneration,
+  deleteAdminModule,
   type AiGenerationLogDto,
   type AdminCourseDetailDto,
   type AdminDocumentSourceDto,
@@ -80,8 +81,11 @@ const addingSubTopicModuleId = ref<number | null>(null)
 const newSubTopicTitle = ref('')
 const subTopicCreating = ref(false)
 
-const deletingSubTopicId = ref<number | null>(null)
-const subTopicDeleting = ref(false)
+const showDeleteConfirm = ref(false)
+const deleteType = ref<'module' | 'subtopic' | null>(null)
+const deleteTargetId = ref<number | null>(null)
+const deleteTargetTitle = ref('')
+const deletingInProgress = ref(false)
 
 // ── Computed ──────────────────────────────────────────────────────────────
 const cover = computed(() => {
@@ -241,19 +245,51 @@ async function addSubTopicInline(moduleId: number) {
   }
 }
 
-async function confirmDeleteSubTopic(moduleId: number, subTopicId: number) {
-  subTopicDeleting.value = true
+function triggerDeleteConfirm(type: 'module' | 'subtopic', id: number, title: string) {
+  deleteType.value = type
+  deleteTargetId.value = id
+  deleteTargetTitle.value = title
+  showDeleteConfirm.value = true
+}
+
+async function proceedDelete() {
+  if (!deleteTargetId.value || deletingInProgress.value) return
+  deletingInProgress.value = true
   try {
-    await deleteAdminSubTopic(subTopicId)
-    if (selectedSubTopicId.value === subTopicId) {
-      selectedSubTopicId.value = null
+    if (deleteType.value === 'module') {
+      await deleteAdminModule(deleteTargetId.value)
+      if (selectedSubTopic.value && selectedSubTopic.value.moduleId === deleteTargetId.value) {
+        selectedSubTopicId.value = null
+      }
+      if (selectedModuleId.value === deleteTargetId.value) {
+        selectedModuleId.value = null
+      }
+    } else if (deleteType.value === 'subtopic') {
+      await deleteAdminSubTopic(deleteTargetId.value)
+      if (selectedSubTopicId.value === deleteTargetId.value) {
+        selectedSubTopicId.value = null
+      }
     }
     await loadCourse()
-    deletingSubTopicId.value = null
+    showDeleteConfirm.value = false
   } catch (error) {
     console.error(error)
   } finally {
-    subTopicDeleting.value = false
+    deletingInProgress.value = false
+  }
+}
+
+watch(showDeleteConfirm, (open) => {
+  if (open) {
+    window.addEventListener('keydown', handleGlobalKeydown)
+  } else {
+    window.removeEventListener('keydown', handleGlobalKeydown)
+  }
+})
+
+function handleGlobalKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape') {
+    showDeleteConfirm.value = false
   }
 }
 
@@ -585,9 +621,23 @@ function getErrorMessage(error: unknown, fallback: string) {
           <div v-if="outlineOpen" class="flex-1 overflow-y-auto py-2">
             <div v-for="module in modules" :key="module.id" class="mb-3">
               <!-- Module Header -->
-              <div class="flex items-center justify-between px-5 py-2">
+              <div class="group flex items-center justify-between px-5 py-2">
                 <p class="truncate font-display text-[13px] font-extrabold text-lm-ink">{{ module.title }}</p>
-                <span class="ml-2 shrink-0 font-mono text-[10px] font-bold text-lm-ink-3">{{ module.subTopics.length }}</span>
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <!-- Delete Module Trash Button -->
+                  <button
+                    v-if="course.status !== 'PENDING_REVIEW'"
+                    type="button"
+                    class="flex h-6 w-6 items-center justify-center rounded bg-lm-surface border border-lm-line-soft text-lm-ink-3 hover:text-lm-red hover:border-lm-red transition-all duration-150 shadow-stamp-xs"
+                    title="Delete module"
+                    @click.stop="triggerDeleteConfirm('module', module.id, module.title)"
+                  >
+                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                  </button>
+                  <span class="font-mono text-[10px] font-bold text-lm-ink-3">{{ module.subTopics.length }}</span>
+                </div>
               </div>
 
               <!-- Subtopics -->
@@ -602,7 +652,6 @@ function getErrorMessage(error: unknown, fallback: string) {
                 >
                   <!-- Normal Navigation Mode -->
                   <button
-                    v-if="deletingSubTopicId !== subTopic.id"
                     type="button"
                     class="flex flex-1 min-w-0 items-center justify-between text-left font-display text-[13px]"
                     @click="selectSubTopic(subTopic.id)"
@@ -613,38 +662,16 @@ function getErrorMessage(error: unknown, fallback: string) {
 
                   <!-- Delete Trash Button (always visible) -->
                   <button
-                    v-if="deletingSubTopicId !== subTopic.id && course.status !== 'PENDING_REVIEW'"
+                    v-if="course.status !== 'PENDING_REVIEW'"
                     type="button"
                     class="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-lm-surface border border-lm-line-soft text-lm-ink-3 hover:text-lm-red hover:border-lm-red transition-all duration-150 shadow-stamp-xs"
                     title="Delete subtopic"
-                    @click.stop="deletingSubTopicId = subTopic.id"
+                    @click.stop="triggerDeleteConfirm('subtopic', subTopic.id, subTopic.title)"
                   >
                     <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2v2" />
                     </svg>
                   </button>
-
-                  <!-- Delete Confirmation Mode -->
-                  <div v-if="deletingSubTopicId === subTopic.id" class="flex w-full items-center justify-between font-mono text-[11px] text-lm-red">
-                    <span class="truncate">Delete?</span>
-                    <div class="flex items-center gap-2 shrink-0">
-                      <button
-                        type="button"
-                        class="px-1.5 py-0.5 font-bold text-lm-green hover:underline"
-                        :disabled="subTopicDeleting"
-                        @click.stop="confirmDeleteSubTopic(module.id, subTopic.id)"
-                      >
-                        ✓
-                      </button>
-                      <button
-                        type="button"
-                        class="px-1.5 py-0.5 font-bold text-lm-red hover:underline"
-                        @click.stop="deletingSubTopicId = null"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </div>
                 </div>
               </div>
 
@@ -1146,6 +1173,104 @@ function getErrorMessage(error: unknown, fallback: string) {
 
     </div>
   </div>
+
+  <!-- Confirm delete module/subtopic modal -->
+  <Teleport to="body">
+    <Transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition duration-150 ease-in"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div v-if="showDeleteConfirm" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-lm-ink/60 backdrop-blur-sm" aria-hidden="true" @click="showDeleteConfirm = false" />
+
+        <Transition
+          enter-active-class="transition duration-200 ease-out"
+          enter-from-class="opacity-0 scale-95 translate-y-2"
+          enter-to-class="opacity-100 scale-100 translate-y-0"
+          leave-active-class="transition duration-150 ease-in"
+          leave-from-class="opacity-100 scale-100 translate-y-0"
+          leave-to-class="opacity-0 scale-95 translate-y-2"
+        >
+          <div
+            v-if="showDeleteConfirm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirm-delete-title"
+            class="relative z-10 flex w-full max-w-md flex-col overflow-hidden rounded-[18px] border-2 border-lm-line bg-lm-surface shadow-stamp-md"
+            @click.stop
+          >
+            <!-- Header -->
+            <header class="shrink-0 border-b-2 border-lm-line px-6 py-5">
+              <div class="flex items-start justify-between gap-4">
+                <div class="flex items-center gap-3">
+                  <div class="flex h-9 w-9 items-center justify-center rounded-[10px] border-2 border-lm-line bg-lm-red-soft text-lm-red shadow-stamp-sm">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                      <line x1="12" y1="9" x2="12" y2="13" />
+                      <line x1="12" y1="17" x2="12.01" y2="17" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 id="confirm-delete-title" class="font-display text-[15px] font-bold text-lm-ink">
+                      Delete {{ deleteType === 'module' ? 'Module' : 'Subtopic' }}?
+                    </h2>
+                    <p class="mt-1 text-[11px] text-lm-ink-3">This action cannot be undone</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-lm-ink-3 transition hover:bg-lm-bg hover:text-lm-ink"
+                  aria-label="Close"
+                  @click="showDeleteConfirm = false"
+                >
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6 6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </header>
+
+            <!-- Body -->
+            <div class="px-6 py-5">
+              <p class="text-[13px] leading-relaxed text-lm-ink-2">
+                Are you sure you want to delete the {{ deleteType === 'module' ? 'module' : 'subtopic' }}
+                <strong class="text-lm-red">"{{ deleteTargetTitle }}"</strong>?
+                <span v-if="deleteType === 'module'">
+                  All subtopics and configurations under this module will be permanently removed.
+                </span>
+                <span v-else>
+                  This will permanently remove all lesson content and interactive configurations for this subtopic.
+                </span>
+              </p>
+            </div>
+
+            <!-- Footer -->
+            <footer class="flex shrink-0 gap-2.5 border-t-2 border-lm-line px-6 py-4">
+              <button
+                type="button"
+                class="h-10 flex-1 rounded-full border-2 border-lm-line bg-lm-surface px-4 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
+                @click="showDeleteConfirm = false"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                class="h-10 flex-1 rounded-full border-2 border-lm-line bg-lm-red text-white px-4 text-[13px] font-bold shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md disabled:cursor-not-allowed disabled:opacity-50"
+                :disabled="deletingInProgress"
+                @click="proceedDelete"
+              >
+                {{ deletingInProgress ? 'Deleting...' : 'Delete' }}
+              </button>
+            </footer>
+          </div>
+        </Transition>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <style scoped>
