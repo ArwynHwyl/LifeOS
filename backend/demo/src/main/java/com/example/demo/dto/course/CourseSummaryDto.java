@@ -15,6 +15,7 @@ public record CourseSummaryDto(
         UUID approvedById,
         String approvedByName,
         Instant publishedAt,
+        int moduleCount,
         Instant createdAt,
         Instant updatedAt
 ) {

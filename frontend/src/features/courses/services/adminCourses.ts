@@ -18,6 +18,7 @@ export interface AdminCourseSummaryDto {
   approvedById: string | null
   approvedByName: string | null
   publishedAt: string | null
+  moduleCount: number
   createdAt: string
   updatedAt: string
 }
@@ -411,7 +412,7 @@ export function toAdminCourseCard(course: AdminCourseSummaryDto | AdminCourseDet
     description: course.description ?? '',
     coverId: course.coverId ?? getCourseCover(course.id),
     status: toCourseStatus(course.status),
-    moduleCount: 'modules' in course ? course.modules.length : 0,
+    moduleCount: 'modules' in course ? course.modules.length : course.moduleCount,
     lastEdited: formatRelativeDate(course.updatedAt),
     createdBy: course.createdByName,
   }

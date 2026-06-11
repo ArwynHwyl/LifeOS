@@ -56,6 +56,7 @@ public class CourseDtoMapper {
                 approvedBy == null ? null : approvedBy.getUserId(),
                 approvedBy == null ? null : displayName(approvedBy),
                 course.getPublishedAt(),
+                course.getModules().size(),
                 course.getCreatedAt(),
                 course.getUpdatedAt()
         );
