@@ -121,6 +121,8 @@ async function loadCourse() {
             text: comment.feedback,
             createdAt: formatDate(comment.createdAt),
             subTopicId: comment.subTopicId,
+            resolved: comment.resolved,
+            resolvedAt: comment.resolvedAt,
           })
         }
       }

@@ -13,6 +13,8 @@ import com.example.demo.dto.course.SubTopicDto;
 import com.example.demo.dto.course.SubTopicUpdateRequest;
 import com.example.demo.entity.course.Course;
 import com.example.demo.entity.course.CourseModule;
+import com.example.demo.dto.course.CourseReviewCommentDto;
+import com.example.demo.entity.course.CourseReviewComment;
 import com.example.demo.entity.course.CourseStatus;
 import com.example.demo.entity.course.InteractionType;
 import com.example.demo.entity.course.SubTopic;
@@ -21,6 +23,7 @@ import com.example.demo.entity.User;
 import com.example.demo.repository.course.CourseModuleRepository;
 import com.example.demo.repository.course.CourseRepository;
 import com.example.demo.repository.course.CourseReviewRepository;
+import com.example.demo.repository.course.CourseReviewCommentRepository;
 import com.example.demo.repository.course.AiGenerationLogRepository;
 import com.example.demo.repository.course.SubTopicRepository;
 import com.example.demo.service.exception.ResourceNotFoundException;
@@ -44,6 +47,7 @@ public class CourseAdminService {
     private final CourseInputValidator validator;
     private final LessonHtmlService lessonHtmlService;
     private final InteractiveConfigService interactiveConfigService;
+    private final CourseReviewCommentRepository courseReviewCommentRepository;
 
     public CourseAdminService(
             CourseRepository courseRepository,
@@ -56,7 +60,8 @@ public class CourseAdminService {
             CourseDtoMapper mapper,
             CourseInputValidator validator,
             LessonHtmlService lessonHtmlService,
-            InteractiveConfigService interactiveConfigService
+            InteractiveConfigService interactiveConfigService,
+            CourseReviewCommentRepository courseReviewCommentRepository
     ) {
         this.courseRepository = courseRepository;
         this.courseModuleRepository = courseModuleRepository;
@@ -69,6 +74,7 @@ public class CourseAdminService {
         this.validator = validator;
         this.lessonHtmlService = lessonHtmlService;
         this.interactiveConfigService = interactiveConfigService;
+        this.courseReviewCommentRepository = courseReviewCommentRepository;
     }
 
     @Transactional(readOnly = true)
@@ -325,5 +331,32 @@ public class CourseAdminService {
 
     private <T> List<T> nullToList(List<T> values) {
         return values == null ? List.of() : values;
+    }
+
+    @Transactional
+    public CourseReviewCommentDto setReviewCommentResolved(
+            UUID adminUserId,
+            Long courseId,
+            Long commentId,
+            boolean resolved
+    ) {
+        userAccessService.requireAdmin(validator.requiredUserId(adminUserId));
+        validator.requiredId(courseId, "courseId");
+        validator.requiredId(commentId, "commentId");
+
+        CourseReviewComment comment = courseReviewCommentRepository.findById(commentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Comment not found: " + commentId));
+
+        if (!comment.getReview().getCourse().getId().equals(courseId)) {
+            throw new ResourceNotFoundException("Comment not found in course: " + commentId);
+        }
+
+        if (resolved) {
+            comment.markResolved();
+        } else {
+            comment.markUnresolved();
+        }
+
+        return mapper.toCourseReviewCommentDto(courseReviewCommentRepository.save(comment));
     }
 }

@@ -36,8 +36,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.example.demo.dto.course.CourseReviewCommentDto;
+import com.example.demo.dto.course.ReviewCommentResolveRequest;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -291,5 +294,20 @@ public class AdminCourseController {
     @GetMapping("/ai-generations/{logId}")
     public AiGenerationLogDto getAiGenerationLog(@AuthenticationPrincipal User user, @PathVariable Long logId) {
         return aiGenerationService.getLog(CurrentUser.id(user), logId);
+    }
+
+    @PatchMapping("/courses/{courseId}/review-comments/{commentId}/resolved")
+    public CourseReviewCommentDto setReviewCommentResolved(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long courseId,
+            @PathVariable Long commentId,
+            @Valid @RequestBody ReviewCommentResolveRequest request
+    ) {
+        return courseAdminService.setReviewCommentResolved(
+                CurrentUser.id(user),
+                courseId,
+                commentId,
+                request.resolved()
+        );
     }
 }

@@ -471,6 +471,8 @@ export interface CourseReviewCommentDto {
   feedback: string
   createdAt: string
   updatedAt: string
+  resolved: boolean
+  resolvedAt: string | null
 }
 
 export interface CourseReviewDto {
@@ -487,5 +489,17 @@ export interface CourseReviewDto {
 
 export async function getReviewComments(courseId: number | string): Promise<CourseReviewDto[]> {
   const { data } = await api.get<CourseReviewDto[]>(`/v1/admin/courses/${courseId}/reviews`)
+  return data
+}
+
+export async function setReviewCommentResolved(
+  courseId: number | string,
+  commentId: number | string,
+  resolved: boolean
+) {
+  const { data } = await api.patch<CourseReviewCommentDto>(
+    `/v1/admin/courses/${courseId}/review-comments/${commentId}/resolved`,
+    { resolved }
+  )
   return data
 }

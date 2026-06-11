@@ -1,6 +1,7 @@
 package com.example.demo.entity.course;
 
 import com.example.demo.entity.BaseTimestampEntity;
+import java.time.Instant;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -34,6 +35,12 @@ public class CourseReviewComment extends BaseTimestampEntity {
     @Column(nullable = false, columnDefinition = "text")
     private String feedback;
 
+    @Column(nullable = false)
+    private boolean resolved = false;
+
+    @Column(name = "resolved_at")
+    private Instant resolvedAt;
+
     protected CourseReviewComment() {
     }
 
@@ -65,5 +72,23 @@ public class CourseReviewComment extends BaseTimestampEntity {
 
     public String getFeedback() {
         return feedback;
+    }
+
+    public boolean isResolved() {
+        return resolved;
+    }
+
+    public Instant getResolvedAt() {
+        return resolvedAt;
+    }
+
+    public void markResolved() {
+        this.resolved = true;
+        this.resolvedAt = Instant.now();
+    }
+
+    public void markUnresolved() {
+        this.resolved = false;
+        this.resolvedAt = null;
     }
 }

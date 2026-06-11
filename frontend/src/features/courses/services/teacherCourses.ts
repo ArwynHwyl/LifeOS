@@ -13,6 +13,8 @@ export interface TeacherCourseReviewCommentDto {
   feedback: string
   createdAt: string
   updatedAt: string
+  resolved: boolean
+  resolvedAt: string | null
 }
 
 export interface TeacherCourseReviewDto {

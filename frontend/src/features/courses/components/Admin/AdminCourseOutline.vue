@@ -8,11 +8,14 @@ type Comment = {
   text: string
   createdAt: string
   subTopicId?: number | null
+  resolved?: boolean
+  resolvedAt?: string | null
 }
 import {
   type AdminModuleDto,
   type BackendCourseStatus,
   getReviewComments,
+  setReviewCommentResolved,
 } from '@/features/courses/services/adminCourses'
 
 const props = defineProps<{
@@ -85,6 +88,8 @@ async function loadComments() {
             text: comment.feedback,
             createdAt: formatDate(comment.createdAt),
             subTopicId: comment.subTopicId,
+            resolved: comment.resolved,
+            resolvedAt: comment.resolvedAt,
           })
         }
       }
@@ -92,6 +97,34 @@ async function loadComments() {
     commentsMap.value = tempMap
   } catch (err) {
     console.error('Failed to load review comments', err)
+  }
+}
+
+const resolvingCommentIds = ref<Set<number | string>>(new Set())
+
+async function toggleCommentResolve(comment: Comment) {
+  if (resolvingCommentIds.value.has(comment.id)) return
+  resolvingCommentIds.value.add(comment.id)
+
+  const oldResolved = !!comment.resolved
+  const oldResolvedAt = comment.resolvedAt
+  const targetResolved = !oldResolved
+
+  // Optimistic update
+  comment.resolved = targetResolved
+  comment.resolvedAt = targetResolved ? new Date().toISOString() : null
+
+  try {
+    const updated = await setReviewCommentResolved(props.courseId, comment.id, targetResolved)
+    comment.resolved = updated.resolved
+    comment.resolvedAt = updated.resolvedAt
+  } catch (err) {
+    console.error('Failed to update comment resolution', err)
+    // Revert on error
+    comment.resolved = oldResolved
+    comment.resolvedAt = oldResolvedAt
+  } finally {
+    resolvingCommentIds.value.delete(comment.id)
   }
 }
 
@@ -179,16 +212,50 @@ function moduleCommentCount(moduleId: number): number {
             <div v-if="moduleLevelComments(module.id).length" class="rounded-[12px] border-2 border-lm-line-soft bg-lm-surface px-4 py-3">
               <p class="mb-2 font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-lm-ink-3">Whole module</p>
               <div class="flex flex-col gap-3">
-                <div v-for="comment in moduleLevelComments(module.id)" :key="comment.id" class="flex gap-3">
-                  <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white" :class="avatarBg(comment.authorName)">
-                    {{ initials(comment.authorName) }}
-                  </div>
-                  <div class="min-w-0 flex-1">
-                    <div class="mb-0.5 flex items-center gap-2">
-                      <span class="text-[12px] font-semibold text-lm-ink">{{ comment.authorName }}</span>
-                      <span class="text-[11px] text-lm-ink-3">· {{ comment.createdAt }}</span>
+                <div
+                  v-for="comment in moduleLevelComments(module.id)"
+                  :key="comment.id"
+                  class="flex items-start justify-between gap-4"
+                  :class="{ 'opacity-70': comment.resolved }"
+                >
+                  <div class="flex min-w-0 flex-1 gap-3">
+                    <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white" :class="avatarBg(comment.authorName)">
+                      {{ initials(comment.authorName) }}
                     </div>
-                    <p class="text-[12.5px] leading-relaxed text-lm-ink-2">{{ comment.text }}</p>
+                    <div class="min-w-0 flex-1">
+                      <div class="mb-0.5 flex items-center gap-2">
+                        <span class="text-[12px] font-semibold text-lm-ink">{{ comment.authorName }}</span>
+                        <span class="text-[11px] text-lm-ink-3">· {{ comment.createdAt }}</span>
+                      </div>
+                      <p class="text-[12.5px] leading-relaxed text-lm-ink-2">{{ comment.text }}</p>
+                    </div>
+                  </div>
+
+                  <!-- Resolve / Resolved Button -->
+                  <div class="shrink-0 pt-0.5">
+                    <button
+                      v-if="comment.resolved"
+                      type="button"
+                      class="inline-flex cursor-pointer items-center gap-1 rounded-full border-2 border-lm-line bg-lm-green-soft px-2 py-0.5 font-mono text-[10px] font-bold text-lm-green shadow-stamp-xs transition-transform hover:-translate-y-px"
+                      @click="toggleCommentResolve(comment)"
+                    >
+                      <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      Resolved
+                    </button>
+                    <button
+                      v-else
+                      type="button"
+                      class="inline-flex cursor-pointer items-center gap-1 rounded-full border-2 border-lm-line bg-lm-surface px-2 py-0.5 font-mono text-[10px] font-bold text-lm-ink shadow-stamp-xs transition-transform hover:-translate-y-px hover:bg-lm-bg"
+                      @click="toggleCommentResolve(comment)"
+                    >
+                      <svg class="h-3 w-3 text-lm-ink-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="9 11 12 14 16 9" />
+                      </svg>
+                      Resolve
+                    </button>
                   </div>
                 </div>
               </div>
@@ -205,16 +272,50 @@ function moduleCommentCount(moduleId: number): number {
                 <span class="truncate normal-case tracking-normal">{{ group.title }}</span>
               </p>
               <div class="flex flex-col gap-3">
-                <div v-for="comment in group.comments" :key="comment.id" class="flex gap-3">
-                  <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white" :class="avatarBg(comment.authorName)">
-                    {{ initials(comment.authorName) }}
-                  </div>
-                  <div class="min-w-0 flex-1">
-                    <div class="mb-0.5 flex items-center gap-2">
-                      <span class="text-[12px] font-semibold text-lm-ink">{{ comment.authorName }}</span>
-                      <span class="text-[11px] text-lm-ink-3">· {{ comment.createdAt }}</span>
+                <div
+                  v-for="comment in group.comments"
+                  :key="comment.id"
+                  class="flex items-start justify-between gap-4"
+                  :class="{ 'opacity-70': comment.resolved }"
+                >
+                  <div class="flex min-w-0 flex-1 gap-3">
+                    <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white" :class="avatarBg(comment.authorName)">
+                      {{ initials(comment.authorName) }}
                     </div>
-                    <p class="text-[12.5px] leading-relaxed text-lm-ink-2">{{ comment.text }}</p>
+                    <div class="min-w-0 flex-1">
+                      <div class="mb-0.5 flex items-center gap-2">
+                        <span class="text-[12px] font-semibold text-lm-ink">{{ comment.authorName }}</span>
+                        <span class="text-[11px] text-lm-ink-3">· {{ comment.createdAt }}</span>
+                      </div>
+                      <p class="text-[12.5px] leading-relaxed text-lm-ink-2">{{ comment.text }}</p>
+                    </div>
+                  </div>
+
+                  <!-- Resolve / Resolved Button -->
+                  <div class="shrink-0 pt-0.5">
+                    <button
+                      v-if="comment.resolved"
+                      type="button"
+                      class="inline-flex cursor-pointer items-center gap-1 rounded-full border-2 border-lm-line bg-lm-green-soft px-2 py-0.5 font-mono text-[10px] font-bold text-lm-green shadow-stamp-xs transition-transform hover:-translate-y-px"
+                      @click="toggleCommentResolve(comment)"
+                    >
+                      <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      Resolved
+                    </button>
+                    <button
+                      v-else
+                      type="button"
+                      class="inline-flex cursor-pointer items-center gap-1 rounded-full border-2 border-lm-line bg-lm-surface px-2 py-0.5 font-mono text-[10px] font-bold text-lm-ink shadow-stamp-xs transition-transform hover:-translate-y-px hover:bg-lm-bg"
+                      @click="toggleCommentResolve(comment)"
+                    >
+                      <svg class="h-3 w-3 text-lm-ink-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="9 11 12 14 16 9" />
+                      </svg>
+                      Resolve
+                    </button>
                   </div>
                 </div>
               </div>

@@ -8,6 +8,8 @@ public record CourseReviewCommentDto(
         Long subTopicId,
         String feedback,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        boolean resolved,
+        Instant resolvedAt
 ) {
 }

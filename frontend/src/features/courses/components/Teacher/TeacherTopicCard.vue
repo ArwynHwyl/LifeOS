@@ -12,6 +12,8 @@ export type Comment = {
   text: string
   createdAt: string
   subTopicId?: number | null
+  resolved?: boolean
+  resolvedAt?: string | null
 }
 
 const props = defineProps<{
@@ -328,6 +330,13 @@ function formatInteractionType(value: string | null | undefined): string {
                               >
                                 Draft
                               </span>
+                              <span
+                                v-if="comment.resolved"
+                                class="rounded-full border border-dashed border-lm-green px-1.5 py-px font-mono text-[8.5px] font-bold uppercase tracking-[0.08em] text-lm-green"
+                                title="This feedback has been resolved"
+                              >
+                                Resolved ✓
+                              </span>
                             </div>
                             <p class="mt-0.5 text-[12px] leading-relaxed text-lm-ink-2">{{ comment.text }}</p>
                           </div>
@@ -412,6 +421,13 @@ function formatInteractionType(value: string | null | undefined): string {
                     title="Sent with your revision request"
                   >
                     Draft
+                  </span>
+                  <span
+                    v-if="comment.resolved"
+                    class="rounded-full border border-dashed border-lm-green px-1.5 py-px font-mono text-[8.5px] font-bold uppercase tracking-[0.08em] text-lm-green"
+                    title="This feedback has been resolved"
+                  >
+                    Resolved ✓
                   </span>
                 </div>
                 <p class="text-[12.5px] leading-relaxed text-lm-ink-2">{{ comment.text }}</p>

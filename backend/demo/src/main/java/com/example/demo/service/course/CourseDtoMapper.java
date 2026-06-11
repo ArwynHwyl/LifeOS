@@ -212,7 +212,9 @@ public class CourseDtoMapper {
                 subTopic == null ? null : subTopic.getId(),
                 comment.getFeedback(),
                 comment.getCreatedAt(),
-                comment.getUpdatedAt()
+                comment.getUpdatedAt(),
+                comment.isResolved(),
+                comment.getResolvedAt()
         );
     }
 

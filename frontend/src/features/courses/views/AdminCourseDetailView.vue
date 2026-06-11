@@ -172,6 +172,9 @@ async function loadCourse() {
     const data = await getAdminCourse(courseId.value)
     course.value = data
     selectedDocumentId.value = data.documentSources[0]?.id ?? null
+    if (data.status === 'NEED_REVISION') {
+      manageOpen.value = true
+    }
     if (!selectedSubTopicId.value) {
       const first = data.modules[0]?.subTopics[0]
       if (first) selectedSubTopicId.value = first.id
@@ -538,13 +541,6 @@ function getErrorMessage(error: unknown, fallback: string) {
             </div>
           </div>
         </div>
-        <span
-          v-if="course"
-          class="inline-flex shrink-0 items-center gap-2 rounded-full border-2 border-lm-green bg-lm-green-soft px-4 py-2 font-display text-[13px] font-bold text-lm-green"
-        >
-          <AdminIcon name="check" :size="15" />
-          {{ statusDisplay.label }}
-        </span>
       </header>
 
       <!-- Error banner -->
