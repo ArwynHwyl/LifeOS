@@ -261,38 +261,6 @@ public class DevSeedConfig {
                 ContentDepth.HIGH
         );
         probabilityModule.addSubTopic(subTopic(
-                "Random Variables",
-                """
-                        <h2>Random Variables</h2>
-                        <p>A random variable represents a quantity of interest from a random experiment, such as the sum of dice rolls, the number of heads in coin flips, or the height of a selected person.</p>
-                        <p>Random variables can be discrete, with listable possible values, or continuous, with real-number values over an interval.</p>
-                        """,
-                0,
-                1,
-                1,
-                InteractionType.QUIZ,
-                "Classify the random variable.",
-                validate(interactiveConfigService, InteractionType.QUIZ, """
-                        {
-                          "type": "QUIZ",
-                          "mode": "PRACTICE",
-                          "title": "Classify variables",
-                          "prompt": "Classify the random variable.",
-                          "question": "The number of emails you receive tomorrow.",
-                          "options": [
-                            { "id": "discrete", "label": "Discrete", "correct": true },
-                            { "id": "continuous", "label": "Continuous", "correct": false }
-                          ],
-                          "explanation": "The number of emails is countable (0, 1, 2, ...), so it is a discrete random variable.",
-                          "successCondition": { "kind": "QUIZ_CORRECT_OPTION" },
-                          "feedback": {
-                            "success": "Correct. Since you can count the number of emails, it is discrete.",
-                            "failure": "Not quite. Can you receive 1.5 emails, or is it countable?"
-                          }
-                        }
-                        """)
-        ));
-        probabilityModule.addSubTopic(subTopic(
                 "Discrete Probability Distributions",
                 """
                         <h2>Discrete Probability Distributions</h2>

@@ -281,6 +281,89 @@
   }
 } /* end @layer base */
 
+/* ── Lesson HTML preview (v-html rendered rich content) ──────────────────── */
+.lesson-preview b,
+.lesson-preview strong {
+  font-weight: 700;
+  color: inherit;
+}
+.lesson-preview i,
+.lesson-preview em {
+  font-style: italic;
+}
+.lesson-preview u {
+  text-decoration: underline;
+}
+.lesson-preview h2 {
+  font-family: var(--font-display, sans-serif);
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.35;
+  margin: 1rem 0 0.4rem;
+  color: #1a1814;
+}
+.lesson-preview h3 {
+  font-family: var(--font-display, sans-serif);
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 0.85rem 0 0.35rem;
+  color: #1a1814;
+}
+.lesson-preview p {
+  margin: 0.35rem 0;
+}
+.lesson-preview ul {
+  list-style-type: disc;
+  padding-left: 1.4rem;
+  margin: 0.5rem 0;
+}
+.lesson-preview ol {
+  list-style-type: decimal;
+  padding-left: 1.4rem;
+  margin: 0.5rem 0;
+}
+.lesson-preview li {
+  margin: 0.2rem 0;
+}
+.lesson-preview pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+  background: #f3eee2;
+  padding: 0.65rem 1rem;
+  border-radius: 7px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0.5rem 0;
+}
+.lesson-preview code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.875em;
+  background: #f3eee2;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+.lesson-preview a {
+  color: #3b6cb5;
+  text-decoration: underline;
+}
+.lesson-preview img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  display: block;
+  margin: 0.75rem 0;
+}
+.lesson-preview blockquote {
+  border-left: 3px solid #e3ddce;
+  padding-left: 1rem;
+  margin: 0.5rem 0;
+  color: #5b544a;
+  font-style: italic;
+}
+
 #app {
   width: 100%;
   min-height: 100svh;

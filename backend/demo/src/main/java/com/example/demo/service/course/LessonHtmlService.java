@@ -14,8 +14,8 @@ import org.springframework.stereotype.Service;
 public class LessonHtmlService {
 
     private final Safelist safelist = Safelist.none()
-            .addTags("p", "h2", "h3", "strong", "em", "code", "pre", "a", "ul", "ol", "li", "blockquote",
-                    "figure", "figcaption", "img", "br")
+            .addTags("p", "h2", "h3", "b", "strong", "i", "em", "u", "code", "pre", "a",
+                    "ul", "ol", "li", "blockquote", "figure", "figcaption", "img", "br")
             .addAttributes("a", "href", "title", "target", "rel")
             .addAttributes("img", "alt", "data-asset-id")
             .addProtocols("a", "href", "http", "https", "mailto")
@@ -99,7 +99,7 @@ public class LessonHtmlService {
     }
 
     private boolean looksLikeHtml(String content) {
-        return content.matches("(?is).*<\\s*(p|h2|h3|strong|em|code|pre|a|ul|ol|li|blockquote|figure|img|br)\\b.*");
+        return content.matches("(?is).*<\\s*(p|h2|h3|b|strong|i|em|u|code|pre|a|ul|ol|li|blockquote|figure|img|br)\\b.*");
     }
 
     private Map<Long, SubTopicAsset> toAssetMap(Iterable<SubTopicAsset> assets) {

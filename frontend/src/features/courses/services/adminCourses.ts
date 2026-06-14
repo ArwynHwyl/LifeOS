@@ -504,6 +504,24 @@ export async function setReviewCommentResolved(
   return data
 }
 
+export async function updateAdminModule(moduleId: number | string, payload: {
+  title: string
+  description?: string | null
+  sortOrder: number
+  contentDepth?: 'LOW' | 'MEDIUM' | 'HIGH'
+}) {
+  const { data } = await api.put<AdminModuleDto>(`/v1/admin/modules/${moduleId}`, {
+    title: payload.title,
+    description: payload.description?.trim() || null,
+    sortOrder: payload.sortOrder,
+    contentDepth: payload.contentDepth ?? 'MEDIUM',
+    interactionType: 'NONE',
+    interactionPrompt: null,
+    interactionConfig: null,
+  })
+  return data
+}
+
 export async function deleteAdminModule(moduleId: number | string): Promise<void> {
   await api.delete(`/v1/admin/modules/${moduleId}`)
 }
