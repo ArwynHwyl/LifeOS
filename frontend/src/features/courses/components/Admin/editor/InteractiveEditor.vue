@@ -6,17 +6,6 @@
         <h3 class="font-display text-[14px] font-[800] text-lm-ink m-0">Interactive</h3>
         <span v-if="type !== 'NONE'" class="font-mono text-[10px] font-bold px-2 py-[2px] border-2 border-lm-line-soft rounded-full bg-lm-bg-soft text-lm-ink-3 uppercase">{{ type }}</span>
       </div>
-      <div class="flex gap-[2px] p-[3px] bg-lm-bg-soft border-2 border-lm-line-soft rounded-[8px]">
-        <button
-          v-for="t in ['Design', 'JSON']"
-          :key="t"
-          @click="mode = t"
-          class="px-2.5 py-1 font-display text-[11px] font-bold border-none rounded-[6px] cursor-pointer bg-transparent text-lm-ink-3"
-          :class="{ 'bg-lm-ink text-lm-bg': mode === t }"
-        >
-          {{ t }}
-        </button>
-      </div>
     </div>
 
     <div class="p-3.5">
