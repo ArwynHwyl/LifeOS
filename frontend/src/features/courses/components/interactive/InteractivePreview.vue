@@ -1142,7 +1142,6 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
     <div v-else-if="config.type === 'QUIZ'" class="quiz-stage">
       <header v-if="!isDiscreteContinuousQuiz" class="quiz-stage__header">
         <span>{{ (config as QuizConfig).title }}</span>
-        <h3>{{ config.question }}</h3>
       </header>
       <div v-if="!isDiscreteContinuousQuiz" class="quiz-question-panel">
         <p>{{ (config as QuizConfig).question }}</p>
@@ -1526,13 +1525,6 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   font-weight: 900;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-}
-.quiz-stage__header h3 {
-  margin: 0;
-  color: #1a1814;
-  font-size: clamp(1.25rem, 2vw, 1.75rem);
-  font-weight: 950;
-  line-height: 1.2;
 }
 .quiz-question-panel {
   display: grid;
