@@ -52,7 +52,7 @@ public class InteractiveConfigService {
     private static final Set<String> VISUAL_OVERLAP_INPUT_FIELDS = Set.of("id", "label", "zoneIds", "value", "kind");
     private static final Set<String> VISUAL_OVERLAP_VALUE_FIELDS = Set.of("id", "label", "zoneIds", "value", "feedback");
     private static final Set<String> QUIZ_FIELDS = Set.of(
-            "type", "mode", "title", "question", "options", "explanation", "prompt", "successCondition", "feedback"
+            "type", "mode", "title", "question", "options", "prompt", "successCondition", "feedback"
     );
     private static final Set<String> QUIZ_OPTION_FIELDS = Set.of("id", "label", "correct");
     private static final Set<String> LOGIC_FIELDS = Set.of(
@@ -172,8 +172,7 @@ public class InteractiveConfigService {
                         List.of(
                                 field("title", "Title", "text", true, null, null, 120, null),
                                 field("question", "Question", "textarea", true, null, null, 500, null),
-                                field("options", "Options", "quiz-options", true, null, null, null, null),
-                                field("explanation", "Explanation", "textarea", false, null, null, 1000, null)
+                                field("options", "Options", "quiz-options", true, null, null, null, null)
                         )
                 ),
                 new InteractiveTemplateDto(
@@ -393,7 +392,6 @@ public class InteractiveConfigService {
                         Map.of("id", "b", "label", "x = 4", "correct", true),
                         Map.of("id", "c", "label", "x = 6", "correct", false)
                 ),
-                "explanation", "Subtract 5 from both sides, then divide by 2.",
                 "successCondition", Map.of("kind", "QUIZ_CORRECT_OPTION"),
                 "feedback", Map.of("success", "Correct.", "failure", "Not quite. Try solving for x first.")
         );
@@ -1071,10 +1069,10 @@ public class InteractiveConfigService {
     }
 
     private void validateQuiz(ObjectNode root, boolean practice) {
+        root.remove(List.of("hint", "explanation"));
         rejectUnknownFields(root, QUIZ_FIELDS, "interactionConfig");
         requiredText(root, "title", 120);
         requiredText(root, "question", 500);
-        optionalText(root, "explanation", 1000);
         JsonNode options = root.get("options");
         if (options == null || !options.isArray() || options.size() < 2 || options.size() > 6) {
             throw new ValidationException("options must contain 2 to 6 items");

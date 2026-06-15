@@ -52,8 +52,7 @@ class GeminiAiDraftGenerator implements AiDraftGenerator {
                         "options": [
                           { "id": "a", "label": "Correct answer", "correct": true },
                           { "id": "b", "label": "Distractor", "correct": false }
-                        ],
-                        "explanation": "Brief feedback."
+                        ]
                       }
                     }
                   ]
@@ -65,7 +64,7 @@ class GeminiAiDraftGenerator implements AiDraftGenerator {
                 - Use only these generated interaction types: QUIZ, GRAPH_2D, FORMULA_EXPLORER, VISUAL_LAYER, LOGIC_FLOW, or NONE.
                 - interactionConfig.type must exactly match interactionType.
                 - Compact config examples:
-                  QUIZ: {"type":"QUIZ","title":"Quiz","question":"Pick one","options":[{"id":"a","label":"A","correct":true},{"id":"b","label":"B","correct":false}],"explanation":"Because."}
+                  QUIZ: {"type":"QUIZ","title":"Quiz","question":"Pick one","options":[{"id":"a","label":"A","correct":true},{"id":"b","label":"B","correct":false}]}
                   GRAPH_2D: {"type":"GRAPH_2D","title":"Graph","expression":"2 * x + 1","xMin":-5,"xMax":5,"yMin":-10,"yMax":10,"sampleCount":100}
                   FORMULA_EXPLORER: {"type":"FORMULA_EXPLORER","title":"Formula","formula":"a * b","variables":[{"name":"a","label":"A","min":1,"max":10,"step":1,"initial":2},{"name":"b","label":"B","min":1,"max":10,"step":1,"initial":3}],"precision":2}
                   VISUAL_LAYER: {"type":"VISUAL_LAYER","title":"Venn visual","canvas":{"width":900,"height":520},"zones":[{"id":"zone_a","label":"A","shape":"circle","x":260,"y":130,"width":260,"height":260,"color":"#ffd333"},{"id":"zone_b","label":"B","shape":"circle","x":380,"y":130,"width":260,"height":260,"color":"#8fb3ff"}],"elements":[],"interactions":[],"overlap":{"enabled":true,"sourceZoneIds":["zone_a","zone_b"],"inputs":[{"id":"A_ONLY","label":"A","zoneIds":["zone_a"],"value":11,"kind":"total"},{"id":"B_ONLY","label":"B","zoneIds":["zone_b"],"value":9,"kind":"total"},{"id":"A_AND_B","label":"A intersect B","zoneIds":["zone_a","zone_b"],"value":3,"kind":"intersection"}]}}
@@ -114,8 +113,7 @@ class GeminiAiDraftGenerator implements AiDraftGenerator {
                             "options": [
                               { "id": "a", "label": "Correct answer", "correct": true },
                               { "id": "b", "label": "Distractor", "correct": false }
-                            ],
-                            "explanation": "Brief feedback."
+                            ]
                           }
                         }
                       ]
@@ -130,7 +128,7 @@ class GeminiAiDraftGenerator implements AiDraftGenerator {
                 - Use only these generated subtopic interaction types: QUIZ, GRAPH_2D, FORMULA_EXPLORER, VISUAL_LAYER, LOGIC_FLOW, or NONE. Do not invent interaction types.
                 - interactionConfig.type must exactly match interactionType.
                 - Compact subtopic config examples:
-                  QUIZ: {"type":"QUIZ","title":"Quiz","question":"Pick one","options":[{"id":"a","label":"A","correct":true},{"id":"b","label":"B","correct":false}],"explanation":"Because."}
+                  QUIZ: {"type":"QUIZ","title":"Quiz","question":"Pick one","options":[{"id":"a","label":"A","correct":true},{"id":"b","label":"B","correct":false}]}
                   GRAPH_2D: {"type":"GRAPH_2D","title":"Graph","expression":"2 * x + 1","xMin":-5,"xMax":5,"yMin":-10,"yMax":10,"sampleCount":100}
                   FORMULA_EXPLORER: {"type":"FORMULA_EXPLORER","title":"Formula","formula":"a * b","variables":[{"name":"a","label":"A","min":1,"max":10,"step":1,"initial":2},{"name":"b","label":"B","min":1,"max":10,"step":1,"initial":3}],"precision":2}
                   VISUAL_LAYER: {"type":"VISUAL_LAYER","title":"Venn visual","canvas":{"width":900,"height":520},"zones":[{"id":"zone_a","label":"A","shape":"circle","x":260,"y":130,"width":260,"height":260,"color":"#ffd333"},{"id":"zone_b","label":"B","shape":"circle","x":380,"y":130,"width":260,"height":260,"color":"#8fb3ff"}],"elements":[],"interactions":[],"overlap":{"enabled":true,"sourceZoneIds":["zone_a","zone_b"],"inputs":[{"id":"A_ONLY","label":"A","zoneIds":["zone_a"],"value":11,"kind":"total"},{"id":"B_ONLY","label":"B","zoneIds":["zone_b"],"value":9,"kind":"total"},{"id":"A_AND_B","label":"A intersect B","zoneIds":["zone_a","zone_b"],"value":3,"kind":"intersection"}]}}

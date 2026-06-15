@@ -106,7 +106,6 @@ export interface QuizConfig {
   title: string
   question: string
   options: QuizOptionConfig[]
-  explanation?: string
   successCondition?: QuizCorrectOptionCondition
   feedback?: PracticeFeedback
 }
@@ -308,7 +307,6 @@ export const DEFAULT_INTERACTIVE_CONFIGS: Record<TemplateInteractionType, Intera
       { id: 'b', label: 'x = 4', correct: true },
       { id: 'c', label: 'x = 6', correct: false },
     ],
-    explanation: 'Subtract 5 from both sides, then divide by 2.',
     successCondition: { kind: 'QUIZ_CORRECT_OPTION' },
     feedback: { success: 'Correct.', failure: 'Not quite. Try solving for x first.' },
   },
@@ -402,9 +400,12 @@ export function clonePracticeDefaultConfig(type: TemplateInteractionType): Inter
 export function normalizeInteractiveConfig(config: InteractiveConfig): InteractiveConfig {
   if (config.type !== 'QUIZ') return config
   const defaults = clonePracticeDefaultConfig('QUIZ') as QuizConfig
+  const quizConfig = { ...config } as QuizConfig & { hint?: unknown; explanation?: unknown }
+  delete quizConfig.hint
+  delete quizConfig.explanation
   return {
     ...defaults,
-    ...config,
+    ...quizConfig,
     mode: 'PRACTICE',
     successCondition: {
       kind: 'QUIZ_CORRECT_OPTION',

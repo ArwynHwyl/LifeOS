@@ -37,7 +37,7 @@ class InteractiveConfigServiceTests {
                 {"type":"VISUAL_LAYER","title":"Venn visual","canvas":{"width":900,"height":520},"zones":[{"id":"zone_a","label":"A","shape":"circle","x":270,"y":150,"width":220,"height":220,"color":"#ffd333"},{"id":"zone_b","label":"B","shape":"circle","x":410,"y":150,"width":220,"height":220,"color":"#8fb3ff"}],"elements":[],"interactions":[],"overlap":{"enabled":true,"sourceZoneIds":["zone_a","zone_b"],"inputs":[{"id":"A_ONLY","label":"A","zoneIds":["zone_a"],"value":11,"kind":"total"},{"id":"B_ONLY","label":"B","zoneIds":["zone_b"],"value":9,"kind":"total"},{"id":"A_AND_B","label":"A intersect B","zoneIds":["zone_a","zone_b"],"value":3,"kind":"intersection"}]}}
                 """)).contains("\"overlap\"").contains("\"value\":8.0").contains("\"value\":6.0").contains("\"value\":3.0");
         assertThat(service.validateAndNormalize(InteractionType.QUIZ, """
-                {"type":"QUIZ","title":"Quiz","question":"Pick one","options":[{"id":"a","label":"A","correct":true},{"id":"b","label":"B","correct":false}],"explanation":"Because."}
+                {"type":"QUIZ","title":"Quiz","question":"Pick one","options":[{"id":"a","label":"A","correct":true},{"id":"b","label":"B","correct":false}]}
                 """)).contains("\"type\":\"QUIZ\"").contains("\"mode\":\"PRACTICE\"");
         assertThat(service.validateAndNormalize(InteractionType.LOGIC_FLOW, """
                 {"type":"LOGIC_FLOW","kind":"SIMPLIFY","mode":"PRACTICE","title":"Logic","start":"P -> Q","target":"¬P ∨ Q","allowedLaws":["IMPLICATION"],"feedback":{"success":"Correct","failure":"Try again"}}
@@ -47,7 +47,7 @@ class InteractiveConfigServiceTests {
     @Test
     void normalizesLegacyQuizConfigsToPractice() throws Exception {
         String normalized = service.validateAndNormalize(InteractionType.QUIZ, """
-                {"type":"QUIZ","mode":"VISUALIZATION","title":"Quiz","question":"Pick one","options":[{"id":"a","label":"A","correct":true},{"id":"b","label":"B","correct":false}],"explanation":"Because."}
+                {"type":"QUIZ","mode":"VISUALIZATION","title":"Quiz","question":"Pick one","options":[{"id":"a","label":"A","correct":true},{"id":"b","label":"B","correct":false}],"hint":"Old hint","explanation":"Because."}
                 """);
 
         JsonNode root = objectMapper.readTree(normalized);
@@ -55,6 +55,8 @@ class InteractiveConfigServiceTests {
         assertThat(root.path("prompt").asText()).isEqualTo("Pick one");
         assertThat(root.path("successCondition").path("kind").asText()).isEqualTo("QUIZ_CORRECT_OPTION");
         assertThat(root.path("feedback").path("success").asText()).isEqualTo("Correct.");
+        assertThat(root.has("hint")).isFalse();
+        assertThat(root.has("explanation")).isFalse();
     }
 
     @Test

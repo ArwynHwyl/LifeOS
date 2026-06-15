@@ -1762,8 +1762,17 @@ function labelFor(type: TemplateInteractionType) {
       <label class="field"><span>Question</span><textarea rows="3" :value="config.question" maxlength="500" @input="patchConfig({ question: ($event.target as HTMLTextAreaElement).value })" /></label>
       <div class="quiz-answer-grid">
         <div v-for="(option, index) in config.options" :key="`${option.id}-${index}`" class="quiz-answer-card" :class="{ 'quiz-answer-card--correct': option.correct }">
-          <label class="quiz-answer-card__main">
-            <input type="radio" name="correct-option" :checked="option.correct" @change="setCorrectQuizOption(index)" />
+          <div class="quiz-answer-card__main">
+            <button
+              type="button"
+              class="quiz-correct-button"
+              :class="{ 'quiz-correct-button--selected': option.correct }"
+              :aria-pressed="option.correct"
+              :aria-label="`Mark option ${index + 1} as correct`"
+              @click="setCorrectQuizOption(index)"
+            >
+              <span v-if="option.correct" class="quiz-correct-button__dot" />
+            </button>
             <input
               class="quiz-answer-input"
               :value="option.label"
@@ -1771,7 +1780,7 @@ function labelFor(type: TemplateInteractionType) {
               :aria-label="`Option ${index + 1}`"
               @input="updateQuizOption(index, { label: ($event.target as HTMLInputElement).value })"
             />
-          </label>
+          </div>
           <div class="quiz-answer-card__meta">
             <label class="quiz-id-chip">
               <span>ID</span>
@@ -1791,7 +1800,6 @@ function labelFor(type: TemplateInteractionType) {
         </div>
         <button type="button" class="quiz-add-card" :disabled="config.options.length >= 6" @click="addQuizOption">Add option</button>
       </div>
-      <label class="field"><span>Explanation</span><textarea rows="3" :value="config.explanation ?? ''" maxlength="1000" @input="patchConfig({ explanation: ($event.target as HTMLTextAreaElement).value })" /></label>
     </div>
 
     <div v-if="config?.mode === 'PRACTICE' && config.type !== 'VISUAL_LAYER'" class="editor-grid">
@@ -2096,10 +2104,30 @@ function labelFor(type: TemplateInteractionType) {
   gap: 0.6rem;
   min-height: 3.1rem;
 }
-.quiz-answer-card__main input[type='radio'] {
-  width: 1.05rem;
-  height: 1.05rem;
-  accent-color: #1a1814;
+.quiz-correct-button {
+  display: grid;
+  width: 1.6rem;
+  height: 1.6rem;
+  place-items: center;
+  border: 2px solid #1a1814;
+  border-radius: 999px;
+  background: #fffdf8;
+  color: #1a1814;
+  font-size: 13px;
+  font-weight: 950;
+}
+.quiz-correct-button:hover {
+  background: #f0ece4;
+}
+.quiz-correct-button--selected {
+  background: #1a1814;
+  color: #ffd333;
+}
+.quiz-correct-button__dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: #ffd333;
 }
 .quiz-answer-input {
   width: 100%;

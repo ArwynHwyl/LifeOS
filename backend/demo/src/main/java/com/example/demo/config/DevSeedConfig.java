@@ -285,7 +285,6 @@ public class DevSeedConfig {
                             { "id": "c", "label": "-0.1, 0.6, 0.5", "correct": false },
                             { "id": "d", "label": "0.1, 0.2, 0.4", "correct": false }
                           ],
-                          "explanation": "The probabilities must be non-negative and add up to exactly 1.",
                           "successCondition": { "kind": "QUIZ_CORRECT_OPTION" },
                           "feedback": {
                             "success": "Correct. The values are non-negative and sum to 1.",
@@ -509,7 +508,6 @@ public class DevSeedConfig {
                             { "id": "c", "label": "P(A) has 2 elements", "correct": false },
                             { "id": "d", "label": "A is not an element of P(A)", "correct": false }
                           ],
-                          "explanation": "P(A) contains every subset of A, including {1}, {2}, empty set, and A itself.",
                           "successCondition": { "kind": "QUIZ_CORRECT_OPTION" },
                           "feedback": {
                             "success": "Correct. A power set contains subsets as its elements.",

@@ -109,7 +109,7 @@ class MockAiDraftGenerator implements AiDraftGenerator {
 
     private String quizConfig(String title, String question) {
         return """
-                {"type":"QUIZ","title":"%s","question":"%s","options":[{"id":"a","label":"A precise mathematical statement with variables.","correct":true},{"id":"b","label":"A paragraph with no testable condition.","correct":false}],"explanation":"Predicates and checks must be precise enough to evaluate."}
+                {"type":"QUIZ","title":"%s","question":"%s","options":[{"id":"a","label":"A precise mathematical statement with variables.","correct":true},{"id":"b","label":"A paragraph with no testable condition.","correct":false}]}
                 """.formatted(title, question).trim();
     }
 

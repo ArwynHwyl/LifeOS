@@ -33,7 +33,7 @@ class AiGenerationWorkerInteractionTests {
                 InteractionType.QUIZ,
                 "Check understanding",
                 """
-                        {"type":"QUIZ","title":"Quiz","question":"Pick one","options":[{"id":"a","label":"A","correct":true},{"id":"b","label":"B","correct":false}],"explanation":"Because."}
+                        {"type":"QUIZ","title":"Quiz","question":"Pick one","options":[{"id":"a","label":"A","correct":true},{"id":"b","label":"B","correct":false}]}
                         """
         ));
 
