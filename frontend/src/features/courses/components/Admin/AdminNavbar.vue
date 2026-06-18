@@ -61,17 +61,16 @@ function logout() {
 
     <div
       class="relative z-10 flex h-[72px] shrink-0 items-center overflow-hidden"
-      :class="expanded ? 'gap-3 px-5' : 'justify-center px-0'"
+      :class="expanded ? '-gap-1 px-5' : 'justify-center px-0'"
     >
-      <div
-        class="grid h-10 w-10 shrink-0 cursor-pointer place-items-center rounded-[12px] border-2 border-[rgba(251,247,239,0.3)] bg-lm-yellow font-math text-[22px] font-bold italic text-lm-ink shadow-stamp-sm"
-        title="LifeOS"
-      >
-        π
-      </div>
+      <img
+        src="@/assets/Logo.png"
+        alt="LifeOS"
+        :class="expanded ? 'h-24 w-auto' : 'h-24 w-24 object-contain'"
+      />
       <span
         v-if="expanded"
-        class="overflow-hidden whitespace-nowrap font-display text-[20px] font-bold text-lm-bg transition-[max-width,opacity,transform] duration-200"
+        class="overflow-hidden whitespace-nowrap font-display text-[20px] font-bold text-lm-bg"
       >
         LifeOS
       </span>

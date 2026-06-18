@@ -21,10 +21,8 @@ function logout() {
     <div class="pointer-events-none absolute inset-0 bg-chalk-dots" />
 
     <!-- Logo -->
-    <div class="relative z-10 flex h-20 shrink-0 items-center gap-3 px-5">
-      <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-lm-yellow border-2 border-lm-bg shadow-stamp-sm font-math italic font-bold text-[22px] text-lm-ink">
-        π
-      </div>
+    <div class="relative z-10 flex h-20 shrink-0 items-center -gap-1 px-5">
+      <img src="@/assets/Logo.png" alt="LifeOS" class="h-24" />
       <span class="font-display text-[20px] font-bold tracking-tight text-lm-bg">LifeOS</span>
     </div>
 

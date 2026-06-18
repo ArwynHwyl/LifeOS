@@ -76,10 +76,8 @@ function logout() {
   <header class="h-[72px] shrink-0 flex items-center gap-3.5 px-6 bg-lm-surface border-b-2 border-lm-line relative z-10">
 
     <!-- Logo -->
-    <div class="flex items-center gap-2.5">
-      <div class="w-10 h-10 flex items-center justify-center bg-lm-yellow border-2 border-lm-ink rounded-[12px] shadow-stamp-sm font-math italic font-bold text-[22px] text-lm-ink shrink-0">
-        π
-      </div>
+    <div class="flex items-center -gap-1">
+      <img src="@/assets/Logo.png" alt="LifeOS" class="h-24" />
       <span class="font-display text-[20px] font-bold tracking-tight text-lm-ink">LifeOS</span>
     </div>
 

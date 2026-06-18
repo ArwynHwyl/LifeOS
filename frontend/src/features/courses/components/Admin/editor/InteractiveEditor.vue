@@ -31,7 +31,7 @@
         <div v-else-if="type === 'QUIZ'">
           <QuizEditor :config="config" @change="onConfigChange" />
         </div>
-        <div v-else-if="type === 'GRAPH_2D'">
+        <!-- <div v-else-if="type === 'GRAPH_2D'">
           <Graph2DEditor :config="config" @change="onConfigChange" />
         </div>
         <div v-else-if="type === 'FORMULA_EXPLORER'">
@@ -39,7 +39,7 @@
         </div>
         <div v-else-if="type === 'VISUAL_LAYER'">
           <VisualLayerEditor :config="config" @change="onConfigChange" />
-        </div>
+        </div> -->
         <div v-else-if="type === 'LOGIC_FLOW'">
           <LogicFlowEditor :config="config" @change="onConfigChange" />
         </div>
@@ -86,9 +86,9 @@ const emit = defineEmits(['change', 'type-change'])
 const INTERACTION_TYPES = [
   { type: 'NONE',             label: 'None',           icon: null    },
   { type: 'QUIZ',             label: 'Quiz',           icon: '?'     },
-  { type: 'GRAPH_2D',         label: 'Graph',          icon: '∿'     },
-  { type: 'FORMULA_EXPLORER', label: 'Formula',        icon: 'f(x)'  },
-  { type: 'VISUAL_LAYER',     label: 'Set / Diagram',  icon: '◯◯'    },
+  // { type: 'GRAPH_2D',         label: 'Graph',          icon: '∿'     },
+  // { type: 'FORMULA_EXPLORER', label: 'Formula',        icon: 'f(x)'  },
+  // { type: 'VISUAL_LAYER',     label: 'Set / Diagram',  icon: '◯◯'    },
   { type: 'LOGIC_FLOW',       label: 'Logic',          icon: '∧∨'    },
 ]
 
