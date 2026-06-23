@@ -45,6 +45,25 @@ class InteractiveConfigServiceTests {
     }
 
     @Test
+    void acceptsComprehensiveGeneratedVisualAndLogicConfigs() {
+        String visual = service.validateAndNormalize(InteractionType.VISUAL_LAYER, """
+                {"type":"VISUAL_LAYER","mode":"VISUALIZATION","title":"Sets and flow","canvas":{"width":900,"height":520,"backgroundText":"Inspect the sets."},"zones":[{"id":"zone_a","label":"A","shape":"circle","x":250,"y":130,"width":260,"height":260,"labelX":35,"labelY":30,"color":"#ffd333","highlightColor":"#ff8f1f","highlightOpacity":0.82,"feedback":"Set A"},{"id":"zone_b","label":"B","shape":"rectangle","x":430,"y":150,"width":260,"height":220,"labelX":65,"labelY":30,"color":"#8fb3ff","highlightColor":"#4f8cff","highlightOpacity":0.82,"feedback":"Set B"}],"elements":[{"id":"choice_a","label":"Highlight A","kind":"button","x":40,"y":40,"width":150,"height":48},{"id":"hotspot_b","label":"Inspect B","kind":"hotspot","x":720,"y":140,"width":100,"height":80},{"id":"flow_a","label":"Flow to A","kind":"line","x":200,"y":80,"width":180,"height":100,"x1":200,"y1":80,"x2":380,"y2":180,"qx":290,"qy":90,"flow":"forward","arrow":"end","color":"#3b6cb5","strokeWidth":3}],"interactions":[{"triggerId":"choice_a","effect":"HIGHLIGHT_ZONE","targetZoneId":"zone_a","feedback":"A highlighted."},{"triggerId":"hotspot_b","effect":"SHOW_FEEDBACK","feedback":"This is B."}],"overlap":{"enabled":true,"sourceZoneIds":["zone_a","zone_b"],"inputs":[{"id":"A_ONLY","label":"A total","zoneIds":["zone_a"],"value":11,"kind":"total"},{"id":"B_ONLY","label":"B total","zoneIds":["zone_b"],"value":9,"kind":"total"},{"id":"A_AND_B","label":"A intersect B","zoneIds":["zone_a","zone_b"],"value":3,"kind":"intersection"}]}}
+                """);
+        String simplify = service.validateAndNormalize(InteractionType.LOGIC_FLOW, """
+                {"type":"LOGIC_FLOW","kind":"SIMPLIFY","mode":"PRACTICE","title":"Simplify the implication","prompt":"Apply the implication law.","start":"P -> Q","target":"!P | Q","steps":[{"law":"IMPLICATION","lawId":"IMPLICATION","from":"P -> Q","to":"!P | Q","result":"!P | Q","note":"Rewrite the implication as a disjunction."}],"allowedLaws":["IMPLICATION"],"feedback":{"success":"Correct!","failure":"Try the implication law first."}}
+                """);
+
+        assertThat(visual)
+                .contains("\"kind\":\"line\"")
+                .contains("\"effect\":\"SHOW_FEEDBACK\"")
+                .contains("\"values\"");
+        assertThat(simplify)
+                .contains("\"lawId\":\"IMPLICATION\"")
+                .contains("\"from\":\"P -> Q\"")
+                .contains("\"result\":\"!P | Q\"");
+    }
+
+    @Test
     void normalizesLegacyQuizConfigsToPractice() throws Exception {
         String normalized = service.validateAndNormalize(InteractionType.QUIZ, """
                 {"type":"QUIZ","mode":"VISUALIZATION","title":"Quiz","question":"Pick one","options":[{"id":"a","label":"A","correct":true},{"id":"b","label":"B","correct":false}],"hint":"Old hint","explanation":"Because."}
@@ -212,6 +231,16 @@ class InteractiveConfigServiceTests {
         assertThat(service.validateAndNormalize(InteractionType.LOGIC_FLOW, """
                 {"type":"LOGIC_FLOW","kind":"CIRCUIT","mode":"VISUALIZATION","title":"Explore","expression":"(P ∧ Q) ∨ ¬R","goal":"EXPLORE"}
                 """)).contains("\"mode\":\"VISUALIZATION\"");
+    }
+
+    @Test
+    void normalizesLowercaseGeneratedLogicVariables() throws Exception {
+        String normalized = service.validateAndNormalize(InteractionType.LOGIC_FLOW, """
+                {"type":"LOGIC_FLOW","kind":"CIRCUIT","mode":"VISUALIZATION","title":"Implication","expression":"p -> q","variables":["p","q"],"goal":"EXPLORE"}
+                """);
+
+        JsonNode config = objectMapper.readTree(normalized);
+        assertThat(config.path("variables").toString()).isEqualTo("[\"P\",\"Q\"]");
     }
 
     @Test
@@ -417,5 +446,3 @@ class InteractiveConfigServiceTests {
                 """)).contains("\"kind\":\"line\"");
     }
 }
-
-

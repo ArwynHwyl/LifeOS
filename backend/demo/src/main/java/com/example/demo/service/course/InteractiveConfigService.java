@@ -1130,7 +1130,8 @@ public class InteractiveConfigService {
     private void validateLogicCircuit(ObjectNode root, boolean practice) {
         String expression = requiredText(root, "expression", 1000);
         LogicExpressionService.Node ast = logicExpressionService.parse(expression);
-        if (logicExpressionService.variables(ast).size() > 8) {
+        Set<String> expressionVariables = logicExpressionService.variables(ast);
+        if (expressionVariables.size() > 8) {
             throw new ValidationException("logic expression can contain at most 8 variables");
         }
         JsonNode variables = root.get("variables");
@@ -1138,12 +1139,18 @@ public class InteractiveConfigService {
             if (!variables.isArray() || variables.size() > 8) {
                 throw new ValidationException("variables must contain 0 to 8 items");
             }
-            Set<String> expressionVariables = logicExpressionService.variables(ast);
+            Set<String> normalizedVariables = new LinkedHashSet<>();
             for (JsonNode variable : variables) {
-                if (!variable.isTextual() || !expressionVariables.contains(variable.asText())) {
+                if (!variable.isTextual()) {
                     throw new ValidationException("variables must match expression variables");
                 }
+                String normalizedVariable = variable.asText().trim().toUpperCase(java.util.Locale.ROOT);
+                if (!expressionVariables.contains(normalizedVariable)) {
+                    throw new ValidationException("variables must match expression variables");
+                }
+                normalizedVariables.add(normalizedVariable);
             }
+            root.set("variables", stringArray(new ArrayList<>(normalizedVariables)));
         }
         String goal = optionalText(root, "goal", 40);
         if (goal != null && !Set.of("MATCH_OUTPUT", "TRUE", "FALSE", "EXPLORE").contains(goal)) {

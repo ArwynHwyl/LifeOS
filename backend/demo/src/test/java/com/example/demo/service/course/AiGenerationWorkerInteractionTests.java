@@ -58,6 +58,24 @@ class AiGenerationWorkerInteractionTests {
         assertThat((String) read(result, "prompt")).contains("Check understanding").contains("Config needs review");
     }
 
+    @Test
+    void keepsGeneratedLogicCircuitWithLowercaseVariables() throws Exception {
+        Object result = ReflectionTestUtils.invokeMethod(worker, "normalizeGeneratedSubTopicInteraction", new GeneratedSubTopicDraft(
+                "Implication",
+                "Explore the truth values of p implies q.",
+                InteractionType.LOGIC_FLOW,
+                "Toggle p and q.",
+                """
+                        {"type":"LOGIC_FLOW","kind":"CIRCUIT","mode":"VISUALIZATION","title":"Implication","expression":"p -> q","variables":["p","q"],"goal":"EXPLORE"}
+                        """
+        ));
+
+        assertThat(read(result, "type")).isEqualTo(InteractionType.LOGIC_FLOW);
+        assertThat((String) read(result, "config"))
+                .contains("\"variables\":[\"P\",\"Q\"]")
+                .contains("\"mode\":\"VISUALIZATION\"");
+    }
+
     private Object read(Object target, String methodName) throws Exception {
         Method method = target.getClass().getDeclaredMethod(methodName);
         method.setAccessible(true);
