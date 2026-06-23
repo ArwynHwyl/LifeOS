@@ -155,8 +155,13 @@ function handleInteractiveStarted() {
   console.log('Interactive started in admin preview mode')
 }
 
-function handleInteractiveChecked(payload: any) {
-  console.log('Interactive checked in admin preview mode:', payload)
+function handleInteractiveChecked(payload: { passed: boolean }) {
+  const config = interactiveConfig.value
+  if (config?.type === 'LOGIC_FLOW') {
+    interactiveServerFeedback.value = payload.passed
+      ? config.feedback?.success || 'Correct.'
+      : config.feedback?.failure || 'Not quite. Try again.'
+  }
 }
 
 // ── Auto-select first subtopic on load ───────────────────────────────────
@@ -202,6 +207,7 @@ function selectSubTopic(id: number) {
   selectedSubTopicId.value = id
   editingInCentre.value    = false
   centreMessage.value      = ''
+  interactiveServerFeedback.value = ''
 }
 
 // ── Inline outline structure management methods ───────────────────────────

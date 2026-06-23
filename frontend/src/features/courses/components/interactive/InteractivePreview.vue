@@ -56,9 +56,12 @@ const learnerVisualDrag = ref<{
   originPoint?: { x: number; y: number }
 } | null>(null)
 
+const configSignature = computed(() => props.config ? JSON.stringify(props.config) : '')
+
 watch(
-  () => props.config,
-  (config) => {
+  configSignature,
+  () => {
+    const config = props.config
     selectedAnswer.value = null
     checked.value = false
     started.value = false
@@ -85,7 +88,7 @@ watch(
       logicInputs.value = Object.fromEntries(vars.map((name) => [name, true]))
     }
   },
-  { immediate: true, deep: true },
+  { immediate: true },
 )
 
 const graphPath = computed(() => {
@@ -152,7 +155,7 @@ const practicePassed = computed(() => {
     }
   }
   if (config.type === 'VISUAL_LAYER') return visualPracticePassed()
-  if (config.type === 'LOGIC_FLOW') return false
+  if (config.type === 'LOGIC_FLOW') return logicPracticePassed(config)
   return false
 })
 
@@ -179,6 +182,19 @@ const logicCircuitOutput = computed(() => {
   if (!logicExpressionParse.value.ast) return null
   return Boolean(Logic.evaluate(logicExpressionParse.value.ast, logicInputs.value))
 })
+
+function logicPracticePassed(config: LogicFlowConfig) {
+  if (config.kind === 'CIRCUIT') {
+    const output = logicCircuitOutput.value
+    if (output === null) return false
+    if (config.goal === 'TRUE') return output
+    if (config.goal === 'FALSE') return !output
+    return true
+  }
+  const answer = Logic.tryParse(logicAnswer.value).ast
+  const expected = Logic.tryParse(config.target ?? config.start ?? '').ast
+  return Boolean(answer && expected && Logic.equivalent(answer, expected))
+}
 
 const targetGraphPoint = computed(() => {
   const config = props.config

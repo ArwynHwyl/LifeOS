@@ -234,6 +234,7 @@ function handleInteractiveStarted() {
 async function persistServerGradedAttempt(payload: InteractiveAttemptRequest) {
   const current = selectedSubTopic.value
   if (!current || current.interactionType === 'NONE') return
+  interactiveServerFeedback.value = ''
 
   let finalPayload = payload
   if (
