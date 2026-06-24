@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
-import type { AdminSubTopicDto } from '@/features/courses/services/adminCourses'
+import type { AdminSubTopicDto, InteractionType } from '@/features/courses/services/adminCourses'
 import InteractivePreview from '@/features/courses/components/interactive/InteractivePreview.vue'
 import { parseInteractiveConfig } from '@/features/courses/types/interactive'
-import type { InteractionType, InteractiveConfig } from '@/features/courses/types/interactive'
+import type { InteractiveConfig } from '@/features/courses/types/interactive'
 
 export type Comment = {
   id: string | number

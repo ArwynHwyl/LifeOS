@@ -429,12 +429,6 @@ function getCourseCover(courseId: number) {
   return readCourseCovers()[String(courseId)] ?? DEFAULT_COVER_ID
 }
 
-function saveCourseCover(courseId: number, coverId: string) {
-  const covers = readCourseCovers()
-  covers[String(courseId)] = coverId
-  localStorage.setItem(COURSE_COVER_STORAGE_KEY, JSON.stringify(covers))
-}
-
 function readCourseCovers(): Record<string, string> {
   const raw = localStorage.getItem(COURSE_COVER_STORAGE_KEY)
   if (!raw) return {}

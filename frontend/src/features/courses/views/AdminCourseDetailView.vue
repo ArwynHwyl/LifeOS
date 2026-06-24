@@ -108,14 +108,6 @@ const uiStatus = computed<CourseStatus>(() => {
   return 'draft'
 })
 
-const statusDisplay = computed(() => {
-  const s = course.value?.status
-  if (s === 'PUBLISHED')      return { label: 'Published',     classes: 'bg-lm-green-soft text-lm-green border-2 border-lm-line shadow-stamp-sm', dot: 'bg-lm-green'  }
-  if (s === 'PENDING_REVIEW') return { label: 'Pending Review', classes: 'bg-lm-yellow text-lm-ink border-2 border-lm-line shadow-stamp-sm', dot: 'bg-lm-ink'    }
-  if (s === 'NEED_REVISION') return { label: 'Needs Revision', classes: 'bg-lm-red-soft text-lm-red border-2 border-lm-line shadow-stamp-sm', dot: 'bg-lm-red'    }
-  return                             { label: 'Draft',           classes: 'bg-lm-bg-soft text-lm-ink-3 border-2 border-lm-line-soft', dot: 'bg-lm-ink-3' }
-})
-
 const documents       = computed(() => course.value?.documentSources ?? [])
 const modules         = computed(() => course.value?.modules ?? [])
 const selectedDocument = computed(() => documents.value.find(d => d.id === selectedDocumentId.value) ?? null)

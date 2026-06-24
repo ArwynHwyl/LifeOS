@@ -7,8 +7,6 @@ import TeacherCourseCard from '@/features/courses/components/Teacher/TeacherCour
 import {
   listTeacherCourses,
   toTeacherCourseCard,
-  approveTeacherCourse,
-  rejectTeacherCourse,
   type TeacherCourseCardModel,
 } from '@/features/courses/services/teacherCourses'
 const router = useRouter()
@@ -45,24 +43,6 @@ async function loadCourses() {
     loadError.value = getErrorMessage(error, 'Unable to load courses.')
   } finally {
     loadingCourses.value = false
-  }
-}
-
-async function approveCourse(id: string) {
-  try {
-    await approveTeacherCourse(id)
-    await loadCourses()
-  } catch {
-    // silently ignore — user can retry
-  }
-}
-
-async function rejectCourse(id: string) {
-  try {
-    await rejectTeacherCourse(id)
-    await loadCourses()
-  } catch {
-    // silently ignore — user can retry
   }
 }
 
@@ -154,8 +134,6 @@ function getErrorMessage(error: unknown, fallback: string) {
               :module-count="course.moduleCount"
               :last-edited="course.lastEdited"
               @open="router.push(`/teacher/courses/${course.id}`)"
-              @approve="approveCourse(course.id)"
-              @reject="rejectCourse(course.id)"
             />
           </div>
 
