@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { generatedOverlapRegions } from '@/features/courses/types/interactive'
 import type {
   FormulaExplorerConfig,
@@ -43,7 +43,18 @@ const learnerZones = ref<VisualLayerZone[]>([])
 const selectedLearnerZoneId = ref<string | null>(null)
 const learnerRegionAnswers = ref<Record<string, string>>({})
 const logicAnswer = ref('')
+const logicAnswerInput = ref<HTMLInputElement | null>(null)
 const logicInputs = ref<Record<string, boolean>>({})
+const logicSyntaxTokens = [
+  { label: '¬', token: '!', title: 'NOT (!)' },
+  { label: '∧', token: ' & ', title: 'AND (&)' },
+  { label: '∨', token: ' | ', title: 'OR (|)' },
+  { label: '⊕', token: ' ^ ', title: 'XOR (^)' },
+  { label: '→', token: ' -> ', title: 'Implication (->)' },
+  { label: '↔', token: ' <-> ', title: 'Biconditional (<->)' },
+  { label: '(', token: '(', title: 'Open parenthesis' },
+  { label: ')', token: ')', title: 'Close parenthesis' },
+]
 type LearnerResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w'
 const learnerResizeHandles: LearnerResizeHandle[] = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w']
 const learnerVisualDrag = ref<{
@@ -181,6 +192,11 @@ const logicExpressionParse = computed(() => {
 const logicCircuitOutput = computed(() => {
   if (!logicExpressionParse.value.ast) return null
   return Boolean(Logic.evaluate(logicExpressionParse.value.ast, logicInputs.value))
+})
+
+const logicAnswerParseError = computed(() => {
+  if (props.config?.type !== 'LOGIC_FLOW' || props.config.kind !== 'SIMPLIFY' || !logicAnswer.value.trim()) return ''
+  return Logic.tryParse(logicAnswer.value).error ?? ''
 })
 
 function logicPracticePassed(config: LogicFlowConfig) {
@@ -363,6 +379,19 @@ function toggleLogicValve(name: string) {
     [name]: !logicInputs.value[name],
   }
   checked.value = false
+}
+
+function insertLogicToken(token: string) {
+  const input = logicAnswerInput.value
+  const start = input?.selectionStart ?? logicAnswer.value.length
+  const end = input?.selectionEnd ?? start
+  logicAnswer.value = `${logicAnswer.value.slice(0, start)}${token}${logicAnswer.value.slice(end)}`
+  checked.value = false
+  void nextTick(() => {
+    input?.focus()
+    const caret = start + token.length
+    input?.setSelectionRange(caret, caret)
+  })
 }
 
 function selectFormulaOption(optionId: string) {
@@ -815,8 +844,30 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
         </p>
         <label class="logic-answer">
           <span>Final expression</span>
-          <input v-model="logicAnswer" placeholder="¬P ∨ Q" @input="checked = false" />
+          <input
+            ref="logicAnswerInput"
+            v-model="logicAnswer"
+            placeholder="e.g. !(P & Q) -> R"
+            aria-describedby="logic-syntax-help"
+            @input="checked = false"
+          />
         </label>
+        <div id="logic-syntax-help" class="logic-syntax-help">
+          <div class="logic-symbol-toolbar" aria-label="Logic symbol shortcuts">
+            <button
+              v-for="item in logicSyntaxTokens"
+              :key="item.title"
+              type="button"
+              :title="item.title"
+              @click="insertLogicToken(item.token)"
+            >
+              {{ item.label }}
+            </button>
+          </div>
+          <p><strong>Keyboard syntax:</strong> <code>!P</code>, <code>P & Q</code>, <code>P | Q</code>, <code>P ^ Q</code>, <code>P -> Q</code>, <code>P <-> Q</code></p>
+          <p><code>&</code> = AND · <code>^</code> = XOR · Use parentheses to control order.</p>
+          <p v-if="logicAnswerParseError" class="logic-syntax-error">Syntax error: {{ logicAnswerParseError }}</p>
+        </div>
         <button type="button" class="check-button" @click="runCheck">Check</button>
         <p v-if="checked && activeFeedback" class="feedback">{{ activeFeedback }}</p>
       </div>
@@ -1943,6 +1994,53 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   padding: 0.65rem 0.75rem;
   font-family: Georgia, serif;
   font-size: 1rem;
+  font-weight: 800;
+}
+.logic-syntax-help {
+  display: grid;
+  gap: 0.5rem;
+  border: 1.5px solid #d9d2c7;
+  border-radius: 10px;
+  background: #f7f3ea;
+  padding: 0.7rem 0.8rem;
+  color: #4f4942;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.logic-syntax-help p {
+  margin: 0;
+}
+.logic-syntax-help code {
+  border-radius: 4px;
+  background: #fffdf8;
+  padding: 0.08rem 0.25rem;
+  color: #1a1814;
+  font-weight: 800;
+}
+.logic-symbol-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.logic-symbol-toolbar button {
+  min-width: 2.25rem;
+  border: 1.5px solid #1a1814;
+  border-radius: 7px;
+  background: #fffdf8;
+  padding: 0.3rem 0.55rem;
+  color: #1a1814;
+  font-family: Georgia, serif;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 1px 2px 0 #1a1814;
+}
+.logic-symbol-toolbar button:active {
+  transform: translate(1px, 2px);
+  box-shadow: none;
+}
+.logic-syntax-error {
+  color: #a63a13;
   font-weight: 800;
 }
 @media (max-width: 700px) {
