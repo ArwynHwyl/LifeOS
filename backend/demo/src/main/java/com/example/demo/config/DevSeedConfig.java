@@ -906,154 +906,391 @@ public class DevSeedConfig {
         Course logicCourse = seedCourse(
                 courseRepository,
                 "Logic",
-                "Seed course covering propositional logic: statements, connectives, truth tables, valve circuits, and equivalence simplification with logic laws.",
+                "Propositional logic for software engineering: truth values, Boolean operators, program conditions, implication, truth tables, and equivalence laws.",
                 admin
         );
         logicCourse.updateCover("forall_amber");
-        CourseModule logicModule = new CourseModule(
-                "Logic",
-                "Propositional logic: connectives, truth tables, valve circuits, and simplification with logic laws.",
+        CourseModule logicFoundationsModule = new CourseModule(
+                "1. Propositions and Truth Tables",
+                "Build compound propositions, predict their truth values, and verify the result with Boolean circuits and truth tables.",
                 0,
                 ContentDepth.HIGH
         );
-        logicModule.addSubTopic(subTopic(
-                "Statements and Connectives",
+        logicFoundationsModule.addSubTopic(subTopic(
+                "Propositions and Truth Values",
                 """
-                        <h2>Statements and Connectives</h2>
-                        <p>A proposition is a statement that is either true (T) or false (F). Compound statements are built with connectives: negation <code>¬</code>, conjunction <code>∧</code>, disjunction <code>∨</code>, implication <code>→</code>, and biconditional <code>↔</code>.</p>
-                        <p>A truth table lists the output of a compound statement for every combination of truth values of its variables.</p>
+                        <h2>Propositions and Truth Values</h2>
+                        <p>A <strong>proposition</strong> is a declarative statement that has exactly one truth value: true or false. “The service is running” is a proposition; “Restart the service” is a command and is not a proposition.</p>
+                        <p>We use symbols such as <code>P</code>, <code>Q</code>, and <code>R</code> to represent propositions. Before combining them, write down what each symbol means so the final expression can still be interpreted in the original problem.</p>
                         """,
                 0,
-                1,
-                4,
+                null,
+                null,
                 InteractionType.NONE,
                 null,
                 null
         ));
-        logicModule.addSubTopic(subTopic(
-                "Valve Circuit: Free Explore",
+        logicFoundationsModule.addSubTopic(subTopic(
+                "Boolean Connectives",
                 """
-                        <h2>Valve Circuit: Free Explore</h2>
-                        <p>Think of each variable as a valve: open means true, closed means false. Water flows through an AND gate only when both inputs flow, and through an OR gate when at least one input flows. A NOT gate inverts the flow.</p>
-                        <p>Flip the valves and watch how the output tank responds for <code>(P ∧ Q) ∨ ¬R</code>.</p>
+                        <h2>Boolean Connectives</h2>
+                        <p>Negation <code>¬P</code> reverses a truth value. Conjunction <code>P ∧ Q</code> requires both parts to be true, while disjunction <code>P ∨ Q</code> requires at least one true part.</p>
+                        <p>Operator precedence matters just as it does in code. Read <code>(P ∧ Q) ∨ ¬R</code> as: first evaluate <code>P ∧ Q</code> and <code>¬R</code>, then combine those results with OR.</p>
                         """,
                 1,
-                5,
-                8,
+                null,
+                null,
+                InteractionType.NONE,
+                null,
+                null
+        ));
+        logicFoundationsModule.addSubTopic(subTopic(
+                "Explore a Compound Circuit",
+                """
+                        <h2>Explore a Compound Circuit</h2>
+                        <p>A valve circuit makes evaluation order visible. Open means true, closed means false, and the output shows the truth value of the whole expression.</p>
+                        <p>Toggle <code>P</code>, <code>Q</code>, and <code>R</code> for <code>(P ∧ Q) ∨ ¬R</code>. Predict the output before each change, then use the circuit to check your reasoning.</p>
+                        """,
+                2,
+                null,
+                null,
                 InteractionType.LOGIC_FLOW,
-                "Flip the valves freely and observe how the output changes.",
+                "Toggle the inputs and explain which branch makes the compound expression true.",
                 validate(interactiveConfigService, InteractionType.LOGIC_FLOW, """
                         {
                           "type": "LOGIC_FLOW",
                           "kind": "CIRCUIT",
                           "mode": "VISUALIZATION",
-                          "title": "Explore a valve circuit",
-                          "prompt": "Flip the valves freely and observe how the output changes.",
-                          "expression": "(P ∧ Q) ∨ ¬R",
+                          "title": "Explore (P AND Q) OR NOT R",
+                          "expression": "(P & Q) | !R",
+                          "variables": ["P", "Q", "R"],
                           "goal": "EXPLORE"
                         }
                         """)
         ));
-        logicModule.addSubTopic(subTopic(
-                "Valve Circuit Practice",
+        logicFoundationsModule.addSubTopic(subTopic(
+                "Make the Compound Circuit True",
                 """
-                        <h2>Valve Circuit Practice</h2>
-                        <p>The statement <code>P ∧ ¬Q</code> is true only when <code>P</code> is true and <code>Q</code> is false.</p>
-                        <p>Set each valve so the water reaches the output tank, then check your answer.</p>
+                        <h2>Make the Compound Circuit True</h2>
+                        <p>Now apply the same idea without relying on trial and error. The expression <code>(P ∧ Q) ∨ ¬R</code> is true when either the left branch is true or the right branch is true.</p>
+                        <p>Choose an input assignment, state which branch should carry the result, and then check the circuit.</p>
                         """,
-                2,
-                5,
-                8,
+                3,
+                null,
+                null,
                 InteractionType.LOGIC_FLOW,
-                "Flip the valves so the statement evaluates to true and the water flows.",
+                "Set P, Q, and R so (P AND Q) OR NOT R evaluates to true.",
                 validate(interactiveConfigService, InteractionType.LOGIC_FLOW, """
                         {
                           "type": "LOGIC_FLOW",
                           "kind": "CIRCUIT",
                           "mode": "PRACTICE",
-                          "title": "Make the water flow",
-                          "prompt": "Flip the valves so the statement evaluates to true and the water flows.",
-                          "expression": "P ∧ ¬Q",
+                          "title": "Make the compound circuit true",
+                          "prompt": "Set P, Q, and R so (P AND Q) OR NOT R evaluates to true.",
+                          "expression": "(P & Q) | !R",
+                          "variables": ["P", "Q", "R"],
                           "goal": "TRUE",
                           "feedback": {
-                            "success": "Correct. With P true and Q false, the water reaches the tank.",
-                            "failure": "Not yet. Recheck each truth value: ¬Q needs Q to be false."
+                            "success": "Correct. At least one branch is true, so the OR gate produces true.",
+                            "failure": "Not yet. Make P and Q both true, or make R false so NOT R becomes true."
                           }
                         }
                         """)
         ));
-        logicModule.addSubTopic(subTopic(
-                "Simplify an Implication",
+        logicFoundationsModule.addSubTopic(subTopic(
+                "Truth Table Checkpoint",
                 """
-                        <h2>Simplify an Implication</h2>
-                        <p>Logical equivalence laws let you rewrite a statement without changing its truth table. The implication law states <code>P → Q ≡ ¬P ∨ Q</code>.</p>
-                        <p>Apply the allowed laws step by step to rewrite the starting statement, then enter the final simplified expression.</p>
-                        """,
-                3,
-                9,
-                14,
-                InteractionType.LOGIC_FLOW,
-                "Rewrite P → Q using the implication law and enter the equivalent expression.",
-                validate(interactiveConfigService, InteractionType.LOGIC_FLOW, """
-                        {
-                          "type": "LOGIC_FLOW",
-                          "kind": "SIMPLIFY",
-                          "mode": "PRACTICE",
-                          "title": "Simplify an implication",
-                          "prompt": "Rewrite P → Q using the implication law and enter the equivalent expression.",
-                          "start": "P → Q",
-                          "target": "¬P ∨ Q",
-                          "allowedLaws": ["IMPLICATION", "DOUBLE_NEGATION", "DE_MORGAN"],
-                          "steps": [
-                            { "law": "IMPLICATION", "result": "¬P ∨ Q", "note": "An implication is false only when P is true and Q is false, which matches ¬P ∨ Q." }
-                          ],
-                          "feedback": {
-                            "success": "Correct. The expression is logically equivalent — the truth table never changed.",
-                            "failure": "Not yet. Apply the implication law: P → Q ≡ ¬P ∨ Q."
-                          }
-                        }
-                        """)
-        ));
-        logicModule.addSubTopic(subTopic(
-                "Simplify with Distribution",
-                """
-                        <h2>Simplify with Distribution</h2>
-                        <p>Combine the distributive, complement, and identity laws to reduce <code>(P ∧ ¬Q) ∨ (P ∧ Q)</code> to a single variable.</p>
-                        <p>Work through the steps, then enter the final simplified expression.</p>
+                        <h2>Truth Table Checkpoint</h2>
+                        <p>A truth table evaluates every possible assignment. With two variables there are four rows; with three variables there are eight.</p>
+                        <p>Evaluate inner operations first and keep one column for each intermediate result. This makes mistakes easier to locate.</p>
                         """,
                 4,
-                15,
-                20,
+                null,
+                null,
+                InteractionType.QUIZ,
+                "Choose the row in which (P AND Q) OR NOT R is false.",
+                validate(interactiveConfigService, InteractionType.QUIZ, """
+                        {
+                          "type": "QUIZ",
+                          "mode": "PRACTICE",
+                          "title": "Truth table checkpoint",
+                          "prompt": "Choose the row in which (P AND Q) OR NOT R is false.",
+                          "question": "Which assignment makes (P ∧ Q) ∨ ¬R false?",
+                          "options": [
+                            { "id": "a", "label": "P = T, Q = T, R = T", "correct": false },
+                            { "id": "b", "label": "P = F, Q = T, R = T", "correct": true },
+                            { "id": "c", "label": "P = F, Q = F, R = F", "correct": false },
+                            { "id": "d", "label": "P = T, Q = F, R = F", "correct": false }
+                          ],
+                          "successCondition": { "kind": "QUIZ_CORRECT_OPTION", "correctOptionId": "b" },
+                          "feedback": {
+                            "success": "Correct. P AND Q is false and NOT R is also false, so the final OR is false.",
+                            "failure": "Not yet. An OR is false only when both of its branches are false."
+                          }
+                        }
+                        """)
+        ));
+
+        CourseModule conditionalLogicModule = new CourseModule(
+                "2. Conditional Reasoning in Programs",
+                "Connect implication to preconditions, postconditions, guard clauses, and counterexamples in software behavior.",
+                1,
+                ContentDepth.HIGH
+        );
+        conditionalLogicModule.addSubTopic(subTopic(
+                "Implication and Program Contracts",
+                """
+                        <h2>Implication and Program Contracts</h2>
+                        <p>The implication <code>P → Q</code> says: whenever the precondition <code>P</code> holds, the required result <code>Q</code> must also hold. It does not claim that <code>Q</code> can happen only because of <code>P</code>.</p>
+                        <p>An implication fails in exactly one case: <code>P</code> is true but <code>Q</code> is false. In testing, that row is the counterexample that violates the contract.</p>
+                        """,
+                0,
+                null,
+                null,
+                InteractionType.NONE,
+                null,
+                null
+        ));
+        conditionalLogicModule.addSubTopic(subTopic(
+                "Explore an Implication",
+                """
+                        <h2>Explore an Implication</h2>
+                        <p>Let <code>P</code> mean “the request is authenticated” and <code>Q</code> mean “the protected action is allowed.” Toggle both inputs and identify the one assignment that violates <code>P → Q</code>.</p>
+                        <p>Notice that when <code>P</code> is false, the implication is true regardless of <code>Q</code>. The contract makes a promise only for cases where its precondition holds.</p>
+                        """,
+                1,
+                null,
+                null,
                 InteractionType.LOGIC_FLOW,
-                "Simplify the statement step by step and enter the final expression.",
+                "Explore all four assignments for P implies Q and find the counterexample.",
+                validate(interactiveConfigService, InteractionType.LOGIC_FLOW, """
+                        {
+                          "type": "LOGIC_FLOW",
+                          "kind": "CIRCUIT",
+                          "mode": "VISUALIZATION",
+                          "title": "Explore an implication",
+                          "expression": "P -> Q",
+                          "variables": ["P", "Q"],
+                          "goal": "EXPLORE"
+                        }
+                        """)
+        ));
+        conditionalLogicModule.addSubTopic(subTopic(
+                "Find the Contract Violation",
+                """
+                        <h2>Find the Contract Violation</h2>
+                        <p>A useful counterexample makes the precondition true and the promised result false. Configure the same implication circuit so it exposes that failure.</p>
+                        <p>Do not guess: translate “the request is authenticated, but the action is not allowed” into truth values for <code>P</code> and <code>Q</code>.</p>
+                        """,
+                2,
+                null,
+                null,
+                InteractionType.LOGIC_FLOW,
+                "Set the inputs to produce the single counterexample that makes P implies Q false.",
+                validate(interactiveConfigService, InteractionType.LOGIC_FLOW, """
+                        {
+                          "type": "LOGIC_FLOW",
+                          "kind": "CIRCUIT",
+                          "mode": "PRACTICE",
+                          "title": "Find the contract violation",
+                          "prompt": "Set P and Q to make P implies Q false.",
+                          "expression": "P -> Q",
+                          "variables": ["P", "Q"],
+                          "goal": "FALSE",
+                          "feedback": {
+                            "success": "Correct. P is true while Q is false, so the contract is violated.",
+                            "failure": "Not yet. An implication is false only when its premise is true and its conclusion is false."
+                          }
+                        }
+                        """)
+        ));
+        conditionalLogicModule.addSubTopic(subTopic(
+                "Guard-Clause Checkpoint",
+                """
+                        <h2>Guard-Clause Checkpoint</h2>
+                        <p>A guard clause often rejects an operation when a required condition is missing. Translating the requirement into logic helps reveal whether the implementation accepts an invalid state.</p>
+                        <p>Use the implication rule to identify the test case that must fail.</p>
+                        """,
+                3,
+                null,
+                null,
+                InteractionType.QUIZ,
+                "Choose the test case that disproves the stated program requirement.",
+                validate(interactiveConfigService, InteractionType.QUIZ, """
+                        {
+                          "type": "QUIZ",
+                          "mode": "PRACTICE",
+                          "title": "Guard-clause checkpoint",
+                          "prompt": "Choose the test case that violates the requirement.",
+                          "question": "Requirement: If a user is an admin (A), they may delete the record (D). Which result violates A → D?",
+                          "options": [
+                            { "id": "a", "label": "A = T and D = T", "correct": false },
+                            { "id": "b", "label": "A = T and D = F", "correct": true },
+                            { "id": "c", "label": "A = F and D = T", "correct": false },
+                            { "id": "d", "label": "A = F and D = F", "correct": false }
+                          ],
+                          "successCondition": { "kind": "QUIZ_CORRECT_OPTION", "correctOptionId": "b" },
+                          "feedback": {
+                            "success": "Correct. The required permission is missing even though the premise is true.",
+                            "failure": "Not yet. Look for a true premise followed by a false conclusion."
+                          }
+                        }
+                        """)
+        ));
+
+        CourseModule equivalenceModule = new CourseModule(
+                "3. Logical Equivalence and Simplification",
+                "Use equivalence laws to rewrite conditions without changing their truth values, then verify multi-step simplifications.",
+                2,
+                ContentDepth.HIGH
+        );
+        equivalenceModule.addSubTopic(subTopic(
+                "Why Equivalent Expressions Matter",
+                """
+                        <h2>Why Equivalent Expressions Matter</h2>
+                        <p>Two expressions are logically equivalent when they have the same output for every possible input assignment. Refactoring a condition is safe only when this property is preserved.</p>
+                        <p>Important laws include De Morgan’s laws, implication, distributive, complement, identity, and absorption. Apply one law at a time and keep each intermediate expression visible.</p>
+                        """,
+                0,
+                null,
+                null,
+                InteractionType.NONE,
+                null,
+                null
+        ));
+        equivalenceModule.addSubTopic(subTopic(
+                "Explore a Negated Conjunction",
+                """
+                        <h2>Explore a Negated Conjunction</h2>
+                        <p>De Morgan’s law states <code>¬(P ∧ Q) ≡ ¬P ∨ ¬Q</code>. Before rewriting it, explore the left-hand expression and observe when it becomes true.</p>
+                        <p>The output is false only when both <code>P</code> and <code>Q</code> are true. That output pattern motivates the equivalent OR expression.</p>
+                        """,
+                1,
+                null,
+                null,
+                InteractionType.LOGIC_FLOW,
+                "Toggle P and Q to inspect the truth pattern of NOT (P AND Q).",
+                validate(interactiveConfigService, InteractionType.LOGIC_FLOW, """
+                        {
+                          "type": "LOGIC_FLOW",
+                          "kind": "CIRCUIT",
+                          "mode": "VISUALIZATION",
+                          "title": "Explore NOT (P AND Q)",
+                          "expression": "!(P & Q)",
+                          "variables": ["P", "Q"],
+                          "goal": "EXPLORE"
+                        }
+                        """)
+        ));
+        equivalenceModule.addSubTopic(subTopic(
+                "Apply De Morgan's Law",
+                """
+                        <h2>Apply De Morgan's Law</h2>
+                        <p>Move the negation through the conjunction: change AND to OR and negate both variables. Enter a complete expression that is equivalent to <code>¬(P ∧ Q)</code>.</p>
+                        <p>The checker compares truth tables, so equivalent syntax and harmless parenthesis differences are accepted.</p>
+                        """,
+                2,
+                null,
+                null,
+                InteractionType.LOGIC_FLOW,
+                "Rewrite NOT (P AND Q) using De Morgan's law.",
                 validate(interactiveConfigService, InteractionType.LOGIC_FLOW, """
                         {
                           "type": "LOGIC_FLOW",
                           "kind": "SIMPLIFY",
                           "mode": "PRACTICE",
-                          "title": "Simplify with distribution",
-                          "prompt": "Simplify the statement step by step and enter the final expression.",
-                          "start": "(P ∧ ¬Q) ∨ (P ∧ Q)",
+                          "title": "Apply De Morgan's law",
+                          "prompt": "Rewrite NOT (P AND Q) using De Morgan's law.",
+                          "start": "!(P & Q)",
+                          "target": "!P | !Q",
+                          "allowedLaws": ["DE_MORGAN"],
+                          "steps": [
+                            { "law": "DE_MORGAN", "lawId": "DE_MORGAN", "from": "!(P & Q)", "to": "!P | !Q", "result": "!P | !Q", "note": "Negate each variable and replace AND with OR." }
+                          ],
+                          "feedback": {
+                            "success": "Correct. Both expressions have the same truth value in every row.",
+                            "failure": "Not yet. Negate both variables and change AND to OR."
+                          }
+                        }
+                        """)
+        ));
+        equivalenceModule.addSubTopic(subTopic(
+                "Rewrite an Implication",
+                """
+                        <h2>Rewrite an Implication</h2>
+                        <p>The implication law <code>P → Q ≡ ¬P ∨ Q</code> removes the arrow and is useful when a programming language provides only NOT, AND, and OR.</p>
+                        <p>Rewrite the implication, then compare the one false row in both forms.</p>
+                        """,
+                3,
+                null,
+                null,
+                InteractionType.LOGIC_FLOW,
+                "Rewrite P implies Q using only NOT and OR.",
+                validate(interactiveConfigService, InteractionType.LOGIC_FLOW, """
+                        {
+                          "type": "LOGIC_FLOW",
+                          "kind": "SIMPLIFY",
+                          "mode": "PRACTICE",
+                          "title": "Rewrite an implication",
+                          "prompt": "Rewrite P implies Q using only NOT and OR.",
+                          "start": "P -> Q",
+                          "target": "!P | Q",
+                          "allowedLaws": ["IMPLICATION"],
+                          "steps": [
+                            { "law": "IMPLICATION", "lawId": "IMPLICATION", "from": "P -> Q", "to": "!P | Q", "result": "!P | Q", "note": "An implication is equivalent to NOT P OR Q." }
+                          ],
+                          "feedback": {
+                            "success": "Correct. NOT P OR Q is false in exactly the same row as P implies Q.",
+                            "failure": "Not yet. Replace P implies Q with NOT P OR Q."
+                          }
+                        }
+                        """)
+        ));
+        equivalenceModule.addSubTopic(subTopic(
+                "Multi-Law Simplification",
+                """
+                        <h2>Multi-Law Simplification</h2>
+                        <p>Simplify <code>(P ∧ ¬Q) ∨ (P ∧ Q)</code>. First factor out <code>P</code>, then reduce the complementary pair, and finally remove the identity constant.</p>
+                        <p>This mirrors refactoring duplicated conditions in code while preserving behavior for every input.</p>
+                        """,
+                4,
+                null,
+                null,
+                InteractionType.LOGIC_FLOW,
+                "Simplify the expression to one variable using distribution, complement, and identity.",
+                validate(interactiveConfigService, InteractionType.LOGIC_FLOW, """
+                        {
+                          "type": "LOGIC_FLOW",
+                          "kind": "SIMPLIFY",
+                          "mode": "PRACTICE",
+                          "title": "Multi-law simplification",
+                          "prompt": "Simplify the expression to one variable using distribution, complement, and identity.",
+                          "start": "(P & !Q) | (P & Q)",
                           "target": "P",
                           "allowedLaws": ["DISTRIBUTIVE", "COMPLEMENT", "IDENTITY"],
                           "steps": [
-                            { "law": "DISTRIBUTIVE", "result": "P ∧ (¬Q ∨ Q)", "note": "Factor P out of both parts." },
-                            { "law": "COMPLEMENT", "result": "P ∧ T", "note": "¬Q ∨ Q is always true." },
-                            { "law": "IDENTITY", "result": "P", "note": "P ∧ T is just P." }
+                            { "law": "DISTRIBUTIVE", "lawId": "DISTRIBUTIVE", "from": "(P & !Q) | (P & Q)", "to": "P & (!Q | Q)", "result": "P & (!Q | Q)", "note": "Factor P out of both terms." },
+                            { "law": "COMPLEMENT", "lawId": "COMPLEMENT", "from": "P & (!Q | Q)", "to": "P & T", "result": "P & T", "note": "NOT Q OR Q is always true." },
+                            { "law": "IDENTITY", "lawId": "IDENTITY", "from": "P & T", "to": "P", "result": "P", "note": "P AND true equals P." }
                           ],
                           "feedback": {
-                            "success": "Correct. Different pipes — same water. The truth table never changed.",
-                            "failure": "Not yet. Factor P out first, then use the complement and identity laws."
+                            "success": "Correct. The simplified condition P preserves the full truth table.",
+                            "failure": "Not yet. Factor P first, then apply complement and identity."
                           }
                         }
                         """)
         ));
-        publishSeedCourse(courseRepository, logicCourse, logicModule);
+        publishSeedCourse(
+                courseRepository,
+                logicCourse,
+                logicFoundationsModule,
+                conditionalLogicModule,
+                equivalenceModule
+        );
     }
 
     private Course seedCourse(CourseRepository courseRepository, String title, String description, User admin) {
-        Course course = courseRepository.findAllByOrderByCreatedAtDesc().stream()
-                .filter(existingCourse -> title.equals(existingCourse.getTitle()))
+        Course course = courseRepository.findByTitleOrderByCreatedAtAsc(title).stream()
                 .findFirst()
                 .orElseGet(() -> new Course(title, description, admin));
         course.updateDetails(title, description);
@@ -1061,8 +1298,10 @@ public class DevSeedConfig {
         return course;
     }
 
-    private void publishSeedCourse(CourseRepository courseRepository, Course course, CourseModule module) {
-        course.addModule(module);
+    private void publishSeedCourse(CourseRepository courseRepository, Course course, CourseModule... modules) {
+        for (CourseModule module : modules) {
+            course.addModule(module);
+        }
         course.publish();
         courseRepository.save(course);
     }
