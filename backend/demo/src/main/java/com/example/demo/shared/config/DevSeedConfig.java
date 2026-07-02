@@ -407,56 +407,434 @@ public class DevSeedConfig {
                 courseRepository,
                 progressRepository,
                 "Set",
-                "Seed course from course_source_for_seed_reference/SetAdv.pdf covering set basics, power sets, subset counts, and Venn diagram counting.",
+                "Structured seed course from course_source_for_seed_reference/SetAdv.pdf covering set notation, operations, power sets, subset formulas, and Venn diagram counting practice.",
                 admin
         );
         setCourse.updateCover("union_green");
-        CourseModule setModule = new CourseModule(
-                "Set",
-                "Based on SetAdv.pdf: set basics, power sets, subset counts, and counting members in Venn regions.",
+        CourseModule setFoundationsModule = new CourseModule(
+                "1. Set Foundations and Notation",
+                "Read set notation accurately, distinguish elements from subsets, and connect core operations to Venn regions.",
                 0,
                 ContentDepth.HIGH
         );
-        setModule.addSubTopic(subTopic(
-                "Basic Review",
+        setFoundationsModule.addSubTopic(subTopic(
+                "What Is a Set?",
                 """
-                        <h2>Basic Review</h2>
-                        <p>A set is a collection of elements treated as one object. Elements are written inside braces, and order or repetition does not change the set.</p>
-                        <p>Important ideas include the empty set, finite sets, subsets, universal sets, Venn diagrams, union, intersection, difference, and complement.</p>
+                        <h2>What Is a Set?</h2>
+                        <p>A set is a well-defined collection of objects treated as one mathematical object. The objects inside the set are called elements or members.</p>
+                        <p>Sets are usually written with braces, such as <code>A = {1, 2, 3}</code>. Order does not matter, and repeated entries do not create new members.</p>
+                        <p>Two sets are equal when they contain exactly the same elements. This makes set notation useful when software needs to reason about permissions, tags, search filters, or groups of records.</p>
                         """,
                 0,
                 1,
                 3,
                 InteractionType.VISUAL_LAYER,
-                "Let learners click set regions to connect the set as one object with its elements.",
+                "Let learners click labels to connect a set, its elements, and the empty set idea.",
                 validate(interactiveConfigService, InteractionType.VISUAL_LAYER, """
                         {
                           "type": "VISUAL_LAYER",
                           "mode": "VISUALIZATION",
-                          "title": "Set as a collection",
-                          "canvas": { "width": 900, "height": 520, "backgroundText": "Click the element button to highlight the set region." },
+                          "title": "Set, element, and empty set",
+                          "canvas": { "width": 900, "height": 520, "backgroundText": "Click each label to connect notation with the diagram." },
                           "zones": [
-                            { "id": "zone_set", "label": "Set A", "shape": "circle", "x": 280, "y": 100, "width": 320, "height": 320, "color": "#8fe0aa", "highlightColor": "#3aa66b", "highlightOpacity": 0.82, "feedback": "Set A is treated as one collection." }
+                            { "id": "zone_a", "label": "A = {1, 2, 3}", "shape": "circle", "x": 285, "y": 105, "width": 330, "height": 330, "labelX": 50, "labelY": 18, "color": "#8fe0aa", "highlightColor": "#3aa66b", "highlightOpacity": 0.82, "feedback": "Set A is the whole collection, not just one member." },
+                            { "id": "zone_empty", "label": "empty set", "shape": "circle", "x": 655, "y": 265, "width": 130, "height": 130, "labelX": 50, "labelY": 50, "color": "#f2eadf", "highlightColor": "#d9cec0", "highlightOpacity": 0.9, "feedback": "The empty set has no elements, but it is still a set." }
                           ],
                           "elements": [
-                            { "id": "element_one", "label": "Element", "kind": "button", "x": 60, "y": 60, "width": 150, "height": 48 }
+                            { "id": "btn_set", "label": "Set A", "kind": "button", "x": 55, "y": 55, "width": 150, "height": 48 },
+                            { "id": "btn_element", "label": "Element 2", "kind": "button", "x": 55, "y": 118, "width": 150, "height": 48 },
+                            { "id": "btn_empty", "label": "Empty set", "kind": "button", "x": 55, "y": 181, "width": 150, "height": 48 },
+                            { "id": "member_1", "label": "1", "kind": "hotspot", "x": 380, "y": 225, "width": 48, "height": 48 },
+                            { "id": "member_2", "label": "2", "kind": "hotspot", "x": 470, "y": 185, "width": 48, "height": 48 },
+                            { "id": "member_3", "label": "3", "kind": "hotspot", "x": 505, "y": 300, "width": 48, "height": 48 }
                           ],
                           "interactions": [
-                            { "triggerId": "element_one", "effect": "HIGHLIGHT_ZONE", "targetZoneId": "zone_set", "feedback": "The element belongs to Set A." }
+                            { "triggerId": "btn_set", "effect": "HIGHLIGHT_ZONE", "targetZoneId": "zone_a", "feedback": "A refers to the whole collection {1, 2, 3}." },
+                            { "triggerId": "btn_element", "effect": "HIGHLIGHT_ZONE", "targetZoneId": "zone_a", "feedback": "The statement 2 is in A is about one member inside the set." },
+                            { "triggerId": "btn_empty", "effect": "HIGHLIGHT_ZONE", "targetZoneId": "zone_empty", "feedback": "The empty set has no members, but it is a subset of every set." },
+                            { "triggerId": "member_1", "effect": "SHOW_FEEDBACK", "feedback": "1 is an element of A." },
+                            { "triggerId": "member_2", "effect": "SHOW_FEEDBACK", "feedback": "2 is an element of A." },
+                            { "triggerId": "member_3", "effect": "SHOW_FEEDBACK", "feedback": "3 is an element of A." }
                           ]
                         }
                         """)
         ));
-        setModule.addSubTopic(subTopic(
-                "2-Set Venn Practice",
+        setFoundationsModule.addSubTopic(subTopic(
+                "Membership, Subsets, and Proper Subsets",
                 """
-                        <h2>2-Set Venn Practice</h2>
-                        <p>After reviewing sets as collections, build a two-set Venn diagram for sets A and B.</p>
-                        <p><strong>Given:</strong> n(A)=11, n(B)=9, and n(A intersect B)=3. Add both circles, create the overlap, then fill the exact region values.</p>
+                        <h2>Membership, Subsets, and Proper Subsets</h2>
+                        <p>Use <code>in</code> language for elements and <code>subset</code> language for sets. If <code>A = {1, 2, 3}</code>, then <code>2</code> is an element of <code>A</code>, while <code>{2}</code> is a subset of <code>A</code>.</p>
+                        <p>A set <code>B</code> is a subset of <code>A</code> when every element of <code>B</code> is also in <code>A</code>. It is a proper subset when <code>B</code> is smaller than <code>A</code>.</p>
                         """,
                 1,
                 1,
                 3,
+                InteractionType.QUIZ,
+                "Check whether learners can distinguish elements from subsets.",
+                validate(interactiveConfigService, InteractionType.QUIZ, """
+                        {
+                          "type": "QUIZ",
+                          "mode": "PRACTICE",
+                          "title": "Element or subset?",
+                          "prompt": "Choose the true statement for A = {1, 2, 3}.",
+                          "question": "Which statement is true when A = {1, 2, 3}?",
+                          "options": [
+                            { "id": "a", "label": "2 is a subset of A", "correct": false },
+                            { "id": "b", "label": "{2} is an element of A", "correct": false },
+                            { "id": "c", "label": "{2} is a subset of A", "correct": true },
+                            { "id": "d", "label": "{1, 2, 3} is a proper subset of A", "correct": false }
+                          ],
+                          "successCondition": { "kind": "QUIZ_CORRECT_OPTION", "correctOptionId": "c" },
+                          "feedback": {
+                            "success": "Correct. {2} is a set whose only element is already in A.",
+                            "failure": "Not yet. Elements use membership language; sets use subset language."
+                          }
+                        }
+                        """)
+        ));
+        setFoundationsModule.addSubTopic(subTopic(
+                "Union, Intersection, Difference, and Complement",
+                """
+                        <h2>Union, Intersection, Difference, and Complement</h2>
+                        <p>A union keeps elements that are in either set. An intersection keeps only elements that are in both sets.</p>
+                        <p>A difference such as <code>A - B</code> keeps elements in <code>A</code> after removing elements that are also in <code>B</code>. A complement keeps elements from the universal set that are not in the selected set.</p>
+                        <p>In a Venn diagram, these operations become regions. The same region can be described with notation, a formula, or a count.</p>
+                        """,
+                2,
+                4,
+                8,
+                InteractionType.VISUAL_LAYER,
+                "Show a two-set Venn diagram where learners can inspect operations and exact regions.",
+                validate(interactiveConfigService, InteractionType.VISUAL_LAYER, """
+                        {
+                          "type": "VISUAL_LAYER",
+                          "mode": "VISUALIZATION",
+                          "title": "Two-set operations map",
+                          "canvas": { "width": 900, "height": 520, "backgroundText": "Click a circle, operation button, or region number." },
+                          "zones": [
+                            { "id": "zone_a", "label": "A", "shape": "circle", "x": 250, "y": 135, "width": 280, "height": 280, "labelX": 34, "labelY": 25, "color": "#ffd333", "highlightColor": "#ff8f1f", "highlightOpacity": 0.78, "feedback": "Set A contains the A-only region and the overlap." },
+                            { "id": "zone_b", "label": "B", "shape": "circle", "x": 390, "y": 135, "width": 280, "height": 280, "labelX": 66, "labelY": 25, "color": "#8fb3ff", "highlightColor": "#4f8cff", "highlightOpacity": 0.78, "feedback": "Set B contains the B-only region and the overlap." }
+                          ],
+                          "elements": [
+                            { "id": "btn_a", "label": "Highlight A", "kind": "button", "x": 40, "y": 40, "width": 170, "height": 48 },
+                            { "id": "btn_b", "label": "Highlight B", "kind": "button", "x": 40, "y": 100, "width": 170, "height": 48 },
+                            { "id": "btn_union", "label": "A union B", "kind": "button", "x": 40, "y": 160, "width": 170, "height": 48 },
+                            { "id": "btn_intersection", "label": "A intersect B", "kind": "button", "x": 40, "y": 220, "width": 170, "height": 48 }
+                          ],
+                          "interactions": [
+                            { "triggerId": "btn_a", "effect": "HIGHLIGHT_ZONE", "targetZoneId": "zone_a", "feedback": "n(A) counts A only plus A intersect B." },
+                            { "triggerId": "btn_b", "effect": "HIGHLIGHT_ZONE", "targetZoneId": "zone_b", "feedback": "n(B) counts B only plus A intersect B." },
+                            { "triggerId": "btn_union", "effect": "SHOW_FEEDBACK", "feedback": "A union B includes A only, the overlap, and B only." },
+                            { "triggerId": "btn_intersection", "effect": "SHOW_FEEDBACK", "feedback": "A intersect B is the overlap shared by both sets." }
+                          ],
+                          "overlap": {
+                            "enabled": true,
+                            "sourceZoneIds": ["zone_a", "zone_b"],
+                            "inputs": [
+                              { "id": "A_ONLY", "label": "n(A)", "zoneIds": ["zone_a"], "value": 20, "kind": "total" },
+                              { "id": "B_ONLY", "label": "n(B)", "zoneIds": ["zone_b"], "value": 15, "kind": "total" },
+                              { "id": "A_AND_B", "label": "n(A intersect B)", "zoneIds": ["zone_a", "zone_b"], "value": 6, "kind": "intersection" }
+                            ],
+                            "values": [
+                              { "id": "A_ONLY", "label": "A only", "zoneIds": ["zone_a"], "value": 14, "feedback": "A only is n(A) - n(A intersect B) = 20 - 6 = 14." },
+                              { "id": "B_ONLY", "label": "B only", "zoneIds": ["zone_b"], "value": 9, "feedback": "B only is n(B) - n(A intersect B) = 15 - 6 = 9." },
+                              { "id": "A_AND_B", "label": "A intersect B", "zoneIds": ["zone_a", "zone_b"], "value": 6, "feedback": "The overlap belongs to both A and B." }
+                            ]
+                          }
+                        }
+                        """)
+        ));
+        setFoundationsModule.addSubTopic(subTopic(
+                "Operations Checkpoint",
+                """
+                        <h2>Operations Checkpoint</h2>
+                        <p>Translate the operation before counting. Union means at least one set; intersection means both sets; difference means one set after removing another.</p>
+                        """,
+                3,
+                4,
+                8,
+                InteractionType.QUIZ,
+                "Check operation notation before moving into counting formulas.",
+                validate(interactiveConfigService, InteractionType.QUIZ, """
+                        {
+                          "type": "QUIZ",
+                          "mode": "PRACTICE",
+                          "title": "Operation notation check",
+                          "prompt": "Choose the operation that keeps elements appearing in both sets.",
+                          "question": "Which operation keeps only elements that are in both A and B?",
+                          "options": [
+                            { "id": "a", "label": "A union B", "correct": false },
+                            { "id": "b", "label": "A intersect B", "correct": true },
+                            { "id": "c", "label": "A - B", "correct": false },
+                            { "id": "d", "label": "Complement of A", "correct": false }
+                          ],
+                          "successCondition": { "kind": "QUIZ_CORRECT_OPTION", "correctOptionId": "b" },
+                          "feedback": {
+                            "success": "Correct. Intersection keeps the shared region.",
+                            "failure": "Not yet. Look for the operation that requires membership in A and B at the same time."
+                          }
+                        }
+                        """)
+        ));
+
+        CourseModule setPowerModule = new CourseModule(
+                "2. Power Sets and Subset Formulas",
+                "Build the power set concept and practice formulas for total subsets and selected subset sizes.",
+                1,
+                ContentDepth.HIGH
+        );
+        setPowerModule.addSubTopic(subTopic(
+                "Power Sets",
+                """
+                        <h2>Power Sets</h2>
+                        <p>The power set of a set <code>A</code>, written <code>P(A)</code>, is the set of all subsets of <code>A</code>.</p>
+                        <p>For example, if <code>A = {1, 2}</code>, then <code>P(A) = { empty, {1}, {2}, {1,2} }</code>. A power set always contains the empty set and the original set.</p>
+                        <p>This is a change in level: elements of <code>P(A)</code> are themselves sets.</p>
+                        """,
+                0,
+                4,
+                8,
+                InteractionType.QUIZ,
+                "Ask learners to check the relationship between elements, subsets, and power sets.",
+                validate(interactiveConfigService, InteractionType.QUIZ, """
+                        {
+                          "type": "QUIZ",
+                          "mode": "PRACTICE",
+                          "title": "Power set check",
+                          "prompt": "Choose the true statement for A = {1, 2}.",
+                          "question": "Which statement is true when A = {1, 2}?",
+                          "options": [
+                            { "id": "a", "label": "{1} is an element of P(A)", "correct": true },
+                            { "id": "b", "label": "3 is an element of P(A)", "correct": false },
+                            { "id": "c", "label": "P(A) has 2 elements", "correct": false },
+                            { "id": "d", "label": "A is not an element of P(A)", "correct": false }
+                          ],
+                          "successCondition": { "kind": "QUIZ_CORRECT_OPTION", "correctOptionId": "a" },
+                          "feedback": {
+                            "success": "Correct. A power set contains subsets as its elements.",
+                            "failure": "Not yet. List every subset of A first."
+                          }
+                        }
+                        """)
+        ));
+        setPowerModule.addSubTopic(subTopic(
+                "Subset Count Formula",
+                """
+                        <h2>Subset Count Formula</h2>
+                        <p>If a set has <code>n</code> elements, the total number of subsets is <code>2^n</code>. Each element has two independent choices: included or not included.</p>
+                        <p>The same idea can be refined. Non-empty subsets are <code>2^n - 1</code>, because we remove the empty set. Two-element subsets can be counted with <code>n(n-1)/2</code>.</p>
+                        """,
+                1,
+                9,
+                13,
+                InteractionType.FORMULA_EXPLORER,
+                "Let learners inspect several subset-count formulas from one value of n.",
+                validate(interactiveConfigService, InteractionType.FORMULA_EXPLORER, """
+                        {
+                          "type": "FORMULA_EXPLORER",
+                          "mode": "VISUALIZATION",
+                          "title": "Subset formula explorer",
+                          "formula": "2^n",
+                          "variables": [
+                            { "name": "n", "label": "Members n", "min": 0, "max": 10, "step": 1, "initial": 4 }
+                          ],
+                          "precision": 0,
+                          "formulaOptions": [
+                            {
+                              "id": "all-subsets",
+                              "label": "All subsets",
+                              "formula": "2^n",
+                              "description": "Each member has two choices: included or not included.",
+                              "steps": [
+                                { "label": "Two choices per member", "expression": "2^n", "explanation": "For n members, multiply 2 choices n times." }
+                              ]
+                            },
+                            {
+                              "id": "non-empty-subsets",
+                              "label": "Non-empty",
+                              "formula": "2^n - 1",
+                              "description": "Remove the empty set from the full power set.",
+                              "steps": [
+                                { "label": "Start with all subsets", "expression": "2^n", "explanation": "The power set includes the empty set." },
+                                { "label": "Remove empty set", "expression": "2^n - 1", "explanation": "Subtract one subset: the empty set." }
+                              ]
+                            },
+                            {
+                              "id": "two-member-subsets",
+                              "label": "2-member subsets",
+                              "formula": "n * (n - 1) / 2",
+                              "description": "Choose two different members, then divide by two because order does not matter.",
+                              "steps": [
+                                { "label": "Pick the first member", "expression": "n", "explanation": "There are n choices for the first selected member." },
+                                { "label": "Pick a different member", "expression": "n * (n - 1)", "explanation": "After one member is selected, n - 1 choices remain." },
+                                { "label": "Remove order duplicates", "expression": "n * (n - 1) / 2", "explanation": "{a, b} and {b, a} are the same subset." }
+                              ]
+                            },
+                            {
+                              "id": "three-member-subsets",
+                              "label": "3-member subsets",
+                              "formula": "n * (n - 1) * (n - 2) / 6",
+                              "description": "Choose three different members and divide by 3! because order does not matter.",
+                              "steps": [
+                                { "label": "Ordered triples", "expression": "n * (n - 1) * (n - 2)", "explanation": "Pick three different members in order." },
+                                { "label": "Remove ordering", "expression": "n * (n - 1) * (n - 2) / 6", "explanation": "Six orders describe the same three-member subset." }
+                              ]
+                            }
+                          ]
+                        }
+                        """)
+        ));
+        setPowerModule.addSubTopic(subTopic(
+                "Subset Count Target Practice",
+                """
+                        <h2>Subset Count Target Practice</h2>
+                        <p>Use the formula <code>2^n</code> in reverse. If the power set has 32 subsets, find how many elements are in the original set.</p>
+                        <p>Adjust <code>n</code> until the formula reaches the target.</p>
+                        """,
+                2,
+                9,
+                13,
+                InteractionType.FORMULA_EXPLORER,
+                "Challenge learners to solve 2^n = 32 with the formula explorer.",
+                validate(interactiveConfigService, InteractionType.FORMULA_EXPLORER, """
+                        {
+                          "type": "FORMULA_EXPLORER",
+                          "mode": "PRACTICE",
+                          "title": "Power set target",
+                          "prompt": "Adjust n until the number of subsets equals 32.",
+                          "formula": "2^n",
+                          "variables": [
+                            { "name": "n", "label": "Members n", "min": 0, "max": 10, "step": 1, "initial": 3 }
+                          ],
+                          "precision": 0,
+                          "successCondition": { "kind": "EXPRESSION_EQUALS", "target": 32, "tolerance": 0.01 },
+                          "feedback": {
+                            "success": "Correct. 2^5 = 32, so the original set has 5 elements.",
+                            "failure": "Not yet. Try powers of two until the result is 32."
+                          }
+                        }
+                        """)
+        ));
+        setPowerModule.addSubTopic(subTopic(
+                "Power Set Size Checkpoint",
+                """
+                        <h2>Power Set Size Checkpoint</h2>
+                        <p>A quick way to check your understanding is to move from a set size to its power set size without listing every subset.</p>
+                        """,
+                3,
+                9,
+                13,
+                InteractionType.QUIZ,
+                "Check direct use of the 2^n formula.",
+                validate(interactiveConfigService, InteractionType.QUIZ, """
+                        {
+                          "type": "QUIZ",
+                          "mode": "PRACTICE",
+                          "title": "Power set size",
+                          "prompt": "Choose the size of P(A).",
+                          "question": "If A has 4 elements, how many elements does P(A) have?",
+                          "options": [
+                            { "id": "a", "label": "4", "correct": false },
+                            { "id": "b", "label": "8", "correct": false },
+                            { "id": "c", "label": "16", "correct": true },
+                            { "id": "d", "label": "24", "correct": false }
+                          ],
+                          "successCondition": { "kind": "QUIZ_CORRECT_OPTION", "correctOptionId": "c" },
+                          "feedback": {
+                            "success": "Correct. 2^4 = 16.",
+                            "failure": "Not yet. Use 2^n with n = 4."
+                          }
+                        }
+                        """)
+        ));
+
+        CourseModule setCountingModule = new CourseModule(
+                "3. Venn Counting and Inclusion-Exclusion",
+                "Turn totals and intersections into exact Venn regions, then practice building two-set and three-set diagrams.",
+                2,
+                ContentDepth.HIGH
+        );
+        setCountingModule.addSubTopic(subTopic(
+                "Two-Set Venn Counting",
+                """
+                        <h2>Two-Set Venn Counting</h2>
+                        <p>When two sets overlap, adding <code>n(A)</code> and <code>n(B)</code> counts the shared members twice. Inclusion-exclusion fixes that by subtracting the overlap once.</p>
+                        <p>For two sets, <code>n(A union B) = n(A) + n(B) - n(A intersect B)</code>. Exact regions come from subtracting the overlap from each set total.</p>
+                        """,
+                0,
+                14,
+                18,
+                InteractionType.FORMULA_EXPLORER,
+                "Show two-set Venn formulas for exact regions, union, and outside count.",
+                validate(interactiveConfigService, InteractionType.FORMULA_EXPLORER, """
+                        {
+                          "type": "FORMULA_EXPLORER",
+                          "mode": "VISUALIZATION",
+                          "title": "Two-set counting formulas",
+                          "formula": "a + b - ab",
+                          "variables": [
+                            { "name": "u", "label": "n(U)", "min": 0, "max": 100, "step": 1, "initial": 30 },
+                            { "name": "a", "label": "n(A)", "min": 0, "max": 80, "step": 1, "initial": 14 },
+                            { "name": "b", "label": "n(B)", "min": 0, "max": 80, "step": 1, "initial": 12 },
+                            { "name": "ab", "label": "n(A intersect B)", "min": 0, "max": 50, "step": 1, "initial": 5 }
+                          ],
+                          "precision": 0,
+                          "formulaOptions": [
+                            {
+                              "id": "a-only",
+                              "label": "A only",
+                              "formula": "a - ab",
+                              "description": "Members in A but not in B.",
+                              "steps": [
+                                { "label": "Start with all of A", "expression": "a", "explanation": "A includes the overlap." },
+                                { "label": "Remove the overlap", "expression": "a - ab", "explanation": "Subtract A intersect B to leave A only." }
+                              ]
+                            },
+                            {
+                              "id": "b-only",
+                              "label": "B only",
+                              "formula": "b - ab",
+                              "description": "Members in B but not in A.",
+                              "steps": [
+                                { "label": "Start with all of B", "expression": "b", "explanation": "B includes the overlap." },
+                                { "label": "Remove the overlap", "expression": "b - ab", "explanation": "Subtract A intersect B to leave B only." }
+                              ]
+                            },
+                            {
+                              "id": "a-union-b",
+                              "label": "A union B",
+                              "formula": "a + b - ab",
+                              "description": "Members in A or B.",
+                              "steps": [
+                                { "label": "Add A and B", "expression": "a + b", "explanation": "The overlap is counted twice." },
+                                { "label": "Subtract one overlap", "expression": "a + b - ab", "explanation": "Now each member in the union is counted once." }
+                              ]
+                            },
+                            {
+                              "id": "outside",
+                              "label": "Outside",
+                              "formula": "u - a - b + ab",
+                              "description": "Members in the universal set but outside both A and B.",
+                              "steps": [
+                                { "label": "Find the union", "expression": "a + b - ab", "explanation": "This is every member inside A or B." },
+                                { "label": "Subtract from U", "expression": "u - a - b + ab", "explanation": "Everything not in the union is outside both circles." }
+                              ]
+                            }
+                          ]
+                        }
+                        """)
+        ));
+        setCountingModule.addSubTopic(subTopic(
+                "Build a 2-Set Venn Practice",
+                """
+                        <h2>Build a 2-Set Venn Practice</h2>
+                        <p>Build a two-set Venn diagram for sets A and B.</p>
+                        <p><strong>Given:</strong> n(A)=14, n(B)=12, and n(A intersect B)=5. Add both circles, arrange an overlap, then fill the exact region values.</p>
+                        <p><strong>Target regions:</strong> A only=9, B only=7, and A intersect B=5.</p>
+                        """,
+                1,
+                14,
+                18,
                 InteractionType.VISUAL_LAYER,
                 "Ask learners to build a two-set Venn diagram and fill each exact region.",
                 validate(interactiveConfigService, InteractionType.VISUAL_LAYER, """
@@ -476,88 +854,31 @@ public class DevSeedConfig {
                             "enabled": true,
                             "sourceZoneIds": ["zone_a", "zone_b"],
                             "inputs": [
-                              { "id": "A_ONLY", "label": "n(A)", "zoneIds": ["zone_a"], "value": 11, "kind": "total" },
-                              { "id": "B_ONLY", "label": "n(B)", "zoneIds": ["zone_b"], "value": 9, "kind": "total" },
-                              { "id": "A_AND_B", "label": "n(A intersect B)", "zoneIds": ["zone_a", "zone_b"], "value": 3, "kind": "intersection" }
+                              { "id": "A_ONLY", "label": "n(A)", "zoneIds": ["zone_a"], "value": 14, "kind": "total" },
+                              { "id": "B_ONLY", "label": "n(B)", "zoneIds": ["zone_b"], "value": 12, "kind": "total" },
+                              { "id": "A_AND_B", "label": "n(A intersect B)", "zoneIds": ["zone_a", "zone_b"], "value": 5, "kind": "intersection" }
                             ],
                             "values": []
                           },
                           "feedback": {
-                            "success": "Correct. A only is 8, B only is 6, and the overlap is 3.",
+                            "success": "Correct. A only is 9, B only is 7, and the overlap is 5.",
                             "failure": "Not yet. Subtract the overlap from each set total to get the exact outside regions."
                           }
                         }
                         """)
         ));
-        setModule.addSubTopic(subTopic(
-                "Power Sets",
+        setCountingModule.addSubTopic(subTopic(
+                "Three-Set Inclusion-Exclusion",
                 """
-                        <h2>Power Sets</h2>
-                        <p>The power set of a set <code>A</code>, written <code>P(A)</code>, is the set of all subsets of <code>A</code>.</p>
-                        <p>For example, if <code>A = {1, 2}</code>, then <code>P(A) = { empty, {1}, {2}, {1,2} }</code>. A power set always contains the empty set and the original set.</p>
+                        <h2>Three-Set Inclusion-Exclusion</h2>
+                        <p>With three sets, pairwise intersections are subtracted after the three set totals are added. The middle region is then added back because it was subtracted one time too many.</p>
+                        <p>The core formula is <code>n(A union B union C) = n(A) + n(B) + n(C) - n(A intersect B) - n(A intersect C) - n(B intersect C) + n(A intersect B intersect C)</code>.</p>
                         """,
                 2,
-                4,
-                8,
-                InteractionType.QUIZ,
-                "Ask learners to check the relationship between elements, subsets, and power sets.",
-                validate(interactiveConfigService, InteractionType.QUIZ, """
-                        {
-                          "type": "QUIZ",
-                          "mode": "PRACTICE",
-                          "title": "Power set check",
-                          "prompt": "Choose the true statement for A = {1, 2}.",
-                          "question": "Which statement is true when A = {1, 2}?",
-                          "options": [
-                            { "id": "a", "label": "{1} is an element of P(A)", "correct": true },
-                            { "id": "b", "label": "3 is an element of P(A)", "correct": false },
-                            { "id": "c", "label": "P(A) has 2 elements", "correct": false },
-                            { "id": "d", "label": "A is not an element of P(A)", "correct": false }
-                          ],
-                          "successCondition": { "kind": "QUIZ_CORRECT_OPTION" },
-                          "feedback": {
-                            "success": "Correct. A power set contains subsets as its elements.",
-                            "failure": "Not yet. List every subset of A first."
-                          }
-                        }
-                        """)
-        ));
-        setModule.addSubTopic(subTopic(
-                "Number of Subsets",
-                """
-                        <h2>Number of Subsets</h2>
-                        <p>If a set has <code>n</code> elements, the total number of subsets is <code>2^n</code>. Each element has two choices: it is either included in a subset or not included.</p>
-                        """,
-                3,
-                9,
-                13,
-                InteractionType.FORMULA_EXPLORER,
-                "Let learners adjust the number of set elements and see the total number of subsets.",
-                validate(interactiveConfigService, InteractionType.FORMULA_EXPLORER, """
-                        {
-                          "type": "FORMULA_EXPLORER",
-                          "mode": "VISUALIZATION",
-                          "title": "Subset count",
-                          "formula": "2^n",
-                          "variables": [
-                            { "name": "n", "label": "Members", "min": 0, "max": 10, "step": 1, "initial": 3 }
-                          ],
-                          "precision": 0
-                        }
-                        """)
-        ));
-        setModule.addSubTopic(subTopic(
-                "Counting Members in Regions",
-                """
-                        <h2>Counting Members in Regions</h2>
-                        <p>Counting members in a Venn diagram requires separating overlapping regions clearly, especially when multiple sets overlap.</p>
-                        <p>The key rule is inclusion-exclusion, such as <code>n(A union B) = n(A) + n(B) - n(A intersect B)</code>.</p>
-                        """,
-                4,
                 14,
                 22,
                 InteractionType.FORMULA_EXPLORER,
-                "Let learners choose a counting formula and inspect the result and steps from sample values.",
+                "Let learners choose a three-set counting formula and inspect the result and steps from sample values.",
                 validate(interactiveConfigService, InteractionType.FORMULA_EXPLORER, """
                         {
                           "type": "FORMULA_EXPLORER",
@@ -615,6 +936,17 @@ public class DevSeedConfig {
                               ]
                             },
                             {
+                              "id": "b-only",
+                              "label": "B only",
+                              "formula": "b - ab - bc + abc",
+                              "description": "Shade only the region in B but not in A or C.",
+                              "steps": [
+                                { "label": "Start with all of B", "expression": "b", "explanation": "Circle B contains B only and the regions overlapping with A or C." },
+                                { "label": "Subtract overlaps with A and C", "expression": "b - ab - bc", "explanation": "The middle three-set region has now been subtracted twice." },
+                                { "label": "Add the middle back", "expression": "b - ab - bc + abc", "explanation": "Add A intersect B intersect C back once, leaving B only." }
+                              ]
+                            },
+                            {
                               "id": "a-union-b",
                               "label": "A union B",
                               "formula": "a + b - ab",
@@ -652,19 +984,29 @@ public class DevSeedConfig {
                               "steps": [
                                 { "label": "Look at the three-set middle", "expression": "abc", "explanation": "n(A intersect B intersect C) counts members that belong to all three sets." }
                               ]
+                            },
+                            {
+                              "id": "outside-all",
+                              "label": "Outside all",
+                              "formula": "u - a - b - c + ab + ac + bc - abc",
+                              "description": "Count members in the universal set but outside A, B, and C.",
+                              "steps": [
+                                { "label": "Find the union", "expression": "a + b + c - ab - ac - bc + abc", "explanation": "This counts every member inside at least one circle." },
+                                { "label": "Subtract from U", "expression": "u - a - b - c + ab + ac + bc - abc", "explanation": "Everything left is outside all three sets." }
+                              ]
                             }
                           ]
                         }
                         """)
         ));
-        setModule.addSubTopic(subTopic(
-                "Three-Set Venn Diagram",
+        setCountingModule.addSubTopic(subTopic(
+                "Three-Set Venn Visual Map",
                 """
-                        <h2>Three-Set Venn Diagram</h2>
+                        <h2>Three-Set Venn Visual Map</h2>
                         <p>A Venn diagram separates the regions of sets A, B, and C visually before member counts are computed with inclusion-exclusion.</p>
-                        <p>Use the buttons to highlight circles or important regions, then connect the visual regions to the formulas from the previous topic.</p>
+                        <p>Click the circles or exact region values, then connect what you see to the formula steps from the previous lesson.</p>
                         """,
-                5,
+                3,
                 14,
                 22,
                 InteractionType.VISUAL_LAYER,
@@ -719,15 +1061,15 @@ public class DevSeedConfig {
                         }
                         """)
         ));
-        setModule.addSubTopic(subTopic(
-                "Build a Venn Diagram Practice",
+        setCountingModule.addSubTopic(subTopic(
+                "Build the Final Venn Diagram",
                 """
-                        <h2>Build a Venn Diagram Practice</h2>
+                        <h2>Build the Final Venn Diagram</h2>
                         <p>Build a three-set Venn diagram for clubs A, B, and C. You must add all three circles yourself, arrange them so the required overlaps exist, then enter the exact number of members in each visible region.</p>
                         <p><strong>Given:</strong> n(A)=33, n(B)=26, n(C)=22, n(A intersect B)=10, n(A intersect C)=8, n(B intersect C)=7, and n(A intersect B intersect C)=3.</p>
                         <p><strong>Success criteria:</strong> create circles A, B, and C; make all pairwise overlaps and the three-way overlap visible; enter A only=18, B only=12, C only=10, A intersect B only=7, A intersect C only=5, B intersect C only=4, and A intersect B intersect C=3.</p>
                         """,
-                6,
+                4,
                 14,
                 22,
                 InteractionType.VISUAL_LAYER,
@@ -771,7 +1113,40 @@ public class DevSeedConfig {
                         }
                         """)
         ));
-        publishSeedCourse(courseRepository, setCourse, setModule);
+        setCountingModule.addSubTopic(subTopic(
+                "Final Set Counting Checkpoint",
+                """
+                        <h2>Final Set Counting Checkpoint</h2>
+                        <p>Use the same final Venn data to verify the outside region. First compute the union, then subtract it from the universal set.</p>
+                        <p><strong>Given:</strong> n(U)=60 and the exact inside regions from the final diagram sum to 56.</p>
+                        """,
+                5,
+                14,
+                22,
+                InteractionType.QUIZ,
+                "Ask learners to finish the course by computing the outside region.",
+                validate(interactiveConfigService, InteractionType.QUIZ, """
+                        {
+                          "type": "QUIZ",
+                          "mode": "PRACTICE",
+                          "title": "Outside-region checkpoint",
+                          "prompt": "Choose the number of members outside A, B, and C.",
+                          "question": "If n(U)=60 and n(A union B union C)=56, how many members are outside all three sets?",
+                          "options": [
+                            { "id": "a", "label": "2", "correct": false },
+                            { "id": "b", "label": "3", "correct": false },
+                            { "id": "c", "label": "4", "correct": true },
+                            { "id": "d", "label": "56", "correct": false }
+                          ],
+                          "successCondition": { "kind": "QUIZ_CORRECT_OPTION", "correctOptionId": "c" },
+                          "feedback": {
+                            "success": "Correct. Outside all three sets is 60 - 56 = 4.",
+                            "failure": "Not yet. Subtract the union count from the universal-set count."
+                          }
+                        }
+                        """)
+        ));
+        publishSeedCourse(courseRepository, setCourse, setFoundationsModule, setPowerModule, setCountingModule);
 
         Course vectorCourse = seedCourse(
                 courseRepository,
