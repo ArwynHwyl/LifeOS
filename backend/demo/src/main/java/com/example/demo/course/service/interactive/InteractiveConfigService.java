@@ -1,8 +1,16 @@
 package com.example.demo.course.service.interactive;
 
-import com.example.demo.course.entity.InteractionType;
-import com.example.demo.course.dto.interactive.response.InteractiveFieldDto;
+import static com.example.demo.course.service.interactive.InteractiveJsonValidator.optionalNumber;
+import static com.example.demo.course.service.interactive.InteractiveJsonValidator.optionalText;
+import static com.example.demo.course.service.interactive.InteractiveJsonValidator.rejectUnknownFields;
+import static com.example.demo.course.service.interactive.InteractiveJsonValidator.requiredId;
+import static com.example.demo.course.service.interactive.InteractiveJsonValidator.requiredInteger;
+import static com.example.demo.course.service.interactive.InteractiveJsonValidator.requiredNumber;
+import static com.example.demo.course.service.interactive.InteractiveJsonValidator.requiredText;
+import static com.example.demo.course.service.interactive.InteractiveJsonValidator.validateVisualBounds;
+
 import com.example.demo.course.dto.interactive.response.InteractiveTemplateDto;
+import com.example.demo.course.entity.InteractionType;
 import com.example.demo.shared.exception.ValidationException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -10,7 +18,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -23,7 +30,6 @@ import org.springframework.stereotype.Service;
 public class InteractiveConfigService {
 
     private static final int MAX_CONFIG_LENGTH = 50_000;
-    private static final Set<String> COMMON_FIELDS = Set.of("type", "mode", "title");
     private static final Set<String> PRACTICE_FIELDS = Set.of("prompt", "successCondition", "feedback");
     private static final Set<String> GRAPH_FIELDS = Set.of(
             "type", "mode", "title", "expression", "xMin", "xMax", "yMin", "yMax", "sampleCount", "controls", "prompt", "successCondition", "feedback"
@@ -48,9 +54,6 @@ public class InteractiveConfigService {
             "x1", "y1", "x2", "y2", "qx", "qy", "flow", "arrow", "color", "strokeWidth"
     );
     private static final Set<String> VISUAL_INTERACTION_FIELDS = Set.of("triggerId", "effect", "targetZoneId", "feedback");
-    private static final Set<String> VISUAL_OVERLAP_FIELDS = Set.of("enabled", "sourceZoneIds", "inputs", "values");
-    private static final Set<String> VISUAL_OVERLAP_INPUT_FIELDS = Set.of("id", "label", "zoneIds", "value", "kind");
-    private static final Set<String> VISUAL_OVERLAP_VALUE_FIELDS = Set.of("id", "label", "zoneIds", "value", "feedback");
     private static final Set<String> QUIZ_FIELDS = Set.of(
             "type", "mode", "title", "question", "options", "prompt", "successCondition", "feedback"
     );
@@ -69,10 +72,18 @@ public class InteractiveConfigService {
 
     private final ObjectMapper objectMapper;
     private final LogicExpressionService logicExpressionService;
+    private final InteractiveTemplateCatalog templateCatalog;
+    private final VisualOverlapValidator visualOverlapValidator;
 
-    public InteractiveConfigService(ObjectMapper objectMapper, LogicExpressionService logicExpressionService) {
+    public InteractiveConfigService(
+            ObjectMapper objectMapper,
+            LogicExpressionService logicExpressionService,
+            InteractiveTemplateCatalog templateCatalog
+    ) {
         this.objectMapper = objectMapper;
         this.logicExpressionService = logicExpressionService;
+        this.templateCatalog = templateCatalog;
+        this.visualOverlapValidator = new VisualOverlapValidator(objectMapper);
     }
 
     public String validateAndNormalize(InteractionType interactionType, String interactionConfig) {
@@ -107,332 +118,7 @@ public class InteractiveConfigService {
     }
 
     public List<InteractiveTemplateDto> listTemplates() {
-        Map<String, Object> graphVisualization = graphVisualizationDefault();
-        Map<String, Object> graphPractice = graphPracticeDefault();
-        Map<String, Object> formulaVisualization = formulaVisualizationDefault();
-        Map<String, Object> formulaPractice = formulaPracticeDefault();
-        Map<String, Object> visualLayer = visualLayerDefault();
-        Map<String, Object> visualLayerPractice = visualLayerPracticeDefault();
-        Map<String, Object> quizPractice = quizPracticeDefault();
-        Map<String, Object> logicCircuitPractice = logicCircuitPracticeDefault();
-        Map<String, Object> logicSimplifyPractice = logicSimplifyPracticeDefault();
-        return List.of(
-                new InteractiveTemplateDto(
-                        InteractionType.GRAPH_2D,
-                        "2D Graph",
-                        "Plot a single-variable expression across a bounded x range.",
-                        graphVisualization,
-                        graphVisualization,
-                        graphPractice,
-                        List.of(
-                                field("title", "Title", "text", true, null, null, 120, null),
-                                field("expression", "Expression", "text", true, null, null, 160, null),
-                                field("xMin", "X min", "number", true, -1000.0, 1000.0, null, null),
-                                field("xMax", "X max", "number", true, -1000.0, 1000.0, null, null),
-                                field("yMin", "Y min", "number", true, -1000.0, 1000.0, null, null),
-                                field("yMax", "Y max", "number", true, -1000.0, 1000.0, null, null),
-                                field("sampleCount", "Samples", "number", true, 20.0, 500.0, null, null)
-                        )
-                ),
-                new InteractiveTemplateDto(
-                        InteractionType.FORMULA_EXPLORER,
-                        "Formula Explorer",
-                        "Explore a formula by adjusting bounded variables.",
-                        formulaVisualization,
-                        formulaVisualization,
-                        formulaPractice,
-                        List.of(
-                                field("title", "Title", "text", true, null, null, 120, null),
-                                field("formula", "Formula", "text", true, null, null, 160, null),
-                                field("variables", "Variables", "variable-list", true, null, null, null, null),
-                                field("precision", "Precision", "number", true, 0.0, 6.0, null, null)
-                        )
-                ),
-                new InteractiveTemplateDto(
-                        InteractionType.VISUAL_LAYER,
-                        "Visual Layer",
-                        "Build a Canva-style hotspot layer with click-to-highlight behavior.",
-                        visualLayerPractice,
-                        visualLayer,
-                        visualLayerPractice,
-                        List.of(
-                                field("title", "Title", "text", true, null, null, 120, null),
-                                field("zones", "Zones", "visual-zones", true, null, null, null, null),
-                                field("elements", "Elements", "visual-elements", true, null, null, null, null),
-                                field("interactions", "Interactions", "visual-interactions", true, null, null, null, null)
-                        )
-                ),
-                new InteractiveTemplateDto(
-                        InteractionType.QUIZ,
-                        "Quiz",
-                        "Render a local multiple-choice check with immediate feedback.",
-                        quizPractice,
-                        quizPractice,
-                        quizPractice,
-                        List.of(
-                                field("title", "Title", "text", true, null, null, 120, null),
-                                field("question", "Question", "textarea", true, null, null, 500, null),
-                                field("options", "Options", "quiz-options", true, null, null, null, null)
-                        )
-                ),
-                new InteractiveTemplateDto(
-                        InteractionType.LOGIC_FLOW,
-                        "Logic Flow",
-                        "Grade propositional logic circuits and equivalence simplification on the server.",
-                        logicCircuitPractice,
-                        logicCircuitPractice,
-                        logicSimplifyPractice,
-                        List.of(
-                                field("title", "Title", "text", true, null, null, 120, null),
-                                field("kind", "Kind", "select", true, null, null, null, List.of("CIRCUIT", "SIMPLIFY")),
-                                field("expression", "Expression", "text", false, null, null, 1000, null),
-                                field("start", "Starting expression", "text", false, null, null, 1000, null),
-                                field("target", "Target expression", "text", false, null, null, 1000, null)
-                        )
-                )
-        );
-    }
-
-    private Map<String, Object> graphVisualizationDefault() {
-        return Map.of(
-                "type", "GRAPH_2D",
-                "mode", "VISUALIZATION",
-                "title", "Function graph",
-                "expression", "sin(x)",
-                "xMin", -6.28,
-                "xMax", 6.28,
-                "yMin", -2,
-                "yMax", 2,
-                "sampleCount", 160
-        );
-    }
-
-    private Map<String, Object> graphPracticeDefault() {
-        return Map.ofEntries(
-                Map.entry("type", "GRAPH_2D"),
-                Map.entry("mode", "PRACTICE"),
-                Map.entry("title", "Match the line"),
-                Map.entry("prompt", "Adjust the slope until the graph passes through the target point."),
-                Map.entry("expression", "m * x"),
-                Map.entry("controls", Map.of("m", Map.of("min", 0, "max", 5, "step", 0.5, "initial", 1))),
-                Map.entry("xMin", 0),
-                Map.entry("xMax", 5),
-                Map.entry("yMin", 0),
-                Map.entry("yMax", 10),
-                Map.entry("sampleCount", 120),
-                Map.entry("successCondition", Map.of("kind", "POINT_ON_GRAPH", "target", Map.of("x", 2, "y", 6), "tolerance", 0.15)),
-                Map.entry("feedback", Map.of("success", "Correct. The curve reaches the target point.", "failure", "Not yet. Adjust the controls and compare the curve to the target."))
-        );
-    }
-
-    private Map<String, Object> formulaVisualizationDefault() {
-        return Map.of(
-                "type", "FORMULA_EXPLORER",
-                "mode", "VISUALIZATION",
-                "title", "Area explorer",
-                "formula", "width * height",
-                "variables", List.of(
-                        Map.of("name", "width", "label", "Width", "min", 1, "max", 20, "step", 1, "initial", 6),
-                        Map.of("name", "height", "label", "Height", "min", 1, "max", 20, "step", 1, "initial", 4)
-                ),
-                "precision", 2
-        );
-    }
-
-    private Map<String, Object> formulaPracticeDefault() {
-        return Map.of(
-                "type", "FORMULA_EXPLORER",
-                "mode", "PRACTICE",
-                "title", "Target magnitude",
-                "prompt", "Adjust x and y until the magnitude equals 5.",
-                "formula", "sqrt(x^2 + y^2)",
-                "variables", List.of(
-                        Map.of("name", "x", "label", "X component", "min", 0, "max", 10, "step", 1, "initial", 0),
-                        Map.of("name", "y", "label", "Y component", "min", 0, "max", 10, "step", 1, "initial", 0)
-                ),
-                "precision", 2,
-                "successCondition", Map.of("kind", "EXPRESSION_EQUALS", "target", 5, "tolerance", 0.01),
-                "feedback", Map.of("success", "Correct. The magnitude is 5.", "failure", "Not yet. Look for a Pythagorean triple.")
-        );
-    }
-
-    private Map<String, Object> visualLayerDefault() {
-        return Map.of(
-                "type", "VISUAL_LAYER",
-                "mode", "VISUALIZATION",
-                "title", "Visual hotspot layer",
-                "canvas", Map.of(
-                        "width", 900,
-                        "height", 520,
-                        "backgroundText", "Draw zones and connect clicks to highlights."
-                ),
-                "zones", List.of(
-                        Map.ofEntries(
-                                Map.entry("id", "zone_a"),
-                                Map.entry("label", "Zone A"),
-                                Map.entry("shape", "circle"),
-                                Map.entry("x", 270),
-                                Map.entry("y", 150),
-                                Map.entry("width", 220),
-                                Map.entry("height", 220),
-                                Map.entry("color", "#ffd333"),
-                                Map.entry("highlightColor", "#ff8f1f"),
-                                Map.entry("highlightOpacity", 0.82),
-                                Map.entry("feedback", "Zone A highlighted.")
-                        ),
-                        Map.ofEntries(
-                                Map.entry("id", "zone_b"),
-                                Map.entry("label", "Zone B"),
-                                Map.entry("shape", "circle"),
-                                Map.entry("x", 410),
-                                Map.entry("y", 150),
-                                Map.entry("width", 220),
-                                Map.entry("height", 220),
-                                Map.entry("color", "#8fb3ff"),
-                                Map.entry("highlightColor", "#4f8cff"),
-                                Map.entry("highlightOpacity", 0.82),
-                                Map.entry("feedback", "Zone B highlighted.")
-                        )
-                ),
-                "elements", List.of(
-                        Map.of("id", "choice_a", "label", "Highlight A", "kind", "button", "x", 40, "y", 40, "width", 150, "height", 48)
-                ),
-                "interactions", List.of(
-                        Map.of("triggerId", "choice_a", "effect", "HIGHLIGHT_ZONE", "targetZoneId", "zone_a", "feedback", "Zone A highlighted.")
-                )
-        );
-    }
-
-    private Map<String, Object> visualLayerPracticeDefault() {
-        return Map.ofEntries(
-                Map.entry("type", "VISUAL_LAYER"),
-                Map.entry("mode", "PRACTICE"),
-                Map.entry("title", "Build the Venn diagram"),
-                Map.entry("prompt", "Add the required circles, arrange the overlaps, then enter the value for each visible region."),
-                Map.entry("canvas", Map.of("width", 900, "height", 520, "backgroundText", "")),
-                Map.entry("zones", List.of(
-                        Map.ofEntries(
-                                Map.entry("id", "zone_a"),
-                                Map.entry("label", "A"),
-                                Map.entry("shape", "circle"),
-                                Map.entry("x", 250),
-                                Map.entry("y", 130),
-                                Map.entry("width", 260),
-                                Map.entry("height", 260),
-                                Map.entry("labelX", 35),
-                                Map.entry("labelY", 30),
-                                Map.entry("color", "#ffd333"),
-                                Map.entry("highlightColor", "#ff8f1f"),
-                                Map.entry("highlightOpacity", 0.82),
-                                Map.entry("feedback", "")
-                        ),
-                        Map.ofEntries(
-                                Map.entry("id", "zone_b"),
-                                Map.entry("label", "B"),
-                                Map.entry("shape", "circle"),
-                                Map.entry("x", 390),
-                                Map.entry("y", 130),
-                                Map.entry("width", 260),
-                                Map.entry("height", 260),
-                                Map.entry("labelX", 65),
-                                Map.entry("labelY", 30),
-                                Map.entry("color", "#8fb3ff"),
-                                Map.entry("highlightColor", "#4f8cff"),
-                                Map.entry("highlightOpacity", 0.82),
-                                Map.entry("feedback", "")
-                        ),
-                        Map.ofEntries(
-                                Map.entry("id", "zone_c"),
-                                Map.entry("label", "C"),
-                                Map.entry("shape", "circle"),
-                                Map.entry("x", 320),
-                                Map.entry("y", 250),
-                                Map.entry("width", 260),
-                                Map.entry("height", 260),
-                                Map.entry("labelX", 50),
-                                Map.entry("labelY", 75),
-                                Map.entry("color", "#8fe0aa"),
-                                Map.entry("highlightColor", "#3aa66b"),
-                                Map.entry("highlightOpacity", 0.82),
-                                Map.entry("feedback", "")
-                        )
-                )),
-                Map.entry("elements", List.of()),
-                Map.entry("interactions", List.of()),
-                Map.entry("overlap", Map.of(
-                        "enabled", true,
-                        "sourceZoneIds", List.of("zone_a", "zone_b", "zone_c"),
-                        "inputs", List.of(
-                                Map.of("id", "A_ONLY", "label", "A", "zoneIds", List.of("zone_a"), "value", 33, "kind", "total"),
-                                Map.of("id", "B_ONLY", "label", "B", "zoneIds", List.of("zone_b"), "value", 26, "kind", "total"),
-                                Map.of("id", "C_ONLY", "label", "C", "zoneIds", List.of("zone_c"), "value", 22, "kind", "total"),
-                                Map.of("id", "A_AND_B", "label", "A ∩ B", "zoneIds", List.of("zone_a", "zone_b"), "value", 10, "kind", "intersection"),
-                                Map.of("id", "A_AND_C", "label", "A ∩ C", "zoneIds", List.of("zone_a", "zone_c"), "value", 8, "kind", "intersection"),
-                                Map.of("id", "B_AND_C", "label", "B ∩ C", "zoneIds", List.of("zone_b", "zone_c"), "value", 7, "kind", "intersection"),
-                                Map.of("id", "A_AND_B_AND_C", "label", "A ∩ B ∩ C", "zoneIds", List.of("zone_a", "zone_b", "zone_c"), "value", 3, "kind", "intersection")
-                        ),
-                        "values", List.of()
-                )),
-                Map.entry("feedback", Map.of(
-                        "success", "Correct. The regions match the expected values.",
-                        "failure", "Not yet. Check that every required overlap exists and each region value is correct."
-                ))
-        );
-    }
-
-    private Map<String, Object> quizPracticeDefault() {
-        return Map.of(
-                "type", "QUIZ",
-                "mode", "PRACTICE",
-                "title", "Quick check",
-                "prompt", "Choose the value that satisfies the equation.",
-                "question", "Which value makes 2x + 5 = 13 true?",
-                "options", List.of(
-                        Map.of("id", "a", "label", "x = 3", "correct", false),
-                        Map.of("id", "b", "label", "x = 4", "correct", true),
-                        Map.of("id", "c", "label", "x = 6", "correct", false)
-                ),
-                "successCondition", Map.of("kind", "QUIZ_CORRECT_OPTION"),
-                "feedback", Map.of("success", "Correct.", "failure", "Not quite. Try solving for x first.")
-        );
-    }
-
-    private Map<String, Object> logicCircuitPracticeDefault() {
-        return Map.of(
-                "type", "LOGIC_FLOW",
-                "kind", "CIRCUIT",
-                "mode", "PRACTICE",
-                "title", "Evaluate a logic statement",
-                "expression", "P ∧ ¬Q",
-                "goal", "MATCH_OUTPUT",
-                "feedback", Map.of("success", "Correct.", "failure", "Not yet. Recheck each truth value.")
-        );
-    }
-
-    private Map<String, Object> logicSimplifyPracticeDefault() {
-        return Map.of(
-                "type", "LOGIC_FLOW",
-                "kind", "SIMPLIFY",
-                "mode", "PRACTICE",
-                "title", "Simplify an implication",
-                "start", "P -> Q",
-                "target", "¬P ∨ Q",
-                "allowedLaws", List.of("IMPLICATION", "DOUBLE_NEGATION", "DE_MORGAN"),
-                "feedback", Map.of("success", "Correct. The expression is logically equivalent.", "failure", "Not yet. Check the implication law.")
-        );
-    }
-
-    private InteractiveFieldDto field(
-            String path,
-            String label,
-            String inputType,
-            boolean required,
-            Double min,
-            Double max,
-            Integer maxLength,
-            List<String> options
-    ) {
-        return new InteractiveFieldDto(path, label, inputType, required, min, max, maxLength, options);
+        return templateCatalog.listTemplates();
     }
 
     private boolean isTemplate(InteractionType type) {
@@ -674,7 +360,7 @@ public class InteractiveConfigService {
         Set<String> zoneIds = validateVisualZones(root, canvasWidth, canvasHeight);
         Set<String> elementIds = validateVisualElements(root, canvasWidth, canvasHeight);
         validateVisualInteractions(root, zoneIds, elementIds);
-        validateVisualOverlap(root, zoneIds);
+        visualOverlapValidator.validate(root, zoneIds);
         if (practice) {
             validateVisualPracticeCommon(root);
         } else {
@@ -801,271 +487,10 @@ public class InteractiveConfigService {
         }
     }
 
-    private void validateVisualOverlap(ObjectNode root, Set<String> zoneIds) {
-        JsonNode overlap = root.get("overlap");
-        if (overlap == null || overlap.isNull()) {
-            return;
-        }
-        if (!overlap.isObject()) {
-            throw new ValidationException("overlap must be an object");
-        }
-        ObjectNode overlapObject = (ObjectNode) overlap;
-        rejectUnknownFields(overlapObject, VISUAL_OVERLAP_FIELDS, "overlap");
-        JsonNode enabled = overlapObject.get("enabled");
-        if (enabled == null || !enabled.isBoolean()) {
-            throw new ValidationException("overlap.enabled must be a boolean");
-        }
-        List<String> sourceZoneIds = requiredIdArray(overlapObject, "sourceZoneIds", "overlap.sourceZoneIds", 0, 5);
-        if (!enabled.booleanValue()) {
-            if (sourceZoneIds.isEmpty()) {
-                root.remove("overlap");
-                return;
-            }
-        } else {
-            if (sourceZoneIds.isEmpty()) {
-                throw new ValidationException("overlap.sourceZoneIds must contain 1 to 5 ids when enabled");
-            }
-        }
-        Set<String> sourceSet = new LinkedHashSet<>(sourceZoneIds);
-        if (sourceSet.size() != sourceZoneIds.size()) {
-            throw new ValidationException("overlap.sourceZoneIds must be unique");
-        }
-        for (String sourceZoneId : sourceZoneIds) {
-            if (!zoneIds.contains(sourceZoneId)) {
-                throw new ValidationException("overlap.sourceZoneIds must reference existing zones");
-            }
-        }
-
-        JsonNode inputs = overlapObject.get("inputs");
-        if (inputs != null && !inputs.isNull()) {
-            validateAndNormalizeOverlapInputs(overlapObject, inputs, sourceZoneIds, sourceSet);
-            return;
-        }
-
-        JsonNode values = overlapObject.get("values");
-        validateLegacyOverlapValues(values, sourceZoneIds, sourceSet);
-    }
-
-    private void validateAndNormalizeOverlapInputs(ObjectNode overlapObject, JsonNode inputs, List<String> sourceZoneIds, Set<String> sourceSet) {
-        List<List<String>> combinations = overlapCombinations(sourceZoneIds);
-        if (!inputs.isArray() || inputs.size() != combinations.size()) {
-            throw new ValidationException("overlap.inputs must contain every source total and intersection");
-        }
-        Set<String> inputIds = new HashSet<>();
-        Map<String, Double> inputValues = new java.util.HashMap<>();
-        ArrayNode normalizedInputs = objectMapper.createArrayNode();
-        for (JsonNode input : inputs) {
-            if (!input.isObject()) {
-                throw new ValidationException("overlap.inputs must contain objects");
-            }
-            ObjectNode inputObject = (ObjectNode) input;
-            rejectUnknownFields(inputObject, VISUAL_OVERLAP_INPUT_FIELDS, "overlap.inputs");
-            String id = requiredLongId(inputObject, "id", "overlap input id", 240);
-            if (!inputIds.add(id)) {
-                throw new ValidationException("overlap input ids must be unique");
-            }
-            requiredText(inputObject, "label", 120);
-            List<String> inputZoneIds = requiredIdArray(inputObject, "zoneIds", "overlap.inputs.zoneIds", 1, sourceZoneIds.size());
-            Set<String> inputSet = new LinkedHashSet<>(inputZoneIds);
-            if (inputSet.size() != inputZoneIds.size()) {
-                throw new ValidationException("overlap.inputs.zoneIds must be unique");
-            }
-            if (!sourceSet.containsAll(inputZoneIds)) {
-                throw new ValidationException("overlap.inputs.zoneIds must be subsets of sourceZoneIds");
-            }
-            String expectedId = overlapRegionId(inputZoneIds);
-            if (!expectedId.equals(id)) {
-                throw new ValidationException("overlap input id must be deterministic for its zoneIds");
-            }
-            String kind = requiredText(inputObject, "kind", 20);
-            String expectedKind = inputZoneIds.size() == 1 ? "total" : "intersection";
-            if (!expectedKind.equals(kind)) {
-                throw new ValidationException("overlap input kind must match its zoneIds");
-            }
-            double value = requiredNumber(inputObject, "value", -1_000_000_000, 1_000_000_000);
-            inputValues.put(expectedId, value);
-            ObjectNode normalized = objectMapper.createObjectNode();
-            normalized.put("id", expectedId);
-            normalized.put("label", inputObject.get("label").asText());
-            normalized.set("zoneIds", stringArray(inputZoneIds));
-            normalized.put("value", value);
-            normalized.put("kind", expectedKind);
-            normalizedInputs.add(normalized);
-        }
-        for (List<String> combination : combinations) {
-            if (!inputValues.containsKey(overlapRegionId(combination))) {
-                throw new ValidationException("overlap.inputs must contain every source total and intersection");
-            }
-        }
-
-        Map<String, ObjectNode> existingValues = new java.util.HashMap<>();
-        JsonNode currentValues = overlapObject.get("values");
-        if (currentValues != null && currentValues.isArray()) {
-            validateLegacyOverlapValues(currentValues, sourceZoneIds, sourceSet);
-            for (JsonNode value : currentValues) {
-                if (value.isObject() && value.has("id")) {
-                    existingValues.put(value.get("id").asText(), (ObjectNode) value);
-                }
-            }
-        } else if (currentValues != null && !currentValues.isNull()) {
-            throw new ValidationException("overlap.values must be an array of generated regions");
-        }
-
-        ArrayNode normalizedValues = objectMapper.createArrayNode();
-        for (List<String> regionZoneIds : combinations) {
-            String id = overlapRegionId(regionZoneIds);
-            double exact = 0;
-            for (List<String> candidate : combinations) {
-                if (candidate.containsAll(regionZoneIds)) {
-                    double inclusive = inputValues.get(overlapRegionId(candidate));
-                    exact += ((candidate.size() - regionZoneIds.size()) % 2 == 0 ? 1 : -1) * inclusive;
-                }
-            }
-            if (exact < 0) {
-                throw new ValidationException("overlap inputs produce negative exact region: " + id);
-            }
-            ObjectNode existing = existingValues.get(id);
-            ObjectNode normalized = objectMapper.createObjectNode();
-            normalized.put("id", id);
-            normalized.put("label", existing != null && existing.has("label") && existing.get("label").isTextual()
-                    ? existing.get("label").asText()
-                    : overlapRegionLabel(regionZoneIds, sourceZoneIds.size()));
-            normalized.set("zoneIds", stringArray(regionZoneIds));
-            normalized.put("value", exact);
-            if (existing != null && existing.has("feedback") && existing.get("feedback").isTextual()) {
-                normalized.put("feedback", existing.get("feedback").asText());
-            }
-            normalizedValues.add(normalized);
-        }
-        overlapObject.set("inputs", normalizedInputs);
-        overlapObject.set("values", normalizedValues);
-    }
-
-    private void validateLegacyOverlapValues(JsonNode values, List<String> sourceZoneIds, Set<String> sourceSet) {
-        if (values == null || !values.isArray() || values.size() > ((1 << sourceZoneIds.size()) - 1)) {
-            throw new ValidationException("overlap.values must be an array of generated regions");
-        }
-        Set<String> valueIds = new HashSet<>();
-        for (JsonNode value : values) {
-            if (!value.isObject()) {
-                throw new ValidationException("overlap.values must contain objects");
-            }
-            ObjectNode valueObject = (ObjectNode) value;
-            rejectUnknownFields(valueObject, VISUAL_OVERLAP_VALUE_FIELDS, "overlap.values");
-            String id = requiredLongId(valueObject, "id", "overlap value id", 240);
-            if (!valueIds.add(id)) {
-                throw new ValidationException("overlap value ids must be unique");
-            }
-            requiredText(valueObject, "label", 120);
-            List<String> regionZoneIds = requiredIdArray(valueObject, "zoneIds", "overlap.values.zoneIds", 1, sourceZoneIds.size());
-            Set<String> regionSet = new LinkedHashSet<>(regionZoneIds);
-            if (regionSet.size() != regionZoneIds.size()) {
-                throw new ValidationException("overlap.values.zoneIds must be unique");
-            }
-            if (!sourceSet.containsAll(regionZoneIds)) {
-                throw new ValidationException("overlap.values.zoneIds must be subsets of sourceZoneIds");
-            }
-            String expectedId = overlapRegionId(regionZoneIds);
-            if (!expectedId.equals(id)) {
-                throw new ValidationException("overlap value id must be deterministic for its zoneIds");
-            }
-            requiredNumber(valueObject, "value", -1_000_000_000, 1_000_000_000);
-            optionalText(valueObject, "feedback", 500);
-        }
-    }
-
-    private List<List<String>> overlapCombinations(List<String> sourceZoneIds) {
-        List<String> sorted = new ArrayList<>(sourceZoneIds);
-        Collections.sort(sorted);
-        List<List<String>> combinations = new ArrayList<>();
-        for (int mask = 1; mask < (1 << sorted.size()); mask++) {
-            List<String> combination = new ArrayList<>();
-            for (int index = 0; index < sorted.size(); index++) {
-                if ((mask & (1 << index)) != 0) {
-                    combination.add(sorted.get(index));
-                }
-            }
-            combinations.add(combination);
-        }
-        return combinations;
-    }
-
     private ArrayNode stringArray(List<String> values) {
         ArrayNode array = objectMapper.createArrayNode();
         values.forEach(array::add);
         return array;
-    }
-
-    private String overlapRegionLabel(List<String> zoneIds, int sourceCount) {
-        List<String> labels = zoneIds.stream().map(this::overlapIdToken).toList();
-        String base = String.join(" ∩ ", labels);
-        if (zoneIds.size() == 1) {
-            return base + " only";
-        }
-        return zoneIds.size() < sourceCount ? base + " only" : base;
-    }
-
-    private void validateVisualBounds(ObjectNode node, double canvasWidth, double canvasHeight) {
-        double x = requiredNumber(node, "x", 0, canvasWidth);
-        double y = requiredNumber(node, "y", 0, canvasHeight);
-        double width = requiredNumber(node, "width", 8, canvasWidth);
-        double height = requiredNumber(node, "height", 8, canvasHeight);
-        if (x + width > canvasWidth || y + height > canvasHeight) {
-            throw new ValidationException("visual object must stay inside canvas bounds");
-        }
-    }
-
-    private String requiredId(ObjectNode node, String fieldName, String label) {
-        String id = requiredText(node, fieldName, 60);
-        if (!id.matches("[A-Za-z][A-Za-z0-9_-]{0,59}")) {
-            throw new ValidationException(label + " must start with a letter and contain only letters, numbers, underscores, or dashes");
-        }
-        return id;
-    }
-
-    private String requiredLongId(ObjectNode node, String fieldName, String label, int maxLength) {
-        String id = requiredText(node, fieldName, maxLength);
-        if (!id.matches("[A-Za-z][A-Za-z0-9_-]{0," + (maxLength - 1) + "}")) {
-            throw new ValidationException(label + " must start with a letter and contain only letters, numbers, underscores, or dashes");
-        }
-        return id;
-    }
-
-    private List<String> requiredIdArray(ObjectNode node, String fieldName, String label, int min, int max) {
-        JsonNode values = node.get(fieldName);
-        if (values == null || !values.isArray() || values.size() < min || values.size() > max) {
-            throw new ValidationException(label + " must contain " + min + " to " + max + " ids");
-        }
-        List<String> ids = new ArrayList<>();
-        for (JsonNode value : values) {
-            if (!value.isTextual()) {
-                throw new ValidationException(label + " must contain ids");
-            }
-            String id = value.asText().trim();
-            if (!id.matches("[A-Za-z][A-Za-z0-9_-]{0,59}")) {
-                throw new ValidationException(label + " entries must start with a letter and contain only letters, numbers, underscores, or dashes");
-            }
-            ids.add(id);
-        }
-        return ids;
-    }
-
-    private String overlapRegionId(List<String> zoneIds) {
-        List<String> sorted = new ArrayList<>(zoneIds);
-        Collections.sort(sorted);
-        List<String> tokens = sorted.stream()
-                .map(this::overlapIdToken)
-                .toList();
-        if (tokens.size() == 1) {
-            return tokens.get(0) + "_ONLY";
-        }
-        return String.join("_AND_", tokens);
-    }
-
-    private String overlapIdToken(String zoneId) {
-        String token = zoneId.replaceFirst("(?i)^zone[_-]?", "").replaceAll("[^A-Za-z0-9]+", "_").toUpperCase();
-        token = token.replaceAll("^_+|_+$", "");
-        return token.isBlank() ? zoneId.replaceAll("[^A-Za-z0-9]+", "_").toUpperCase() : token;
     }
 
     private void validateQuiz(ObjectNode root, boolean practice) {
@@ -1380,84 +805,6 @@ public class InteractiveConfigService {
             }
             throw new ValidationException("expression contains unsupported identifier: " + token);
         }
-    }
-
-    private void rejectUnknownFields(ObjectNode node, Set<String> allowedFields, String path) {
-        Iterator<String> fields = node.fieldNames();
-        while (fields.hasNext()) {
-            String field = fields.next();
-            if (!allowedFields.contains(field)) {
-                throw new ValidationException(path + " contains unsupported field: " + field);
-            }
-        }
-    }
-
-    private String requiredText(ObjectNode node, String fieldName, int maxLength) {
-        JsonNode value = node.get(fieldName);
-        if (value == null || !value.isTextual() || value.asText().isBlank()) {
-            throw new ValidationException(fieldName + " is required");
-        }
-        String text = value.asText().trim();
-        if (text.length() > maxLength) {
-            throw new ValidationException(fieldName + " must be " + maxLength + " characters or fewer");
-        }
-        node.put(fieldName, text);
-        return text;
-    }
-
-    private String optionalText(ObjectNode node, String fieldName, int maxLength) {
-        JsonNode value = node.get(fieldName);
-        if (value == null || value.isNull()) {
-            return null;
-        }
-        if (!value.isTextual()) {
-            throw new ValidationException(fieldName + " must be text");
-        }
-        String text = value.asText().trim();
-        if (text.length() > maxLength) {
-            throw new ValidationException(fieldName + " must be " + maxLength + " characters or fewer");
-        }
-        node.put(fieldName, text);
-        return text;
-    }
-
-    private double requiredNumber(ObjectNode node, String fieldName, double min, double max) {
-        JsonNode value = node.get(fieldName);
-        if (value == null || !value.isNumber()) {
-            throw new ValidationException(fieldName + " is required");
-        }
-        double number = value.asDouble();
-        if (!Double.isFinite(number) || number < min || number > max) {
-            throw new ValidationException(fieldName + " must be between " + min + " and " + max);
-        }
-        return number;
-    }
-
-    private Double optionalNumber(ObjectNode node, String fieldName, double min, double max) {
-        JsonNode value = node.get(fieldName);
-        if (value == null || value.isNull()) {
-            return null;
-        }
-        if (!value.isNumber()) {
-            throw new ValidationException(fieldName + " must be a number");
-        }
-        double number = value.asDouble();
-        if (!Double.isFinite(number) || number < min || number > max) {
-            throw new ValidationException(fieldName + " must be between " + min + " and " + max);
-        }
-        return number;
-    }
-
-    private int requiredInteger(ObjectNode node, String fieldName, int min, int max) {
-        JsonNode value = node.get(fieldName);
-        if (value == null || !value.canConvertToInt() || value.asDouble() % 1 != 0) {
-            throw new ValidationException(fieldName + " must be an integer");
-        }
-        int number = value.asInt();
-        if (number < min || number > max) {
-            throw new ValidationException(fieldName + " must be between " + min + " and " + max);
-        }
-        return number;
     }
 
     private String stringify(ObjectNode root) {

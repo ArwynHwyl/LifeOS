@@ -11,7 +11,11 @@ import org.junit.jupiter.api.Test;
 
 class InteractiveConfigServiceTests {
 
-    private final InteractiveConfigService service = new InteractiveConfigService(new ObjectMapper(), new LogicExpressionService());
+    private final InteractiveConfigService service = new InteractiveConfigService(
+            new ObjectMapper(),
+            new LogicExpressionService(),
+            new InteractiveTemplateCatalog()
+    );
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test

@@ -6,6 +6,7 @@ import com.example.demo.course.service.generation.model.GeneratedCourseOutlineDr
 import com.example.demo.course.service.generation.model.GeneratedModuleDraft;
 import com.example.demo.course.service.generation.model.GeneratedSubTopicDraft;
 import com.example.demo.course.service.interactive.InteractiveConfigService;
+import com.example.demo.course.service.interactive.InteractiveTemplateCatalog;
 import com.example.demo.course.service.interactive.LogicExpressionService;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -20,7 +21,11 @@ import org.junit.jupiter.api.Test;
 class MockAiDraftGeneratorTests {
 
     private final MockAiDraftGenerator generator = new MockAiDraftGenerator();
-    private final InteractiveConfigService configService = new InteractiveConfigService(new ObjectMapper(), new LogicExpressionService());
+    private final InteractiveConfigService configService = new InteractiveConfigService(
+            new ObjectMapper(),
+            new LogicExpressionService(),
+            new InteractiveTemplateCatalog()
+    );
 
     @Test
     void moduleDraftIncludesValidInteractiveConfigs() {

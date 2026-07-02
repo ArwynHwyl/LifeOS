@@ -1,38 +1,37 @@
 package com.example.demo.course.service.management;
 
-import com.example.demo.course.mapper.CourseDtoMapper;
-import com.example.demo.course.service.interactive.InteractiveConfigService;
-import com.example.demo.course.service.interactive.LessonHtmlService;
-import com.example.demo.course.service.learner.UserAccessService;
-
-import com.example.demo.course.dto.management.response.CourseDetailDto;
 import com.example.demo.course.dto.management.request.CourseCreateRequest;
+import com.example.demo.course.dto.management.request.CourseUpdateRequest;
+import com.example.demo.course.dto.management.request.ModuleCreateRequest;
+import com.example.demo.course.dto.management.request.ModuleUpdateRequest;
+import com.example.demo.course.dto.management.request.SubTopicCreateRequest;
+import com.example.demo.course.dto.management.request.SubTopicUpdateRequest;
+import com.example.demo.course.dto.management.response.CourseDetailDto;
+import com.example.demo.course.dto.management.response.CourseSummaryDto;
+import com.example.demo.course.dto.management.response.ModuleDto;
+import com.example.demo.course.dto.management.response.SubTopicDto;
+import com.example.demo.course.dto.review.response.CourseReviewCommentDto;
+import com.example.demo.course.dto.review.response.CourseReviewDto;
+import com.example.demo.course.entity.ContentDepth;
 import com.example.demo.course.entity.Course;
 import com.example.demo.course.entity.CourseModule;
 import com.example.demo.course.entity.CourseReviewComment;
-import com.example.demo.course.entity.CourseStatus;
 import com.example.demo.course.entity.InteractionType;
 import com.example.demo.course.entity.SubTopic;
 import com.example.demo.course.entity.SubTopicSourceType;
+import com.example.demo.course.mapper.CourseDtoMapper;
 import com.example.demo.course.repository.AiGenerationLogRepository;
 import com.example.demo.course.repository.CourseModuleRepository;
 import com.example.demo.course.repository.CourseRepository;
 import com.example.demo.course.repository.CourseReviewCommentRepository;
 import com.example.demo.course.repository.CourseReviewRepository;
 import com.example.demo.course.repository.SubTopicRepository;
-import com.example.demo.course.dto.review.response.CourseReviewDto;
-import com.example.demo.course.dto.management.response.CourseSummaryDto;
-import com.example.demo.course.dto.management.request.CourseUpdateRequest;
-import com.example.demo.course.dto.management.request.ModuleCreateRequest;
-import com.example.demo.course.dto.management.response.ModuleDto;
-import com.example.demo.course.dto.management.request.ModuleUpdateRequest;
-import com.example.demo.course.dto.management.request.SubTopicCreateRequest;
-import com.example.demo.course.dto.management.response.SubTopicDto;
-import com.example.demo.course.dto.management.request.SubTopicUpdateRequest;
-import com.example.demo.course.dto.review.response.CourseReviewCommentDto;
-import com.example.demo.user.entity.User;
+import com.example.demo.course.service.interactive.InteractiveConfigService;
+import com.example.demo.course.service.interactive.LessonHtmlService;
+import com.example.demo.course.service.learner.UserAccessService;
 import com.example.demo.shared.exception.ResourceNotFoundException;
 import com.example.demo.shared.exception.ValidationException;
+import com.example.demo.user.entity.User;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -84,19 +83,19 @@ public class CourseAdminService {
 
     @Transactional(readOnly = true)
     public List<CourseSummaryDto> listCourses(UUID adminUserId) {
-        userAccessService.requireAdmin(validator.requiredUserId(adminUserId));
+        requireAdmin(adminUserId);
         return mapper.toSummaryDtos(courseRepository.findAllByOrderByCreatedAtDesc());
     }
 
     @Transactional(readOnly = true)
     public CourseDetailDto getCourse(UUID adminUserId, Long courseId) {
-        userAccessService.requireAdmin(validator.requiredUserId(adminUserId));
+        requireAdmin(adminUserId);
         return mapper.toDetailDto(findCourse(courseId));
     }
 
     @Transactional(readOnly = true)
     public List<CourseReviewDto> getCourseReviews(UUID adminUserId, Long courseId) {
-        userAccessService.requireAdmin(validator.requiredUserId(adminUserId));
+        requireAdmin(adminUserId);
         return courseReviewRepository.findByCourseIdOrderByCreatedAtDescIdDesc(validator.requiredId(courseId, "courseId")).stream()
                 .map(mapper::toCourseReviewDto)
                 .toList();
@@ -105,7 +104,7 @@ public class CourseAdminService {
     @Transactional
     public CourseDetailDto createCourse(UUID adminUserId, CourseCreateRequest request) {
         requireRequest(request, "Course create request is required");
-        User admin = userAccessService.requireAdmin(validator.requiredUserId(adminUserId));
+        User admin = requireAdmin(adminUserId);
         Course course = new Course(
                 validator.requiredText(request.title(), "title", 255),
                 validator.optionalText(request.description(), "description", 10_000),
@@ -121,7 +120,7 @@ public class CourseAdminService {
     @Transactional
     public CourseDetailDto updateCourse(UUID adminUserId, Long courseId, CourseUpdateRequest request) {
         requireRequest(request, "Course update request is required");
-        userAccessService.requireAdmin(validator.requiredUserId(adminUserId));
+        requireAdmin(adminUserId);
         Course course = findCourse(courseId);
         workflowGuard.prepareForAdminEdit(course);
         course.updateDetails(
@@ -136,7 +135,7 @@ public class CourseAdminService {
 
     @Transactional
     public void deleteCourse(UUID adminUserId, Long courseId) {
-        userAccessService.requireAdmin(validator.requiredUserId(adminUserId));
+        requireAdmin(adminUserId);
         Course course = findCourse(courseId);
         workflowGuard.prepareForAdminEdit(course);
         aiGenerationLogRepository.deleteByCourseId(course.getId());
@@ -146,7 +145,7 @@ public class CourseAdminService {
 
     @Transactional
     public CourseDetailDto submitForReview(UUID adminUserId, Long courseId) {
-        userAccessService.requireAdmin(validator.requiredUserId(adminUserId));
+        requireAdmin(adminUserId);
         Course course = findCourse(courseId);
         workflowGuard.requireAdminEditable(course);
         validateReadyForReview(course);
@@ -156,14 +155,14 @@ public class CourseAdminService {
 
     @Transactional
     public CourseDetailDto publish(UUID adminUserId, Long courseId) {
-        userAccessService.requireAdmin(validator.requiredUserId(adminUserId));
+        requireAdmin(adminUserId);
         throw new ValidationException("Courses are published automatically when a teacher approves the review");
     }
 
     @Transactional
     public ModuleDto addModule(UUID adminUserId, Long courseId, ModuleCreateRequest request) {
         requireRequest(request, "Module create request is required");
-        userAccessService.requireAdmin(validator.requiredUserId(adminUserId));
+        requireAdmin(adminUserId);
         Course course = findCourse(courseId);
         workflowGuard.prepareForAdminEdit(course);
         CourseModule module = toModule(request);
@@ -174,7 +173,7 @@ public class CourseAdminService {
     @Transactional
     public ModuleDto updateModule(UUID adminUserId, Long moduleId, ModuleUpdateRequest request) {
         requireRequest(request, "Module update request is required");
-        userAccessService.requireAdmin(validator.requiredUserId(adminUserId));
+        requireAdmin(adminUserId);
         CourseModule module = findModule(moduleId);
         workflowGuard.prepareForAdminEdit(module.getCourse());
         module.updateDetails(
@@ -193,7 +192,7 @@ public class CourseAdminService {
 
     @Transactional
     public void deleteModule(UUID adminUserId, Long moduleId) {
-        userAccessService.requireAdmin(validator.requiredUserId(adminUserId));
+        requireAdmin(adminUserId);
         CourseModule module = findModule(moduleId);
         Course course = module.getCourse();
         workflowGuard.prepareForAdminEdit(course);
@@ -204,7 +203,7 @@ public class CourseAdminService {
     @Transactional
     public SubTopicDto addSubTopic(UUID adminUserId, Long moduleId, SubTopicCreateRequest request) {
         requireRequest(request, "Sub-topic create request is required");
-        userAccessService.requireAdmin(validator.requiredUserId(adminUserId));
+        requireAdmin(adminUserId);
         CourseModule module = findModule(moduleId);
         workflowGuard.prepareForAdminEdit(module.getCourse());
         validator.validateOptionalPageRange(request.pageStart(), request.pageEnd());
@@ -216,7 +215,7 @@ public class CourseAdminService {
     @Transactional
     public SubTopicDto updateSubTopic(UUID adminUserId, Long subTopicId, SubTopicUpdateRequest request) {
         requireRequest(request, "Sub-topic update request is required");
-        userAccessService.requireAdmin(validator.requiredUserId(adminUserId));
+        requireAdmin(adminUserId);
         SubTopic subTopic = findSubTopic(subTopicId);
         workflowGuard.prepareForAdminEdit(subTopic.getModule().getCourse());
         validator.validateOptionalPageRange(request.pageStart(), request.pageEnd());
@@ -238,11 +237,15 @@ public class CourseAdminService {
 
     @Transactional
     public void deleteSubTopic(UUID adminUserId, Long subTopicId) {
-        userAccessService.requireAdmin(validator.requiredUserId(adminUserId));
+        requireAdmin(adminUserId);
         SubTopic subTopic = findSubTopic(subTopicId);
         CourseModule module = subTopic.getModule();
         workflowGuard.prepareForAdminEdit(module.getCourse());
         module.removeSubTopic(subTopic);
+    }
+
+    private User requireAdmin(UUID adminUserId) {
+        return userAccessService.requireAdmin(validator.requiredUserId(adminUserId));
     }
 
     private Course findCourse(Long courseId) {
@@ -311,9 +314,7 @@ public class CourseAdminService {
         }
     }
 
-    private com.example.demo.course.entity.ContentDepth requireContentDepth(
-            com.example.demo.course.entity.ContentDepth contentDepth
-    ) {
+    private ContentDepth requireContentDepth(ContentDepth contentDepth) {
         if (contentDepth == null) {
             throw new ValidationException("contentDepth is required");
         }
@@ -345,7 +346,7 @@ public class CourseAdminService {
             Long commentId,
             boolean resolved
     ) {
-        userAccessService.requireAdmin(validator.requiredUserId(adminUserId));
+        requireAdmin(adminUserId);
         validator.requiredId(courseId, "courseId");
         validator.requiredId(commentId, "commentId");
 

@@ -6,6 +6,7 @@ import com.example.demo.course.service.generation.model.GeneratedCourseOutlineDr
 import com.example.demo.course.service.generation.model.GeneratedModuleDraft;
 import com.example.demo.course.service.generation.model.GeneratedSubTopicDraft;
 import com.example.demo.course.service.interactive.InteractiveConfigService;
+import com.example.demo.course.service.interactive.InteractiveTemplateCatalog;
 import com.example.demo.course.service.interactive.LogicExpressionService;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,7 +31,7 @@ class AiGenerationWorkerInteractionTests {
             null,
             new CourseInputValidator(objectMapper),
             null,
-            new InteractiveConfigService(objectMapper, new LogicExpressionService())
+            new InteractiveConfigService(objectMapper, new LogicExpressionService(), new InteractiveTemplateCatalog())
     );
 
     @Test

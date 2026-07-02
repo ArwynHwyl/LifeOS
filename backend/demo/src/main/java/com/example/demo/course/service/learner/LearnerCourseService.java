@@ -80,10 +80,7 @@ public class LearnerCourseService {
 
     @Transactional(readOnly = true)
     public PublishedCourseDetailDto getPublishedCourse(UUID userId, Long courseId) {
-        validator.requiredId(courseId, "courseId");
-        Course course = courseRepository.findById(validator.requiredId(courseId, "courseId"))
-                .filter(foundCourse -> foundCourse.getStatus() == CourseStatus.PUBLISHED)
-                .orElseThrow(() -> new ResourceNotFoundException("Published course not found: " + courseId));
+        Course course = findPublishedCourse(courseId);
         List<SubTopic> allTopics = course.getModules().stream()
                 .flatMap(module -> module.getSubTopics().stream())
                 .toList();
@@ -97,31 +94,20 @@ public class LearnerCourseService {
             Long subTopicId,
             InteractiveProgressUpdateRequest request
     ) {
-        validator.requiredId(courseId, "courseId");
-        validator.requiredId(subTopicId, "subTopicId");
+        Long requiredCourseId = validator.requiredId(courseId, "courseId");
+        Long requiredSubTopicId = validator.requiredId(subTopicId, "subTopicId");
         InteractiveProgressStatus requestedStatus = request.status();
         if (requestedStatus == null || requestedStatus == InteractiveProgressStatus.NOT_STARTED) {
             throw new ValidationException("status must be TRIED or MASTERED");
         }
 
-        Course course = courseRepository.findById(courseId)
-                .filter(foundCourse -> foundCourse.getStatus() == CourseStatus.PUBLISHED)
-                .orElseThrow(() -> new ResourceNotFoundException("Published course not found: " + courseId));
-        SubTopic subTopic = course.getModules().stream()
-                .flatMap(module -> module.getSubTopics().stream())
-                .filter(item -> item.getId().equals(subTopicId))
-                .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("Subtopic not found in published course: " + subTopicId));
+        Course course = findPublishedCourseById(requiredCourseId, courseId);
+        SubTopic subTopic = findSubTopicInPublishedCourse(course, requiredSubTopicId);
         if (requestedStatus == InteractiveProgressStatus.MASTERED && isServerGradable(subTopic.getInteractionType()) && !isVisualizationMode(subTopic)) {
             throw new InvalidWorkflowStateException(subTopic.getInteractionType() + " mastery must be recorded through interactive-attempts");
         }
 
-        LearnerInteractiveProgress progress = progressRepository.findByUserUserIdAndSubTopicId(userId, subTopicId)
-                .orElseGet(() -> new LearnerInteractiveProgress(
-                        entityManager.getReference(User.class, userId),
-                        course,
-                        subTopic
-                ));
+        LearnerInteractiveProgress progress = findOrCreateProgress(userId, course, subTopic);
         progress.recordAttempt(requestedStatus);
         return toProgressDto(progressRepository.save(progress));
     }
@@ -133,19 +119,14 @@ public class LearnerCourseService {
             Long subTopicId,
             LogicAttemptRequest request
     ) {
-        validator.requiredId(courseId, "courseId");
-        validator.requiredId(subTopicId, "subTopicId");
+        Long requiredCourseId = validator.requiredId(courseId, "courseId");
+        Long requiredSubTopicId = validator.requiredId(subTopicId, "subTopicId");
         if (request == null) {
             throw new ValidationException("logic attempt request is required");
         }
 
-        Course course = courseRepository.findById(courseId)
-                .filter(foundCourse -> foundCourse.getStatus() == CourseStatus.PUBLISHED)
-                .orElseThrow(() -> new ResourceNotFoundException("Published course not found: " + courseId));
-        SubTopic subTopic = interactiveSubTopics(course).stream()
-                .filter(item -> item.getId().equals(subTopicId))
-                .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("Interactive subtopic not found in published course: " + subTopicId));
+        Course course = findPublishedCourseById(requiredCourseId, courseId);
+        SubTopic subTopic = findInteractiveSubTopicInPublishedCourse(course, requiredSubTopicId);
         if (subTopic.getInteractionType() != InteractionType.LOGIC_FLOW) {
             throw new InvalidWorkflowStateException("Subtopic is not a LOGIC_FLOW interactive");
         }
@@ -163,16 +144,11 @@ public class LearnerCourseService {
         InteractiveProgressStatus nextStatus = grade.correct()
                 ? InteractiveProgressStatus.MASTERED
                 : InteractiveProgressStatus.TRIED;
-        LearnerInteractiveProgress progress = progressRepository.findByUserUserIdAndSubTopicId(userId, subTopicId)
-                .orElseGet(() -> new LearnerInteractiveProgress(
-                        entityManager.getReference(User.class, userId),
-                        course,
-                        subTopic
-                ));
+        LearnerInteractiveProgress progress = findOrCreateProgress(userId, course, subTopic);
         progress.recordAttempt(nextStatus);
         LearnerInteractiveProgress saved = progressRepository.save(progress);
         return new LogicAttemptResponse(
-                subTopicId,
+                requiredSubTopicId,
                 kind,
                 grade.correct(),
                 saved.getStatus(),
@@ -191,20 +167,15 @@ public class LearnerCourseService {
             Long subTopicId,
             InteractiveAttemptRequest request
     ) {
-        validator.requiredId(courseId, "courseId");
-        validator.requiredId(subTopicId, "subTopicId");
+        Long requiredCourseId = validator.requiredId(courseId, "courseId");
+        Long requiredSubTopicId = validator.requiredId(subTopicId, "subTopicId");
         if (request == null) {
             throw new ValidationException("interactive attempt request is required");
         }
-        Course course = courseRepository.findById(courseId)
-                .filter(foundCourse -> foundCourse.getStatus() == CourseStatus.PUBLISHED)
-                .orElseThrow(() -> new ResourceNotFoundException("Published course not found: " + courseId));
-        SubTopic subTopic = interactiveSubTopics(course).stream()
-                .filter(item -> item.getId().equals(subTopicId))
-                .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("Interactive subtopic not found in published course: " + subTopicId));
+        Course course = findPublishedCourseById(requiredCourseId, courseId);
+        SubTopic subTopic = findInteractiveSubTopicInPublishedCourse(course, requiredSubTopicId);
         if (subTopic.getInteractionType() == InteractionType.LOGIC_FLOW) {
-            LogicAttemptResponse logic = submitLogicAttempt(userId, courseId, subTopicId, toLogicAttempt(request, subTopic));
+            LogicAttemptResponse logic = submitLogicAttempt(userId, courseId, requiredSubTopicId, toLogicAttempt(request, subTopic));
             return new InteractiveAttemptResponse(
                     logic.subTopicId(),
                     InteractionType.LOGIC_FLOW,
@@ -221,16 +192,11 @@ public class LearnerCourseService {
         InteractiveProgressStatus nextStatus = grade.correct()
                 ? InteractiveProgressStatus.MASTERED
                 : InteractiveProgressStatus.TRIED;
-        LearnerInteractiveProgress progress = progressRepository.findByUserUserIdAndSubTopicId(userId, subTopicId)
-                .orElseGet(() -> new LearnerInteractiveProgress(
-                        entityManager.getReference(User.class, userId),
-                        course,
-                        subTopic
-                ));
+        LearnerInteractiveProgress progress = findOrCreateProgress(userId, course, subTopic);
         progress.recordAttempt(nextStatus);
         LearnerInteractiveProgress saved = progressRepository.save(progress);
         return new InteractiveAttemptResponse(
-                subTopicId,
+                requiredSubTopicId,
                 subTopic.getInteractionType(),
                 grade.correct(),
                 saved.getStatus(),
@@ -240,6 +206,41 @@ public class LearnerCourseService {
                 grade.feedback(),
                 grade.details()
         );
+    }
+
+    private Course findPublishedCourse(Long courseId) {
+        Long requiredCourseId = validator.requiredId(courseId, "courseId");
+        return findPublishedCourseById(requiredCourseId, courseId);
+    }
+
+    private Course findPublishedCourseById(Long requiredCourseId, Long requestedCourseId) {
+        return courseRepository.findById(requiredCourseId)
+                .filter(foundCourse -> foundCourse.getStatus() == CourseStatus.PUBLISHED)
+                .orElseThrow(() -> new ResourceNotFoundException("Published course not found: " + requestedCourseId));
+    }
+
+    private SubTopic findSubTopicInPublishedCourse(Course course, Long subTopicId) {
+        return course.getModules().stream()
+                .flatMap(module -> module.getSubTopics().stream())
+                .filter(item -> item.getId().equals(subTopicId))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Subtopic not found in published course: " + subTopicId));
+    }
+
+    private SubTopic findInteractiveSubTopicInPublishedCourse(Course course, Long subTopicId) {
+        return interactiveSubTopics(course).stream()
+                .filter(item -> item.getId().equals(subTopicId))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Interactive subtopic not found in published course: " + subTopicId));
+    }
+
+    private LearnerInteractiveProgress findOrCreateProgress(UUID userId, Course course, SubTopic subTopic) {
+        return progressRepository.findByUserUserIdAndSubTopicId(userId, subTopic.getId())
+                .orElseGet(() -> new LearnerInteractiveProgress(
+                        entityManager.getReference(User.class, userId),
+                        course,
+                        subTopic
+                ));
     }
 
     private List<SubTopic> interactiveSubTopics(Course course) {

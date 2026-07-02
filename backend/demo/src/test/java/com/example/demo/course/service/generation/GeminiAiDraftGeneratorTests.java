@@ -14,6 +14,7 @@ import com.example.demo.shared.config.GeminiAiProperties;
 import com.example.demo.course.entity.InteractionType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
+import com.example.demo.course.service.interactive.InteractiveTemplateCatalog;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestClient;
@@ -21,7 +22,11 @@ import org.springframework.web.client.RestClient;
 class GeminiAiDraftGeneratorTests {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final InteractiveConfigService configService = new InteractiveConfigService(objectMapper, new LogicExpressionService());
+    private final InteractiveConfigService configService = new InteractiveConfigService(
+            objectMapper,
+            new LogicExpressionService(),
+            new InteractiveTemplateCatalog()
+    );
     private final GeminiAiDraftGenerator generator = new GeminiAiDraftGenerator(
             new GeminiAiProperties("test-key", "gemini-test"),
             RestClient.builder(),
