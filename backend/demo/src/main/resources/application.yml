@@ -15,7 +15,7 @@ app:
     from: ${APP_MAIL_FROM:no-reply@lifeos.local}
   jwt:
     secret: ${JWT_SECRET}
-    access-token-ttl-minutes: ${JWT_ACCESS_TOKEN_TTL_MINUTES:15}
+    access-token-ttl-minutes: ${JWT_ACCESS_TOKEN_TTL_MINUTES:10000}
     refresh-token-ttl-days: ${JWT_REFRESH_TOKEN_TTL_DAYS:30}
   storage:
     s3:

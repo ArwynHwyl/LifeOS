@@ -1,11 +1,43 @@
 <script setup lang="ts">
-import { RouterLink, useRouter } from 'vue-router'
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import AdminIcon from '@/features/courses/components/Admin/AdminIcon.vue'
 
-defineProps<{
+const props = defineProps<{
   activeItem?: 'dashboard' | 'course' | 'help'
 }>()
 
 const router = useRouter()
+const hovering = ref(false)
+const focused = ref(false)
+const expanded = computed(() => hovering.value || focused.value)
+
+const navItems = [
+  { id: 'course', label: 'Courses', icon: 'courses', to: '/admin/courses' },
+  { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', to: '/admin/dashboard' },
+  { id: 'help', label: 'Help', icon: 'help', to: '/admin/help' },
+] as const
+
+const user = computed(() => {
+  try {
+    const raw = localStorage.getItem('authUser')
+    return raw ? JSON.parse(raw) as { name?: string; email?: string } : null
+  } catch {
+    return null
+  }
+})
+
+const userName = computed(() => user.value?.name || 'Admin')
+const userEmail = computed(() => user.value?.email || 'admin@lifeos.app')
+const initials = computed(() => userName.value.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'AD')
+
+function handleFocusOut(event: FocusEvent) {
+  const nextTarget = event.relatedTarget
+  if (nextTarget instanceof Node && event.currentTarget instanceof Node && event.currentTarget.contains(nextTarget)) {
+    return
+  }
+  focused.value = false
+}
 
 function logout() {
   localStorage.removeItem('token')
@@ -16,104 +48,112 @@ function logout() {
 </script>
 
 <template>
-  <aside class="relative flex w-[220px] shrink-0 flex-col overflow-hidden bg-lm-ink" aria-label="Main navigation">
-    <!-- Subtle dot-grid texture -->
-    <div class="pointer-events-none absolute inset-0 bg-chalk-dots" />
+  <aside
+    class="relative flex shrink-0 flex-col overflow-hidden bg-lm-ink transition-[width] duration-[0.22s] ease-[cubic-bezier(0.4,0,0.2,1)]"
+    :style="{ width: expanded ? '220px' : '64px' }"
+    aria-label="Admin navigation"
+    @mouseenter="hovering = true"
+    @mouseleave="hovering = false"
+    @focusin="focused = true"
+    @focusout="handleFocusOut"
+  >
+    <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle,rgba(251,247,239,0.06)_1px,transparent_1px)] bg-[length:12px_12px]" />
 
-    <!-- Logo -->
-    <div class="relative z-10 flex h-20 shrink-0 items-center gap-3 px-5">
-      <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-lm-yellow border-2 border-lm-bg shadow-stamp-sm font-math italic font-bold text-[22px] text-lm-ink">
-        π
-      </div>
-      <span class="font-display text-[20px] font-bold tracking-tight text-lm-bg">LifeOS</span>
+    <div
+      class="relative z-10 flex h-[72px] shrink-0 items-center overflow-hidden"
+      :class="expanded ? '-gap-1 px-5' : 'justify-center px-0'"
+    >
+      <img
+        src="@/assets/Logo.png"
+        alt="LifeOS"
+        :class="expanded ? 'h-24 w-auto' : 'h-24 w-24 object-contain'"
+      />
+      <span
+        v-if="expanded"
+        class="overflow-hidden whitespace-nowrap font-display text-[20px] font-bold text-lm-bg"
+      >
+        LifeOS
+      </span>
+      <button
+        v-if="expanded"
+        type="button"
+        class="ml-auto grid h-[26px] w-[26px] shrink-0 cursor-pointer place-items-center rounded-[7px] border border-[rgba(251,247,239,0.15)] bg-transparent text-[rgba(251,247,239,0.45)]"
+        title="Collapse sidebar"
+        @click="hovering = false; focused = false"
+      >
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 19l-7-7 7-7M18 19l-7-7 7-7" />
+        </svg>
+      </button>
     </div>
 
-    <!-- Nav -->
-    <nav class="relative z-10 flex flex-1 flex-col gap-6 overflow-y-auto px-4 py-2">
-      <div>
-        <p class="mb-2 px-2.5 font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-lm-bg/35">Main Menu</p>
-        <ul class="space-y-1">
-          <li>
-            <RouterLink
-              to="/admin/courses"
-              class="relative flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-semibold transition-all duration-200"
-              :class="activeItem === 'course'
-                ? 'bg-lm-yellow text-lm-ink shadow-stamp-sm border-2 border-lm-bg/30'
-                : 'text-lm-bg/50 hover:bg-lm-bg/10 hover:text-lm-bg/80'"
+    <nav class="relative z-10 flex-1 overflow-auto px-2 pb-4 pt-2">
+      <p
+        class="mb-2 mt-1 h-3 overflow-hidden px-2 font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-[rgba(251,247,239,0.35)] transition-opacity duration-150"
+        :class="expanded ? 'opacity-100' : 'opacity-0'"
+      >
+        Main Menu
+      </p>
+      <ul class="m-0 flex list-none flex-col gap-[2px] p-0">
+        <li v-for="item in navItems" :key="item.id">
+          <RouterLink :to="item.to" custom v-slot="{ navigate }">
+            <button
+              type="button"
+              :title="expanded ? '' : item.label"
+              class="flex w-full cursor-pointer items-center overflow-hidden whitespace-nowrap rounded-[12px] border-2 border-transparent bg-transparent text-left font-display text-[13px] font-semibold text-[rgba(251,247,239,0.5)] shadow-none transition-[background-color,border-color,color,box-shadow,padding,gap] duration-180"
+              :class="{ 'font-bold shadow-stamp-sm': props.activeItem === item.id }"
+              :style="{
+                gap: expanded ? '10px' : '0',
+                justifyContent: expanded ? 'flex-start' : 'center',
+                padding: expanded ? '10px 12px' : '10px 0',
+                background: props.activeItem === item.id ? 'var(--lm-yellow)' : 'transparent',
+                borderColor: props.activeItem === item.id ? 'rgba(251,247,239,0.3)' : 'transparent',
+                color: props.activeItem === item.id ? 'var(--lm-ink)' : 'rgba(251,247,239,0.5)',
+              }"
+              @click="navigate"
             >
-              <svg class="h-[15px] w-[15px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-              </svg>
-              Courses
-            </RouterLink>
-          </li>
-          <li>
-            <a
-              href="#"
-              class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-semibold transition-all duration-200"
-              :class="activeItem === 'dashboard'
-                ? 'bg-lm-yellow text-lm-ink shadow-stamp-sm border-2 border-lm-bg/30'
-                : 'text-lm-bg/50 hover:bg-lm-bg/10 hover:text-lm-bg/80'"
-              @click.prevent
-            >
-              <svg class="h-[15px] w-[15px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="7" height="9" rx="1" />
-                <rect x="14" y="3" width="7" height="5" rx="1" />
-                <rect x="14" y="12" width="7" height="9" rx="1" />
-                <rect x="3" y="16" width="7" height="5" rx="1" />
-              </svg>
-              Dashboard
-            </a>
-          </li>
-        </ul>
-      </div>
-
-      <div>
-        <p class="mb-2 px-2.5 font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-lm-bg/35">Systems</p>
-        <ul class="space-y-1">
-          <li>
-            <a
-              href="#"
-              class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-semibold transition-all duration-200"
-              :class="activeItem === 'help'
-                ? 'bg-lm-yellow text-lm-ink shadow-stamp-sm border-2 border-lm-bg/30'
-                : 'text-lm-bg/50 hover:bg-lm-bg/10 hover:text-lm-bg/80'"
-              @click.prevent
-            >
-              <svg class="h-[15px] w-[15px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
-              Help
-            </a>
-          </li>
-        </ul>
-      </div>
+              <span class="flex shrink-0"><AdminIcon :name="item.icon" :size="16" /></span>
+              <span
+                class="overflow-hidden text-ellipsis transition-[max-width,opacity,transform] duration-200"
+                :class="expanded ? 'max-w-32 translate-x-0 opacity-100' : 'max-w-0 -translate-x-1 opacity-0'"
+              >
+                {{ item.label }}
+              </span>
+            </button>
+          </RouterLink>
+        </li>
+      </ul>
     </nav>
 
-    <!-- User card -->
-    <div class="relative z-10 shrink-0 px-4 py-5">
-      <div class="flex items-center gap-2.5 rounded-xl border-2 border-lm-bg/20 bg-lm-bg/10 px-3 py-3">
-        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-lm-yellow border-2 border-lm-bg/30 font-display text-[13px] font-bold text-lm-ink">
-          AD
+    <div class="relative z-10 shrink-0" :style="{ padding: expanded ? '0 12px 16px' : '0 8px 16px' }">
+      <template v-if="!expanded">
+        <div class="flex flex-col items-center gap-1.5">
+          <button
+            type="button"
+            class="grid h-9 w-9 cursor-pointer place-items-center rounded-full border-2 border-[rgba(251,247,239,0.3)] bg-lm-yellow font-display text-[13px] font-bold text-lm-ink"
+            :title="`Sign out ${userName}`"
+            @click="logout"
+          >
+            {{ initials }}
+          </button>
+        </div>
+      </template>
+
+      <div v-else class="flex items-center gap-2.5 rounded-[12px] border-2 border-[rgba(251,247,239,0.2)] bg-[rgba(251,247,239,0.1)] px-3 py-2.5">
+        <div class="grid h-9 w-9 shrink-0 place-items-center rounded-full border-2 border-[rgba(251,247,239,0.3)] bg-lm-yellow font-display text-[13px] font-bold text-lm-ink">
+          {{ initials }}
         </div>
         <div class="min-w-0 flex-1">
-          <p class="font-display truncate text-[13px] font-bold text-lm-bg">Admin</p>
-          <p class="truncate font-mono text-[10px] font-semibold text-lm-bg/50">admin@gmail.com</p>
+          <p class="m-0 truncate font-display text-[13px] font-bold text-lm-bg">{{ userName }}</p>
+          <p class="m-0 truncate font-mono text-[10px] font-semibold text-[rgba(251,247,239,0.5)]">{{ userEmail }}</p>
         </div>
         <button
           type="button"
-          class="flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-lm-bg/30 transition hover:bg-lm-bg/10 hover:text-lm-bg/60"
-          aria-label="Sign out"
+          class="grid h-6 w-6 shrink-0 cursor-pointer place-items-center rounded-[6px] border-none bg-transparent text-[rgba(251,247,239,0.35)]"
+          title="Sign out"
           @click="logout"
         >
-          <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-            <polyline points="16 17 21 12 16 7" />
-            <line x1="21" y1="12" x2="9" y2="12" />
-          </svg>
+          <AdminIcon name="logout" :size="14" />
         </button>
       </div>
     </div>

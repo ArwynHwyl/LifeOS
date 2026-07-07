@@ -1,21 +1,24 @@
 import api from '@/services/api'
 import { DEFAULT_COVER_ID } from '@/features/courses/constants/courseCoverPresets'
+import type { InteractiveTemplate } from '@/features/courses/types/interactive'
 import type { CourseStatus } from '@/types/types'
 
 const COURSE_COVER_STORAGE_KEY = 'lifeosCourseCovers'
 
-export type BackendCourseStatus = 'DRAFT' | 'PENDING_REVIEW' | 'NEED_REVISION' | 'APPROVED' | 'PUBLISHED'
+export type BackendCourseStatus = 'DRAFT' | 'PENDING_REVIEW' | 'NEED_REVISION' | 'PUBLISHED'
 
 export interface AdminCourseSummaryDto {
   id: number
   title: string
   description: string | null
+  coverId: string | null
   status: BackendCourseStatus
   createdById: string
   createdByName: string
   approvedById: string | null
   approvedByName: string | null
   publishedAt: string | null
+  moduleCount: number
   createdAt: string
   updatedAt: string
 }
@@ -40,7 +43,7 @@ export interface AdminModuleDto {
   subTopics: AdminSubTopicDto[]
 }
 
-export type InteractionType = 'NONE' | 'THREE_JS' | 'GRAPH_2D' | 'FORMULA_EXPLORER' | 'QUIZ' | 'OTHER'
+export type InteractionType = 'NONE' | 'GRAPH_2D' | 'FORMULA_EXPLORER' | 'VISUAL_LAYER' | 'LOGIC_FLOW' | 'QUIZ' | 'OTHER'
 
 export interface AdminSubTopicDto {
   id: number
@@ -48,6 +51,7 @@ export interface AdminSubTopicDto {
   title: string
   content: string
   contentHtml: string
+  mascotPrompt: string | null
   assets: AdminSubTopicAssetDto[]
   sortOrder: number
   sourceType: string
@@ -154,6 +158,11 @@ export async function getAdminCourse(courseId: number | string) {
   return data
 }
 
+export async function listInteractiveTemplates() {
+  const { data } = await api.get<InteractiveTemplate[]>('/v1/admin/interactive-templates')
+  return data
+}
+
 export async function createAdminCourse(payload: CourseCreatePayload) {
   if (payload.aiEnabled && !payload.pdfFile) {
     throw new Error('AI generation requires a PDF source.')
@@ -161,11 +170,9 @@ export async function createAdminCourse(payload: CourseCreatePayload) {
   const { data } = await api.post<AdminCourseDetailDto>('/v1/admin/courses', {
     title: payload.title,
     description: payload.description?.trim() || null,
+    coverId: payload.coverId ?? null,
     modules: [],
   })
-  if (payload.coverId) {
-    saveCourseCover(data.id, payload.coverId)
-  }
   if (payload.pdfFile) {
     const documentSource = await uploadCourseDocument(data.id, payload.pdfFile)
     data.documentSources = [documentSource, ...data.documentSources]
@@ -225,6 +232,7 @@ export async function createCourseModule(courseId: number | string, payload: {
 export async function createModuleSubTopic(moduleId: number | string, payload: {
   title: string
   content?: string | null
+  mascotPrompt?: string | null
   sortOrder: number
   pageStart?: number | null
   pageEnd?: number | null
@@ -232,6 +240,7 @@ export async function createModuleSubTopic(moduleId: number | string, payload: {
   const { data } = await api.post<AdminSubTopicDto>(`/v1/admin/modules/${moduleId}/subtopics`, {
     title: payload.title,
     content: payload.content?.trim() || null,
+    mascotPrompt: payload.mascotPrompt?.trim() || null,
     sortOrder: payload.sortOrder,
     pageStart: payload.pageStart ?? null,
     pageEnd: payload.pageEnd ?? null,
@@ -242,6 +251,7 @@ export async function createModuleSubTopic(moduleId: number | string, payload: {
 export async function updateModuleSubTopic(subTopicId: number | string, payload: {
   title: string
   content?: string | null
+  mascotPrompt?: string | null
   sortOrder: number
   pageStart?: number | null
   pageEnd?: number | null
@@ -252,6 +262,7 @@ export async function updateModuleSubTopic(subTopicId: number | string, payload:
   const { data } = await api.put<AdminSubTopicDto>(`/v1/admin/subtopics/${subTopicId}`, {
     title: payload.title,
     content: payload.content?.trim() || null,
+    mascotPrompt: payload.mascotPrompt?.trim() || null,
     sortOrder: payload.sortOrder,
     pageStart: payload.pageStart ?? null,
     pageEnd: payload.pageEnd ?? null,
@@ -368,7 +379,9 @@ Use the PDF as the factual source. Organize the course into coherent modules wit
 
 Prioritize concepts that help software engineering learners reason about programs, algorithms, graphics, data, and AI systems: logic, functions, discrete structures, linear algebra, probability, optimization, and complexity.
 
-For each module and subtopic, suggest interactive or visual learning ideas where useful. Use interactionType values from NONE, THREE_JS, GRAPH_2D, FORMULA_EXPLORER, QUIZ, or OTHER, and include an implementation-oriented interactionPrompt when interactionType is not NONE.`
+For each module and subtopic, suggest interactive or visual learning ideas only when they genuinely improve learning. Use interactionType values from NONE, QUIZ, GRAPH_2D, FORMULA_EXPLORER, or VISUAL_LAYER.
+
+When interactionType is not NONE, include both an implementation-oriented interactionPrompt and a valid interactionConfig JSON object. interactionConfig.type must exactly match interactionType.`
 
 export async function deleteAdminSubTopic(subTopicId: number | string) {
   await api.delete(`/v1/admin/subtopics/${subTopicId}`)
@@ -387,8 +400,8 @@ export async function updateAdminCourse(courseId: number | string, payload: { ti
   const { data } = await api.put<AdminCourseSummaryDto>(`/v1/admin/courses/${courseId}`, {
     title: payload.title,
     description: payload.description?.trim() || null,
+    coverId: payload.coverId ?? null,
   })
-  if (payload.coverId) saveCourseCover(Number(courseId), payload.coverId)
   return data
 }
 
@@ -397,16 +410,16 @@ export function toAdminCourseCard(course: AdminCourseSummaryDto | AdminCourseDet
     id: String(course.id),
     title: course.title,
     description: course.description ?? '',
-    coverId: getCourseCover(course.id),
+    coverId: course.coverId ?? getCourseCover(course.id),
     status: toCourseStatus(course.status),
-    moduleCount: 'modules' in course ? course.modules.length : 0,
+    moduleCount: 'modules' in course ? course.modules.length : course.moduleCount,
     lastEdited: formatRelativeDate(course.updatedAt),
     createdBy: course.createdByName,
   }
 }
 
 function toCourseStatus(status: BackendCourseStatus): CourseStatus {
-  if (status === 'PUBLISHED' || status === 'APPROVED') return 'published'
+  if (status === 'PUBLISHED') return 'published'
   if (status === 'PENDING_REVIEW') return 'pending'
   if (status === 'NEED_REVISION') return 'revision'
   return 'draft'
@@ -414,12 +427,6 @@ function toCourseStatus(status: BackendCourseStatus): CourseStatus {
 
 function getCourseCover(courseId: number) {
   return readCourseCovers()[String(courseId)] ?? DEFAULT_COVER_ID
-}
-
-function saveCourseCover(courseId: number, coverId: string) {
-  const covers = readCourseCovers()
-  covers[String(courseId)] = coverId
-  localStorage.setItem(COURSE_COVER_STORAGE_KEY, JSON.stringify(covers))
 }
 
 function readCourseCovers(): Record<string, string> {
@@ -449,4 +456,66 @@ function formatRelativeDate(value: string) {
   if (diffMs < 7 * day) return `${Math.floor(diffMs / day)} days ago`
 
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+export interface CourseReviewCommentDto {
+  id: number
+  moduleId: number | null
+  subTopicId: number | null
+  feedback: string
+  createdAt: string
+  updatedAt: string
+  resolved: boolean
+  resolvedAt: string | null
+}
+
+export interface CourseReviewDto {
+  id: number
+  courseId: number
+  reviewerId: string
+  reviewerName: string
+  decision: string
+  feedback: string | null
+  createdAt: string
+  updatedAt: string
+  comments: CourseReviewCommentDto[]
+}
+
+export async function getReviewComments(courseId: number | string): Promise<CourseReviewDto[]> {
+  const { data } = await api.get<CourseReviewDto[]>(`/v1/admin/courses/${courseId}/reviews`)
+  return data
+}
+
+export async function setReviewCommentResolved(
+  courseId: number | string,
+  commentId: number | string,
+  resolved: boolean
+) {
+  const { data } = await api.patch<CourseReviewCommentDto>(
+    `/v1/admin/courses/${courseId}/review-comments/${commentId}/resolved`,
+    { resolved }
+  )
+  return data
+}
+
+export async function updateAdminModule(moduleId: number | string, payload: {
+  title: string
+  description?: string | null
+  sortOrder: number
+  contentDepth?: 'LOW' | 'MEDIUM' | 'HIGH'
+}) {
+  const { data } = await api.put<AdminModuleDto>(`/v1/admin/modules/${moduleId}`, {
+    title: payload.title,
+    description: payload.description?.trim() || null,
+    sortOrder: payload.sortOrder,
+    contentDepth: payload.contentDepth ?? 'MEDIUM',
+    interactionType: 'NONE',
+    interactionPrompt: null,
+    interactionConfig: null,
+  })
+  return data
+}
+
+export async function deleteAdminModule(moduleId: number | string): Promise<void> {
+  await api.delete(`/v1/admin/modules/${moduleId}`)
 }

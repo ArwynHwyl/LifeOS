@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { AxiosError } from 'axios'
 import { useRoute, useRouter } from 'vue-router'
 import TeacherNavbar from '@/features/courses/components/Teacher/TeacherNavbar.vue'
 import TeacherTopicCard, { type Comment } from '@/features/courses/components/Teacher/TeacherTopicCard.vue'
 import { DEFAULT_COVER_ID, getCoverPreset } from '@/features/courses/constants/courseCoverPresets'
 import {
-  getTeacherCourse,
+  getTeacherCourseReviewDetail,
   approveTeacherCourse,
   rejectTeacherCourse,
 } from '@/features/courses/services/teacherCourses'
@@ -24,6 +24,21 @@ const loading = ref(false)
 const loadError = ref('')
 const approving = ref(false)
 const rejecting = ref(false)
+const showDiscardConfirm = ref(false)
+
+watch(showDiscardConfirm, (open) => {
+  if (open) {
+    window.addEventListener('keydown', handleGlobalKeydown)
+  } else {
+    window.removeEventListener('keydown', handleGlobalKeydown)
+  }
+})
+
+function handleGlobalKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape') {
+    showDiscardConfirm.value = false
+  }
+}
 
 const currentUser = computed(() => {
   const raw = localStorage.getItem('authUser')
@@ -43,11 +58,12 @@ const coverPreset = computed(() => {
 const modules = computed(() => course.value?.modules ?? [])
 
 const commentsMap = ref<Record<string, Comment[]>>({})
+const newComments = ref<Array<{ moduleId: number | null; subTopicId: number | null; feedback: string }>>([])
 
 const courseStatus = computed<CourseStatus>(() => {
   if (!course.value) return 'draft'
   const s = course.value.status
-  if (s === 'PUBLISHED' || s === 'APPROVED') return 'published'
+  if (s === 'PUBLISHED') return 'published'
   if (s === 'PENDING_REVIEW') return 'pending'
   if (s === 'NEED_REVISION') return 'revision'
   return 'draft'
@@ -55,11 +71,63 @@ const courseStatus = computed<CourseStatus>(() => {
 
 onMounted(loadCourse)
 
+function formatDate(value: string) {
+  const date = new Date(value)
+  const time = date.getTime()
+  if (Number.isNaN(time)) return 'recently'
+
+  const diffMs = Date.now() - time
+  const minute = 60 * 1000
+  const hour = 60 * minute
+  const day = 24 * hour
+
+  if (diffMs < minute) return 'just now'
+  if (diffMs < hour) return `${Math.floor(diffMs / minute)} min ago`
+  if (diffMs < day) return `${Math.floor(diffMs / hour)} hours ago`
+  if (diffMs < 2 * day) return 'yesterday'
+  if (diffMs < 7 * day) return `${Math.floor(diffMs / day)} days ago`
+
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
 async function loadCourse() {
   loading.value = true
   loadError.value = ''
   try {
-    course.value = await getTeacherCourse(courseId.value)
+    const detail = await getTeacherCourseReviewDetail(courseId.value)
+    course.value = detail.course
+
+    const moduleIdBySubTopicId = new Map<number, number>()
+    for (const mod of detail.course.modules ?? []) {
+      for (const subTopic of mod.subTopics ?? []) {
+        moduleIdBySubTopicId.set(subTopic.id, mod.id)
+      }
+    }
+    const tempMap: Record<string, Comment[]> = {}
+    if (detail.reviews) {
+      for (const review of detail.reviews) {
+        for (const comment of review.comments ?? []) {
+          const moduleId = comment.moduleId
+            ?? (comment.subTopicId !== null ? moduleIdBySubTopicId.get(comment.subTopicId) : undefined)
+          if (moduleId === undefined || moduleId === null) continue
+          const modIdStr = String(moduleId)
+          if (!tempMap[modIdStr]) {
+            tempMap[modIdStr] = []
+          }
+          tempMap[modIdStr].push({
+            id: comment.id,
+            authorId: review.reviewerId,
+            authorName: review.reviewerName || 'Reviewer',
+            text: comment.feedback,
+            createdAt: formatDate(comment.createdAt),
+            subTopicId: comment.subTopicId,
+            resolved: comment.resolved,
+            resolvedAt: comment.resolvedAt,
+          })
+        }
+      }
+    }
+    commentsMap.value = tempMap
   } catch (error) {
     loadError.value = getErrorMessage(error, 'Unable to load course.')
   } finally {
@@ -68,6 +136,15 @@ async function loadCourse() {
 }
 
 async function handleApprove() {
+  if (!course.value || approving.value) return
+  if (newComments.value.length > 0) {
+    showDiscardConfirm.value = true
+  } else {
+    await proceedApprove()
+  }
+}
+
+async function proceedApprove() {
   if (!course.value || approving.value) return
   approving.value = true
   try {
@@ -82,38 +159,33 @@ async function handleReject() {
   if (!course.value || rejecting.value) return
   rejecting.value = true
   try {
-    await rejectTeacherCourse(course.value.id)
+    await rejectTeacherCourse(course.value.id, {
+      feedback: 'Revision requested',
+      comments: newComments.value,
+    })
     router.push('/teacher/courses')
   } catch {
     rejecting.value = false
   }
 }
 
-function addComment(modId: string, text: string) {
+function addComment(modId: string, payload: { text: string; subTopicId: number | null }) {
   if (!commentsMap.value[modId]) commentsMap.value[modId] = []
   commentsMap.value[modId].push({
-    id: `c-${Date.now()}`,
+    id: `temp-${Date.now()}`,
     authorId: currentUser.value.userId,
     authorName: currentUser.value.username,
-    text,
+    text: payload.text,
     createdAt: 'just now',
+    subTopicId: payload.subTopicId,
   })
-}
 
-function editComment(modId: string, payload: { id: string; text: string }) {
-  const list = commentsMap.value[modId]
-  if (!list) return
-  const i = list.findIndex((c) => c.id === payload.id)
-  if (i !== -1) list[i] = { ...list[i], text: payload.text }
-}
-
-function deleteComment(modId: string, commentId: string) {
-  if (!commentsMap.value[modId]) return
-  commentsMap.value[modId] = commentsMap.value[modId].filter((c) => c.id !== commentId)
-}
-
-function endDiscussion(modId: string) {
-  commentsMap.value[modId] = []
+  // Backend requires exactly one target: module XOR subtopic.
+  newComments.value.push({
+    moduleId: payload.subTopicId !== null ? null : Number(modId),
+    subTopicId: payload.subTopicId,
+    feedback: payload.text,
+  })
 }
 
 function getErrorMessage(error: unknown, fallback: string) {
@@ -151,6 +223,16 @@ function getErrorMessage(error: unknown, fallback: string) {
 
         <!-- Approve / Reject -->
         <div v-if="course" class="flex items-center gap-2">
+          <span
+            v-if="newComments.length > 0"
+            class="inline-flex items-center gap-1.5 rounded-full border-2 border-dashed border-lm-rust bg-lm-surface px-2.5 py-1 font-mono text-[10px] font-bold text-lm-rust"
+            title="Draft comments are sent with your revision request (Reject)"
+          >
+            <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            {{ newComments.length }} draft{{ newComments.length === 1 ? '' : 's' }}
+          </span>
           <button
             type="button"
             class="inline-flex items-center gap-1.5 cursor-pointer rounded-lg border-2 border-lm-green bg-lm-green-soft px-3 py-1.5 text-[12px] font-semibold text-lm-green shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md disabled:cursor-not-allowed disabled:opacity-50"
@@ -267,9 +349,6 @@ function getErrorMessage(error: unknown, fallback: string) {
                 :comments="commentsMap[String(mod.id)] ?? []"
                 :current-user-id="currentUser.userId"
                 @add-comment="addComment(String(mod.id), $event)"
-                @edit-comment="editComment(String(mod.id), $event)"
-                @delete-comment="deleteComment(String(mod.id), $event)"
-                @end-discussion="endDiscussion(String(mod.id))"
               />
             </div>
 
@@ -307,4 +386,96 @@ function getErrorMessage(error: unknown, fallback: string) {
       </main>
     </div>
   </div>
+
+  <!-- Discard comments confirmation modal -->
+  <Teleport to="body">
+    <Transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition duration-150 ease-in"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div v-if="showDiscardConfirm" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-lm-ink/60 backdrop-blur-sm" aria-hidden="true" @click="showDiscardConfirm = false" />
+
+        <Transition
+          enter-active-class="transition duration-200 ease-out"
+          enter-from-class="opacity-0 scale-95 translate-y-2"
+          enter-to-class="opacity-100 scale-100 translate-y-0"
+          leave-active-class="transition duration-150 ease-in"
+          leave-from-class="opacity-100 scale-100 translate-y-0"
+          leave-to-class="opacity-0 scale-95 translate-y-2"
+        >
+          <div
+            v-if="showDiscardConfirm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirm-discard-title"
+            class="relative z-10 flex w-full max-w-md flex-col overflow-hidden rounded-[18px] border-2 border-lm-line bg-lm-surface shadow-stamp-md"
+            @click.stop
+          >
+            <!-- Header -->
+            <header class="shrink-0 border-b-2 border-lm-line px-6 py-5">
+              <div class="flex items-start justify-between gap-4">
+                <div class="flex items-center gap-3">
+                  <div class="flex h-9 w-9 items-center justify-center rounded-[10px] border-2 border-lm-line bg-lm-rust-soft text-lm-rust shadow-stamp-sm">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                      <line x1="12" y1="9" x2="12" y2="13" />
+                      <line x1="12" y1="17" x2="12.01" y2="17" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 id="confirm-discard-title" class="font-display text-[15px] font-bold text-lm-ink">Discard Draft Comments?</h2>
+                    <p class="mt-1 text-[11px] text-lm-ink-3">Confirm approval action</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-lm-ink-3 transition hover:bg-lm-bg hover:text-lm-ink"
+                  aria-label="Close"
+                  @click="showDiscardConfirm = false"
+                >
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6 6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </header>
+
+            <!-- Body -->
+            <div class="px-6 py-5">
+              <p class="text-[13px] leading-relaxed text-lm-ink-2">
+                You have <strong class="text-lm-rust">{{ newComments.length }} draft comment{{ newComments.length === 1 ? '' : 's' }}</strong> that will be discarded if you approve.
+                Comments are only sent with a revision request (Reject).
+              </p>
+              <p class="mt-3 text-[13px] font-semibold text-lm-ink">
+                Approve anyway?
+              </p>
+            </div>
+
+            <!-- Footer -->
+            <footer class="flex shrink-0 gap-2.5 border-t-2 border-lm-line px-6 py-4">
+              <button
+                type="button"
+                class="h-10 flex-1 rounded-full border-2 border-lm-line bg-lm-surface px-4 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
+                @click="showDiscardConfirm = false"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                class="h-10 flex-1 rounded-full border-2 border-lm-line bg-lm-rust px-4 text-[13px] font-bold text-lm-bg shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
+                @click="() => { showDiscardConfirm = false; proceedApprove(); }"
+              >
+                Discard & Approve
+              </button>
+            </footer>
+          </div>
+        </Transition>
+      </div>
+    </Transition>
+  </Teleport>
 </template>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import LmIcon from './LmIcon.vue'
 
@@ -29,16 +30,54 @@ const tabs: { id: 'courses' | 'flashcards' | 'dashboard'; label: string; icon: '
 function navigate(id: 'courses' | 'flashcards' | 'dashboard') {
   router.push(`/learn/${id}`)
 }
+
+const authUser = computed(() => {
+  const raw = localStorage.getItem('authUser')
+  if (!raw) return null
+  try {
+    return JSON.parse(raw) as { username?: string; firstName?: string; lastName?: string; email?: string }
+  } catch {
+    return null
+  }
+})
+
+const displayName = computed(() => {
+  const user = authUser.value
+  if (!user) return 'Learner'
+  const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ')
+  return fullName || user.username || 'Learner'
+})
+
+const avatarInitials = computed(() =>
+  displayName.value.split(' ').map((w) => w[0] ?? '').slice(0, 2).join('').toUpperCase() || 'L',
+)
+
+const profileOpen = ref(false)
+const profileRef = ref<HTMLElement | null>(null)
+
+function onClickOutside(event: MouseEvent) {
+  if (profileOpen.value && profileRef.value && !profileRef.value.contains(event.target as Node)) {
+    profileOpen.value = false
+  }
+}
+
+onMounted(() => document.addEventListener('pointerdown', onClickOutside))
+onBeforeUnmount(() => document.removeEventListener('pointerdown', onClickOutside))
+
+function logout() {
+  localStorage.removeItem('token')
+  localStorage.removeItem('refreshToken')
+  localStorage.removeItem('authUser')
+  router.push('/login')
+}
 </script>
 
 <template>
   <header class="h-[72px] shrink-0 flex items-center gap-3.5 px-6 bg-lm-surface border-b-2 border-lm-line relative z-10">
 
     <!-- Logo -->
-    <div class="flex items-center gap-2.5">
-      <div class="w-10 h-10 flex items-center justify-center bg-lm-yellow border-2 border-lm-ink rounded-[12px] shadow-stamp-sm font-math italic font-bold text-[22px] text-lm-ink shrink-0">
-        π
-      </div>
+    <div class="flex items-center -gap-1">
+      <img src="@/assets/Logo.png" alt="LifeOS" class="h-24" />
       <span class="font-display text-[20px] font-bold tracking-tight text-lm-ink">LifeOS</span>
     </div>
 
@@ -90,9 +129,50 @@ function navigate(id: 'courses' | 'flashcards' | 'dashboard') {
       <span class="font-display font-bold text-[16px] text-lm-ink">×{{ shields }}</span>
     </div>
 
-    <!-- Avatar -->
-    <div class="w-[42px] h-[42px] rounded-full bg-lm-yellow border-2 border-lm-line shadow-stamp-sm flex items-center justify-center font-display font-bold text-sm text-lm-ink shrink-0">
-      JD
+    <!-- Avatar + dropdown -->
+    <div ref="profileRef" class="relative shrink-0">
+      <button
+        type="button"
+        class="w-[42px] h-[42px] rounded-full bg-lm-yellow border-2 border-lm-line shadow-stamp-sm flex items-center justify-center font-display font-bold text-sm text-lm-ink cursor-pointer transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
+        :aria-expanded="profileOpen"
+        aria-haspopup="menu"
+        @click="profileOpen = !profileOpen"
+      >
+        {{ avatarInitials }}
+      </button>
+
+      <Transition
+        enter-active-class="transition-all duration-150 ease-out"
+        enter-from-class="opacity-0 -translate-y-1 scale-95"
+        enter-to-class="opacity-100 translate-y-0 scale-100"
+        leave-active-class="transition-all duration-100 ease-in"
+        leave-from-class="opacity-100 translate-y-0 scale-100"
+        leave-to-class="opacity-0 -translate-y-1 scale-95"
+      >
+        <div
+          v-if="profileOpen"
+          class="absolute right-0 top-[52px] z-50 w-[220px] overflow-hidden rounded-[14px] border-2 border-lm-line bg-lm-surface shadow-stamp-md"
+          role="menu"
+        >
+          <div class="border-b-2 border-lm-line-soft bg-lm-bg-soft px-4 py-3">
+            <p class="font-display text-[13px] font-bold text-lm-ink truncate">{{ displayName }}</p>
+            <p v-if="authUser?.email" class="mt-0.5 font-mono text-[10px] text-lm-ink-3 truncate">{{ authUser.email }}</p>
+          </div>
+          <button
+            type="button"
+            class="flex w-full cursor-pointer items-center gap-2.5 px-4 py-3 text-left text-[13px] font-semibold text-lm-rust transition-colors duration-150 hover:bg-lm-rust-soft"
+            role="menuitem"
+            @click="logout"
+          >
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            Log out
+          </button>
+        </div>
+      </Transition>
     </div>
   </header>
 </template>

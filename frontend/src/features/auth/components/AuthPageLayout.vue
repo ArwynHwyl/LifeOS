@@ -31,11 +31,9 @@ withDefaults(defineProps<{
     </div>
 
     <!-- Brand — top left -->
-    <div class="absolute left-8 top-6 z-10 flex items-center gap-2.5">
-      <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-lm-line bg-lm-yellow font-math text-[20px] font-bold italic text-lm-ink shadow-stamp-sm">
-        π
-      </div>
-      <span class="font-display text-[18px] font-bold text-lm-ink">LifeOS</span>
+    <div class="absolute left-8 top-6 z-10 flex items-center -gap-1">
+      <img src="@/assets/Logo.png" alt="LifeOS" class="h-25" />
+      <span class="font-display text-[20px] font-bold text-lm-ink">LifeOS</span>
     </div>
 
     <!-- Main content -->

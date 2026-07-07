@@ -84,23 +84,6 @@ const cover = computed(() => getCoverPreset(props.coverId))
       <div class="mt-3.5 flex items-center justify-between border-t-2 border-lm-line-soft pt-3">
         <span class="font-mono text-[11px] text-lm-ink-3">{{ moduleCount }} modules · {{ lastEdited }}</span>
 
-        <!-- Approve on hover (reject requires opening the course for feedback) -->
-        <div
-          class="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100"
-          @click.stop
-        >
-          <button
-            type="button"
-            class="flex h-7 cursor-pointer items-center gap-1 rounded-lg px-2 text-[11px] font-semibold text-lm-green transition hover:bg-lm-green-soft"
-            title="Approve course"
-            @click.stop="emit('approve')"
-          >
-            <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            Approve
-          </button>
-        </div>
       </div>
     </div>
   </article>

@@ -1,122 +1,1149 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import LmIcon from '../components/LmIcon.vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import InteractiveChallengeShell from '@/features/courses/components/interactive/InteractiveChallengeShell.vue'
+import InteractivePreview from '@/features/courses/components/interactive/InteractivePreview.vue'
+import { parseInteractiveConfig } from '@/features/courses/types/interactive'
+import {
+  getPublishedCourse,
+  submitInteractiveAttempt,
+  updateInteractiveProgress,
+  type InteractiveAttemptRequest,
+  type InteractiveProgressDto,
+  type InteractiveProgressStatus,
+  type PublishedCourseDetailDto,
+  type PublishedSubTopicDto,
+} from '@/features/learning/services/learnerCourses'
+import toraMascotUrl from '@/assets/tora-mascot.svg'
 
+const route = useRoute()
 const router = useRouter()
-const selected = ref<number | null>(1)
 
-const options = [
-  { label: 'x = 3' },
-  { label: 'x = 4' },
-  { label: 'x = 6' },
-  { label: 'x = 9' },
-]
+const course = ref<PublishedCourseDetailDto | null>(null)
+const selectedSubTopicId = ref<number | null>(null)
+const loading = ref(true)
+const error = ref('')
+const interactiveServerFeedback = ref('')
+const canvasEl = ref<HTMLElement | null>(null)
+const showMasteryFlash = ref(false)
+const contentTransitionDir = ref<'next' | 'prev'>('next')
+
+const allSubTopics = computed(() => course.value?.modules.flatMap((module) => module.subTopics) ?? [])
+const selectedSubTopic = computed(() => {
+  return allSubTopics.value.find((subTopic) => subTopic.id === selectedSubTopicId.value) ?? allSubTopics.value[0] ?? null
+})
+const selectedModule = computed(() => {
+  const current = selectedSubTopic.value
+  return course.value?.modules.find((module) => module.subTopics.some((subTopic) => subTopic.id === current?.id)) ?? null
+})
+const selectedIndex = computed(() => {
+  const current = selectedSubTopic.value
+  if (!current) return 0
+  return Math.max(0, allSubTopics.value.findIndex((subTopic) => subTopic.id === current.id))
+})
+const progressPercent = computed(() => {
+  if (!allSubTopics.value.length) return 0
+  return ((selectedIndex.value + 1) / allSubTopics.value.length) * 100
+})
+const interactiveConfig = computed(() => {
+  const current = selectedSubTopic.value
+  if (!current) return null
+  return parseInteractiveConfig(current.interactionType, current.interactionConfig)
+})
+const currentInteractiveMode = computed(() => {
+  if (selectedSubTopic.value?.interactionType === 'QUIZ') return 'PRACTICE'
+  return interactiveConfig.value?.mode ?? 'VISUALIZATION'
+})
+const selectedLessonHtml = computed(() => {
+  let html = selectedSubTopic.value?.contentHtml || selectedSubTopic.value?.content || ''
+  // Safe replacement of discrete/continuous words outside HTML tags
+  html = html.replace(/(?<!<[^>]*)\bdiscrete\b(?![^<>]*>)/gi, '<span class="math-word-discrete">discrete</span>')
+  html = html.replace(/(?<!<[^>]*)\bcontinuous\b(?![^<>]*>)/gi, '<span class="math-word-continuous">continuous</span>')
+  return html
+})
+const mascotPrompt = computed(() => {
+  const current = selectedSubTopic.value
+  const prompt = current?.mascotPrompt?.trim()
+  if (prompt) return prompt
+  return current ? `Think about how "${current.title}" connects to this lesson.` : ''
+})
+
+const isSidebarOpen = ref(false)
+function toggleSidebar() {
+  isSidebarOpen.value = !isSidebarOpen.value
+}
+
+const currentModuleSubTopics = computed(() => {
+  return selectedModule.value?.subTopics ?? []
+})
+const currentSubTopicIndexInModule = computed(() => {
+  const current = selectedSubTopic.value
+  if (!current) return 0
+  return Math.max(0, currentModuleSubTopics.value.findIndex((subTopic) => subTopic.id === current.id))
+})
+const currentProgressStatus = computed<InteractiveProgressStatus>(() => selectedSubTopic.value?.interactiveProgress?.status ?? 'NOT_STARTED')
+const currentChallengeObjective = computed(() => {
+  const current = selectedSubTopic.value
+  if (!current) return 'Complete this activity to master the concept.'
+  if (current.interactionPrompt?.trim()) return current.interactionPrompt
+  if (current.interactionType === 'QUIZ') return 'Answer the quiz to check your understanding.'
+  if (current.interactionType === 'GRAPH_2D') return 'Use the graph to match the target behavior.'
+  if (current.interactionType === 'FORMULA_EXPLORER') return 'Adjust the formula inputs to reach the target.'
+  if (current.interactionType === 'VISUAL_LAYER') return 'Build or inspect the set diagram to master the concept.'
+  return 'Complete this activity to master the concept.'
+})
+
+/* ── Clever #1: Estimated reading time ── */
+const estimatedReadTime = computed(() => {
+  const html = selectedLessonHtml.value
+  if (!html) return 0
+  const text = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+  const words = text.split(' ').filter(Boolean).length
+  return Math.max(1, Math.ceil(words / 200))
+})
+
+onMounted(async () => {
+  loading.value = true
+  error.value = ''
+  try {
+    course.value = await getPublishedCourse(String(route.params.courseId))
+    selectedSubTopicId.value = allSubTopics.value[0]?.id ?? null
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Unable to load lesson.'
+  } finally {
+    loading.value = false
+  }
+  window.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
+
+/* ── Clever #2: Keyboard navigation ── */
+function handleKeydown(e: KeyboardEvent) {
+  if ((e.target as HTMLElement)?.closest('input, textarea, [contenteditable]')) return
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+    e.preventDefault()
+    goToOffset(1)
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault()
+    goToOffset(-1)
+  }
+}
+
+watch(selectedSubTopicId, () => {
+  nextTick(() => {
+    if (canvasEl.value) canvasEl.value.scrollTop = 0
+  })
+})
+
+function selectSubTopic(subTopic: PublishedSubTopicDto) {
+  const idx = allSubTopics.value.findIndex((s) => s.id === subTopic.id)
+  contentTransitionDir.value = idx > selectedIndex.value ? 'next' : 'prev'
+  selectedSubTopicId.value = subTopic.id
+  interactiveServerFeedback.value = ''
+}
+
+function goToOffset(offset: number) {
+  contentTransitionDir.value = offset > 0 ? 'next' : 'prev'
+  const next = allSubTopics.value[selectedIndex.value + offset]
+  if (next) {
+    selectedSubTopicId.value = next.id
+  }
+}
+
+function progressMarkerClass(subTopic: PublishedSubTopicDto) {
+  const status = subTopic.interactiveProgress?.status ?? 'NOT_STARTED'
+  if (status === 'MASTERED') return 'progress-marker progress-marker--mastered'
+  if (status === 'TRIED') return 'progress-marker progress-marker--tried'
+  return 'progress-marker progress-marker--not-started'
+}
+
+function setSubTopicProgress(subTopicId: number, progress: InteractiveProgressDto) {
+  if (!course.value) return
+  /* ── Clever #4: Mastery celebration flash ── */
+  if (progress.status === 'MASTERED') {
+    const prev = course.value.modules
+      .flatMap((m) => m.subTopics)
+      .find((s) => s.id === subTopicId)
+      ?.interactiveProgress?.status
+    if (prev !== 'MASTERED') {
+      showMasteryFlash.value = true
+      setTimeout(() => { showMasteryFlash.value = false }, 1600)
+    }
+  }
+  course.value = {
+    ...course.value,
+    modules: course.value.modules.map((module) => ({
+      ...module,
+      subTopics: module.subTopics.map((subTopic) => (
+        subTopic.id === subTopicId ? { ...subTopic, interactiveProgress: progress } : subTopic
+      )),
+    })),
+  }
+}
+
+function optimisticProgress(status: Exclude<InteractiveProgressStatus, 'NOT_STARTED'>) {
+  const current = selectedSubTopic.value
+  if (!current) return null
+  const existing = current.interactiveProgress
+  if (existing?.status === 'MASTERED' && status === 'TRIED') return existing
+  const next: InteractiveProgressDto = {
+    subTopicId: current.id,
+    status,
+    attemptCount: (existing?.attemptCount ?? 0) + 1,
+    masteredAt: status === 'MASTERED' ? (existing?.masteredAt ?? new Date().toISOString()) : (existing?.masteredAt ?? null),
+    updatedAt: new Date().toISOString(),
+  }
+  setSubTopicProgress(current.id, next)
+  return next
+}
+
+async function persistInteractiveProgress(status: Exclude<InteractiveProgressStatus, 'NOT_STARTED'>) {
+  const current = selectedSubTopic.value
+  if (!current) return
+  if (current.interactiveProgress?.status === 'MASTERED' && status === 'TRIED') return
+  optimisticProgress(status)
+  try {
+    const saved = await updateInteractiveProgress(String(route.params.courseId), current.id, status)
+    setSubTopicProgress(current.id, saved)
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Unable to save challenge progress.'
+  }
+}
+
+function handleInteractiveStarted() {
+  if (selectedSubTopic.value?.interactionType === 'LOGIC_FLOW') {
+    if (currentProgressStatus.value === 'NOT_STARTED') {
+      void persistInteractiveProgress('TRIED')
+    }
+    return
+  }
+  if (currentInteractiveMode.value !== 'PRACTICE') {
+    if (currentProgressStatus.value === 'NOT_STARTED') {
+      void persistInteractiveProgress('TRIED')
+    }
+    return
+  }
+  if (currentProgressStatus.value === 'NOT_STARTED') {
+    void persistInteractiveProgress('TRIED')
+  }
+}
+
+async function persistServerGradedAttempt(payload: InteractiveAttemptRequest) {
+  const current = selectedSubTopic.value
+  if (!current || current.interactionType === 'NONE') return
+  interactiveServerFeedback.value = ''
+
+  let finalPayload = payload
+  if (
+    current.interactionType === 'LOGIC_FLOW' &&
+    'kind' in payload &&
+    payload.kind === 'CIRCUIT'
+  ) {
+    const values: Record<string, number> = {}
+    if (payload.inputs) {
+      for (const [key, val] of Object.entries(payload.inputs)) {
+        values[key] = val ? 1 : 0
+      }
+    }
+    finalPayload = {
+      ...payload,
+      values,
+    } as any
+  }
+
+  try {
+    const saved = await submitInteractiveAttempt(String(route.params.courseId), current.id, finalPayload)
+    interactiveServerFeedback.value = saved.feedback
+    setSubTopicProgress(current.id, {
+      subTopicId: saved.subTopicId,
+      status: saved.status,
+      attemptCount: saved.attemptCount,
+      masteredAt: saved.masteredAt,
+      updatedAt: saved.updatedAt,
+    })
+  } catch (err) {
+    interactiveServerFeedback.value = ''
+    error.value = err instanceof Error ? err.message : 'Unable to submit logic attempt.'
+  }
+}
+
+function handleInteractiveChecked(payload: { passed: boolean; attempt?: InteractiveAttemptRequest }) {
+  if (payload.attempt) {
+    void persistServerGradedAttempt(payload.attempt)
+    return
+  }
+  void persistInteractiveProgress(payload.passed ? 'MASTERED' : 'TRIED')
+}
 </script>
 
 <template>
-  <main class="flex-1 flex flex-col overflow-hidden bg-lm-bg">
-
-    <!-- Quiz progress bar -->
-    <div class="flex items-center gap-4 px-6 py-3 bg-lm-surface border-b-2 border-lm-line shrink-0">
-      <button
-        @click="router.back()"
-        class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold border-2 border-lm-line rounded-full bg-lm-surface shadow-stamp-sm hover:-translate-y-px transition-all duration-200 text-lm-ink shrink-0"
-      >
-        <LmIcon name="close" :size="14" />
-        Exit
-      </button>
-      <div class="flex-1 h-4 bg-lm-bg-soft rounded-full overflow-hidden border border-lm-line">
-        <div class="h-full bg-lm-yellow transition-all duration-200" style="width: 40%" />
-      </div>
-      <span class="flex items-center gap-1.5 px-3 py-1 text-sm font-semibold border border-lm-line rounded-full bg-lm-yellow-soft shrink-0">
-        <LmIcon name="bolt" :size="14" :filled="true" class="text-lm-rust" />
-        +15 XP
-      </span>
-      <span class="flex items-center gap-1.5 px-3 py-1 text-sm font-semibold border border-lm-line rounded-full bg-lm-rust-soft shrink-0">
-        <span class="text-lm-rust"><LmIcon name="flame" :size="14" :filled="true" /></span>
-        7
-      </span>
-    </div>
-
-    <!-- Breadcrumb strip -->
-    <div class="flex items-center gap-2.5 px-6 py-2 bg-lm-yellow-soft border-b border-lm-line-soft text-[13px] shrink-0">
-      <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3">ALGEBRA BASICS</span>
-      <span class="text-lm-ink-3">›</span>
-      <span class="font-semibold text-lm-ink">Topic 5 · Linear equations</span>
-      <div class="flex-1" />
-      <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3">QUESTION 2 / 5</span>
-    </div>
-
-    <!-- Scrollable content -->
-    <div class="flex-1 overflow-auto relative">
-      <div class="absolute inset-0 bg-dot-grid opacity-50 pointer-events-none" />
-      <div class="relative max-w-[840px] mx-auto px-6 py-9 flex flex-col gap-7">
-
-        <!-- Prompt -->
-        <div>
-          <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3">SOLVE FOR <em class="font-math italic not-italic">x</em></span>
-          <h2 class="font-display text-[32px] font-bold tracking-tight text-lm-ink leading-tight mt-1.5 m-0">
-            What value of <em class="font-math italic text-[32px]">x</em> makes this equation true?
-          </h2>
+  <main class="lesson-player">
+    <!-- Collapsible Sidebar -->
+    <aside class="lesson-sidebar" :class="{ 'lesson-sidebar--open': isSidebarOpen }">
+      <div class="lesson-sidebar__header">
+        <span>Course Outline</span>
+        <h1>{{ course?.title ?? 'Lesson' }}</h1>
+        <div class="lesson-progress">
+          <div><span :style="{ width: `${progressPercent}%` }" /></div>
+          <strong>{{ selectedIndex + 1 }}/{{ Math.max(allSubTopics.length, 1) }}</strong>
         </div>
+      </div>
 
-        <!-- Chalkboard equation -->
-        <div class="relative bg-lm-ink rounded-[18px] border-2 border-lm-line shadow-stamp-md overflow-hidden px-6 py-10 text-center">
-          <div class="absolute inset-0 bg-chalk-dots pointer-events-none" />
-          <span class="relative font-math italic font-semibold text-[58px] text-lm-bg leading-none">2x + 5 = 13</span>
-          <svg class="absolute bottom-2 right-3 opacity-15 pointer-events-none" width="60" height="60" viewBox="0 0 80 80">
-            <path d="M2 30 Q 15 5, 28 30 T 54 30 T 78 30" stroke="#fbf7ef" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <div v-if="loading" class="lesson-sidebar__empty">Loading outline...</div>
+      <div v-else-if="course" class="lesson-module-list">
+        <section v-for="module in course.modules" :key="module.id" class="lesson-module">
+          <header class="lesson-module__header">
+            <span>⌄</span>
+            <h2>{{ module.title }}</h2>
+            <strong>{{ module.subTopics.length }}</strong>
+          </header>
+          <button
+            v-for="subTopic in module.subTopics"
+            :key="subTopic.id"
+            type="button"
+            class="lesson-topic"
+            :class="{ 'lesson-topic--active': selectedSubTopic?.id === subTopic.id }"
+            @click="selectSubTopic(subTopic); isSidebarOpen = false"
+          >
+            <span :class="progressMarkerClass(subTopic)">
+              <span v-if="subTopic.interactiveProgress?.status === 'MASTERED'">✓</span>
+            </span>
+            <span>{{ subTopic.title }}</span>
+          </button>
+        </section>
+      </div>
+    </aside>
+
+    <!-- Main Canvas Area -->
+    <section ref="canvasEl" class="lesson-canvas" @click="isSidebarOpen = false">
+      <div class="lesson-canvas__bg" />
+
+      <!-- Top level headers outside the card -->
+      <div class="lesson-top-bar" @click.stop>
+        <div class="lesson-top-left">
+          <button type="button" class="sidebar-toggle-btn" @click="toggleSidebar" aria-label="Toggle Outline">
+            <svg v-if="isSidebarOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="toggle-icon"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="toggle-icon"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <span class="reading-time">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" class="clock-icon"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.5V8l2.5 1.5"/></svg>
+            {{ estimatedReadTime }} MIN READ
+          </span>
+        </div>
+        
+        <button type="button" class="lesson-exit-button" @click="router.back()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="exit-icon"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          EXIT
+        </button>
+      </div>
+
+      <!-- Floating Prev/Next Buttons outside the card -->
+      <button
+        type="button"
+        class="floating-nav-btn floating-nav-btn--prev"
+        :disabled="selectedIndex <= 0"
+        @click.stop="goToOffset(-1)"
+        aria-label="Previous Page"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="nav-arrow-icon"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <button
+        type="button"
+        class="floating-nav-btn floating-nav-btn--next"
+        :disabled="selectedIndex >= allSubTopics.length - 1"
+        @click.stop="goToOffset(1)"
+        aria-label="Next Page"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="nav-arrow-icon"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+
+      <!-- Mastery celebration overlay -->
+      <Transition name="mastery-flash">
+        <div v-if="showMasteryFlash" class="mastery-overlay">
+          <div class="mastery-burst" />
+          <svg class="mastery-check" viewBox="0 0 64 64" fill="none">
+            <circle cx="32" cy="32" r="28" stroke="#245e3e" stroke-width="3" fill="#dff4df" />
+            <polyline points="20 33 28 41 44 25" stroke="#245e3e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
         </div>
+      </Transition>
 
-        <!-- Answer options (2×2 grid) -->
-        <div class="grid grid-cols-2 gap-3.5">
-          <button
-            v-for="(opt, i) in options"
-            :key="i"
-            @click="selected = i"
-            :class="[
-              'flex items-center gap-3.5 px-[22px] py-[18px] border-2 border-lm-line rounded-[18px] transition-all duration-200 cursor-pointer',
-              selected === i
-                ? 'bg-lm-yellow shadow-stamp-md -translate-x-px -translate-y-px'
-                : 'bg-lm-surface shadow-stamp-sm hover:bg-lm-bg-soft hover:shadow-stamp-md'
-            ]"
-          >
-            <div :class="[
-              'w-9 h-9 rounded-full border-2 border-lm-line flex items-center justify-center font-display font-bold text-[15px] shrink-0 transition-colors duration-200',
-              selected === i ? 'bg-lm-ink text-lm-bg' : 'bg-lm-bg-soft text-lm-ink'
-            ]">
-              {{ String.fromCharCode(65 + i) }}
+      <div v-if="loading" class="lesson-state">Loading lesson...</div>
+      <div v-else-if="error" class="lesson-state lesson-state--error">{{ error }}</div>
+      <div v-else-if="!selectedSubTopic" class="lesson-state">No lesson content is available.</div>
+
+      <Transition :name="contentTransitionDir === 'next' ? 'slide-next' : 'slide-prev'" mode="out-in">
+        <article v-if="selectedSubTopic" :key="selectedSubTopic.id" class="lesson-content">
+          <header class="lesson-content__header">
+            <div class="lesson-hero-copy">
+              <span>{{ selectedModule?.title }} • LESSON {{ selectedIndex + 1 }}</span>
+              <div class="lesson-hero-title-wrap">
+                <h1>{{ selectedSubTopic.title }}</h1>
+              </div>
             </div>
-            <em class="font-math italic font-semibold text-[22px] text-lm-ink not-italic">{{ opt.label }}</em>
-          </button>
-        </div>
+            <div class="lesson-mascot">
+              <p>{{ mascotPrompt }}</p>
+              <div class="lesson-mascot__avatar">
+                <img :src="toraMascotUrl" alt="" />
+              </div>
+            </div>
+          </header>
 
-        <!-- Hint callout -->
-        <div class="flex items-center gap-3 p-4 bg-lm-surface border-2 border-lm-line rounded-[12px] shadow-stamp-sm -rotate-[0.4deg] self-start max-w-[460px]">
-          <div class="w-7 h-7 rounded-full bg-lm-yellow border-2 border-lm-line flex items-center justify-center font-bold text-lm-ink shrink-0">?</div>
-          <p class="text-[13.5px] text-lm-ink m-0">
-            <strong>Hint:</strong> Subtract 5 from both sides first, then divide by 2.
-          </p>
-        </div>
+          <!-- Lesson body — open flow, no box wrapper -->
+          <section class="lesson-body" v-html="selectedLessonHtml" />
 
-      </div>
-    </div>
+          <InteractiveChallengeShell
+            v-if="selectedSubTopic.interactionType !== 'NONE'"
+            :interaction-type="selectedSubTopic.interactionType"
+            :objective="currentChallengeObjective"
+            :status="currentProgressStatus"
+            :mode="currentInteractiveMode"
+          >
+            <InteractivePreview
+              :config="interactiveConfig"
+              :server-feedback="interactiveServerFeedback"
+              @started="handleInteractiveStarted"
+              @checked="handleInteractiveChecked"
+            />
+          </InteractiveChallengeShell>
 
-    <!-- Footer action bar -->
-    <div class="flex items-center gap-2.5 px-6 py-3.5 bg-lm-yellow-soft border-t-2 border-lm-line shrink-0">
-      <button class="px-[18px] py-[9px] text-[15px] font-semibold border-2 border-lm-line rounded-full bg-lm-surface shadow-stamp-sm hover:-translate-y-px hover:shadow-stamp-md transition-all duration-200 text-lm-ink">
-        Show hint
-      </button>
-      <button class="px-[18px] py-[9px] text-[15px] font-semibold border-2 border-lm-line rounded-full bg-lm-surface shadow-stamp-sm hover:-translate-y-px hover:shadow-stamp-md transition-all duration-200 text-lm-ink">
-        Show steps
-      </button>
-      <div class="flex-1" />
-      <button class="flex items-center gap-2 px-[18px] py-[9px] text-[15px] font-semibold border-2 border-lm-line rounded-full bg-lm-ink text-lm-bg shadow-stamp-sm hover:-translate-y-px hover:shadow-stamp-md transition-all duration-200">
-        Check
-        <LmIcon name="arrow" :size="16" />
-      </button>
-    </div>
+          <!-- Mark as Completed button for reading-only lessons or visualization-only interactives -->
+          <div
+            v-if="selectedSubTopic.interactionType === 'NONE' || currentInteractiveMode !== 'PRACTICE'"
+            class="reading-complete-section"
+          >
+            <button
+              v-if="currentProgressStatus !== 'MASTERED'"
+              type="button"
+              class="complete-btn complete-btn--uncompleted"
+              @click="persistInteractiveProgress('MASTERED')"
+            >
+              <svg class="complete-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Mark as Completed
+            </button>
+            <div
+              v-else
+              class="complete-btn complete-btn--completed"
+            >
+              <svg class="complete-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Completed
+            </div>
+          </div>
+
+          <!-- Pagination Dots inside the card -->
+          <div class="lesson-pagination">
+            <button
+              v-for="(subTopic, idx) in currentModuleSubTopics"
+              :key="subTopic.id"
+              type="button"
+              class="pagination-dot"
+              :class="{ 'pagination-dot--active': currentSubTopicIndexInModule === idx }"
+              @click.stop="selectSubTopic(subTopic)"
+              :aria-label="`Go to step ${idx + 1}`"
+            />
+          </div>
+        </article>
+      </Transition>
+    </section>
   </main>
 </template>
+
+<style scoped>
+.lesson-player {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border-top: 2px solid #1a1814;
+  background: #eae5da;
+  color: #1a1814;
+}
+.lesson-sidebar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 275px;
+  z-index: 100;
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  border-right: 2px solid #1a1814;
+  background: #f6f0e7;
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 4px 0 24px rgba(26, 24, 20, 0.15);
+}
+.lesson-sidebar--open {
+  transform: translateX(0);
+}
+.lesson-sidebar__header {
+  display: grid;
+  gap: 0.75rem;
+  border-bottom: 1px solid #e4ded6;
+  padding: 2rem 1.15rem 1.5rem;
+}
+.lesson-sidebar__header span {
+  color: #8f887e;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.lesson-sidebar__header h1 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 950;
+  line-height: 1.25;
+}
+.lesson-progress {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem;
+}
+.lesson-progress div {
+  height: 0.45rem;
+  overflow: hidden;
+  border: 1px solid #1a1814;
+  border-radius: 999px;
+  background: #fffdf8;
+}
+.lesson-progress span {
+  display: block;
+  height: 100%;
+  background: #1a1814;
+  transition: width 400ms cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.lesson-progress strong {
+  color: #8f887e;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 900;
+}
+.lesson-module-list {
+  min-height: 0;
+  overflow: auto;
+  padding: 1rem 0 1.5rem;
+}
+.lesson-module {
+  display: grid;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+}
+.lesson-module__header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.3rem 1rem;
+}
+.lesson-module__header h2 {
+  min-width: 0;
+  margin: 0;
+  font-size: 0.84rem;
+  font-weight: 950;
+  line-height: 1.25;
+}
+.lesson-module__header strong {
+  color: #8f887e;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 900;
+}
+.lesson-topic {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  min-height: 2.2rem;
+  border: 0;
+  border-left: 4px solid transparent;
+  background: transparent;
+  padding: 0.45rem 1rem 0.45rem 2.4rem;
+  color: #8f887e;
+  text-align: left;
+  font-size: 0.8rem;
+  font-weight: 850;
+  transition: background 150ms ease, border-color 200ms ease;
+}
+.lesson-topic span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lesson-topic:hover {
+  background: #fff4bf;
+  color: #1a1814;
+}
+.lesson-topic--active {
+  border-left-color: #1a1814;
+  background: #ffd333;
+  color: #1a1814;
+}
+.lesson-sidebar__empty,
+.lesson-state {
+  padding: 2rem;
+  color: #1a1814;
+  font-weight: 900;
+}
+.lesson-state {
+  position: relative;
+  z-index: 1;
+}
+.lesson-state--error {
+  color: #8c3322;
+}
+
+.lesson-canvas {
+  position: relative;
+  min-height: 0;
+  overflow: auto;
+  background: #eae5da;
+}
+.lesson-canvas__bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle, rgba(26, 24, 20, 0.12) 1px, transparent 1.5px),
+    #eae5da;
+  background-size: 20px 20px;
+  pointer-events: none;
+}
+.lesson-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: absolute;
+  top: 1.5rem;
+  left: 2rem;
+  right: 2rem;
+  z-index: 50;
+}
+.lesson-top-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.sidebar-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 2px solid #1d1b17;
+  border-radius: 50%;
+  background: #fffdf8;
+  color: #1d1b17;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 #1d1b17;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.sidebar-toggle-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 3px 3px 0 #1d1b17;
+}
+.toggle-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+.reading-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #6b6660;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+.clock-icon {
+  width: 14px;
+  height: 14px;
+}
+.lesson-exit-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.25rem;
+  border: 2px solid #1d1b17;
+  border-radius: 999px;
+  background: #fffdf8;
+  padding: 0 1.25rem;
+  color: #1d1b17;
+  font-size: 0.8rem;
+  font-weight: 900;
+  box-shadow: 2px 2px 0 #1d1b17;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  text-transform: uppercase;
+}
+.lesson-exit-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 3px 3px 0 #1d1b17;
+}
+.exit-icon {
+  width: 12px;
+  height: 12px;
+}
+.floating-nav-btn {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border: 2px solid #1d1b17;
+  border-radius: 50%;
+  background: #fffdf8;
+  color: #1d1b17;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 #1d1b17;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
+  opacity: 0.7;
+}
+.floating-nav-btn:hover:not(:disabled) {
+  transform: translateY(-50%) translateY(-2px);
+  box-shadow: 4px 4px 0 #1d1b17;
+  opacity: 1;
+}
+.floating-nav-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.15;
+  box-shadow: none;
+}
+.floating-nav-btn--prev {
+  left: 2rem;
+}
+.floating-nav-btn--next {
+  right: 2rem;
+}
+.nav-arrow-icon {
+  width: 1.4rem;
+  height: 1.4rem;
+}
+.lesson-content {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 1.5rem;
+  width: min(calc(100% - 12rem), 1200px);
+  margin: 6.5rem auto 4rem;
+  border: 2.5px solid #1d1b17;
+  border-radius: 32px;
+  background: #fffdf8;
+  padding: 3.5rem;
+  box-shadow: 4px 4px 0px 0px #1d1b17;
+}
+
+.lesson-content__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(270px, 420px);
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+.lesson-hero-copy span {
+  display: block;
+  color: #8f887e;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+.lesson-hero-title-wrap {
+  display: inline-block;
+  background: #ffd333;
+  border: 2px solid #1d1b17;
+  padding: 0.6rem 1.25rem;
+  border-radius: 12px;
+  margin-bottom: 0.75rem;
+  box-shadow: 2px 2px 0px 0px #1d1b17;
+}
+.lesson-hero-copy h1 {
+  margin: 0;
+  color: #1d1b17;
+  font-size: clamp(2.35rem, 5vw, 4rem);
+  font-weight: 950;
+  line-height: 0.96;
+}
+.lesson-mascot {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  justify-self: end;
+  align-self: flex-end;
+}
+.lesson-mascot p {
+  position: relative;
+  min-width: 0;
+  margin: 0;
+  border: 2px solid #1d1b17;
+  border-radius: 16px;
+  background: #ffffff;
+  padding: 1rem;
+  color: #1d1b17;
+  font-size: 0.75rem;
+  font-style: italic;
+  font-weight: 650;
+  line-height: 1.45;
+  box-shadow: 2px 2px 0px 0px #1d1b17;
+  max-width: 240px;
+}
+.lesson-mascot p::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: -8px;
+  width: 12px;
+  height: 12px;
+  border-top: 2px solid #1d1b17;
+  border-right: 2px solid #1d1b17;
+  background: #ffffff;
+  transform: translateY(-50%) rotate(45deg);
+}
+.lesson-mascot__avatar {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  place-items: center;
+  overflow: hidden;
+  border: 2px solid #1d1b17;
+  border-radius: 50%;
+  background: #ffd333;
+  padding: 4px;
+  box-shadow: 2px 2px 0px 0px #1d1b17;
+}
+.lesson-mascot__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.lesson-body {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+
+.progress-marker {
+  display: inline-grid;
+  width: 0.85rem;
+  height: 0.85rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 2px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  line-height: 1;
+}
+.progress-marker--not-started {
+  color: #8f887e;
+  background: transparent;
+}
+.progress-marker--tried {
+  border-color: #1a1814;
+  background: #ffd333;
+  color: #1a1814;
+}
+.progress-marker--mastered {
+  border-color: #245e3e;
+  background: #dff4df;
+  color: #245e3e;
+  font-weight: 900;
+}
+
+/* ── Pagination Dots ── */
+.lesson-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 2.5rem;
+  padding-top: 1rem;
+}
+.pagination-dot {
+  display: block;
+  padding: 0;
+  border: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #d4cec6;
+  cursor: pointer;
+  transition: width 0.2s ease, border-radius 0.2s ease, background-color 0.2s ease;
+}
+.pagination-dot:hover {
+  background: #9e9892;
+}
+.pagination-dot--active {
+  width: 24px;
+  border-radius: 4px;
+  background: #1d1b17;
+}
+
+/* ── Mastery celebration overlay ── */
+.mastery-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.mastery-burst {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(223, 244, 223, 0.7) 0%, transparent 70%);
+  animation: burst-expand 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.mastery-check {
+  width: 64px;
+  height: 64px;
+  animation: check-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  filter: drop-shadow(0 4px 12px rgba(36, 94, 62, 0.25));
+}
+@keyframes burst-expand {
+  0% { transform: scale(0.3); opacity: 1; }
+  60% { transform: scale(3); opacity: 0.6; }
+  100% { transform: scale(4.5); opacity: 0; }
+}
+@keyframes check-pop {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.mastery-flash-enter-active { transition: opacity 200ms ease; }
+.mastery-flash-leave-active { transition: opacity 600ms ease; }
+.mastery-flash-enter-from { opacity: 0; }
+.mastery-flash-leave-to { opacity: 0; }
+
+/* ── Content transition: slide + fade ── */
+.slide-next-enter-active,
+.slide-next-leave-active,
+.slide-prev-enter-active,
+.slide-prev-leave-active {
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+.slide-next-enter-from {
+  opacity: 0;
+  transform: translateX(24px);
+}
+.slide-next-leave-to {
+  opacity: 0;
+  transform: translateX(-24px);
+}
+.slide-prev-enter-from {
+  opacity: 0;
+  transform: translateX(-24px);
+}
+.slide-prev-leave-to {
+  opacity: 0;
+  transform: translateX(24px);
+}
+
+/* ── Typography for lesson body content ── */
+:deep(.lesson-body h2) {
+  margin-top: 2.5rem;
+  margin-bottom: 1.5rem;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.2;
+  border-bottom: 1px solid #e2e0db;
+  padding-bottom: 0.5rem;
+}
+:deep(.lesson-body h3) {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+:deep(.lesson-body p),
+:deep(.lesson-body ul),
+:deep(.lesson-body ol),
+:deep(.lesson-body figure) {
+  margin: 1.25rem 0;
+  color: rgba(29, 27, 23, 0.9);
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 1.125rem;
+  line-height: 1.6;
+}
+:deep(.lesson-body ul),
+:deep(.lesson-body ol) {
+  padding-left: 1.3rem;
+}
+:deep(.lesson-body img) {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0.85rem 0;
+  border-radius: 8px;
+}
+:deep(.lesson-body a) {
+  color: #1f63d4;
+  font-weight: 800;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.18em;
+}
+:deep(.lesson-body a:hover) {
+  color: #174a9b;
+}
+:deep(.lesson-body figcaption) {
+  margin-top: -0.35rem;
+  color: #6b6660;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+/* ── Inline math word highlights ── */
+:deep(.lesson-body .math-word-discrete) {
+  color: #a63a13;
+  font-weight: 900;
+  text-decoration: underline;
+  text-decoration-color: #a63a13;
+  text-decoration-thickness: 2.5px;
+  text-underline-offset: 4px;
+}
+:deep(.lesson-body .math-word-continuous) {
+  color: #2563eb;
+  font-weight: 900;
+  text-decoration: underline;
+  text-decoration-color: #2563eb;
+  text-decoration-thickness: 2.5px;
+  text-underline-offset: 4px;
+}
+
+@media (max-width: 900px) {
+  .lesson-content {
+    width: min(calc(100% - 2rem), 640px);
+    margin: 5.2rem auto 6rem;
+    padding: 2rem;
+    border-radius: 32px;
+  }
+  .lesson-content__header {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+  .lesson-mascot {
+    justify-self: stretch;
+    width: 100%;
+    display: flex;
+    gap: 1rem;
+  }
+  .lesson-mascot p {
+    flex: 1;
+    max-width: none;
+  }
+  .lesson-mascot__avatar {
+    width: 64px;
+    height: 64px;
+  }
+  .lesson-mascot__avatar img {
+    width: 100%;
+    height: 100%;
+  }
+  .floating-nav-btn {
+    width: 3rem;
+    height: 3rem;
+  }
+  .floating-nav-btn--prev {
+    left: 0.5rem;
+  }
+  .floating-nav-btn--next {
+    right: 0.5rem;
+  }
+}
+
+:deep(.material-symbols-outlined) {
+  font-family: 'Material Symbols Outlined', sans-serif;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "liga";
+}
+
+:deep(.math-var) {
+  font-family: 'Literata', serif;
+  font-style: italic;
+}
+/* ── Mark as Completed Button ── */
+.reading-complete-section {
+  display: flex;
+  justify-content: center;
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 2px dashed #e4ded6;
+}
+.complete-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  border: 2px solid #1d1b17;
+  border-radius: 999px;
+  padding: 0 1.75rem;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease;
+  box-shadow: 3px 3px 0 #1d1b17;
+}
+.complete-btn--uncompleted {
+  background: #ffd333;
+  color: #1d1b17;
+}
+.complete-btn--uncompleted:hover {
+  transform: translateY(-1px);
+  box-shadow: 4px 4px 0 #1d1b17;
+  background: #ffdb58;
+}
+.complete-btn--completed {
+  border-color: #245e3e;
+  background: #dff4df;
+  color: #245e3e;
+  box-shadow: 3px 3px 0 #245e3e;
+  cursor: default;
+}
+.complete-btn-icon {
+  width: 1rem;
+  height: 1rem;
+}
+</style>

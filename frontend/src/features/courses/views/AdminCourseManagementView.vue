@@ -1,8 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { AxiosError } from 'axios'
 import { useRouter } from 'vue-router'
 import AppSidebar from '@/features/courses/components/Admin/AdminNavbar.vue'
+import AdminIcon from '@/features/courses/components/Admin/AdminIcon.vue'
+import MonoLabel from '@/features/courses/components/Admin/MonoLabel.vue'
+import StatCard from '@/features/courses/components/Admin/StatCard.vue'
+import StatusFilter from '@/features/courses/components/Admin/StatusFilter.vue'
 import CourseCard from '@/features/courses/components/Admin/AdminCourseCard.vue'
 import AddCourseModal from '@/features/courses/components/Admin/AddCoursePopUp.vue'
 import CourseEditPopUp from '@/features/courses/components/Admin/CourseEditPopUp.vue'
@@ -23,7 +27,6 @@ const router = useRouter()
 const showAddModal = ref(false)
 const searchQuery = ref('')
 const statusFilter = ref<'all' | CourseStatus>('all')
-const showStatusMenu = ref(false)
 const loadingCourses = ref(false)
 const loadError = ref('')
 const creatingCourse = ref(false)
@@ -33,6 +36,11 @@ const showEditModal = ref(false)
 const editingCourse = ref<AdminCourseCardModel | null>(null)
 const updatingCourse = ref(false)
 const updateError = ref('')
+
+const showDeleteConfirm = ref(false)
+const deleteTargetId = ref<string | null>(null)
+const deleteTargetTitle = ref('')
+const deletingCourseFlag = ref(false)
 
 const courses = ref<AdminCourseCardModel[]>([])
 
@@ -51,14 +59,6 @@ const filteredCourses = computed(() => {
     const matchesStatus = statusFilter.value === 'all' || c.status === statusFilter.value
     return matchesSearch && matchesStatus
   })
-})
-
-const statusLabel = computed(() => {
-  if (statusFilter.value === 'published') return 'Published'
-  if (statusFilter.value === 'pending') return 'Pending Review'
-  if (statusFilter.value === 'revision') return 'Needs Revision'
-  if (statusFilter.value === 'draft') return 'Draft'
-  return 'All'
 })
 
 onMounted(loadCourses)
@@ -102,18 +102,38 @@ function closeAddModal() {
   createError.value = ''
 }
 
-async function deleteCourse(id: string) {
+function confirmDeleteCourse(course: AdminCourseCardModel) {
+  deleteTargetId.value = course.id
+  deleteTargetTitle.value = course.title
+  showDeleteConfirm.value = true
+}
+
+async function proceedDeleteCourse() {
+  if (!deleteTargetId.value || deletingCourseFlag.value) return
+  deletingCourseFlag.value = true
   try {
-    await deleteAdminCourse(id)
-    courses.value = courses.value.filter((c) => c.id !== id)
+    await deleteAdminCourse(deleteTargetId.value)
+    courses.value = courses.value.filter((c) => c.id !== deleteTargetId.value)
+    showDeleteConfirm.value = false
   } catch (error) {
     loadError.value = getErrorMessage(error, 'Unable to delete course.')
+  } finally {
+    deletingCourseFlag.value = false
   }
 }
 
-function setStatus(val: 'all' | CourseStatus) {
-  statusFilter.value = val
-  showStatusMenu.value = false
+watch(showDeleteConfirm, (open) => {
+  if (open) {
+    window.addEventListener('keydown', handleGlobalKeydown)
+  } else {
+    window.removeEventListener('keydown', handleGlobalKeydown)
+  }
+})
+
+function handleGlobalKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape') {
+    showDeleteConfirm.value = false
+  }
 }
 
 function openEditModal(course: AdminCourseCardModel) {
@@ -175,127 +195,53 @@ function getErrorMessage(error: unknown, fallback: string) {
     <AppSidebar active-item="course" />
 
     <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
-      <!-- Page header -->
       <header class="shrink-0 border-b-2 border-lm-line bg-lm-surface px-7 py-4">
         <div class="flex items-center justify-between gap-4">
           <div>
-            <h1 class="font-display text-[23px] font-bold leading-tight text-lm-ink">Course Management</h1>
-            <p class="mt-0.5 font-mono text-[12px] font-medium text-lm-ink-3">Manage, publish and track all learning content</p>
+            <h1 class="m-0 mb-[2px] font-display text-[23px] font-bold text-lm-ink">Course Management</h1>
+            <MonoLabel>Manage, publish and track all learning content</MonoLabel>
           </div>
 
-          <!-- Controls group -->
           <div class="flex items-center gap-3">
-            <!-- Search -->
             <div class="relative">
-              <svg class="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-lm-ink-3"
-                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
-              </svg>
+              <span class="pointer-events-none absolute left-3 top-1/2 flex -translate-y-1/2 text-lm-ink-3">
+                <AdminIcon name="search" :size="14" />
+              </span>
               <input
                 v-model="searchQuery"
                 type="search"
-                placeholder="Search courses..."
-                class="h-11 w-72 rounded-xl border-2 border-lm-line-soft bg-lm-bg-soft py-2 pl-10 pr-3 text-[12px] font-semibold text-lm-ink outline-none transition placeholder:text-lm-ink-3 focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
+                placeholder="Search courses…"
+                class="h-11 w-[270px] rounded-[12px] border-2 border-lm-line-soft bg-lm-bg-soft pl-[38px] pr-3 font-display text-[12px] font-semibold text-lm-ink outline-none"
               />
             </div>
 
-            <!-- Status filter -->
-            <div class="relative">
-              <button
-                type="button"
-                class="inline-flex h-11 min-w-32 items-center justify-between gap-2 rounded-xl border-2 border-lm-line-soft bg-lm-bg-soft px-4 text-[12px] font-bold text-lm-ink-2 transition hover:border-lm-line hover:bg-lm-surface"
-                @click="showStatusMenu = !showStatusMenu"
-              >
-                <span v-if="statusFilter !== 'all'" class="h-1.5 w-1.5 rounded-full"
-                  :class="statusFilter === 'published' ? 'bg-lm-green' : statusFilter === 'pending' ? 'bg-lm-purple' : statusFilter === 'revision' ? 'bg-lm-red' : 'bg-lm-ink-3'" />
-                {{ statusLabel }}
-                <svg class="h-3 w-3 text-lm-ink-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </button>
-              <div v-if="showStatusMenu"
-                class="absolute right-0 top-full z-20 mt-1.5 w-40 overflow-hidden rounded-xl border-2 border-lm-line bg-lm-surface shadow-stamp-md">
-                <button v-for="[val, label] in [['all','All status'],['published','Published'],['pending','Pending Review'],['revision','Needs Revision'],['draft','Draft']]" :key="val"
-                  type="button"
-                  class="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-[12px] transition hover:bg-lm-bg-soft"
-                  :class="statusFilter === val ? 'font-bold text-lm-ink bg-lm-yellow/40' : 'text-lm-ink-2'"
-                  @click="setStatus(val as 'all' | CourseStatus)">
-                  <span class="h-1.5 w-1.5 rounded-full"
-                    :class="val === 'published' ? 'bg-lm-green' : val === 'pending' ? 'bg-lm-purple' : val === 'revision' ? 'bg-lm-red' : val === 'draft' ? 'bg-lm-ink-3' : 'bg-lm-line-soft'" />
-                  {{ label }}
-                </button>
-              </div>
-            </div>
+            <StatusFilter v-model="statusFilter" />
 
-            <!-- New Course CTA -->
             <button
               type="button"
-              class="inline-flex h-11 items-center gap-2 rounded-full bg-lm-yellow border-2 border-lm-line px-5 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md active:scale-[0.98]"
+              class="inline-flex h-11 cursor-pointer items-center gap-2 rounded-full border-2 border-lm-line bg-lm-yellow px-5 font-display text-[13px] font-bold text-lm-ink shadow-stamp-sm"
               @click="openAddModal"
             >
-              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
+              <AdminIcon name="plus" :size="14" />
               New Course
             </button>
           </div>
         </div>
       </header>
 
-      <main class="flex-1 overflow-y-auto px-7 py-6 relative">
-        <div class="absolute inset-0 bg-dot-grid opacity-40 pointer-events-none" />
+      <main class="relative flex-1 overflow-auto px-7 py-6">
+        <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle,#e3ddce_1px,transparent_1px)] bg-[length:18px_18px] opacity-40" />
 
         <div class="relative">
-          <!-- Stats grid -->
-          <section class="mb-6 grid gap-4 xl:grid-cols-4">
-            <div class="rounded-[18px] bg-lm-surface p-5 border-2 border-lm-line shadow-stamp-sm">
-              <div class="flex items-start justify-between">
-                <p class="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-lm-ink-3">Total Courses</p>
-                <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-lm-purple-soft border border-lm-line-soft text-lm-purple">
-                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>
-                </span>
-              </div>
-              <p class="mt-6 font-display text-[28px] font-bold text-lm-ink">{{ stats.total }}</p>
-              <p class="mt-1 font-mono text-[11px] font-semibold text-lm-purple">+{{ stats.draft }} draft</p>
-            </div>
-
-            <div class="rounded-[18px] bg-lm-surface p-5 border-2 border-lm-line shadow-stamp-sm">
-              <div class="flex items-start justify-between">
-                <p class="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-lm-ink-3">Published</p>
-                <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-lm-green-soft border border-lm-line-soft text-lm-green">
-                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5" /></svg>
-                </span>
-              </div>
-              <p class="mt-6 font-display text-[28px] font-bold text-lm-green">{{ stats.published }}</p>
-              <p class="mt-1 font-mono text-[11px] font-semibold text-lm-ink-3">Ready for learners</p>
-            </div>
-
-            <div class="rounded-[18px] bg-lm-surface p-5 border-2 border-lm-line shadow-stamp-sm">
-              <div class="flex items-start justify-between">
-                <p class="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-lm-ink-3">Pending Review</p>
-                <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-lm-purple-soft border border-lm-line-soft text-lm-purple">
-                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
-                </span>
-              </div>
-              <p class="mt-6 font-display text-[28px] font-bold text-lm-purple">{{ stats.pending }}</p>
-              <p class="mt-1 font-mono text-[11px] font-semibold text-lm-ink-3">Awaiting teacher</p>
-            </div>
-
-            <div class="rounded-[18px] bg-lm-surface p-5 border-2 border-lm-line shadow-stamp-sm">
-              <div class="flex items-start justify-between">
-                <p class="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-lm-ink-3">Needs Revision</p>
-                <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-lm-red-soft border border-lm-line-soft text-lm-red">
-                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /><path d="M15 9 9 15M9 9l6 6" /></svg>
-                </span>
-              </div>
-              <p class="mt-6 font-display text-[28px] font-bold text-lm-red">{{ stats.revision }}</p>
-              <p class="mt-1 font-mono text-[11px] font-semibold text-lm-ink-3">Teacher feedback</p>
-            </div>
+          <section class="mb-6 grid grid-cols-4 gap-4">
+            <StatCard label="Total Courses" :value="stats.total" color="var(--lm-ink)" :sub="`+${stats.draft} draft`" :icon="{ name: 'courses', bg: 'var(--lm-purple-soft)', color: 'var(--lm-purple)' }" />
+            <StatCard label="Published" :value="stats.published" color="var(--lm-green)" sub="Ready for learners" :icon="{ name: 'check', bg: 'var(--lm-green-soft)', color: 'var(--lm-green)' }" />
+            <StatCard label="Pending Review" :value="stats.pending" color="var(--lm-purple)" sub="Awaiting teacher" :icon="{ name: 'publish', bg: 'var(--lm-purple-soft)', color: 'var(--lm-purple)' }" />
+            <StatCard label="Needs Revision" :value="stats.revision" color="var(--lm-red)" sub="Teacher feedback" :icon="{ name: 'close', bg: 'var(--lm-red-soft)', color: 'var(--lm-red)' }" />
           </section>
 
-          <!-- Section separator -->
           <div class="mb-4 flex items-center gap-3">
-            <p class="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-lm-ink-3">Courses</p>
+            <MonoLabel>Courses</MonoLabel>
             <div class="flex-1 border-t-2 border-lm-line-soft" />
             <span class="font-mono text-[11px] font-semibold text-lm-ink-3">{{ filteredCourses.length }}</span>
           </div>
@@ -310,12 +256,12 @@ function getErrorMessage(error: unknown, fallback: string) {
           </div>
 
           <!-- Loading skeletons -->
-          <div v-if="loadingCourses" class="space-y-4">
-            <div v-for="index in 5" :key="index" class="h-[84px] animate-pulse rounded-[18px] bg-lm-surface border-2 border-lm-line-soft" />
+          <div v-if="loadingCourses" class="space-y-3">
+            <div v-for="index in 5" :key="index" class="h-[78px] animate-pulse rounded-[12px] border-2 border-lm-line-soft bg-lm-surface" />
           </div>
 
           <!-- Course list -->
-          <div v-else-if="filteredCourses.length > 0" class="space-y-4">
+          <div v-else-if="filteredCourses.length > 0" class="flex flex-col gap-3">
             <CourseCard
               v-for="course in filteredCourses"
               :key="course.id"
@@ -328,7 +274,7 @@ function getErrorMessage(error: unknown, fallback: string) {
               :created-by="course.createdBy"
               @open="router.push(`/admin/courses/${course.id}`)"
               @edit="openEditModal(course)"
-              @delete="deleteCourse(course.id)"
+              @delete="confirmDeleteCourse(course)"
               @submit="submitCourseForReview(course.id)"
             />
           </div>
@@ -338,11 +284,8 @@ function getErrorMessage(error: unknown, fallback: string) {
             v-else
             class="flex flex-col items-center justify-center rounded-[18px] border-2 border-dashed border-lm-line-soft bg-lm-surface py-24 text-center"
           >
-            <div class="flex h-14 w-14 items-center justify-center rounded-[18px] bg-lm-yellow border-2 border-lm-line shadow-stamp-sm text-lm-ink">
-              <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-              </svg>
+            <div class="flex h-14 w-14 items-center justify-center rounded-[18px] border-2 border-lm-line bg-lm-yellow text-lm-ink shadow-stamp-sm">
+              <AdminIcon name="courses" :size="28" />
             </div>
             <p class="mt-4 font-display text-[15px] font-semibold text-lm-ink">
               {{ searchQuery ? 'No courses found' : 'No courses yet' }}
@@ -353,7 +296,7 @@ function getErrorMessage(error: unknown, fallback: string) {
             <button
               v-if="!searchQuery"
               type="button"
-              class="mt-5 inline-flex items-center gap-2 rounded-full bg-lm-yellow border-2 border-lm-line px-5 py-2.5 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
+              class="mt-5 inline-flex h-11 items-center rounded-full border-2 border-lm-line bg-lm-yellow px-5 text-[14px] font-bold text-lm-ink shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
               @click="openAddModal"
             >
               New Course
@@ -362,8 +305,6 @@ function getErrorMessage(error: unknown, fallback: string) {
         </div>
       </main>
     </div>
-
-    <div v-if="showStatusMenu" class="fixed inset-0 z-10" aria-hidden="true" @click="showStatusMenu = false" />
 
     <AddCourseModal
       :open="showAddModal"
@@ -381,5 +322,95 @@ function getErrorMessage(error: unknown, fallback: string) {
       @close="closeEditModal"
       @save="handleUpdateCourse"
     />
+
+    <!-- Confirm delete course modal -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div v-if="showDeleteConfirm" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div class="absolute inset-0 bg-lm-ink/60 backdrop-blur-sm" aria-hidden="true" @click="showDeleteConfirm = false" />
+
+          <Transition
+            enter-active-class="transition duration-200 ease-out"
+            enter-from-class="opacity-0 scale-95 translate-y-2"
+            enter-to-class="opacity-100 scale-100 translate-y-0"
+            leave-active-class="transition duration-150 ease-in"
+            leave-from-class="opacity-100 scale-100 translate-y-0"
+            leave-to-class="opacity-0 scale-95 translate-y-2"
+          >
+            <div
+              v-if="showDeleteConfirm"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="confirm-delete-course-title"
+              class="relative z-10 flex w-full max-w-md flex-col overflow-hidden rounded-[18px] border-2 border-lm-line bg-lm-surface shadow-stamp-md"
+              @click.stop
+            >
+              <!-- Header -->
+              <header class="shrink-0 border-b-2 border-lm-line px-6 py-5">
+                <div class="flex items-start justify-between gap-4">
+                  <div class="flex items-center gap-3">
+                    <div class="flex h-9 w-9 items-center justify-center rounded-[10px] border-2 border-lm-line bg-lm-red-soft text-lm-red shadow-stamp-sm">
+                      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                        <line x1="12" y1="9" x2="12" y2="13" />
+                        <line x1="12" y1="17" x2="12.01" y2="17" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 id="confirm-delete-course-title" class="font-display text-[15px] font-bold text-lm-ink">Delete Course?</h2>
+                      <p class="mt-1 text-[11px] text-lm-ink-3">This action cannot be undone</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-lm-ink-3 transition hover:bg-lm-bg hover:text-lm-ink"
+                    aria-label="Close"
+                    @click="showDeleteConfirm = false"
+                  >
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M18 6 6 18M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </header>
+
+              <!-- Body -->
+              <div class="px-6 py-5">
+                <p class="text-[13px] leading-relaxed text-lm-ink-2">
+                  Are you sure you want to delete the course <strong class="text-lm-red">"{{ deleteTargetTitle }}"</strong>?
+                  All modules, topics, and configurations associated with this course will be permanently removed.
+                </p>
+              </div>
+
+              <!-- Footer -->
+              <footer class="flex shrink-0 gap-2.5 border-t-2 border-lm-line px-6 py-4">
+                <button
+                  type="button"
+                  class="h-10 flex-1 rounded-full border-2 border-lm-line bg-lm-surface px-4 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
+                  @click="showDeleteConfirm = false"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  class="h-10 flex-1 rounded-full border-2 border-lm-line bg-lm-red text-white px-4 text-[13px] font-bold shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md disabled:cursor-not-allowed disabled:opacity-50"
+                  :disabled="deletingCourseFlag"
+                  @click="proceedDeleteCourse"
+                >
+                  {{ deletingCourseFlag ? 'Deleting...' : 'Delete' }}
+                </button>
+              </footer>
+            </div>
+          </Transition>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
