@@ -51,6 +51,12 @@ public class LearnerProfile extends BaseTimestampEntity {
     @Column(name = "shield_pool_last_reset_at")
     private Instant shieldPoolLastResetAt;
 
+    // Last date the streak is confirmed safe due to a shield covering a missed day.
+    // Distinct from lastActiveDate (true last engagement) so the nightly job can tell
+    // a shield-covered gap from a real one and never double-charge the same missed day.
+    @Column(name = "streak_safe_through_date")
+    private LocalDate streakSafeThroughDate;
+
     protected LearnerProfile() {
     }
 
@@ -128,5 +134,13 @@ public class LearnerProfile extends BaseTimestampEntity {
 
     public void setShieldPoolLastResetAt(Instant shieldPoolLastResetAt) {
         this.shieldPoolLastResetAt = shieldPoolLastResetAt;
+    }
+
+    public LocalDate getStreakSafeThroughDate() {
+        return streakSafeThroughDate;
+    }
+
+    public void setStreakSafeThroughDate(LocalDate streakSafeThroughDate) {
+        this.streakSafeThroughDate = streakSafeThroughDate;
     }
 }
