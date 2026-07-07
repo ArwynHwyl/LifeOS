@@ -85,7 +85,11 @@ const router = createRouter({
         },
         {
           path: 'dashboard',
-          component: () => import('@/features/learning/views/DashboardView.vue'),
+          component: () => import('@/features/gamified/views/DashboardView.vue'),
+        },
+        {
+          path: 'levels',
+          component: () => import('@/features/gamified/views/LevelRoadmapView.vue'),
         },
       ],
     },

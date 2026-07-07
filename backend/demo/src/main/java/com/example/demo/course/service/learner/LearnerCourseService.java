@@ -22,6 +22,7 @@ import com.example.demo.course.dto.interactive.request.InteractiveProgressUpdate
 import com.example.demo.course.dto.interactive.request.LogicAttemptRequest;
 import com.example.demo.course.dto.interactive.response.LogicAttemptResponse;
 import com.example.demo.course.dto.interactive.response.LogicStepSubmissionDto;
+import com.example.demo.gamification.service.GamificationService;
 import com.example.demo.shared.exception.ApiException;
 import com.example.demo.user.entity.User;
 import com.example.demo.shared.exception.InvalidWorkflowStateException;
@@ -44,6 +45,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class LearnerCourseService {
 
+    private static final int SUBTOPIC_MASTERY_BASE_EXP = 10;
+
     private final CourseRepository courseRepository;
     private final LearnerInteractiveProgressRepository progressRepository;
     private final EntityManager entityManager;
@@ -52,6 +55,7 @@ public class LearnerCourseService {
     private final ObjectMapper objectMapper;
     private final LogicExpressionService logicExpressionService;
     private final MathExpressionService mathExpressionService;
+    private final GamificationService gamificationService;
 
     public LearnerCourseService(
             CourseRepository courseRepository,
@@ -61,7 +65,8 @@ public class LearnerCourseService {
             CourseInputValidator validator,
             ObjectMapper objectMapper,
             LogicExpressionService logicExpressionService,
-            MathExpressionService mathExpressionService
+            MathExpressionService mathExpressionService,
+            GamificationService gamificationService
     ) {
         this.courseRepository = courseRepository;
         this.progressRepository = progressRepository;
@@ -71,6 +76,7 @@ public class LearnerCourseService {
         this.objectMapper = objectMapper;
         this.logicExpressionService = logicExpressionService;
         this.mathExpressionService = mathExpressionService;
+        this.gamificationService = gamificationService;
     }
 
     @Transactional(readOnly = true)
@@ -108,8 +114,7 @@ public class LearnerCourseService {
         }
 
         LearnerInteractiveProgress progress = findOrCreateProgress(userId, course, subTopic);
-        progress.recordAttempt(requestedStatus);
-        return toProgressDto(progressRepository.save(progress));
+        return toProgressDto(recordAttemptAndAward(userId, progress, requestedStatus));
     }
 
     @Transactional
@@ -145,8 +150,7 @@ public class LearnerCourseService {
                 ? InteractiveProgressStatus.MASTERED
                 : InteractiveProgressStatus.TRIED;
         LearnerInteractiveProgress progress = findOrCreateProgress(userId, course, subTopic);
-        progress.recordAttempt(nextStatus);
-        LearnerInteractiveProgress saved = progressRepository.save(progress);
+        LearnerInteractiveProgress saved = recordAttemptAndAward(userId, progress, nextStatus);
         return new LogicAttemptResponse(
                 requiredSubTopicId,
                 kind,
@@ -193,8 +197,7 @@ public class LearnerCourseService {
                 ? InteractiveProgressStatus.MASTERED
                 : InteractiveProgressStatus.TRIED;
         LearnerInteractiveProgress progress = findOrCreateProgress(userId, course, subTopic);
-        progress.recordAttempt(nextStatus);
-        LearnerInteractiveProgress saved = progressRepository.save(progress);
+        LearnerInteractiveProgress saved = recordAttemptAndAward(userId, progress, nextStatus);
         return new InteractiveAttemptResponse(
                 requiredSubTopicId,
                 subTopic.getInteractionType(),
@@ -241,6 +244,17 @@ public class LearnerCourseService {
                         course,
                         subTopic
                 ));
+    }
+
+    private LearnerInteractiveProgress recordAttemptAndAward(
+            UUID userId, LearnerInteractiveProgress progress, InteractiveProgressStatus nextStatus) {
+        boolean wasAlreadyMastered = progress.getStatus() == InteractiveProgressStatus.MASTERED;
+        progress.recordAttempt(nextStatus);
+        LearnerInteractiveProgress saved = progressRepository.save(progress);
+        if (!wasAlreadyMastered && saved.getStatus() == InteractiveProgressStatus.MASTERED) {
+            gamificationService.recordSubtopicCompletion(userId, SUBTOPIC_MASTERY_BASE_EXP);
+        }
+        return saved;
     }
 
     private List<SubTopic> interactiveSubTopics(Course course) {

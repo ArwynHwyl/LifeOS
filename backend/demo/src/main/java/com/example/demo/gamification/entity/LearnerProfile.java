@@ -60,9 +60,12 @@ public class LearnerProfile extends BaseTimestampEntity {
     protected LearnerProfile() {
     }
 
+    // userId is intentionally left null here — it must stay null until Hibernate derives it
+    // from `user` via @MapsId during persist(). Setting it eagerly makes Spring Data's isNew()
+    // check treat this transient entity as existing, so save() calls merge() instead of
+    // persist() and Hibernate throws AssertionFailure: null identifier.
     public LearnerProfile(User user) {
         this.user = user;
-        this.userId = user.getUserId();
     }
 
     public UUID getUserId() {

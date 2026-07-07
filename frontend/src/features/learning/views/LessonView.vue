@@ -14,7 +14,10 @@ import {
   type PublishedCourseDetailDto,
   type PublishedSubTopicDto,
 } from '@/features/learning/services/learnerCourses'
+import { useGamificationStore } from '@/features/gamified/stores/gamification'
 import toraMascotUrl from '@/assets/tora-mascot.svg'
+
+const gamificationStore = useGamificationStore()
 
 const route = useRoute()
 const router = useRouter()
@@ -208,6 +211,9 @@ async function persistInteractiveProgress(status: Exclude<InteractiveProgressSta
   try {
     const saved = await updateInteractiveProgress(String(route.params.courseId), current.id, status)
     setSubTopicProgress(current.id, saved)
+    if (saved.status === 'MASTERED') {
+      void gamificationStore.fetchProfile()
+    }
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Unable to save challenge progress.'
   }
@@ -264,6 +270,9 @@ async function persistServerGradedAttempt(payload: InteractiveAttemptRequest) {
       masteredAt: saved.masteredAt,
       updatedAt: saved.updatedAt,
     })
+    if (saved.status === 'MASTERED') {
+      void gamificationStore.fetchProfile()
+    }
   } catch (err) {
     interactiveServerFeedback.value = ''
     error.value = err instanceof Error ? err.message : 'Unable to submit logic attempt.'

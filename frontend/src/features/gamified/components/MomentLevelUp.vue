@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import LmIcon from './LmIcon.vue'
+import LmIcon from '../../learning/components/LmIcon.vue'
 defineEmits<{ close: [] }>()
 </script>
 

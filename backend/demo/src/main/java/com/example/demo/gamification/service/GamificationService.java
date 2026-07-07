@@ -297,6 +297,7 @@ public class GamificationService {
         return userAchievementRepository.findByUserUserId(userId);
     }
 
+    @Transactional(readOnly = true)
     public LearnerProfileSummaryDto getProfileSummary(UUID userId) {
         LearnerProfile profile = getOrCreateProfile(userId);
         List<LevelDefinition> levels = levelDefinitionRepository.findAllByOrderByLevelAsc();
@@ -325,6 +326,7 @@ public class GamificationService {
         );
     }
 
+    @Transactional(readOnly = true)
     public List<LevelRoadmapEntryDto> getLevelRoadmapDto(UUID userId) {
         LearnerProfile profile = getOrCreateProfile(userId);
         return getLevelRoadmap().stream()
@@ -339,6 +341,7 @@ public class GamificationService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<AchievementDto> getAchievementCatalogDto(UUID userId) {
         Map<Long, Instant> unlockedAtById = getUnlockedAchievements(userId).stream()
                 .collect(Collectors.toMap(ua -> ua.getAchievement().getId(), UserAchievement::getUnlockedAt));
@@ -356,6 +359,7 @@ public class GamificationService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<PendingLearnerEventDto> getPendingEventDtos(UUID userId) {
         return getPendingEvents(userId).stream()
                 .map(event -> new PendingLearnerEventDto(
@@ -370,6 +374,7 @@ public class GamificationService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<DailyActivityDto> getRecentActivityDto(UUID userId, int days) {
         LocalDate today = LocalDate.now();
         LocalDate start = today.minusDays(days - 1L);

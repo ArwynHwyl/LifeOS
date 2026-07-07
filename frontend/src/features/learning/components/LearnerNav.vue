@@ -2,24 +2,25 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import LmIcon from './LmIcon.vue'
+import { useGamificationStore } from '@/features/gamified/stores/gamification'
 
-const props = withDefaults(defineProps<{
+withDefaults(defineProps<{
   active?: 'courses' | 'flashcards' | 'dashboard'
-  level?: number
-  exp?: number
-  expMax?: number
-  streak?: number
-  shields?: number
 }>(), {
   active: 'courses',
-  level: 12,
-  exp: 340,
-  expMax: 500,
-  streak: 7,
-  shields: 2,
 })
 
 const router = useRouter()
+const gamificationStore = useGamificationStore()
+
+const level = computed(() => gamificationStore.profile?.level ?? 1)
+const currentExp = computed(() => gamificationStore.profile?.currentExp ?? 0)
+const expRequiredForNextLevel = computed(() => gamificationStore.profile?.expRequiredForNextLevel ?? 100)
+const expProgressPercent = computed(() =>
+  expRequiredForNextLevel.value <= 0 ? 100 : (currentExp.value / expRequiredForNextLevel.value) * 100,
+)
+const streak = computed(() => gamificationStore.profile?.currentStreak ?? 0)
+const shields = computed(() => gamificationStore.profile?.currentShield ?? 0)
 
 const tabs: { id: 'courses' | 'flashcards' | 'dashboard'; label: string; icon: 'book' | 'card' | 'user' }[] = [
   { id: 'courses',    label: 'Courses',    icon: 'book' },
@@ -109,7 +110,7 @@ function logout() {
       <div class="flex flex-col gap-0.5">
         <span class="font-mono text-[9px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3 leading-none">LEVEL</span>
         <div class="w-16 h-1.5 bg-lm-bg-soft rounded-full overflow-hidden border border-lm-line">
-          <div class="h-full bg-lm-yellow transition-all duration-200" :style="{ width: `${(exp / expMax) * 100}%` }" />
+          <div class="h-full bg-lm-yellow transition-all duration-200" :style="{ width: `${expProgressPercent}%` }" />
         </div>
       </div>
     </div>
