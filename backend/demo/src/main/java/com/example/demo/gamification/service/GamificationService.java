@@ -1,6 +1,7 @@
 package com.example.demo.gamification.service;
 
 import com.example.demo.gamification.dto.AchievementDto;
+import com.example.demo.gamification.dto.DailyActivityDto;
 import com.example.demo.gamification.dto.LearnerProfileSummaryDto;
 import com.example.demo.gamification.dto.LevelRoadmapEntryDto;
 import com.example.demo.gamification.dto.PendingLearnerEventDto;
@@ -367,5 +368,23 @@ public class GamificationService {
                         event.getCreatedAt()
                 ))
                 .toList();
+    }
+
+    public List<DailyActivityDto> getRecentActivityDto(UUID userId, int days) {
+        LocalDate today = LocalDate.now();
+        LocalDate start = today.minusDays(days - 1L);
+        Map<LocalDate, DailyLearningActivity> byDate = dailyLearningActivityRepository
+                .findByUserUserIdAndActivityDateBetweenOrderByActivityDateAsc(userId, start, today)
+                .stream()
+                .collect(Collectors.toMap(DailyLearningActivity::getActivityDate, activity -> activity));
+
+        List<DailyActivityDto> result = new ArrayList<>();
+        for (LocalDate date = start; !date.isAfter(today); date = date.plusDays(1)) {
+            DailyLearningActivity activity = byDate.get(date);
+            int completed = activity != null ? activity.getSubtopicsCompleted() : 0;
+            int expEarned = activity != null ? activity.getExpEarned() : 0;
+            result.add(new DailyActivityDto(date, completed, expEarned));
+        }
+        return result;
     }
 }

@@ -1,6 +1,7 @@
 package com.example.demo.gamification.controller;
 
 import com.example.demo.gamification.dto.AchievementDto;
+import com.example.demo.gamification.dto.DailyActivityDto;
 import com.example.demo.gamification.dto.LearnerProfileSummaryDto;
 import com.example.demo.gamification.dto.LevelRoadmapEntryDto;
 import com.example.demo.gamification.dto.PendingLearnerEventDto;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -50,5 +52,13 @@ public class LearnerGamificationController {
     @PostMapping("/notifications/{eventId}/ack")
     public void acknowledgeNotification(@AuthenticationPrincipal User user, @PathVariable Long eventId) {
         gamificationService.acknowledgeEvent(CurrentUser.id(user), eventId);
+    }
+
+    @GetMapping("/activity")
+    public List<DailyActivityDto> getRecentActivity(
+            @AuthenticationPrincipal User user,
+            @RequestParam(defaultValue = "7") int days
+    ) {
+        return gamificationService.getRecentActivityDto(CurrentUser.id(user), days);
     }
 }
