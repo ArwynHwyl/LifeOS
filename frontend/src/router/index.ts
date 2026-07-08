@@ -73,15 +73,15 @@ const router = createRouter({
         },
         {
           path: 'flashcards',
-          component: () => import('@/features/learning/views/FlashcardsView.vue'),
+          component: () => import('@/features/flashcards/views/FlashcardsView.vue'),
         },
         {
           path: 'flashcards/srs',
-          component: () => import('@/features/learning/views/FlashcardsSRSView.vue'),
+          component: () => import('@/features/flashcards/views/FlashcardsSRSView.vue'),
         },
         {
           path: 'flashcards/set/:deckId',
-          component: () => import('@/features/learning/views/FlashcardsSetView.vue'),
+          component: () => import('@/features/flashcards/views/FlashcardsSetView.vue'),
         },
         {
           path: 'dashboard',
