@@ -5,7 +5,7 @@ import LmIcon from './LmIcon.vue'
 import { useGamificationStore } from '@/features/gamified/stores/gamification'
 
 withDefaults(defineProps<{
-  active?: 'courses' | 'flashcards' | 'dashboard'
+  active?: 'courses' | 'assessments' | 'flashcards' | 'dashboard'
 }>(), {
   active: 'courses',
 })
@@ -22,13 +22,14 @@ const expProgressPercent = computed(() =>
 const streak = computed(() => gamificationStore.profile?.currentStreak ?? 0)
 const shields = computed(() => gamificationStore.profile?.currentShield ?? 0)
 
-const tabs: { id: 'courses' | 'flashcards' | 'dashboard'; label: string; icon: 'book' | 'card' | 'user' }[] = [
-  { id: 'courses',    label: 'Courses',    icon: 'book' },
-  { id: 'flashcards', label: 'Flashcards', icon: 'card' },
-  { id: 'dashboard',  label: 'Dashboard',  icon: 'user' },
+const tabs: { id: 'courses' | 'assessments' | 'flashcards' | 'dashboard'; label: string; icon: 'book' | 'check' | 'card' | 'user' }[] = [
+  { id: 'courses',     label: 'Courses',     icon: 'book' },
+  { id: 'assessments', label: 'Assessments', icon: 'check' },
+  { id: 'flashcards',  label: 'Flashcards',  icon: 'card' },
+  { id: 'dashboard',   label: 'Dashboard',   icon: 'user' },
 ]
 
-function navigate(id: 'courses' | 'flashcards' | 'dashboard') {
+function navigate(id: 'courses' | 'assessments' | 'flashcards' | 'dashboard') {
   router.push(`/learn/${id}`)
 }
 

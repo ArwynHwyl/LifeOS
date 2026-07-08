@@ -9,8 +9,9 @@ import { useGamificationStore } from '@/features/gamified/stores/gamification'
 const route = useRoute()
 const gamificationStore = useGamificationStore()
 
-const activeTab = computed<'courses' | 'flashcards' | 'dashboard'>(() => {
+const activeTab = computed<'courses' | 'assessments' | 'flashcards' | 'dashboard'>(() => {
   const path = route.path
+  if (path.includes('/assessments')) return 'assessments'
   if (path.includes('/flashcards')) return 'flashcards'
   if (path.includes('/dashboard') || path.includes('/levels')) return 'dashboard'
   return 'courses'

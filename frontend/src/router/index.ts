@@ -72,6 +72,14 @@ const router = createRouter({
           component: () => import('@/features/learning/views/LessonView.vue'),
         },
         {
+          path: 'assessments',
+          component: () => import('@/features/assessments/views/AssessmentsView.vue'),
+        },
+        {
+          path: 'assessments/:assessmentId',
+          component: () => import('@/features/assessments/views/AssessmentTakeView.vue'),
+        },
+        {
           path: 'flashcards',
           component: () => import('@/features/flashcards/views/FlashcardsView.vue'),
         },
