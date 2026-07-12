@@ -1,0 +1,9 @@
+package com.example.demo.assessment.dto;
+
+import jakarta.validation.constraints.NotNull;
+
+public record AnswerSubmission(
+        @NotNull Long questionId,
+        Long selectedOptionId
+) {
+}

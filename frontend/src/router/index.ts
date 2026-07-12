@@ -72,20 +72,32 @@ const router = createRouter({
           component: () => import('@/features/learning/views/LessonView.vue'),
         },
         {
+          path: 'assessments',
+          component: () => import('@/features/assessments/views/AssessmentsView.vue'),
+        },
+        {
+          path: 'assessments/:assessmentId',
+          component: () => import('@/features/assessments/views/AssessmentTakeView.vue'),
+        },
+        {
           path: 'flashcards',
-          component: () => import('@/features/learning/views/FlashcardsView.vue'),
+          component: () => import('@/features/flashcards/views/FlashcardsView.vue'),
         },
         {
           path: 'flashcards/srs',
-          component: () => import('@/features/learning/views/FlashcardsSRSView.vue'),
+          component: () => import('@/features/flashcards/views/FlashcardsSRSView.vue'),
         },
         {
           path: 'flashcards/set/:deckId',
-          component: () => import('@/features/learning/views/FlashcardsSetView.vue'),
+          component: () => import('@/features/flashcards/views/FlashcardsSetView.vue'),
         },
         {
           path: 'dashboard',
-          component: () => import('@/features/learning/views/DashboardView.vue'),
+          component: () => import('@/features/gamified/views/DashboardView.vue'),
+        },
+        {
+          path: 'levels',
+          component: () => import('@/features/gamified/views/LevelRoadmapView.vue'),
         },
       ],
     },

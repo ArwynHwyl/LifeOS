@@ -27,6 +27,7 @@ import com.example.demo.course.dto.interactive.request.InteractiveProgressUpdate
 import com.example.demo.course.dto.interactive.request.LogicAttemptRequest;
 import com.example.demo.course.dto.interactive.response.LogicAttemptResponse;
 import com.example.demo.course.dto.interactive.response.PublishedCourseDetailDto;
+import com.example.demo.gamification.service.GamificationService;
 import com.example.demo.user.entity.User;
 import com.example.demo.user.entity.UserRole;
 import com.example.demo.user.entity.UserStatus;
@@ -73,6 +74,9 @@ class LearnerCourseServiceTests {
 
     @Mock
     private MathExpressionService mathExpressionService;
+
+    @Mock
+    private GamificationService gamificationService;
 
     @InjectMocks
     private LearnerCourseService service;
@@ -234,7 +238,8 @@ class LearnerCourseServiceTests {
                 validator,
                 new ObjectMapper(),
                 new LogicExpressionService(),
-                new MathExpressionService()
+                new MathExpressionService(),
+                gamificationService
         );
         when(validator.requiredId(1L, "courseId")).thenReturn(1L);
         when(validator.requiredId(11L, "subTopicId")).thenReturn(11L);
@@ -271,7 +276,8 @@ class LearnerCourseServiceTests {
                 validator,
                 new ObjectMapper(),
                 new LogicExpressionService(),
-                new MathExpressionService()
+                new MathExpressionService(),
+                gamificationService
         );
         when(validator.requiredId(1L, "courseId")).thenReturn(1L);
         when(validator.requiredId(11L, "subTopicId")).thenReturn(11L);
@@ -318,7 +324,8 @@ class LearnerCourseServiceTests {
                 validator,
                 new ObjectMapper(),
                 new LogicExpressionService(),
-                new MathExpressionService()
+                new MathExpressionService(),
+                gamificationService
         );
         when(validator.requiredId(1L, "courseId")).thenReturn(1L);
         when(validator.requiredId(11L, "subTopicId")).thenReturn(11L);
