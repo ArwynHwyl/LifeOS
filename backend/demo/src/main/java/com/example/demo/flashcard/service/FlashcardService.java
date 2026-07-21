@@ -105,7 +105,7 @@ public class FlashcardService {
 
         Pageable pageable = PageRequest.of(page, size);
         Page<LearnerFlashcardSrsCard> duePage = srsCardRepository
-                .findByUserUserIdAndDueAtLessThanEqualOrderByDueAtAsc(userId, now, pageable);
+                .findByUserUserIdAndDueAtLessThanEqualOrderByDueAtAscIdAsc(userId, now, pageable);
 
         long totalTracked = srsCardRepository.countByUserUserId(userId);
         long totalDueLaterToday = srsCardRepository.countByUserUserIdAndDueAtBetween(userId, now, endOfToday);
@@ -118,7 +118,7 @@ public class FlashcardService {
     public List<SrsCardDto> getDueSessionCards(UUID userId) {
         syncSrsQueueForUser(userId);
         Instant now = Instant.now();
-        return srsCardRepository.findByUserUserIdAndDueAtLessThanEqualOrderByDueAtAsc(userId, now).stream()
+        return srsCardRepository.findByUserUserIdAndDueAtLessThanEqualOrderByDueAtAscIdAsc(userId, now).stream()
                 .map(this::toSrsCardDto)
                 .toList();
     }

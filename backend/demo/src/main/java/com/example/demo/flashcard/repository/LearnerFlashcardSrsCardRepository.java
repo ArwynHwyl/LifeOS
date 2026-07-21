@@ -23,8 +23,8 @@ public interface LearnerFlashcardSrsCardRepository extends JpaRepository<Learner
 
     long countByUserUserIdAndDueAtBetween(UUID userId, Instant start, Instant end);
 
-    List<LearnerFlashcardSrsCard> findByUserUserIdAndDueAtLessThanEqualOrderByDueAtAsc(UUID userId, Instant now);
+    List<LearnerFlashcardSrsCard> findByUserUserIdAndDueAtLessThanEqualOrderByDueAtAscIdAsc(UUID userId, Instant now);
 
-    Page<LearnerFlashcardSrsCard> findByUserUserIdAndDueAtLessThanEqualOrderByDueAtAsc(
+    Page<LearnerFlashcardSrsCard> findByUserUserIdAndDueAtLessThanEqualOrderByDueAtAscIdAsc(
             UUID userId, Instant now, Pageable pageable);
 }
