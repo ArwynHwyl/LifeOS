@@ -3,6 +3,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import InteractiveChallengeShell from '@/features/courses/components/interactive/InteractiveChallengeShell.vue'
 import InteractivePreview from '@/features/courses/components/interactive/InteractivePreview.vue'
+import LearningAssistantPanel from '@/features/learning/components/LearningAssistantPanel.vue'
 import { parseInteractiveConfig } from '@/features/courses/types/interactive'
 import {
   getPublishedCourse,
@@ -30,6 +31,9 @@ const interactiveServerFeedback = ref('')
 const canvasEl = ref<HTMLElement | null>(null)
 const showMasteryFlash = ref(false)
 const contentTransitionDir = ref<'next' | 'prev'>('next')
+const assistantOpen = ref(false)
+const assistantSelectedText = ref('')
+const selectionButton = ref<{ x: number; y: number } | null>(null)
 
 const allSubTopics = computed(() => course.value?.modules.flatMap((module) => module.subTopics) ?? [])
 const selectedSubTopic = computed(() => {
@@ -136,10 +140,46 @@ function handleKeydown(e: KeyboardEvent) {
 }
 
 watch(selectedSubTopicId, () => {
+  clearAssistantSelection()
   nextTick(() => {
     if (canvasEl.value) canvasEl.value.scrollTop = 0
   })
 })
+
+function captureLessonSelection() {
+  const selection = window.getSelection()
+  const text = selection?.toString().replace(/\s+/g, ' ').trim() ?? ''
+  if (!selection || selection.rangeCount === 0 || !text || text.length > 2000) {
+    selectionButton.value = null
+    return
+  }
+  const range = selection.getRangeAt(0)
+  const container = range.commonAncestorContainer.nodeType === Node.TEXT_NODE
+    ? range.commonAncestorContainer.parentElement
+    : range.commonAncestorContainer as HTMLElement
+  if (!container?.closest('.lesson-body')) {
+    selectionButton.value = null
+    return
+  }
+  const rect = range.getBoundingClientRect()
+  assistantSelectedText.value = text
+  selectionButton.value = {
+    x: Math.min(window.innerWidth - 110, Math.max(10, rect.left + rect.width / 2 - 48)),
+    y: Math.max(10, rect.top - 46),
+  }
+}
+
+function askAboutSelection() {
+  assistantOpen.value = true
+  selectionButton.value = null
+  window.getSelection()?.removeAllRanges()
+}
+
+function clearAssistantSelection() {
+  assistantSelectedText.value = ''
+  selectionButton.value = null
+  window.getSelection()?.removeAllRanges()
+}
 
 function selectSubTopic(subTopic: PublishedSubTopicDto) {
   const idx = allSubTopics.value.findIndex((s) => s.id === subTopic.id)
@@ -395,14 +435,14 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
             </div>
             <div class="lesson-mascot">
               <p>{{ mascotPrompt }}</p>
-              <div class="lesson-mascot__avatar">
+              <button class="lesson-mascot__avatar" type="button" aria-label="Ask Tora about this lesson" @click="assistantOpen = true">
                 <img :src="toraMascotUrl" alt="" />
-              </div>
+              </button>
             </div>
           </header>
 
           <!-- Lesson body — open flow, no box wrapper -->
-          <section class="lesson-body" v-html="selectedLessonHtml" />
+          <section class="lesson-body" @mouseup="captureLessonSelection" v-html="selectedLessonHtml" />
 
           <InteractiveChallengeShell
             v-if="selectedSubTopic.interactionType !== 'NONE'"
@@ -460,6 +500,25 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
           </div>
         </article>
       </Transition>
+
+      <button
+        v-if="selectionButton"
+        type="button"
+        class="selection-ask-button"
+        :style="{ left: `${selectionButton.x}px`, top: `${selectionButton.y}px` }"
+        @click.stop="askAboutSelection"
+      >
+        Ask Tora
+      </button>
+
+      <LearningAssistantPanel
+        v-if="selectedSubTopic"
+        v-model:open="assistantOpen"
+        :course-id="String(route.params.courseId)"
+        :sub-topic-id="selectedSubTopic.id"
+        :selected-text="assistantSelectedText"
+        @clear-selection="clearAssistantSelection"
+      />
     </section>
   </main>
 </template>
@@ -615,6 +674,19 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
 }
 .lesson-state--error {
   color: #8c3322;
+}
+.selection-ask-button {
+  position: fixed;
+  z-index: 120;
+  border: 2px solid #1d1b17;
+  border-radius: 999px;
+  background: #ffd333;
+  padding: 0.4rem 0.75rem;
+  color: #1d1b17;
+  font-size: 0.7rem;
+  font-weight: 950;
+  box-shadow: 2px 3px 0 #1d1b17;
+  cursor: pointer;
 }
 
 .lesson-canvas {
@@ -841,6 +913,7 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   background: #ffd333;
   padding: 4px;
   box-shadow: 2px 2px 0px 0px #1d1b17;
+  cursor: pointer;
 }
 .lesson-mascot__avatar img {
   width: 100%;
