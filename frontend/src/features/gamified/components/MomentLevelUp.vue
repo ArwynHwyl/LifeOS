@@ -1,6 +1,27 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import LmIcon from '../../learning/components/LmIcon.vue'
+
+const props = withDefaults(defineProps<{
+  fromLevel: number
+  toLevel: number
+  rankName?: string
+  currentExp?: number
+  expRequiredForNextLevel?: number
+  shieldMax?: number
+}>(), {
+  rankName: '',
+  currentExp: 0,
+  expRequiredForNextLevel: 0,
+  shieldMax: 0,
+})
+
 defineEmits<{ close: [] }>()
+
+const xpPercent = computed(() => {
+  if (props.expRequiredForNextLevel <= 0) return 100
+  return Math.min(100, Math.round((props.currentExp / props.expRequiredForNextLevel) * 100))
+})
 </script>
 
 <template>
@@ -33,26 +54,26 @@ defineEmits<{ close: [] }>()
 
       <!-- Level transition -->
       <div class="relative flex items-center gap-[22px]">
-        <div class="w-[84px] h-[84px] rounded-full bg-lm-surface border-2 border-lm-line flex items-center justify-center font-display font-bold text-[36px] text-lm-ink-3 opacity-55">12</div>
+        <div class="w-[84px] h-[84px] rounded-full bg-lm-surface border-2 border-lm-line flex items-center justify-center font-display font-bold text-[36px] text-lm-ink-3 opacity-55">{{ fromLevel }}</div>
         <span class="font-display text-[38px] text-lm-ink">→</span>
         <div class="relative w-[116px] h-[116px] rounded-full bg-lm-ink border-[3px] border-lm-line shadow-stamp-md flex items-center justify-center font-display font-bold text-[52px] text-lm-bg">
-          13
+          {{ toLevel }}
           <span class="absolute -top-2.5 -right-1 text-[22px] text-lm-yellow">✦</span>
           <span class="absolute bottom-0.5 -left-3.5 text-[16px] text-lm-rust">✦</span>
           <span class="absolute top-4 -left-5 text-[13px] text-lm-bg">✧</span>
         </div>
       </div>
 
-      <h2 class="relative font-display text-[30px] font-bold tracking-tight text-lm-ink m-0">You reached Level 13!</h2>
+      <h2 class="relative font-display text-[30px] font-bold tracking-tight text-lm-ink m-0">You reached Level {{ toLevel }}!</h2>
 
       <!-- XP bar -->
       <div class="relative w-4/5">
         <div class="h-4 bg-lm-surface rounded-full overflow-hidden border border-lm-line">
-          <div class="h-full bg-lm-ink" style="width: 100%" />
+          <div class="h-full bg-lm-ink" :style="{ width: xpPercent + '%' }" />
         </div>
         <div class="flex justify-between mt-1.5">
-          <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-2">500 / 500 XP</span>
-          <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-2">NEXT: 600 XP</span>
+          <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-2">{{ currentExp }} / {{ expRequiredForNextLevel }} XP</span>
+          <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-2">NEXT LEVEL: {{ toLevel + 1 }}</span>
         </div>
       </div>
 
@@ -60,9 +81,8 @@ defineEmits<{ close: [] }>()
       <div class="relative w-[88%] bg-lm-surface border-2 border-dashed border-lm-line rounded-[18px] p-3.5 text-left">
         <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3">UNLOCKED</span>
         <ul class="mt-1.5 ml-[18px] p-0 text-[14px] leading-relaxed text-lm-ink">
-          <li><strong>+1 shield</strong> (max is now ×3)</li>
-          <li><strong>Calculus 1</strong> course (intermediate)</li>
-          <li>New <strong>badge slot</strong></li>
+          <li><strong>Rank:</strong> {{ rankName }}</li>
+          <li><strong>Shield capacity</strong> ×{{ shieldMax }}</li>
         </ul>
       </div>
 

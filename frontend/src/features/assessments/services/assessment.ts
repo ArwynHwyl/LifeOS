@@ -1,4 +1,5 @@
 import api from '@/services/api'
+import type { GamificationRewardDto } from '@/features/gamified/services/gamification'
 
 export interface AssessmentSummaryDto {
   id: number
@@ -45,6 +46,7 @@ export interface AssessmentResultDto {
   percentage: number
   submittedAt: string
   questionResults: AssessmentQuestionResultDto[]
+  reward: GamificationRewardDto
 }
 
 export interface AssessmentDetailDto {

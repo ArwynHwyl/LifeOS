@@ -5,6 +5,7 @@ import java.util.Map;
 
 import com.example.demo.course.entity.InteractionType;
 import com.example.demo.course.entity.InteractiveProgressStatus;
+import com.example.demo.gamification.dto.GamificationRewardDto;
 
 public record InteractiveAttemptResponse(
         Long subTopicId,
@@ -15,7 +16,8 @@ public record InteractiveAttemptResponse(
         Instant masteredAt,
         Instant updatedAt,
         String feedback,
-        Map<String, Object> details
+        Map<String, Object> details,
+        GamificationRewardDto reward
 ) {
 }
 

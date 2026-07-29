@@ -29,6 +29,9 @@ const error = ref('')
 const interactiveServerFeedback = ref('')
 const canvasEl = ref<HTMLElement | null>(null)
 const showMasteryFlash = ref(false)
+const masteryExpAwarded = ref(0)
+const masteryLeveledUp = ref(false)
+const masteryNewLevel = ref(0)
 const contentTransitionDir = ref<'next' | 'prev'>('next')
 
 const allSubTopics = computed(() => course.value?.modules.flatMap((module) => module.subTopics) ?? [])
@@ -163,19 +166,28 @@ function progressMarkerClass(subTopic: PublishedSubTopicDto) {
   return 'progress-marker progress-marker--not-started'
 }
 
-function setSubTopicProgress(subTopicId: number, progress: InteractiveProgressDto) {
+function setSubTopicProgress(
+  subTopicId: number,
+  progress: InteractiveProgressDto,
+  options: { skipCelebration?: boolean; justMastered?: boolean } = {},
+) {
   if (!course.value) return
   /* ── Clever #4: Mastery celebration flash ── */
-  if (progress.status === 'MASTERED') {
-    const prev = course.value.modules
+  if (!options.skipCelebration && progress.status === 'MASTERED') {
+    const prevStatus = course.value.modules
       .flatMap((m) => m.subTopics)
       .find((s) => s.id === subTopicId)
       ?.interactiveProgress?.status
-    if (prev !== 'MASTERED') {
+    const justMastered = options.justMastered ?? prevStatus !== 'MASTERED'
+    if (justMastered) {
+      masteryExpAwarded.value = progress.reward?.expAwarded ?? 0
+      masteryLeveledUp.value = progress.reward?.leveledUp ?? false
+      masteryNewLevel.value = progress.reward?.newLevel ?? 0
       showMasteryFlash.value = true
       setTimeout(() => { showMasteryFlash.value = false }, 1600)
     }
   }
+  gamificationStore.handleReward(progress.reward)
   course.value = {
     ...course.value,
     modules: course.value.modules.map((module) => ({
@@ -199,7 +211,7 @@ function optimisticProgress(status: Exclude<InteractiveProgressStatus, 'NOT_STAR
     masteredAt: status === 'MASTERED' ? (existing?.masteredAt ?? new Date().toISOString()) : (existing?.masteredAt ?? null),
     updatedAt: new Date().toISOString(),
   }
-  setSubTopicProgress(current.id, next)
+  setSubTopicProgress(current.id, next, { skipCelebration: true })
   return next
 }
 
@@ -207,13 +219,11 @@ async function persistInteractiveProgress(status: Exclude<InteractiveProgressSta
   const current = selectedSubTopic.value
   if (!current) return
   if (current.interactiveProgress?.status === 'MASTERED' && status === 'TRIED') return
+  const wasAlreadyMastered = current.interactiveProgress?.status === 'MASTERED'
   optimisticProgress(status)
   try {
     const saved = await updateInteractiveProgress(String(route.params.courseId), current.id, status)
-    setSubTopicProgress(current.id, saved)
-    if (saved.status === 'MASTERED') {
-      void gamificationStore.fetchProfile()
-    }
+    setSubTopicProgress(current.id, saved, { justMastered: !wasAlreadyMastered })
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Unable to save challenge progress.'
   }
@@ -269,10 +279,8 @@ async function persistServerGradedAttempt(payload: InteractiveAttemptRequest) {
       attemptCount: saved.attemptCount,
       masteredAt: saved.masteredAt,
       updatedAt: saved.updatedAt,
+      reward: saved.reward,
     })
-    if (saved.status === 'MASTERED') {
-      void gamificationStore.fetchProfile()
-    }
   } catch (err) {
     interactiveServerFeedback.value = ''
     error.value = err instanceof Error ? err.message : 'Unable to submit logic attempt.'
@@ -377,6 +385,10 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
             <circle cx="32" cy="32" r="28" stroke="#245e3e" stroke-width="3" fill="#dff4df" />
             <polyline points="20 33 28 41 44 25" stroke="#245e3e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
+          <div v-if="masteryExpAwarded > 0" class="mastery-exp">
+            <span class="mastery-exp__amount">+{{ masteryExpAwarded }} XP</span>
+            <span v-if="masteryLeveledUp" class="mastery-exp__levelup">LEVEL UP! → {{ masteryNewLevel }}</span>
+          </div>
         </div>
       </Transition>
 
@@ -944,6 +956,34 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   0% { transform: scale(0); opacity: 0; }
   50% { transform: scale(1.15); opacity: 1; }
   100% { transform: scale(1); opacity: 1; }
+}
+.mastery-exp {
+  position: absolute;
+  margin-top: 92px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  animation: exp-rise 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.mastery-exp__amount {
+  font-weight: 700;
+  font-size: 20px;
+  color: #245e3e;
+  text-shadow: 0 2px 8px rgba(36, 94, 62, 0.2);
+}
+.mastery-exp__levelup {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #b45309;
+}
+@keyframes exp-rise {
+  0% { transform: translateY(8px); opacity: 0; }
+  25% { transform: translateY(0); opacity: 1; }
+  80% { transform: translateY(-4px); opacity: 1; }
+  100% { transform: translateY(-14px); opacity: 0; }
 }
 .mastery-flash-enter-active { transition: opacity 200ms ease; }
 .mastery-flash-leave-active { transition: opacity 600ms ease; }

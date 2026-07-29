@@ -18,12 +18,11 @@ import org.springframework.context.annotation.Profile;
 @Profile("dev")
 public class GamificationSeedConfig {
 
-    private static final int MAX_SEEDED_LEVEL = 30;
-    private static final int LEVELS_PER_RANK = 5;
-    private static final int LEVELS_PER_SHIELD = 5;
+    private static final int MAX_SEEDED_LEVEL = 12;
+    private static final int LEVELS_PER_RANK = 3;
 
     private static final String[] RANK_NAMES = {
-            "Newcomer", "Apprentice", "Scholar", "Strategist", "Virtuoso", "Master"
+            "Newcomer", "Scholar", "Strategist", "Master"
     };
 
     @Bean
@@ -47,21 +46,19 @@ public class GamificationSeedConfig {
         int cumulativeExp = 0;
         for (int level = 1; level <= MAX_SEEDED_LEVEL; level++) {
             if (level > 1) {
-                int expToReachFromPrevious = 150 + (level - 2) * 50;
+                int expToReachFromPrevious = 100 + (level - 2) * 40;
                 cumulativeExp += expToReachFromPrevious;
             }
-            String rankName = RANK_NAMES[Math.min((level - 1) / LEVELS_PER_RANK, RANK_NAMES.length - 1)];
-            int shieldMaxTotal = 1 + (level / LEVELS_PER_SHIELD);
+            int rankIndex = Math.min((level - 1) / LEVELS_PER_RANK, RANK_NAMES.length - 1);
+            String rankName = RANK_NAMES[rankIndex];
+            int shieldMaxTotal = rankIndex + 1;
             boolean isRankBandStart = level > 1 && (level - 1) % LEVELS_PER_RANK == 0;
-            boolean isShieldMilestone = level % LEVELS_PER_SHIELD == 0;
 
             String unlockDescription;
-            if (isRankBandStart) {
-                unlockDescription = "New rank: " + rankName + ".";
-            } else if (isShieldMilestone) {
-                unlockDescription = "+1 Streak Shield (max now " + shieldMaxTotal + ").";
-            } else if (level == 1) {
+            if (level == 1) {
                 unlockDescription = "Welcome! Start earning EXP to level up.";
+            } else if (isRankBandStart) {
+                unlockDescription = "New rank: " + rankName + ". Shield capacity now " + shieldMaxTotal + ".";
             } else {
                 unlockDescription = "Keep learning to reach level " + (level + 1) + ".";
             }
@@ -94,24 +91,36 @@ public class GamificationSeedConfig {
                         20, AchievementCriteriaType.FIRST_SUBTOPIC_COMPLETED, 1
                 ),
                 new AchievementDefinition(
+                        "ASSESSMENT_ROOKIE", "Assessment Rookie", "Score a perfect result on your first assessment", "B",
+                        15, AchievementCriteriaType.ASSESSMENT_PERFECT_COUNT, 1
+                ),
+                new AchievementDefinition(
+                        "FLASHCARD_STARTER", "Flashcard Starter", "Memorize your first flashcard", "σ",
+                        15, AchievementCriteriaType.FLASHCARDS_MEMORIZED_COUNT, 1
+                ),
+                new AchievementDefinition(
+                        "STREAK_STARTER", "Streak Starter", "Study 3 days in a row", "🔥",
+                        25, AchievementCriteriaType.STREAK_DAYS_REACHED, 3
+                ),
+                new AchievementDefinition(
                         "STREAK_7", "7-Day Streak", "Study 7 days in a row", "🔥",
                         50, AchievementCriteriaType.STREAK_DAYS_REACHED, 7
                 ),
                 new AchievementDefinition(
-                        "STREAK_30", "30-Day Streak", "Study 30 days in a row", "🔥",
-                        100, AchievementCriteriaType.STREAK_DAYS_REACHED, 30
+                        "RISING_STAR", "Rising Star", "Reach level 7 and become a Strategist", "🌟",
+                        60, AchievementCriteriaType.LEVEL_REACHED, 7
                 ),
                 new AchievementDefinition(
-                        "QUIZ_ACE", "Quiz Ace", "Perfect score on 5 quizzes", "A⁺",
-                        40, AchievementCriteriaType.QUIZ_PERFECT_COUNT, 5
+                        "ASSESSMENT_ACE", "Assessment Ace", "Perfect score on 5 assessments", "A⁺",
+                        40, AchievementCriteriaType.ASSESSMENT_PERFECT_COUNT, 5
                 ),
                 new AchievementDefinition(
                         "COURSE_COMPLETE", "Course Complete", "Master every subtopic in a course", "✓",
                         60, AchievementCriteriaType.COURSE_MASTERED_COUNT, 1
                 ),
                 new AchievementDefinition(
-                        "FLASHCARD_MASTER", "Flashcard Master", "Memorize 50 flashcards", "Σ",
-                        45, AchievementCriteriaType.FLASHCARDS_MEMORIZED_COUNT, 50
+                        "GRANDMASTER", "Grandmaster", "Reach level 12, the top of the roadmap", "♛",
+                        100, AchievementCriteriaType.LEVEL_REACHED, 12
                 )
         ));
     }

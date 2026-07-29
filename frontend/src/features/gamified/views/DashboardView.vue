@@ -237,7 +237,16 @@ const showShieldUsed   = ref(false)
     </div>
 
     <!-- Moment overlays (demo: fed with representative mock data, not live state) -->
-    <MomentLevelUp      v-if="showLevelUp"      @close="showLevelUp = false" />
+    <MomentLevelUp
+      v-if="showLevelUp"
+      :from-level="6"
+      :to-level="7"
+      rank-name="Strategist"
+      :current-exp="0"
+      :exp-required-for-next-level="340"
+      :shield-max="3"
+      @close="showLevelUp = false"
+    />
     <MomentStreakBroken v-if="showStreakBroken"  :streak-days-lost="7" :longest-streak="14" @close="showStreakBroken = false" />
     <MomentShieldUsed   v-if="showShieldUsed"    :streak-days="7" :shields-remaining="1" :shield-max="2" @close="showShieldUsed = false" />
   </main>
