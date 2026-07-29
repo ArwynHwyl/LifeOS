@@ -13,6 +13,7 @@ import com.example.demo.user.entity.UserRole;
 import com.example.demo.user.entity.UserStatus;
 import com.example.demo.user.repository.UserRepository;
 import com.example.demo.course.service.interactive.InteractiveConfigService;
+import java.util.List;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -82,6 +83,9 @@ public class DevSeedConfig {
             InteractiveConfigService interactiveConfigService,
             User admin
     ) {
+        if (referenceCoursesAlreadySeeded(courseRepository)) {
+            return;
+        }
         removeLegacyAggregateSeedCourse(courseRepository, progressRepository);
 
         Course matrixCourse = seedCourse(
@@ -1670,6 +1674,11 @@ public class DevSeedConfig {
                 conditionalLogicModule,
                 equivalenceModule
         );
+    }
+
+    private boolean referenceCoursesAlreadySeeded(CourseRepository courseRepository) {
+        return List.of("Matrix", "Probability", "Set", "Vector", "Logic").stream()
+                .allMatch(title -> !courseRepository.findByTitleOrderByCreatedAtAsc(title).isEmpty());
     }
 
     private Course seedCourse(
