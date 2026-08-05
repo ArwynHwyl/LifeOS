@@ -74,9 +74,11 @@ const xpToNextLevelLabel = computed(() => {
   return `${p.expRequiredForNextLevel - p.currentExp} XP TO LEVEL ${p.level + 1}`
 })
 
+const WEEKDAY_LABELS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
+
 const weekStrip = computed(() =>
   recentActivity.value.map((day) => ({
-    label: new Date(day.date).toLocaleDateString('en-US', { weekday: 'narrow' }),
+    label: WEEKDAY_LABELS[new Date(day.date).getDay()],
     active: day.subtopicsCompleted > 0,
   })),
 )
