@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
-@PreAuthorize("hasAnyRole('LEARNER', 'TEACHER', 'ADMIN')")
+@PreAuthorize("hasRole('LEARNER')")
 public class LearningAssistantController {
     private final LearningAssistantService service;
 
