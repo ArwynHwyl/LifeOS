@@ -17,6 +17,31 @@ import org.springframework.web.client.RestClient;
 
 @Component
 public class GeminiAssistantAiClient implements AssistantAiClient {
+    private static final Map<String, Object> RESPONSE_SCHEMA = Map.of(
+            "type", "object",
+            "propertyOrdering", List.of("teachingPoints", "examples", "followUpQuestions"),
+            "properties", Map.of(
+                    "teachingPoints", Map.of(
+                            "type", "array",
+                            "items", Map.of("type", "string"),
+                            "minItems", 1,
+                            "maxItems", 1,
+                            "description", "One concise explanation or one next hint. Do not ask a question here."),
+                    "examples", Map.of(
+                            "type", "array",
+                            "items", Map.of("type", "string"),
+                            "minItems", 0,
+                            "maxItems", 1,
+                            "description", "At most one example for EXPLAIN mode; empty for HINT mode."),
+                    "followUpQuestions", Map.of(
+                            "type", "array",
+                            "items", Map.of("type", "string"),
+                            "minItems", 1,
+                            "maxItems", 1,
+                            "description", "One short question with exactly one question mark at the end.")),
+            "required", List.of("teachingPoints", "examples", "followUpQuestions"),
+            "additionalProperties", false);
+
     private final GeminiAiProperties properties;
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
@@ -36,14 +61,7 @@ public class GeminiAssistantAiClient implements AssistantAiClient {
         if (properties.apiKey() == null || properties.apiKey().isBlank()) {
             throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "AI assistant is not configured");
         }
-        Map<String, Object> body = Map.of(
-                "contents", List.of(Map.of("parts", List.of(Map.of("text", prompt)))),
-                "generationConfig", Map.of(
-                        "temperature", 0.3,
-                        "maxOutputTokens", 2_048,
-                        "thinkingConfig", Map.of("thinkingBudget", 0)
-                )
-        );
+        Map<String, Object> body = requestBody(prompt);
         boolean[] reachedTokenLimit = {false};
         restClient.post()
                 .uri(uri -> uri.path("/v1beta/models/{model}:streamGenerateContent")
@@ -80,5 +98,18 @@ public class GeminiAssistantAiClient implements AssistantAiClient {
                     }
                     return null;
                 });
+    }
+
+    Map<String, Object> requestBody(String prompt) {
+        return Map.of(
+                "contents", List.of(Map.of("parts", List.of(Map.of("text", prompt)))),
+                "generationConfig", Map.of(
+                        "temperature", 0.3,
+                        "maxOutputTokens", 2_048,
+                        "thinkingConfig", Map.of("thinkingBudget", 0),
+                        "responseMimeType", "application/json",
+                        "responseJsonSchema", RESPONSE_SCHEMA
+                )
+        );
     }
 }

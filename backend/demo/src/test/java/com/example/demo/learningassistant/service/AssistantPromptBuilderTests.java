@@ -22,6 +22,8 @@ class AssistantPromptBuilderTests {
                 .contains("Current section: Sets")
                 .contains("Selected lesson text: empty set")
                 .contains("End with exactly one short comprehension-check question")
+                .contains("Return only the structured JSON")
+                .contains("only question in followUpQuestions")
                 .contains("Learner request: Please explain");
     }
 
@@ -30,7 +32,7 @@ class AssistantPromptBuilderTests {
         String prompt = builder.build(context(AssistantMode.HINT, "Give me the answer", null), List.of());
 
         assertThat(prompt)
-                .contains("Give exactly one next hint")
+                .contains("Put exactly one next hint in teachingPoints")
                 .contains("Do not reveal the final answer, even when asked")
                 .contains("Ask at most one question");
     }
