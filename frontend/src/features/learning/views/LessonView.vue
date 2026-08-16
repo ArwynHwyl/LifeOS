@@ -34,6 +34,7 @@ const contentTransitionDir = ref<'next' | 'prev'>('next')
 const assistantOpen = ref(false)
 const assistantSelectedText = ref('')
 const selectionButton = ref<{ x: number; y: number } | null>(null)
+const selectionNotice = ref<{ x: number; y: number; selectedLength: number } | null>(null)
 
 const allSubTopics = computed(() => course.value?.modules.flatMap((module) => module.subTopics) ?? [])
 const selectedSubTopic = computed(() => {
@@ -149,8 +150,10 @@ watch(selectedSubTopicId, () => {
 function captureLessonSelection() {
   const selection = window.getSelection()
   const text = selection?.toString().replace(/\s+/g, ' ').trim() ?? ''
-  if (!selection || selection.rangeCount === 0 || !text || text.length > 2000) {
+  if (!selection || selection.rangeCount === 0 || !text) {
+    assistantSelectedText.value = ''
     selectionButton.value = null
+    selectionNotice.value = null
     return
   }
   const range = selection.getRangeAt(0)
@@ -158,10 +161,23 @@ function captureLessonSelection() {
     ? range.commonAncestorContainer.parentElement
     : range.commonAncestorContainer as HTMLElement
   if (!container?.closest('.lesson-body')) {
+    assistantSelectedText.value = ''
     selectionButton.value = null
+    selectionNotice.value = null
     return
   }
   const rect = range.getBoundingClientRect()
+  if (text.length > 2000) {
+    assistantSelectedText.value = ''
+    selectionButton.value = null
+    selectionNotice.value = {
+      x: Math.min(window.innerWidth - 280, Math.max(10, rect.left + rect.width / 2 - 130)),
+      y: Math.max(10, rect.top - 64),
+      selectedLength: text.length,
+    }
+    return
+  }
+  selectionNotice.value = null
   assistantSelectedText.value = text
   selectionButton.value = {
     x: Math.min(window.innerWidth - 110, Math.max(10, rect.left + rect.width / 2 - 48)),
@@ -172,12 +188,14 @@ function captureLessonSelection() {
 function askAboutSelection() {
   assistantOpen.value = true
   selectionButton.value = null
+  selectionNotice.value = null
   window.getSelection()?.removeAllRanges()
 }
 
 function clearAssistantSelection() {
   assistantSelectedText.value = ''
   selectionButton.value = null
+  selectionNotice.value = null
   window.getSelection()?.removeAllRanges()
 }
 
@@ -511,6 +529,17 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
         Ask Tora
       </button>
 
+      <div
+        v-if="selectionNotice"
+        class="selection-limit-notice"
+        role="status"
+        aria-live="polite"
+        :style="{ left: `${selectionNotice.x}px`, top: `${selectionNotice.y}px` }"
+      >
+        <strong>Select 2,000 characters or fewer.</strong>
+        <span>{{ selectionNotice.selectedLength.toLocaleString() }} selected</span>
+      </div>
+
       <LearningAssistantPanel
         v-if="selectedSubTopic"
         v-model:open="assistantOpen"
@@ -687,6 +716,29 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   font-weight: 950;
   box-shadow: 2px 3px 0 #1d1b17;
   cursor: pointer;
+}
+.selection-limit-notice {
+  position: fixed;
+  z-index: 120;
+  display: grid;
+  width: 260px;
+  gap: 0.15rem;
+  border: 2px solid #1d1b17;
+  border-radius: 12px;
+  background: #fff0ed;
+  padding: 0.55rem 0.7rem;
+  color: #8c3322;
+  font-size: 0.68rem;
+  box-shadow: 2px 3px 0 #1d1b17;
+  pointer-events: none;
+}
+.selection-limit-notice strong {
+  font-weight: 950;
+}
+.selection-limit-notice span {
+  color: #6b6660;
+  font-size: 0.6rem;
+  font-weight: 800;
 }
 
 .lesson-canvas {
