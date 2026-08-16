@@ -36,6 +36,7 @@ const showWeaknesses = ref(false)
 const weaknessesLoaded = ref(false)
 const weaknessesLoading = ref(false)
 const weaknessesError = ref('')
+const feedbackPendingIds = ref(new Set<number>())
 const showSuggestions = ref(false)
 const messageList = ref<HTMLElement | null>(null)
 const composerInput = ref<HTMLTextAreaElement | null>(null)
@@ -191,11 +192,17 @@ async function send(payload: { message?: string; suggestionKey?: string; display
 }
 
 async function setFeedback(message: AssistantMessage, feedback: AssistantFeedback) {
+  if (feedbackPendingIds.value.has(message.id)) return
+  feedbackPendingIds.value.add(message.id)
   try {
     const result = await updateAssistantFeedback(message.id, feedback)
     message.feedback = result.feedback
+    weaknessesLoaded.value = false
+    if (showWeaknesses.value) await loadWeaknesses(true)
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Unable to save feedback.'
+  } finally {
+    feedbackPendingIds.value.delete(message.id)
   }
 }
 
@@ -270,9 +277,11 @@ async function scrollToBottom() {
               <span>Was this helpful?</span>
               <button :class="{ active: message.feedback === 'HELPFUL' }"
                 :aria-pressed="message.feedback === 'HELPFUL'"
+                :disabled="feedbackPendingIds.has(message.id)"
                 @click="setFeedback(message, 'HELPFUL')">Helpful</button>
               <button :class="{ active: message.feedback === 'NOT_UNDERSTOOD' }"
                 :aria-pressed="message.feedback === 'NOT_UNDERSTOOD'"
+                :disabled="feedbackPendingIds.has(message.id)"
                 @click="setFeedback(message, 'NOT_UNDERSTOOD')">Still unclear</button>
             </div>
           </div>
