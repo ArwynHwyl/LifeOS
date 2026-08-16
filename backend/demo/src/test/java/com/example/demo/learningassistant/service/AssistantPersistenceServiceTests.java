@@ -8,7 +8,8 @@ import com.example.demo.course.repository.CourseRepository;
 import com.example.demo.learningassistant.dto.AssistantDtos.*;
 import com.example.demo.learningassistant.entity.*;
 import com.example.demo.learningassistant.repository.*;
-import com.example.demo.shared.exception.AccessDeniedException;
+import com.example.demo.shared.exception.InvalidWorkflowStateException;
+import com.example.demo.shared.exception.ResourceNotFoundException;
 import com.example.demo.shared.exception.ValidationException;
 import com.example.demo.user.entity.*;
 import jakarta.persistence.EntityManager;
@@ -156,16 +157,65 @@ class AssistantPersistenceServiceTests {
     }
 
     @Test
-    void feedbackRejectsMessageOwnedByAnotherUser() {
-        User owner = new User("owner@example.com", "owner", "hash", "Own", "Er", UserRole.ROLE_LEARNER, UserStatus.VERIFY);
-        AssistantConversation conversation = conversation(owner);
-        AssistantMessage answer = new AssistantMessage(conversation, AssistantMessageRole.ASSISTANT,
-                AssistantMode.EXPLAIN, "Answer", null, null, AssistantMessageStatus.COMPLETED);
-        ReflectionTestUtils.setField(answer, "id", 60L);
-        when(messageRepository.findById(60L)).thenReturn(Optional.of(answer));
-
+    void feedbackDoesNotRevealAMessageOwnedByAnotherUser() {
+        when(messageRepository.findByIdAndConversationUserUserId(60L, learner.getUserId()))
+                .thenReturn(Optional.empty());
         assertThatThrownBy(() -> service.feedback(learner.getUserId(), 60L,
-                new FeedbackRequest(AssistantFeedback.HELPFUL))).isInstanceOf(AccessDeniedException.class);
+                new FeedbackRequest(AssistantFeedback.HELPFUL)))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("Assistant message not found: 60");
+        verify(messageRepository, never()).findById(60L);
+    }
+
+    @Test
+    void feedbackStoresHelpfulAndCanBeChangedWithoutCreatingARecord() {
+        AssistantMessage answer = message(conversation(learner), AssistantMessageRole.ASSISTANT,
+                "Answer", 60L, Instant.parse("2026-01-02T00:00:01Z"));
+        when(messageRepository.findByIdAndConversationUserUserId(60L, learner.getUserId()))
+                .thenReturn(Optional.of(answer));
+
+        FeedbackResponse first = service.feedback(learner.getUserId(), 60L,
+                new FeedbackRequest(AssistantFeedback.HELPFUL));
+        FeedbackResponse repeated = service.feedback(learner.getUserId(), 60L,
+                new FeedbackRequest(AssistantFeedback.HELPFUL));
+        FeedbackResponse changed = service.feedback(learner.getUserId(), 60L,
+                new FeedbackRequest(AssistantFeedback.NOT_UNDERSTOOD));
+
+        assertThat(first.feedback()).isEqualTo(AssistantFeedback.HELPFUL);
+        assertThat(repeated.feedback()).isEqualTo(AssistantFeedback.HELPFUL);
+        assertThat(changed.feedback()).isEqualTo(AssistantFeedback.NOT_UNDERSTOOD);
+        assertThat(answer.getFeedback()).isEqualTo(AssistantFeedback.NOT_UNDERSTOOD);
+        verify(messageRepository, never()).save(any());
+    }
+
+    @Test
+    void feedbackRejectsNonPositiveMessageIdBeforeQuerying() {
+        assertThatThrownBy(() -> service.feedback(learner.getUserId(), 0L,
+                new FeedbackRequest(AssistantFeedback.HELPFUL)))
+                .isInstanceOf(ValidationException.class)
+                .hasMessage("messageId must be positive");
+        verifyNoInteractions(messageRepository);
+    }
+
+    @Test
+    void feedbackRejectsLearnerAndIncompleteMessages() {
+        AssistantConversation conversation = conversation(learner);
+        AssistantMessage learnerMessage = message(conversation, AssistantMessageRole.USER,
+                "Question", 61L, Instant.parse("2026-01-02T00:00:01Z"));
+        AssistantMessage pendingAnswer = new AssistantMessage(conversation, AssistantMessageRole.ASSISTANT,
+                AssistantMode.EXPLAIN, "", null, null, AssistantMessageStatus.PENDING);
+        ReflectionTestUtils.setField(pendingAnswer, "id", 62L);
+        when(messageRepository.findByIdAndConversationUserUserId(61L, learner.getUserId()))
+                .thenReturn(Optional.of(learnerMessage));
+        when(messageRepository.findByIdAndConversationUserUserId(62L, learner.getUserId()))
+                .thenReturn(Optional.of(pendingAnswer));
+
+        assertThatThrownBy(() -> service.feedback(learner.getUserId(), 61L,
+                new FeedbackRequest(AssistantFeedback.HELPFUL)))
+                .isInstanceOf(InvalidWorkflowStateException.class);
+        assertThatThrownBy(() -> service.feedback(learner.getUserId(), 62L,
+                new FeedbackRequest(AssistantFeedback.HELPFUL)))
+                .isInstanceOf(InvalidWorkflowStateException.class);
     }
 
     @Test

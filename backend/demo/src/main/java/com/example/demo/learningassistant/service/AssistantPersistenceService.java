@@ -90,9 +90,9 @@ public class AssistantPersistenceService {
     @Transactional
     public FeedbackResponse feedback(UUID userId, Long messageId, FeedbackRequest request) {
         if (request == null || request.feedback() == null) throw new ValidationException("feedback is required");
-        AssistantMessage message = findMessage(messageId);
-        if (!message.getConversation().getUser().getUserId().equals(userId))
-            throw new AccessDeniedException("Assistant message does not belong to the current user");
+        if (messageId == null || messageId <= 0) throw new ValidationException("messageId must be positive");
+        AssistantMessage message = messageRepository.findByIdAndConversationUserUserId(messageId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Assistant message not found: " + messageId));
         if (message.getRole() != AssistantMessageRole.ASSISTANT || message.getStatus() != AssistantMessageStatus.COMPLETED)
             throw new InvalidWorkflowStateException("Feedback is only allowed for completed assistant messages");
         message.updateFeedback(request.feedback());
