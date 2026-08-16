@@ -74,6 +74,77 @@ class AssistantPersistenceServiceTests {
     }
 
     @Test
+    void openReusesOwnedConversationAndReturnsRepositoryOrder() {
+        AssistantConversation conversation = conversation(learner);
+        AssistantMessage first = message(conversation, AssistantMessageRole.USER, "First", 1L,
+                Instant.parse("2026-01-01T00:00:00Z"));
+        AssistantMessage second = message(conversation, AssistantMessageRole.ASSISTANT, "Second", 2L,
+                Instant.parse("2026-01-01T00:00:01Z"));
+        when(courseRepository.findById(10L)).thenReturn(Optional.of(course));
+        when(conversationRepository.findByUserUserIdAndSubTopicId(learner.getUserId(), 30L))
+                .thenReturn(Optional.of(conversation));
+        when(messageRepository.findByConversationIdOrderByCreatedAtAscIdAsc(40L))
+                .thenReturn(List.of(first, second));
+
+        ConversationDto result = service.open(learner.getUserId(), 10L, 30L);
+
+        assertThat(result.conversationId()).isEqualTo(40L);
+        assertThat(result.context().subTopicTitle()).isEqualTo("Sets");
+        assertThat(result.suggestions()).hasSize(5);
+        assertThat(result.messages()).extracting(MessageDto::content).containsExactly("First", "Second");
+        verify(conversationRepository, never()).save(any());
+    }
+
+    @Test
+    void openCreatesAnEmptyConversationWhenNoneExists() {
+        when(courseRepository.findById(10L)).thenReturn(Optional.of(course));
+        when(conversationRepository.findByUserUserIdAndSubTopicId(learner.getUserId(), 30L))
+                .thenReturn(Optional.empty());
+        when(entityManager.getReference(User.class, learner.getUserId())).thenReturn(learner);
+        when(conversationRepository.save(any())).thenAnswer(invocation -> {
+            AssistantConversation saved = invocation.getArgument(0);
+            ReflectionTestUtils.setField(saved, "id", 41L);
+            return saved;
+        });
+        when(messageRepository.findByConversationIdOrderByCreatedAtAscIdAsc(41L)).thenReturn(List.of());
+
+        ConversationDto result = service.open(learner.getUserId(), 10L, 30L);
+
+        assertThat(result.conversationId()).isEqualTo(41L);
+        assertThat(result.messages()).isEmpty();
+        verify(entityManager).getReference(User.class, learner.getUserId());
+    }
+
+    @Test
+    void submittedSuggestionCanContainLearnerEditedText() {
+        AssistantConversation conversation = conversation(learner);
+        when(courseRepository.findById(10L)).thenReturn(Optional.of(course));
+        when(conversationRepository.findByUserUserIdAndSubTopicId(learner.getUserId(), 30L))
+                .thenReturn(Optional.of(conversation));
+        when(messageRepository.findTop12ByConversationIdAndStatusOrderByCreatedAtDescIdDesc(
+                40L, AssistantMessageStatus.COMPLETED)).thenReturn(List.of());
+        AtomicLong ids = new AtomicLong(70);
+        when(messageRepository.save(any())).thenAnswer(invocation -> {
+            AssistantMessage message = invocation.getArgument(0);
+            ReflectionTestUtils.setField(message, "id", ids.getAndIncrement());
+            return message;
+        });
+
+        var prepared = service.prepare(learner.getUserId(), 10L, 30L,
+                new SendMessageRequest(AssistantMode.EXPLAIN,
+                        "Explain this section more simply, especially the empty set.",
+                        "EXPLAIN_SIMPLY", null));
+
+        assertThat(prepared.context().message())
+                .isEqualTo("Explain this section more simply, especially the empty set.");
+        ArgumentCaptor<AssistantMessage> messageCaptor = ArgumentCaptor.forClass(AssistantMessage.class);
+        verify(messageRepository, times(2)).save(messageCaptor.capture());
+        AssistantMessage userMessage = messageCaptor.getAllValues().get(0);
+        assertThat(userMessage.getSuggestionKey()).isEqualTo("EXPLAIN_SIMPLY");
+        assertThat(userMessage.getContent()).isEqualTo(prepared.context().message());
+    }
+
+    @Test
     void selectedTextMustExistInCurrentLesson() {
         when(courseRepository.findById(10L)).thenReturn(Optional.of(course));
 
@@ -115,6 +186,7 @@ class AssistantPersistenceServiceTests {
             assertThat(item.questionCount()).isEqualTo(2);
             assertThat(item.notUnderstoodCount()).isEqualTo(1);
         });
+        verify(conversationRepository).findByUserUserId(learner.getUserId());
     }
 
     private AssistantConversation conversation(User user) {
