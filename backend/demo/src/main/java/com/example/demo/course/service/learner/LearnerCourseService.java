@@ -22,7 +22,10 @@ import com.example.demo.course.dto.interactive.request.InteractiveProgressUpdate
 import com.example.demo.course.dto.interactive.request.LogicAttemptRequest;
 import com.example.demo.course.dto.interactive.response.LogicAttemptResponse;
 import com.example.demo.course.dto.interactive.response.LogicStepSubmissionDto;
+import com.example.demo.gamification.dto.AchievementDto;
+import com.example.demo.gamification.dto.GamificationRewardDto;
 import com.example.demo.gamification.service.GamificationService;
+import com.example.demo.gamification.service.SubtopicCompletionResult;
 import com.example.demo.shared.exception.ApiException;
 import com.example.demo.user.entity.User;
 import com.example.demo.shared.exception.InvalidWorkflowStateException;
@@ -32,6 +35,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -114,7 +118,8 @@ public class LearnerCourseService {
         }
 
         LearnerInteractiveProgress progress = findOrCreateProgress(userId, course, subTopic);
-        return toProgressDto(recordAttemptAndAward(userId, progress, requestedStatus));
+        AttemptAwardResult award = recordAttemptAndAward(userId, course, progress, requestedStatus);
+        return toProgressDto(award.progress(), award.reward());
     }
 
     @Transactional
@@ -150,7 +155,8 @@ public class LearnerCourseService {
                 ? InteractiveProgressStatus.MASTERED
                 : InteractiveProgressStatus.TRIED;
         LearnerInteractiveProgress progress = findOrCreateProgress(userId, course, subTopic);
-        LearnerInteractiveProgress saved = recordAttemptAndAward(userId, progress, nextStatus);
+        AttemptAwardResult award = recordAttemptAndAward(userId, course, progress, nextStatus);
+        LearnerInteractiveProgress saved = award.progress();
         return new LogicAttemptResponse(
                 requiredSubTopicId,
                 kind,
@@ -160,7 +166,8 @@ public class LearnerCourseService {
                 saved.getMasteredAt(),
                 saved.getUpdatedAt(),
                 grade.feedback(),
-                grade.details()
+                grade.details(),
+                award.reward()
         );
     }
 
@@ -189,7 +196,8 @@ public class LearnerCourseService {
                     logic.masteredAt(),
                     logic.updatedAt(),
                     logic.feedback(),
-                    logic.details()
+                    logic.details(),
+                    logic.reward()
             );
         }
         GradeResult grade = gradeInteractive(subTopic, request);
@@ -197,7 +205,8 @@ public class LearnerCourseService {
                 ? InteractiveProgressStatus.MASTERED
                 : InteractiveProgressStatus.TRIED;
         LearnerInteractiveProgress progress = findOrCreateProgress(userId, course, subTopic);
-        LearnerInteractiveProgress saved = recordAttemptAndAward(userId, progress, nextStatus);
+        AttemptAwardResult award = recordAttemptAndAward(userId, course, progress, nextStatus);
+        LearnerInteractiveProgress saved = award.progress();
         return new InteractiveAttemptResponse(
                 requiredSubTopicId,
                 subTopic.getInteractionType(),
@@ -207,7 +216,8 @@ public class LearnerCourseService {
                 saved.getMasteredAt(),
                 saved.getUpdatedAt(),
                 grade.feedback(),
-                grade.details()
+                grade.details(),
+                award.reward()
         );
     }
 
@@ -246,15 +256,65 @@ public class LearnerCourseService {
                 ));
     }
 
-    private LearnerInteractiveProgress recordAttemptAndAward(
-            UUID userId, LearnerInteractiveProgress progress, InteractiveProgressStatus nextStatus) {
+    private AttemptAwardResult recordAttemptAndAward(
+            UUID userId, Course course, LearnerInteractiveProgress progress, InteractiveProgressStatus nextStatus) {
         boolean wasAlreadyMastered = progress.getStatus() == InteractiveProgressStatus.MASTERED;
         progress.recordAttempt(nextStatus);
         LearnerInteractiveProgress saved = progressRepository.save(progress);
-        if (!wasAlreadyMastered && saved.getStatus() == InteractiveProgressStatus.MASTERED) {
-            gamificationService.recordSubtopicCompletion(userId, SUBTOPIC_MASTERY_BASE_EXP);
+        if (wasAlreadyMastered || saved.getStatus() != InteractiveProgressStatus.MASTERED) {
+            return new AttemptAwardResult(saved, GamificationRewardDto.empty());
         }
-        return saved;
+
+        SubtopicCompletionResult subtopicResult = gamificationService.recordSubtopicCompletion(userId, SUBTOPIC_MASTERY_BASE_EXP);
+        GamificationRewardDto reward = gamificationService.toRewardDto(subtopicResult);
+
+        if (isCourseFullyMastered(userId, course)) {
+            GamificationRewardDto courseReward = gamificationService.notifyCourseMastered(userId, countCoursesMasteredByUser(userId));
+            reward = mergeRewards(reward, courseReward);
+        }
+        return new AttemptAwardResult(saved, reward);
+    }
+
+    private boolean isCourseFullyMastered(UUID userId, Course course) {
+        long totalSubtopics = interactiveOrReadableSubTopicCount(course);
+        long masteredCount = progressRepository.countByUserUserIdAndCourseIdAndStatus(
+                userId, course.getId(), InteractiveProgressStatus.MASTERED);
+        return totalSubtopics > 0 && masteredCount >= totalSubtopics;
+    }
+
+    private int countCoursesMasteredByUser(UUID userId) {
+        int masteredCourses = 0;
+        for (Long courseId : progressRepository.findDistinctCourseIdsByUserUserId(userId)) {
+            Course otherCourse = courseRepository.findById(courseId).orElse(null);
+            if (otherCourse == null) {
+                continue;
+            }
+            long totalSubtopics = interactiveOrReadableSubTopicCount(otherCourse);
+            long masteredCount = progressRepository.countByUserUserIdAndCourseIdAndStatus(
+                    userId, courseId, InteractiveProgressStatus.MASTERED);
+            if (totalSubtopics > 0 && masteredCount >= totalSubtopics) {
+                masteredCourses++;
+            }
+        }
+        return masteredCourses;
+    }
+
+    private long interactiveOrReadableSubTopicCount(Course course) {
+        return course.getModules().stream().flatMap(module -> module.getSubTopics().stream()).count();
+    }
+
+    private GamificationRewardDto mergeRewards(GamificationRewardDto first, GamificationRewardDto second) {
+        List<AchievementDto> achievements = new ArrayList<>(first.achievementsUnlocked());
+        achievements.addAll(second.achievementsUnlocked());
+        return new GamificationRewardDto(
+                first.expAwarded() + second.expAwarded(),
+                first.leveledUp() || second.leveledUp(),
+                second.leveledUp() ? second.newLevel() : first.newLevel(),
+                achievements
+        );
+    }
+
+    private record AttemptAwardResult(LearnerInteractiveProgress progress, GamificationRewardDto reward) {
     }
 
     private List<SubTopic> interactiveSubTopics(Course course) {
@@ -292,16 +352,22 @@ public class LearnerCourseService {
     }
 
     private InteractiveProgressDto notStartedProgressDto(Long subTopicId) {
-        return new InteractiveProgressDto(subTopicId, InteractiveProgressStatus.NOT_STARTED, 0, null, null);
+        return new InteractiveProgressDto(
+                subTopicId, InteractiveProgressStatus.NOT_STARTED, 0, null, null, GamificationRewardDto.empty());
     }
 
     private InteractiveProgressDto toProgressDto(LearnerInteractiveProgress progress) {
+        return toProgressDto(progress, GamificationRewardDto.empty());
+    }
+
+    private InteractiveProgressDto toProgressDto(LearnerInteractiveProgress progress, GamificationRewardDto reward) {
         return new InteractiveProgressDto(
                 progress.getSubTopic().getId(),
                 progress.getStatus(),
                 progress.getAttemptCount(),
                 progress.getMasteredAt(),
-                progress.getUpdatedAt()
+                progress.getUpdatedAt(),
+                reward
         );
     }
 

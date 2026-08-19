@@ -2,6 +2,7 @@ package com.example.demo.gamification.service;
 
 import com.example.demo.gamification.dto.AchievementDto;
 import com.example.demo.gamification.dto.DailyActivityDto;
+import com.example.demo.gamification.dto.GamificationRewardDto;
 import com.example.demo.gamification.dto.LearnerProfileSummaryDto;
 import com.example.demo.gamification.dto.LevelRoadmapEntryDto;
 import com.example.demo.gamification.dto.PendingLearnerEventDto;
@@ -108,6 +109,7 @@ public class GamificationService {
         LevelUpOutcome levelUpOutcome = applyExpGain(profile, expAwarded);
 
         List<AchievementDefinition> unlocked = new ArrayList<>();
+        unlocked.addAll(unlockEligibleAchievements(profile, AchievementCriteriaType.LEVEL_REACHED, profile.getLevel()));
         if (isFirstSubtopicToday) {
             unlocked.addAll(unlockEligibleAchievements(profile, AchievementCriteriaType.FIRST_SUBTOPIC_COMPLETED, 1));
             unlocked.addAll(unlockEligibleAchievements(
@@ -119,28 +121,64 @@ public class GamificationService {
                 expAwarded, levelUpOutcome.leveledUp(), levelUpOutcome.newLevel(), profile.getCurrentStreak(), unlocked);
     }
 
-    public List<AchievementDefinition> notifyQuizPerfect(UUID userId, int totalPerfectQuizzes) {
+    @Transactional
+    public GamificationRewardDto notifyAssessmentPerfect(UUID userId, int totalPerfectAssessments) {
         LearnerProfile profile = getOrCreateProfile(userId);
+        int levelBefore = profile.getLevel();
         List<AchievementDefinition> unlocked = unlockEligibleAchievements(
-                profile, AchievementCriteriaType.QUIZ_PERFECT_COUNT, totalPerfectQuizzes);
+                profile, AchievementCriteriaType.ASSESSMENT_PERFECT_COUNT, totalPerfectAssessments);
+        unlocked.addAll(unlockEligibleAchievements(profile, AchievementCriteriaType.LEVEL_REACHED, profile.getLevel()));
         learnerProfileRepository.save(profile);
-        return unlocked;
+        return buildRewardDto(profile, levelBefore, unlocked, 0);
     }
 
-    public List<AchievementDefinition> notifyCourseMastered(UUID userId, int totalCoursesMastered) {
+    @Transactional
+    public GamificationRewardDto notifyCourseMastered(UUID userId, int totalCoursesMastered) {
         LearnerProfile profile = getOrCreateProfile(userId);
+        int levelBefore = profile.getLevel();
         List<AchievementDefinition> unlocked = unlockEligibleAchievements(
                 profile, AchievementCriteriaType.COURSE_MASTERED_COUNT, totalCoursesMastered);
+        unlocked.addAll(unlockEligibleAchievements(profile, AchievementCriteriaType.LEVEL_REACHED, profile.getLevel()));
         learnerProfileRepository.save(profile);
-        return unlocked;
+        return buildRewardDto(profile, levelBefore, unlocked, 0);
     }
 
-    public List<AchievementDefinition> notifyFlashcardsMemorized(UUID userId, int totalMemorized) {
+    @Transactional
+    public GamificationRewardDto notifyFlashcardsMemorized(UUID userId, int totalMemorized) {
         LearnerProfile profile = getOrCreateProfile(userId);
+        int levelBefore = profile.getLevel();
         List<AchievementDefinition> unlocked = unlockEligibleAchievements(
                 profile, AchievementCriteriaType.FLASHCARDS_MEMORIZED_COUNT, totalMemorized);
+        unlocked.addAll(unlockEligibleAchievements(profile, AchievementCriteriaType.LEVEL_REACHED, profile.getLevel()));
         learnerProfileRepository.save(profile);
-        return unlocked;
+        return buildRewardDto(profile, levelBefore, unlocked, 0);
+    }
+
+    public GamificationRewardDto toRewardDto(SubtopicCompletionResult result) {
+        return new GamificationRewardDto(
+                result.expAwarded(),
+                result.leveledUp(),
+                result.newLevel(),
+                result.unlockedAchievements().stream().map(this::toUnlockedAchievementDto).toList()
+        );
+    }
+
+    private GamificationRewardDto buildRewardDto(
+            LearnerProfile profile, int levelBefore, List<AchievementDefinition> unlocked, int directExpAwarded) {
+        int expFromAchievements = unlocked.stream().mapToInt(AchievementDefinition::getExpReward).sum();
+        return new GamificationRewardDto(
+                directExpAwarded + expFromAchievements,
+                profile.getLevel() > levelBefore,
+                profile.getLevel(),
+                unlocked.stream().map(this::toUnlockedAchievementDto).toList()
+        );
+    }
+
+    private AchievementDto toUnlockedAchievementDto(AchievementDefinition achievement) {
+        return new AchievementDto(
+                achievement.getCode(), achievement.getName(), achievement.getDescription(),
+                achievement.getIconGlyph(), achievement.getExpReward(), true, Instant.now()
+        );
     }
 
     private boolean updateDailyActivityAndStreak(LearnerProfile profile, LocalDate today, int expEarnedToday) {

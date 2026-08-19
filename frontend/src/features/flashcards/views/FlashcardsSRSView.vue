@@ -48,7 +48,8 @@ async function submitOutcome(outcome: SrsOutcome) {
   if (!currentCard.value || !isFlipped.value || submitting.value) return
   submitting.value = true
   try {
-    await submitSrsReview(currentCard.value.srsCardId, outcome)
+    const result = await submitSrsReview(currentCard.value.srsCardId, outcome)
+    gamificationStore.handleReward(result.reward)
     if (cardIndex.value < sessionCards.value.length - 1) {
       cardIndex.value += 1
       isFlipped.value = false

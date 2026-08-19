@@ -10,6 +10,9 @@ import {
   type AssessmentDetailDto,
   type AssessmentResultDto,
 } from '../services/assessment'
+import { useGamificationStore } from '@/features/gamified/stores/gamification'
+
+const gamificationStore = useGamificationStore()
 
 const route = useRoute()
 const router = useRouter()
@@ -56,6 +59,7 @@ async function confirmSubmit() {
       questions.value.map((q) => ({ questionId: q.id, selectedOptionId: answers.value[q.id] ?? null })),
     )
     showConfirm.value = false
+    gamificationStore.handleReward(result.value.reward)
   } finally {
     submitting.value = false
   }

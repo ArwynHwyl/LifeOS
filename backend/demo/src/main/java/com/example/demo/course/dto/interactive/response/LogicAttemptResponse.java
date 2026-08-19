@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.Map;
 
 import com.example.demo.course.entity.InteractiveProgressStatus;
+import com.example.demo.gamification.dto.GamificationRewardDto;
 
 public record LogicAttemptResponse(
         Long subTopicId,
@@ -14,6 +15,7 @@ public record LogicAttemptResponse(
         Instant masteredAt,
         Instant updatedAt,
         String feedback,
-        Map<String, Object> details
+        Map<String, Object> details,
+        GamificationRewardDto reward
 ) {
 }

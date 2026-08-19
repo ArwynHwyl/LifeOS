@@ -2,6 +2,8 @@
 import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import LearnerNav from '../components/LearnerNav.vue'
+import AchievementToast from '@/features/gamified/components/AchievementToast.vue'
+import MomentLevelUp from '@/features/gamified/components/MomentLevelUp.vue'
 import MomentShieldUsed from '@/features/gamified/components/MomentShieldUsed.vue'
 import MomentStreakBroken from '@/features/gamified/components/MomentStreakBroken.vue'
 import { useGamificationStore } from '@/features/gamified/stores/gamification'
@@ -27,8 +29,18 @@ onMounted(() => {
     <LearnerNav :active="activeTab" />
     <router-view class="flex-1 min-h-0" />
 
+    <MomentLevelUp
+      v-if="gamificationStore.pendingLevelUp"
+      :from-level="gamificationStore.pendingLevelUp.fromLevel"
+      :to-level="gamificationStore.pendingLevelUp.toLevel"
+      :rank-name="gamificationStore.profile?.rankName"
+      :current-exp="gamificationStore.profile?.currentExp"
+      :exp-required-for-next-level="gamificationStore.profile?.expRequiredForNextLevel"
+      :shield-max="gamificationStore.profile?.shieldMax"
+      @close="gamificationStore.dismissLevelUp"
+    />
     <MomentShieldUsed
-      v-if="gamificationStore.activeNotification?.eventType === 'SHIELD_CONSUMED'"
+      v-else-if="gamificationStore.activeNotification?.eventType === 'SHIELD_CONSUMED'"
       :streak-days="gamificationStore.profile?.currentStreak ?? 0"
       :shields-remaining="gamificationStore.activeNotification.shieldsRemaining ?? 0"
       :shield-max="gamificationStore.activeNotification.shieldMax ?? 0"
@@ -40,5 +52,6 @@ onMounted(() => {
       :longest-streak="gamificationStore.activeNotification.longestStreak ?? 0"
       @close="gamificationStore.dismissActiveNotification"
     />
+    <AchievementToast />
   </div>
 </template>

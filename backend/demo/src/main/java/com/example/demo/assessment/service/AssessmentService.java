@@ -17,6 +17,8 @@ import com.example.demo.assessment.entity.LearnerAssessmentAttempt;
 import com.example.demo.assessment.repository.AssessmentQuestionRepository;
 import com.example.demo.assessment.repository.AssessmentRepository;
 import com.example.demo.assessment.repository.LearnerAssessmentAttemptRepository;
+import com.example.demo.gamification.dto.GamificationRewardDto;
+import com.example.demo.gamification.service.GamificationService;
 import com.example.demo.shared.exception.InvalidWorkflowStateException;
 import com.example.demo.shared.exception.ResourceNotFoundException;
 import com.example.demo.user.entity.User;
@@ -36,17 +38,20 @@ public class AssessmentService {
     private final AssessmentQuestionRepository assessmentQuestionRepository;
     private final LearnerAssessmentAttemptRepository attemptRepository;
     private final UserRepository userRepository;
+    private final GamificationService gamificationService;
 
     public AssessmentService(
             AssessmentRepository assessmentRepository,
             AssessmentQuestionRepository assessmentQuestionRepository,
             LearnerAssessmentAttemptRepository attemptRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            GamificationService gamificationService
     ) {
         this.assessmentRepository = assessmentRepository;
         this.assessmentQuestionRepository = assessmentQuestionRepository;
         this.attemptRepository = attemptRepository;
         this.userRepository = userRepository;
+        this.gamificationService = gamificationService;
     }
 
     @Transactional(readOnly = true)
@@ -77,7 +82,7 @@ public class AssessmentService {
         return attemptRepository.findByUserUserIdAndAssessmentId(userId, assessmentId)
                 .map(attempt -> new AssessmentDetailDto(
                         assessment.getId(), assessment.getTitle(), assessment.getDescription(),
-                        true, null, toResultDto(assessment, attempt)
+                        true, null, toResultDto(assessment, attempt, GamificationRewardDto.empty())
                 ))
                 .orElseGet(() -> new AssessmentDetailDto(
                         assessment.getId(), assessment.getTitle(), assessment.getDescription(),
@@ -127,7 +132,13 @@ public class AssessmentService {
         }
 
         attempt = attemptRepository.save(attempt);
-        return toResultDto(assessment, attempt);
+
+        GamificationRewardDto reward = GamificationRewardDto.empty();
+        if (score == attempt.getTotalQuestions()) {
+            long totalPerfect = attemptRepository.countPerfectByUserId(userId);
+            reward = gamificationService.notifyAssessmentPerfect(userId, (int) totalPerfect);
+        }
+        return toResultDto(assessment, attempt, reward);
     }
 
     private List<AssessmentQuestionDto> toQuestionDtos(Assessment assessment) {
@@ -142,7 +153,7 @@ public class AssessmentService {
                 .toList();
     }
 
-    private AssessmentResultDto toResultDto(Assessment assessment, LearnerAssessmentAttempt attempt) {
+    private AssessmentResultDto toResultDto(Assessment assessment, LearnerAssessmentAttempt attempt, GamificationRewardDto reward) {
         Map<Long, LearnerAssessmentAnswer> answerByQuestionId = new HashMap<>();
         for (LearnerAssessmentAnswer answer : attempt.getAnswers()) {
             answerByQuestionId.put(answer.getQuestion().getId(), answer);
@@ -170,7 +181,7 @@ public class AssessmentService {
 
         return new AssessmentResultDto(
                 assessment.getId(), assessment.getTitle(), attempt.getScore(), attempt.getTotalQuestions(),
-                percentage, attempt.getSubmittedAt(), questionResults
+                percentage, attempt.getSubmittedAt(), questionResults, reward
         );
     }
 }

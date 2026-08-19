@@ -13,6 +13,8 @@ import com.example.demo.flashcard.entity.SrsOutcome;
 import com.example.demo.flashcard.repository.FlashcardCardRepository;
 import com.example.demo.flashcard.repository.FlashcardDeckRepository;
 import com.example.demo.flashcard.repository.LearnerFlashcardSrsCardRepository;
+import com.example.demo.gamification.dto.GamificationRewardDto;
+import com.example.demo.gamification.service.GamificationService;
 import com.example.demo.shared.exception.ResourceNotFoundException;
 import com.example.demo.user.entity.User;
 import com.example.demo.user.repository.UserRepository;
@@ -42,17 +44,20 @@ public class FlashcardService {
     private final FlashcardCardRepository cardRepository;
     private final LearnerFlashcardSrsCardRepository srsCardRepository;
     private final UserRepository userRepository;
+    private final GamificationService gamificationService;
 
     public FlashcardService(
             FlashcardDeckRepository deckRepository,
             FlashcardCardRepository cardRepository,
             LearnerFlashcardSrsCardRepository srsCardRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            GamificationService gamificationService
     ) {
         this.deckRepository = deckRepository;
         this.cardRepository = cardRepository;
         this.srsCardRepository = srsCardRepository;
         this.userRepository = userRepository;
+        this.gamificationService = gamificationService;
     }
 
     @Transactional(readOnly = true)
@@ -105,7 +110,7 @@ public class FlashcardService {
 
         Pageable pageable = PageRequest.of(page, size);
         Page<LearnerFlashcardSrsCard> duePage = srsCardRepository
-                .findByUserUserIdAndDueAtLessThanEqualOrderByDueAtAsc(userId, now, pageable);
+                .findByUserUserIdAndDueAtLessThanEqualOrderByDueAtAscIdAsc(userId, now, pageable);
 
         long totalTracked = srsCardRepository.countByUserUserId(userId);
         long totalDueLaterToday = srsCardRepository.countByUserUserIdAndDueAtBetween(userId, now, endOfToday);
@@ -118,7 +123,7 @@ public class FlashcardService {
     public List<SrsCardDto> getDueSessionCards(UUID userId) {
         syncSrsQueueForUser(userId);
         Instant now = Instant.now();
-        return srsCardRepository.findByUserUserIdAndDueAtLessThanEqualOrderByDueAtAsc(userId, now).stream()
+        return srsCardRepository.findByUserUserIdAndDueAtLessThanEqualOrderByDueAtAscIdAsc(userId, now).stream()
                 .map(this::toSrsCardDto)
                 .toList();
     }
@@ -131,7 +136,13 @@ public class FlashcardService {
         Instant nextDueAt = now.plus(intervalFor(outcome));
         srsCard.applyReview(outcome, now, nextDueAt);
         srsCardRepository.save(srsCard);
-        return new SrsReviewResultDto(srsCard.getId(), outcome.name(), nextDueAt);
+
+        GamificationRewardDto reward = GamificationRewardDto.empty();
+        if (outcome == SrsOutcome.EASY) {
+            long totalMemorized = srsCardRepository.countByUserUserIdAndLastOutcome(userId, SrsOutcome.EASY);
+            reward = gamificationService.notifyFlashcardsMemorized(userId, (int) totalMemorized);
+        }
+        return new SrsReviewResultDto(srsCard.getId(), outcome.name(), nextDueAt, reward);
     }
 
     private Duration intervalFor(SrsOutcome outcome) {

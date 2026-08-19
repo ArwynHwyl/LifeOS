@@ -1,4 +1,5 @@
 import api from '@/services/api'
+import type { GamificationRewardDto } from '@/features/gamified/services/gamification'
 
 export interface FlashcardDeckSummaryDto {
   id: number
@@ -54,6 +55,7 @@ export interface SrsReviewResultDto {
   srsCardId: number
   outcome: SrsOutcome
   nextDueAt: string
+  reward: GamificationRewardDto
 }
 
 export async function listDecks() {

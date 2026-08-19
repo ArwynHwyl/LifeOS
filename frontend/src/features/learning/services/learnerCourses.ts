@@ -1,5 +1,6 @@
 import api from '@/services/api'
 import type { InteractionType } from '@/features/courses/services/adminCourses'
+import type { GamificationRewardDto } from '@/features/gamified/services/gamification'
 
 export interface PublishedCourseDetailDto {
   id: number
@@ -41,6 +42,7 @@ export interface InteractiveProgressDto {
   attemptCount: number
   masteredAt: string | null
   updatedAt: string | null
+  reward?: GamificationRewardDto
 }
 
 export interface LogicStepSubmissionDto {
@@ -71,6 +73,7 @@ export interface LogicAttemptResponse {
   updatedAt: string | null
   feedback: string
   details: Record<string, unknown>
+  reward: GamificationRewardDto
 }
 
 export type InteractiveAttemptRequest =
@@ -89,6 +92,7 @@ export interface InteractiveAttemptResponse {
   updatedAt: string | null
   feedback: string
   details: Record<string, unknown>
+  reward: GamificationRewardDto
 }
 
 export interface PublishedCourseSummaryDto {

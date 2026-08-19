@@ -33,6 +33,13 @@ export interface AchievementDto {
   unlockedAt: string | null
 }
 
+export interface GamificationRewardDto {
+  expAwarded: number
+  leveledUp: boolean
+  newLevel: number
+  achievementsUnlocked: AchievementDto[]
+}
+
 export type LearnerEventType = 'SHIELD_CONSUMED' | 'STREAK_LOST'
 
 export interface PendingLearnerEventDto {

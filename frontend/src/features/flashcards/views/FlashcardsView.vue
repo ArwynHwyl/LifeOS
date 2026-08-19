@@ -6,6 +6,7 @@ import {
   listDecks,
   getSrsQueuePage,
   type FlashcardDeckSummaryDto,
+  type SrsCardDto,
   type SrsQueuePageDto,
 } from '../services/flashcard'
 
@@ -29,6 +30,7 @@ function visualFor(tag: string) {
 const decks = ref<FlashcardDeckSummaryDto[]>([])
 const queuePage = ref<SrsQueuePageDto | null>(null)
 const queuePageIndex = ref(0)
+const heroPreviewItems = ref<SrsCardDto[]>([])
 const loadingDecks = ref(true)
 const loadingQueue = ref(true)
 const selectedTag = ref('All')
@@ -42,6 +44,8 @@ const filteredDecks = computed(() => {
   if (selectedTag.value === 'All') return decks.value
   return decks.value.filter((d) => d.tag === selectedTag.value)
 })
+
+const heroPreviewCards = computed(() => heroPreviewItems.value.slice(0, 4))
 
 const totalDueNow = computed(() => queuePage.value?.totalDueNow ?? 0)
 const totalTracked = computed(() => queuePage.value?.totalTracked ?? 0)
@@ -61,8 +65,12 @@ async function loadDecks() {
 async function loadQueuePage(page: number) {
   loadingQueue.value = true
   try {
-    queuePage.value = await getSrsQueuePage(page, QUEUE_PAGE_SIZE)
+    const data = await getSrsQueuePage(page, QUEUE_PAGE_SIZE)
+    queuePage.value = data
     queuePageIndex.value = page
+    if (page === 0) {
+      heroPreviewItems.value = data.items
+    }
   } finally {
     loadingQueue.value = false
   }
@@ -124,10 +132,10 @@ onMounted(() => {
             <!-- Stacked cards preview -->
             <div class="relative w-[130px] h-[160px] shrink-0">
               <div
-                v-for="(c, i) in (queuePage?.items ?? []).slice(0, 4)"
+                v-for="(c, i) in heroPreviewCards"
                 :key="c.srsCardId"
                 class="absolute flex flex-col justify-between p-2.5 bg-lm-surface border-2 border-lm-line rounded-[12px] shadow-stamp-sm"
-                :style="{ left: `${i * 8}px`, top: `${i * 4}px`, width: '100px', height: '140px', transform: `rotate(${(i - 1.5) * 4}deg)`, zIndex: i }"
+                :style="{ left: `${i * 8}px`, top: `${i * 4}px`, width: '100px', height: '140px', transform: `rotate(${(i - 1.5) * 4}deg)`, zIndex: heroPreviewCards.length - i }"
               >
                 <span class="font-mono text-[8px] font-semibold tracking-widest uppercase text-lm-ink-3">{{ c.deckTag }}</span>
                 <p class="text-[11px] font-semibold leading-tight text-lm-ink m-0">{{ c.front }}</p>

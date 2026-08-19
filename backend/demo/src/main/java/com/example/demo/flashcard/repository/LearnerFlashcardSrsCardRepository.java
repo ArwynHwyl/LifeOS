@@ -1,6 +1,7 @@
 package com.example.demo.flashcard.repository;
 
 import com.example.demo.flashcard.entity.LearnerFlashcardSrsCard;
+import com.example.demo.flashcard.entity.SrsOutcome;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -21,10 +22,12 @@ public interface LearnerFlashcardSrsCardRepository extends JpaRepository<Learner
 
     long countByUserUserId(UUID userId);
 
+    long countByUserUserIdAndLastOutcome(UUID userId, SrsOutcome lastOutcome);
+
     long countByUserUserIdAndDueAtBetween(UUID userId, Instant start, Instant end);
 
-    List<LearnerFlashcardSrsCard> findByUserUserIdAndDueAtLessThanEqualOrderByDueAtAsc(UUID userId, Instant now);
+    List<LearnerFlashcardSrsCard> findByUserUserIdAndDueAtLessThanEqualOrderByDueAtAscIdAsc(UUID userId, Instant now);
 
-    Page<LearnerFlashcardSrsCard> findByUserUserIdAndDueAtLessThanEqualOrderByDueAtAsc(
+    Page<LearnerFlashcardSrsCard> findByUserUserIdAndDueAtLessThanEqualOrderByDueAtAscIdAsc(
             UUID userId, Instant now, Pageable pageable);
 }

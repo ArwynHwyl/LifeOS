@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.demo.course.entity.InteractiveProgressStatus;
 import com.example.demo.course.entity.LearnerInteractiveProgress;
 
 public interface LearnerInteractiveProgressRepository extends JpaRepository<LearnerInteractiveProgress, Long> {
@@ -16,6 +17,11 @@ public interface LearnerInteractiveProgressRepository extends JpaRepository<Lear
     List<LearnerInteractiveProgress> findByUserUserIdAndSubTopicIdIn(UUID userId, Collection<Long> subTopicIds);
 
     Optional<LearnerInteractiveProgress> findByUserUserIdAndSubTopicId(UUID userId, Long subTopicId);
+
+    long countByUserUserIdAndCourseIdAndStatus(UUID userId, Long courseId, InteractiveProgressStatus status);
+
+    @Query("select distinct progress.course.id from LearnerInteractiveProgress progress where progress.user.userId = :userId")
+    List<Long> findDistinctCourseIdsByUserUserId(UUID userId);
 
     @Modifying
     @Transactional
