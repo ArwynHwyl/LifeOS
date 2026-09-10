@@ -62,12 +62,17 @@ public class LearningAssistantService {
             sendEvent(emitter, "message-complete", Map.of("assistantMessageId", context.assistantMessageId(),
                     "content", answer, "mode", context.mode().name()));
             emitter.complete();
+        } catch (StreamClosedException exception) {
+            // A failed SSE write is terminal. Spring handles connection cleanup.
+            persistence.fail(context.assistantMessageId());
         } catch (Exception exception) {
             persistence.fail(context.assistantMessageId());
             try {
                 sendEvent(emitter, "error", Map.of("code", "AI_STREAM_FAILED",
                         "message", "AI assistant is temporarily unavailable. Please try again."));
                 emitter.complete();
+            } catch (StreamClosedException ignored) {
+                // The client disconnected while we were reporting the failure.
             } catch (RuntimeException ignored) {
                 emitter.completeWithError(exception);
             }

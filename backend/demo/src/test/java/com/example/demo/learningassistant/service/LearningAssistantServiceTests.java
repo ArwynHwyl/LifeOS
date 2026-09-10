@@ -101,6 +101,61 @@ class LearningAssistantServiceTests {
 
         verify(persistence).fail(3L);
         verify(persistence, never()).complete(anyLong(), anyString());
+        verify(emitter, times(2)).send(any(SseEmitter.SseEventBuilder.class));
+        verify(emitter, never()).complete();
+        verify(emitter, never()).completeWithError(any());
+    }
+
+    @Test
+    void closedStreamBeforeStartDoesNotRequestAnAnswer() throws IOException {
+        SseEmitter emitter = mock(SseEmitter.class);
+        doThrow(new IllegalStateException("stream already closed"))
+                .when(emitter).send(any(SseEmitter.SseEventBuilder.class));
+
+        service.stream(new PreparedMessage(context, List.of()), emitter);
+
+        verifyNoInteractions(aiClient);
+        verify(persistence).fail(3L);
+        verify(persistence, never()).complete(anyLong(), anyString());
+        verify(emitter).send(any(SseEmitter.SseEventBuilder.class));
+        verify(emitter, never()).complete();
+        verify(emitter, never()).completeWithError(any());
+    }
+
+    @Test
+    void disconnectWhileReportingProviderFailureDoesNotSendAgain() throws IOException {
+        SseEmitter emitter = mock(SseEmitter.class);
+        doNothing().doThrow(new IOException("client disconnected"))
+                .when(emitter).send(any(SseEmitter.SseEventBuilder.class));
+        doThrow(new RuntimeException("provider unavailable")).when(aiClient).stream(anyString(), any());
+
+        service.stream(new PreparedMessage(context, List.of()), emitter);
+
+        verify(persistence).fail(3L);
+        verify(persistence, never()).complete(anyLong(), anyString());
+        verify(aiClient).stream(anyString(), any());
+        verify(emitter, times(2)).send(any(SseEmitter.SseEventBuilder.class));
+        verify(emitter, never()).complete();
+        verify(emitter, never()).completeWithError(any());
+    }
+
+    @Test
+    void disconnectAtFinalEventDoesNotResendCompletedAnswer() throws IOException {
+        SseEmitter emitter = mock(SseEmitter.class);
+        doNothing().doNothing().doThrow(new IOException("client disconnected"))
+                .when(emitter).send(any(SseEmitter.SseEventBuilder.class));
+        doAnswer(invocation -> {
+            java.util.function.Consumer<String> consumer = invocation.getArgument(1);
+            consumer.accept("{\"teachingPoints\":[\"One point.\"],\"examples\":[],\"followUpQuestions\":[\"Ready?\"]}");
+            return null;
+        }).when(aiClient).stream(anyString(), any());
+
+        service.stream(new PreparedMessage(context, List.of()), emitter);
+
+        verify(persistence).complete(3L, "One point.\n\nReady?");
+        verify(aiClient).stream(anyString(), any());
+        verify(emitter, times(3)).send(any(SseEmitter.SseEventBuilder.class));
+        verify(emitter, never()).complete();
         verify(emitter, never()).completeWithError(any());
     }
 }
