@@ -1,0 +1,23 @@
+<p>Suppose two equations must hold at once, such as 2x + y = 5 and x − y = 1. This is a <strong>linear system</strong>. Writing it as a matrix lets you solve it step by step with a method that works for any number of equations.</p>
+<figure><img data-seed-image="matrix-system.png" alt="Two lines 2x plus y equals 5 and x minus y equals 1 meeting at the point 2, 1."><figcaption>A linear system is where the lines meet</figcaption></figure>
+<h2>The augmented matrix</h2>
+<p>Take only the coefficients and constants and put them in one matrix, separating the constants with a bar:</p>
+<pre>2x +  y = 5            [ 2   1 | 5 ]
+ x −  y = 1     →      [ 1  −1 | 1 ]</pre>
+<h2>Row operations</h2>
+<p>Three moves keep the solutions unchanged:</p>
+<ul>
+<li>Swap two rows.</li>
+<li>Multiply a row by a nonzero number.</li>
+<li>Add a multiple of one row to another row.</li>
+</ul>
+<p>Use them to build zeros below the diagonal. Adding the two rows above gives 3x = 6, so x = 2. Substituting back into x − y = 1 gives y = 1.</p>
+<h2>The geometry</h2>
+<p>Each linear equation in two unknowns is a <strong>line</strong>. The reference graph shows one such line, y = 2x + 1. A system asks where the lines meet, and there are three possibilities:</p>
+<ul>
+<li><strong>One solution:</strong> the lines cross at a single point.</li>
+<li><strong>No solution:</strong> the lines are parallel and never meet.</li>
+<li><strong>Infinitely many solutions:</strong> the equations describe the same line.</li>
+</ul>
+<blockquote>Key idea: solving a system means finding the point where all the lines meet, and row operations do this without guessing.</blockquote>
+<p>Study the reference line first. Predict where it crosses the y-axis and how steep it is before you continue to the practice.</p>

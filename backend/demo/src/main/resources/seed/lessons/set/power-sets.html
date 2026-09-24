@@ -1,0 +1,21 @@
+<p>Sometimes you need to talk about <em>all</em> the possible subsets of a set at once. Think of every possible combination of toppings on a pizza, or every possible set of permissions you could grant a user. The collection of all subsets is called the <strong>power set</strong>.</p>
+<figure><img data-seed-image="set-power-set.png" alt="All eight subsets of the set a, b, c grouped by size 0, 1, 2 and 3."><figcaption>The eight subsets of {a, b, c}, grouped by size</figcaption></figure>
+<h2>Definition</h2>
+<p>The power set of A, written <code>P(A)</code>, is the set of <em>all subsets</em> of A, including the empty set and A itself. Its elements are themselves sets.</p>
+<h2>Building one</h2>
+<p>Let A = {1, 2}. List subsets by size:</p>
+<pre>size 0:  ∅
+size 1:  {1}, {2}
+size 2:  {1, 2}
+
+P(A) = { ∅, {1}, {2}, {1, 2} }</pre>
+<p>So P(A) has <strong>four</strong> elements. Notice that {1} is an <em>element</em> of P(A) (it is a subset of A) but 1 is <em>not</em> an element of P(A). And A itself is an element of P(A), because A is a subset of itself.</p>
+<h2>A systematic method</h2>
+<ol>
+<li>Start with the empty set.</li>
+<li>Add all subsets with one member, then two members, and so on.</li>
+<li>Finish with A itself.</li>
+</ol>
+<p>Working by size prevents missing a subset and helps you spot the pattern that leads to a formula in the next lesson.</p>
+<blockquote>Key idea: elements of a power set are subsets of the original set.</blockquote>
+<p>Use this idea in the check: list every subset of A = {1, 2} first, then judge each statement.</p>

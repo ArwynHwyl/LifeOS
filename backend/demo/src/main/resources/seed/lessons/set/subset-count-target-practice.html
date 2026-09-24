@@ -1,0 +1,9 @@
+<p>Now use the formula in reverse. Instead of asking “how many subsets does this set have?”, ask “how big must a set be to have this many subsets?” This is the same skill as estimating how many features can be combined before the options explode.</p>
+<h2>The challenge</h2>
+<p>Adjust n until the number of subsets, <code>2ⁿ</code>, equals <strong>32</strong>.</p>
+<h2>How to solve it</h2>
+<p>Because the formula uses powers of two, it helps to know them by heart:</p>
+<pre>2¹ = 2     2² = 4     2³ = 8     2⁴ = 16
+2⁵ = 32    2⁶ = 64    2⁷ = 128   2⁸ = 256</pre>
+<p>Find 32 in the list and read off the exponent. You can also halve repeatedly: 32 → 16 → 8 → 4 → 2 → 1 takes five halvings, so n = 5.</p>
+<blockquote>Key idea: if a set has 2ⁿ subsets, halving the count n times reaches 1. The number of halvings is n.</blockquote>

@@ -1,0 +1,21 @@
+<p>Adding matrices is straightforward. Multiplying them is where matrices become powerful, and where the rules become unlike ordinary numbers. Multiplication combines information across rows and columns, which is exactly what is needed to chain transformations, such as rotating and then scaling an image.</p>
+<figure><img data-seed-image="matrix-multiply.png" alt="Multiplying two 2 by 2 matrices with the top-left entry 19 calculated from row 1 and column 1."><figcaption>Each entry of AB pairs a row of A with a column of B</figcaption></figure>
+<h2>When is it defined?</h2>
+<p>Matrix multiplication is defined only when the number of <strong>columns of the first</strong> matrix equals the number of <strong>rows of the second</strong>. If A is m × n and B is n × p, then AB exists and has size <strong>m × p</strong>.</p>
+<h2>The row-times-column rule</h2>
+<p>Each entry of AB is found by pairing a row of A with a column of B, multiplying matching entries, and adding the products.</p>
+<pre>A = [ 1  2 ]      B = [ 5  6 ]
+    [ 3  4 ]          [ 7  8 ]
+
+AB = [ 1×5 + 2×7    1×6 + 2×8 ]   [ 19  22 ]
+     [ 3×5 + 4×7    3×6 + 4×8 ] = [ 43  50 ]</pre>
+<p>The top-left entry is row 1 of A paired with column 1 of B: 1×5 + 2×7 = 19.</p>
+<h2>Surprising properties</h2>
+<ul>
+<li><strong>Order matters.</strong> In general AB ≠ BA. Here BA = [[23, 34], [31, 46]], which is different.</li>
+<li><strong>Identity:</strong> AI = IA = A, so I plays the role of the number 1.</li>
+<li><strong>Associative:</strong> (AB)C = A(BC), so you can group products as you like.</li>
+<li>A product can be zero even when neither matrix is zero.</li>
+</ul>
+<blockquote>Key idea: to multiply, go across a row of the first matrix and down a column of the second.</blockquote>
+<p>Always check the sizes first. A 2 × 3 matrix times a 3 × 4 matrix works and gives a 2 × 4 matrix. Reverse the order and it does not work at all.</p>

@@ -1,0 +1,19 @@
+<p>Listing subsets by hand becomes hopeless quickly: a set with 10 members has more than a thousand. Fortunately there is a neat formula that counts them without listing.</p>
+<h2>Two choices per member</h2>
+<p>To build a subset, go through the members one at a time and decide for each: <strong>in</strong> or <strong>out</strong>. That is two choices for every member, and the choices are independent. With n members you multiply 2 by itself n times:</p>
+<pre>number of subsets = 2 × 2 × … × 2 = 2ⁿ</pre>
+<h3>Checking small cases</h3>
+<pre>n = 0:  2⁰ = 1    (only the empty set)
+n = 1:  2¹ = 2
+n = 2:  2² = 4    (matches P({1, 2}) from the last lesson)
+n = 3:  2³ = 8
+n = 4:  2⁴ = 16</pre>
+<h2>Related counts</h2>
+<ul>
+<li><strong>Non-empty subsets:</strong> 2ⁿ − 1 (remove the empty set).</li>
+<li><strong>Proper subsets:</strong> 2ⁿ − 1 as well (remove the set itself).</li>
+<li><strong>Subsets with exactly 2 members:</strong> n(n − 1)/2. Choose a first member, then a different second, then divide by 2 because order does not matter.</li>
+<li><strong>Subsets with exactly 3 members:</strong> n(n − 1)(n − 2)/6.</li>
+</ul>
+<blockquote>Key idea: every extra member doubles the number of subsets.</blockquote>
+<p>In the explorer, change the number of members n and switch between the formulas. Compare their results for n = 4: there should be 16 subsets in total and 6 with exactly two members.</p>

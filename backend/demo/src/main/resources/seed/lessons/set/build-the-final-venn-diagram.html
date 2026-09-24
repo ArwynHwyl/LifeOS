@@ -1,0 +1,13 @@
+<p>This is the final build: a full three-set diagram from a word problem. Take your time. The key is to work from the middle outward so nothing is counted twice.</p>
+<h2>The problem</h2>
+<p>Build a three-set Venn diagram for clubs A, B, and C. You must add all three circles yourself, arrange them so the required overlaps exist, then enter the exact number of members in each visible region.</p>
+<p><strong>Given:</strong> n(A)=33, n(B)=26, n(C)=22, n(A ∩ B)=10, n(A ∩ C)=8, n(B ∩ C)=7, and n(A ∩ B ∩ C)=3.</p>
+<h2>Method</h2>
+<ol>
+<li>Start in the centre: A ∩ B ∩ C = 3.</li>
+<li>Pairwise regions only: subtract the centre from each pairwise overlap, such as A ∩ B only = 10 − 3 = 7.</li>
+<li>“Only” regions: subtract the two pairwise-only regions and the centre from the set total, such as A only = 33 − 7 − 5 − 3 = 18.</li>
+<li>Add all seven regions to check that the total makes sense.</li>
+</ol>
+<p><strong>Success criteria:</strong> create circles A, B, and C; make all pairwise overlaps and the three-way overlap visible; enter A only=18, B only=12, C only=10, A ∩ B only=7, A ∩ C only=5, B ∩ C only=4, and A ∩ B ∩ C=3.</p>
+<blockquote>Key idea: the centre is counted in every overlap total, so remove it when you want the “exactly two” regions.</blockquote>

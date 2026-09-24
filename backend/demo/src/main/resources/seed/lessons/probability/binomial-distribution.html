@@ -1,0 +1,24 @@
+<p>Many real situations repeat the same yes-or-no trial again and again: a basketball player’s free throws, a machine producing defective or good parts, customers who click or do not click. The <strong>binomial distribution</strong> counts the number of successes in such a series.</p>
+<figure><img data-seed-image="prob-binomial.png" alt="Bar chart of the binomial distribution for 10 fair coin flips peaking at 5 heads."><figcaption>Heads in 10 fair coin flips follow a binomial distribution</figcaption></figure>
+<h2>When does it apply?</h2>
+<p>All four conditions must hold:</p>
+<ol>
+<li>There is a fixed number of trials, n.</li>
+<li>Each trial has only two outcomes: success or failure.</li>
+<li>The trials are independent of each other.</li>
+<li>The probability of success p is the same on every trial.</li>
+</ol>
+<h2>The formula</h2>
+<p>If X is the number of successes, then</p>
+<pre>P(X = k) = C(n, k) · pᵏ · (1 − p)ⁿ⁻ᵏ</pre>
+<p>where <code>C(n, k) = n! / (k!(n − k)!)</code> counts the ways to place k successes among n trials.</p>
+<h2>Worked example</h2>
+<p>Flip a fair coin 5 times. What is the probability of exactly 3 heads?</p>
+<pre>C(5, 3) = 10
+P(X = 3) = 10 × (0.5)³ × (0.5)² = 10/32 = 0.3125</pre>
+<p>Now a player with a 70% free-throw rate takes 4 shots. The probability of making exactly 3 is C(4,3)(0.7)³(0.3) = 4 × 0.343 × 0.3 ≈ 0.412.</p>
+<h2>Mean and spread</h2>
+<pre>mean μ = n · p
+variance = n · p · (1 − p)</pre>
+<p>For 5 fair coin flips, the expected number of heads is 5 × 0.5 = 2.5.</p>
+<blockquote>Key idea: count the ways to arrange the successes, then multiply by the probability of one such arrangement.</blockquote>

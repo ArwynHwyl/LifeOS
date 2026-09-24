@@ -1,0 +1,14 @@
+<p>Explaining a circuit is one skill. Steering it to a target is another, and it is exactly what a tester does when writing a case that reaches a particular branch of code.</p>
+<h2>The goal</h2>
+<p>Set the inputs P, Q, and R so that <code>(P ∧ Q) ∨ ¬R</code> evaluates to <strong>true</strong>.</p>
+<h2>A method that always works</h2>
+<ol>
+<li>Look at the outermost connective. Here it is OR, so <em>one</em> true branch is enough.</li>
+<li>Pick the cheaper branch. Making ¬R true only needs R = F. Making P ∧ Q true needs two inputs to be T.</li>
+<li>Set the inputs for that branch and check the result by hand.</li>
+</ol>
+<p>Working backwards from the desired output like this is much faster than trying all eight rows.</p>
+<h2>How many solutions are there?</h2>
+<p>Because either branch can succeed, there are several correct settings. R = F works no matter what P and Q are. If R = T you need both P and Q to be true instead. Five of the eight rows make the expression true.</p>
+<blockquote>Key idea: to make an OR true, satisfy any one branch. To make an AND true, satisfy every branch.</blockquote>
+<p>Try one solution from each family and read the circuit to confirm which branch is carrying the current.</p>

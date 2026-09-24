@@ -1,0 +1,15 @@
+<p>Implication is the connective people get wrong most often, because everyday “if” carries extra meaning. In logic it is strictly defined by four rows. The clearest way to make it stick is to see all four with your own eyes.</p>
+<h2>The four assignments</h2>
+<p>The circuit below computes <code>P → Q</code>. Toggle P and Q through every combination and record what the output does.</p>
+<ol>
+<li>P = T, Q = T: the promise was triggered and kept.</li>
+<li>P = T, Q = F: the promise was triggered and broken.</li>
+<li>P = F, Q = T: the promise was never triggered.</li>
+<li>P = F, Q = F: the promise was never triggered.</li>
+</ol>
+<h2>What to notice</h2>
+<p>Only one of the four rows turns the output off. Rows 3 and 4 surprise many learners because the output stays on even though P is false. Remember the picnic: if it did not rain, the rule “if it rains, cancel” cannot be violated.</p>
+<h2>The counterexample</h2>
+<p>To prove that an implication is false, you do not need to check every row. You need just <strong>one counterexample</strong>: a case where the premise holds but the conclusion fails. Finding that row quickly is the heart of debugging a broken requirement.</p>
+<blockquote>Key idea: “P implies Q” is a promise about what happens whenever P is true. It says nothing about when P is false.</blockquote>
+<p>Explore all four assignments now, and be ready to name the single row that breaks the promise.</p>

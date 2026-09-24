@@ -1,0 +1,17 @@
+<p>A guard clause is a check at the top of a function that rejects invalid situations early. Behind every guard clause is an implication, and choosing test cases for it is a direct application of what you have just practiced.</p>
+<h2>From requirement to logic</h2>
+<p>Take the requirement: “If a user is an admin (A), they may delete the record (D).” This is the implication <code>A → D</code>. The code might look like this:</p>
+<pre>if (isAdmin) {
+  requireDeletePermission();
+}</pre>
+<p>What could go wrong? An admin who is <em>not</em> allowed to delete breaks the contract. A non-admin who can delete does <em>not</em> break this particular rule, although another rule may forbid it.</p>
+<h2>Choosing good test cases</h2>
+<p>List the four combinations of A and D and mark which ones the requirement allows.</p>
+<pre>A  D | A → D
+T  T |   T   allowed
+T  F |   F   VIOLATION
+F  T |   T   allowed (rule not triggered)
+F  F |   T   allowed (rule not triggered)</pre>
+<p>A test suite that only tries admins who can delete will never catch the bug. The valuable test is the one in which the premise is true and the conclusion is false.</p>
+<blockquote>Key idea: to disprove a requirement of the form “if A then D”, look for A true and D false.</blockquote>
+<p>Apply this to the checkpoint. Read each result as a pair (A, D) and choose the one that breaks the promise.</p>

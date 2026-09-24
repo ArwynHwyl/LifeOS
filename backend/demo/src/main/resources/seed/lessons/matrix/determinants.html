@@ -1,0 +1,20 @@
+<p>Every square matrix has a single number attached to it that reveals a lot: the <strong>determinant</strong>. It tells you whether the matrix can be undone, how much it stretches space, and whether a system of equations has a unique solution.</p>
+<figure><img data-seed-image="matrix-determinant.png" alt="A unit square mapped to a parallelogram of area 10 by the matrix 3, 1, 2, 4."><figcaption>The determinant is the area scale factor</figcaption></figure>
+<h2>The 2 × 2 determinant</h2>
+<p>For a 2 × 2 matrix, multiply along the main diagonal and subtract the product along the other diagonal:</p>
+<pre>| a  b |
+| c  d |   =  ad − bc</pre>
+<h3>Example</h3>
+<pre>| 3  1 |
+| 2  4 |   =  3×4 − 1×2 = 12 − 2 = 10</pre>
+<h2>What the number means</h2>
+<ul>
+<li>The absolute value of the determinant is the <strong>area scale factor</strong>: a unit square is mapped to a parallelogram of that area.</li>
+<li>A <strong>negative</strong> determinant means the shape is also flipped (mirrored).</li>
+<li>A determinant of <strong>zero</strong> means the matrix squashes the plane onto a line. It has no inverse and is called <strong>singular</strong>.</li>
+</ul>
+<h2>Larger matrices</h2>
+<p>For a 3 × 3 matrix, expand along a row: multiply each entry by the determinant of the smaller matrix left after deleting its row and column, and alternate the signs + − +. The idea is the same: a single number that summarises the matrix.</p>
+<blockquote>Key idea: a matrix has an inverse exactly when its determinant is not zero.</blockquote>
+<h2>Try it</h2>
+<p>Adjust a, b, c, and d until ad − bc equals 5. Many combinations work. For instance a = 1 and d = 5 with b = c = 0 gives 5, and so does a = 3, d = 2, b = 1, c = 1, because 6 − 1 = 5.</p>

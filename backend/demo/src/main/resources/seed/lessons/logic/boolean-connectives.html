@@ -1,0 +1,18 @@
+<p>Real conditions are rarely a single yes-or-no. “Allow access if the user is logged in <em>and</em> verified” combines two propositions into one. Logical connectives are the glue words that do this, and each one has a precise meaning defined by a truth table.</p>
+<figure><img data-seed-image="logic-connectives.png" alt="Cards showing NOT, AND, OR, and IF-THEN with a one-line meaning each."><figcaption>The four connectives at a glance</figcaption></figure>
+<h2>NOT (¬)</h2>
+<p>Negation flips a truth value. If P is true then ¬P is false, and the other way around. In most languages this is <code>!P</code>.</p>
+<h2>AND (∧)</h2>
+<p>P ∧ Q is true only when <strong>both</strong> P and Q are true. In code: <code>P &amp;&amp; Q</code>.</p>
+<h2>OR (∨)</h2>
+<p>P ∨ Q is true when <strong>at least one</strong> of P and Q is true, including when both are. In code: <code>P || Q</code>. This is the inclusive “or”. The exclusive “or” (XOR), true when exactly one is true, is a different connective.</p>
+<h2>The truth tables</h2>
+<pre>P  Q | P ∧ Q | P ∨ Q      P | ¬P
+T  T |   T   |   T        T |  F
+T  F |   F   |   T        F |  T
+F  T |   F   |   T
+F  F |   F   |   F</pre>
+<h2>Order of evaluation</h2>
+<p>Just like multiplication before addition, NOT binds tightest, then AND, then OR. So <code>P ∨ Q ∧ R</code> means <code>P ∨ (Q ∧ R)</code>. When a condition is important, add parentheses anyway. Your teammates and your future self will thank you.</p>
+<blockquote>Key idea: AND is strict (everything must hold), OR is generous (one is enough), NOT flips.</blockquote>
+<p>Try predicting the value of <code>(P ∧ Q) ∨ ¬R</code> when P = T, Q = F, R = F. Since Q is false the AND branch is false, but ¬R is true, so the OR is true. You will explore this exact expression in the next lesson.</p>

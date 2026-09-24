@@ -1,0 +1,19 @@
+<p>Height, weight, reaction time, measurement error: these can take any value in a range, not just whole numbers. Such variables are <strong>continuous</strong>, and they need a different way of describing probability.</p>
+<figure><img data-seed-image="prob-normal.png" alt="Normal curve with shaded bands within 1, 2 and 3 standard deviations of the mean."><figcaption>The 68–95–99.7 rule for the normal curve</figcaption></figure>
+<h2>Probability as area</h2>
+<p>For a continuous variable the chance of hitting one exact value is essentially zero, so instead we ask for the chance of landing in an <strong>interval</strong>. It equals the <strong>area under the curve</strong> above that interval. The total area under the curve is always 1.</p>
+<h2>The normal distribution</h2>
+<p>The most important continuous distribution is the <strong>normal distribution</strong>, the bell curve. It is symmetric about its mean μ, and its width is set by the standard deviation σ. Countless natural quantities are approximately normal.</p>
+<h3>The 68–95–99.7 rule</h3>
+<ul>
+<li>About <strong>68%</strong> of values lie within 1σ of the mean.</li>
+<li>About <strong>95%</strong> lie within 2σ.</li>
+<li>About <strong>99.7%</strong> lie within 3σ.</li>
+</ul>
+<h2>Z-scores</h2>
+<p>To compare values on different scales, convert to a <strong>z-score</strong>, the number of standard deviations from the mean:</p>
+<pre>z = (x − μ) / σ</pre>
+<p>If exam marks have μ = 70 and σ = 10, then a mark of 90 has z = 2. It is two standard deviations above average, better than about 97.5% of students.</p>
+<h2>The reference curve</h2>
+<p>The <strong>standard normal</strong> distribution has μ = 0 and σ = 1. The graph below shows its bell shape, drawn with the simple form <code>exp(−x²/2)</code> so that the peak has height 1 at x = 0. Notice how quickly the curve falls once you are more than about 2 units from the centre.</p>
+<blockquote>Key idea: for continuous data, probability is area under the curve, and the normal curve is the model to know.</blockquote>

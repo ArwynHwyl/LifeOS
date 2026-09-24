@@ -12,6 +12,11 @@ const TAG_VISUALS: Record<string, { icon: string; bgClass: string }> = {
   CALCULUS: { icon: '∫', bgClass: 'bg-lx-beetle' },
   GEOMETRY: { icon: '△', bgClass: 'bg-lx-feather' },
   STATS: { icon: 'σ', bgClass: 'bg-lx-eel' },
+  LOGIC: { icon: '∧', bgClass: 'bg-lx-beetle' },
+  SETS: { icon: '∪', bgClass: 'bg-lx-feather' },
+  VECTOR: { icon: '→', bgClass: 'bg-lx-macaw' },
+  MATRIX: { icon: '[ ]', bgClass: 'bg-lx-fox' },
+  PROBABILITY: { icon: 'P', bgClass: 'bg-lx-eel' },
 }
 const DEFAULT_VISUAL = { icon: '?', bgClass: 'bg-lx-eel' }
 

@@ -1,0 +1,13 @@
+<p>The height and the width of a bell curve are controlled by different numbers. In this practice you will control the height of the standard bell shape and see exactly how the formula produces it.</p>
+<h2>The task</h2>
+<p>Adjust the scale a until the curve <code>a · exp(−x²/2)</code> passes through the target peak at (0, 1).</p>
+<h2>Reason it out</h2>
+<p>At the centre x = 0, the exponent is −0²/2 = 0, and exp(0) = 1. So the height at the centre is simply a × 1 = a. To reach a peak of 1 you need a = 1. The curve’s height at x = 0 <em>is</em> the scale.</p>
+<h2>What the scale changes</h2>
+<ul>
+<li>A larger a makes the whole curve taller.</li>
+<li>The centre stays at x = 0, and the spread stays the same.</li>
+</ul>
+<h2>Why real densities have a smaller peak</h2>
+<p>A real normal density must enclose an area of exactly 1. To achieve this, the standard normal is multiplied by 1/√(2π) ≈ 0.399, which is why its true peak is about 0.4 rather than 1. Here we ignore that factor so the peak is easy to read on the axis.</p>
+<blockquote>Key idea: evaluate the formula at the point you care about, and the unknown often reveals itself.</blockquote>

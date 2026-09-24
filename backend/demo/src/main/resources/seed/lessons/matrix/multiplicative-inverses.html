@@ -1,0 +1,17 @@
+<p>Matrices cannot be divided, but many of them can be “undone”. The undoing matrix is called the <strong>inverse</strong>, and it is the key to solving equations that involve matrices.</p>
+<h2>Definition</h2>
+<p>The inverse of a square matrix A is a matrix <code>A⁻¹</code> such that <code>AA⁻¹ = I</code> and <code>A⁻¹A = I</code>, where I is the identity matrix. It plays the role of the reciprocal: just as 5 × (1/5) = 1, we have A A⁻¹ = I.</p>
+<h2>When does it exist?</h2>
+<p>A square matrix has an inverse exactly when its determinant is <strong>nonzero</strong>. Matrices with determinant 0 are singular and have no inverse.</p>
+<h2>The 2 × 2 formula</h2>
+<pre>     [ a  b ]                 1     [  d  −b ]
+A =  [ c  d ]      A⁻¹ = ───────  [ −c   a ]
+                          ad − bc</pre>
+<p>Swap the diagonal entries, change the sign of the other two, and divide everything by the determinant.</p>
+<h2>Worked example</h2>
+<p>Let A = [[3, 1], [2, 4]]. Its determinant is 3×4 − 1×2 = 10, so:</p>
+<pre>A⁻¹ = (1/10) [  4  −1 ]  =  [  0.4  −0.1 ]
+             [ −2   3 ]     [ −0.2   0.3 ]</pre>
+<p>Check the first entry of AA⁻¹: 3×0.4 + 1×(−0.2) = 1.2 − 0.2 = 1. Good.</p>
+<blockquote>Key idea: the inverse undoes the matrix, and it exists only when the determinant is not zero.</blockquote>
+<p>Also remember (AB)⁻¹ = B⁻¹A⁻¹. The order reverses, just like taking off your shoes and socks after putting them on.</p>

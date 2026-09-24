@@ -1,0 +1,20 @@
+<p>A spreadsheet, a photograph, a table of exam scores: all of them are grids of numbers. Mathematics gives such grids a name, the <strong>matrix</strong>, and a whole set of rules for calculating with them. Graphics cards, search engines, and machine learning are built on matrix arithmetic.</p>
+<figure><img data-seed-image="matrix-anatomy.png" alt="A 2 by 3 matrix with row 1, column 2 and the entry a23 equal to 6 highlighted."><figcaption>Rows, columns, and entries of a 2 × 3 matrix</figcaption></figure>
+<h2>What is a matrix?</h2>
+<p>A matrix is a rectangular arrangement of numbers in <strong>rows</strong> (horizontal) and <strong>columns</strong> (vertical). Each number is an <strong>entry</strong>.</p>
+<pre>A = [ 1  2  3 ]
+    [ 4  5  6 ]</pre>
+<p>Its <strong>size</strong> is written rows × columns. This matrix is 2 × 3: two rows and three columns. An entry is named <code>a_ij</code>, where i is the row and j is the column. Here a_23 = 6 (row 2, column 3).</p>
+<h2>Special matrices</h2>
+<ul>
+<li><strong>Square matrix:</strong> the same number of rows and columns, such as 2 × 2.</li>
+<li><strong>Row matrix</strong> and <strong>column matrix:</strong> a single row or a single column.</li>
+<li><strong>Zero matrix:</strong> every entry is 0.</li>
+<li><strong>Identity matrix I:</strong> ones on the main diagonal and zeros elsewhere. It acts like the number 1 for matrices.</li>
+</ul>
+<h2>Equality and basic operations</h2>
+<p>Two matrices are equal when they have the same size and every matching entry is equal. Addition, subtraction, and scalar multiplication work <strong>entry by entry</strong>:</p>
+<pre>[ 1  2 ]   [ 5  0 ]   [ 6  2 ]        [ 1  2 ]   [ 3  6 ]
+[ 3  4 ] + [ 1  7 ] = [ 4 11 ]      3 [ 3  4 ] = [ 9 12 ]</pre>
+<p>Adding requires <strong>the same size</strong>. A 2 × 3 matrix cannot be added to a 3 × 2 matrix.</p>
+<blockquote>Key idea: a matrix is a table of numbers with a size, and the size decides which operations are allowed.</blockquote>

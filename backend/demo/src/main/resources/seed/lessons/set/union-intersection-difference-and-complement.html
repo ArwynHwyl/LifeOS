@@ -1,0 +1,20 @@
+<p>Sets become useful when you combine them. Searching for “red <em>or</em> blue shoes”, “students who study maths <em>and</em> physics”, or “everything <em>except</em> spam” are all set operations in disguise.</p>
+<figure><img data-seed-image="set-operations.png" alt="Four Venn diagrams shading A union B, A intersect B, A minus B, and the complement of A."><figcaption>Union, intersection, difference, and complement</figcaption></figure>
+<h2>The four basic operations</h2>
+<ul>
+<li><strong>Union</strong> <code>A ∪ B</code>: everything that is in A, in B, or in both.</li>
+<li><strong>Intersection</strong> <code>A ∩ B</code>: only what is in <em>both</em> A and B.</li>
+<li><strong>Difference</strong> <code>A − B</code>: what is in A but <em>not</em> in B.</li>
+<li><strong>Complement</strong> <code>A′</code>: everything in the universal set U that is not in A.</li>
+</ul>
+<h2>A worked example</h2>
+<p>Let A = {1, 2, 3, 4} and B = {3, 4, 5}. Then:</p>
+<pre>A ∪ B = {1, 2, 3, 4, 5}
+A ∩ B = {3, 4}
+A − B = {1, 2}
+B − A = {5}</pre>
+<p>Notice that A − B and B − A are different sets: difference is not symmetric.</p>
+<h2>Reading a Venn diagram</h2>
+<p>A two-circle Venn diagram splits everything into <strong>four regions</strong>: A only, B only, both, and neither (outside both circles). In the diagram below the set totals are n(A) = 20 and n(B) = 15, and 6 members lie in the overlap. So A only = 20 − 6 = 14 and B only = 15 − 6 = 9, and the union has <code>n(A ∪ B) = 20 + 15 − 6 = 29</code> members.</p>
+<blockquote>Key idea: the overlap belongs to both circles, so it must be counted once when you take a union.</blockquote>
+<p>Use the buttons to highlight A, B, their union, and their intersection, and notice which regions light up each time.</p>

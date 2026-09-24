@@ -1,0 +1,14 @@
+<p>Boolean logic was born in electronics. A wire either carries current or it does not, and gates combine wires into new wires. Picturing an expression as a circuit is a powerful way to see <em>why</em> it gives the value it does.</p>
+<h2>Reading the circuit</h2>
+<p>The circuit below implements the expression <code>(P ∧ Q) ∨ ¬R</code>. Read it from the inputs on the left to the output on the right.</p>
+<ul>
+<li>Inputs P and Q feed an <strong>AND</strong> gate. Its output is on only when both inputs are on.</li>
+<li>Input R passes through a <strong>NOT</strong> gate, so its output is on when R is off.</li>
+<li>An <strong>OR</strong> gate joins the two results. The final output is on when either branch is on.</li>
+</ul>
+<h2>A worked assignment</h2>
+<p>Let P = T, Q = T, R = T. The AND branch gives T. The NOT branch gives ¬T = F. The OR gate sees T and F, so the output is <strong>T</strong>. Notice that one live branch is enough.</p>
+<p>Now flip R to F. The AND branch is still T, and the NOT branch also becomes T. The output stays T. Which single change would make the output false? Keep that question in mind.</p>
+<h2>Your turn</h2>
+<p>Toggle P, Q, and R on the circuit and watch which wires light up. For each of the eight combinations, say out loud which branch is responsible for the output. Look for the combinations where <em>neither</em> branch is on, because those are the only ones that give a false output.</p>
+<blockquote>Key idea: an OR gate is false only when both of its inputs are false. To understand a compound condition, ask which branch carries the result.</blockquote>

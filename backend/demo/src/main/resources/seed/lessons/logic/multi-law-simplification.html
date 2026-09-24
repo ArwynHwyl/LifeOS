@@ -1,0 +1,23 @@
+<p>Real conditions accumulate over time: one developer adds a check, another adds a slightly different one, and soon the same test appears twice. Applying several laws in a row cleans this up without changing behaviour.</p>
+<h2>The expression</h2>
+<p>Simplify <code>(P ∧ ¬Q) ∨ (P ∧ Q)</code>. It says: “P holds and Q is false, or P holds and Q is true.” Intuitively, that just means “P holds”, and Q does not matter. Let us prove it using laws.</p>
+<h2>Three steps</h2>
+<ol>
+<li><strong>Distributive law.</strong> P appears in both branches, so factor it out: <code>P ∧ (¬Q ∨ Q)</code>.</li>
+<li><strong>Complement law.</strong> A statement OR its negation is always true, so ¬Q ∨ Q becomes T: <code>P ∧ T</code>.</li>
+<li><strong>Identity law.</strong> ANDing with true changes nothing: <code>P</code>.</li>
+</ol>
+<h2>Strategy</h2>
+<ul>
+<li>Look for a shared factor between branches and pull it out.</li>
+<li>Look for a variable meeting its own negation (P ∨ ¬P or P ∧ ¬P).</li>
+<li>Finish by removing constants with the identity laws.</li>
+<li>Verify the result with a quick truth table. If it disagrees, one of the steps was wrong.</li>
+</ul>
+<h2>In code</h2>
+<pre>// before
+if ((isPaid &amp;&amp; !isRefunded) || (isPaid &amp;&amp; isRefunded)) { ship(); }
+// after
+if (isPaid) { ship(); }</pre>
+<blockquote>Key idea: simplification is a chain of small, justified steps, each one an equivalence law.</blockquote>
+<p>In the activity, choose the right law for each step and reach the single variable.</p>

@@ -1,0 +1,24 @@
+<p>Every <code>if</code> in your code asks a question that has exactly one answer: yes or no. Logic is the tool we use to reason about those answers before the program ever runs. The first step is to know what counts as a question worth reasoning about.</p>
+<figure><img data-seed-image="logic-truth-values.png" alt="Truth tables for the three basic connectives: NOT, AND, and OR."><figcaption>Truth tables for NOT, AND, and OR</figcaption></figure>
+<h2>What is a proposition?</h2>
+<p>A <strong>proposition</strong> is a declarative statement that is either true or false, never both and never neither. Its answer is called its <strong>truth value</strong>, written T (true) or F (false).</p>
+<ul>
+<li>“The server is running.” is a proposition. It is true or false at any moment.</li>
+<li>“7 is greater than 10.” is a proposition. Its truth value is F.</li>
+<li>“Restart the server.” is <em>not</em> a proposition. It is a command.</li>
+<li>“Is the file saved?” is <em>not</em> a proposition. It is a question.</li>
+<li>“x + 2 = 9” is <em>not</em> a proposition until x has a value.</li>
+</ul>
+<h2>Naming propositions</h2>
+<p>To work with several statements at once we give each one a letter such as <code>P</code>, <code>Q</code>, and <code>R</code>. Always write down what each letter means, so the final expression can still be read in the language of the original problem.</p>
+<pre>P: the user is logged in
+Q: the account is verified
+R: the request comes from the office network</pre>
+<p>A statement that cannot be split into smaller propositions is <strong>atomic</strong>. Statements built from atomic ones with words such as “and”, “or”, and “not” are <strong>compound</strong>. The next lesson shows how compound statements get their truth values.</p>
+<blockquote>Key idea: a proposition has exactly one truth value at a time. If you cannot decide whether a sentence is true or false, it is not yet a proposition.</blockquote>
+<h2>Common mistakes</h2>
+<ul>
+<li>Treating opinions such as “this function is elegant” as propositions. They have no fixed truth value.</li>
+<li>Forgetting that a false statement is still a proposition. “2 + 2 = 5” is a perfectly good proposition with value F.</li>
+</ul>
+<p>In a program, a boolean variable is simply a proposition stored in memory. Learning to combine them correctly is what the rest of this course is about.</p>

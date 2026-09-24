@@ -1,0 +1,20 @@
+<p>Now put inverses to work. Matrix equations look like the equations you already know, such as 3x = 12, but the unknown is a matrix. The same strategy applies: undo whatever was done to the unknown, one step at a time. The only new rule is that the <strong>order of multiplication matters</strong>.</p>
+<h2>Solving AX = B</h2>
+<p>To free X, multiply both sides by A⁻¹ on the <strong>left</strong>:</p>
+<pre>AX = B
+A⁻¹AX = A⁻¹B
+IX = A⁻¹B
+X = A⁻¹B</pre>
+<p>Because matrix multiplication is not commutative, you must put A⁻¹ on the same side on both sides of the equation. If the unknown is on the left instead (XA = B), multiply by A⁻¹ on the <strong>right</strong>: X = BA⁻¹.</p>
+<h2>Example</h2>
+<p>Solve AX = B with A = [[3, 1], [2, 4]] and B = [[5], [6]]. From the last lesson, A⁻¹ = [[0.4, −0.1], [−0.2, 0.3]]. Then:</p>
+<pre>X = A⁻¹B = [ 0.4×5 + (−0.1)×6 ]   [ 1.4 ]
+           [ −0.2×5 +  0.3 ×6 ] = [ 0.8 ]</pre>
+<p>Check: 3×1.4 + 1×0.8 = 5 and 2×1.4 + 4×0.8 = 6. Correct.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li>Multiplying by A⁻¹ on the left of one side and the right of the other.</li>
+<li>Trying to divide by a matrix. There is no such operation.</li>
+<li>Forgetting to check that the determinant is nonzero first.</li>
+</ul>
+<blockquote>Key idea: to isolate the unknown, multiply by the inverse on the same side on both sides.</blockquote>

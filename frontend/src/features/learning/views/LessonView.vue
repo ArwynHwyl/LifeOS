@@ -1105,12 +1105,47 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
 :deep(.lesson-body ol) {
   padding-left: 1.3rem;
 }
+:deep(.lesson-body ul) { list-style: disc; }
+:deep(.lesson-body ol) { list-style: decimal; }
+:deep(.lesson-body li + li) { margin-top: 0.35rem; }
 :deep(.lesson-body img) {
   display: block;
   max-width: 100%;
   height: auto;
   margin: 0.85rem 0;
   border-radius: 8px;
+}
+:deep(.lesson-body blockquote) {
+  margin: 1.1rem 0;
+  padding: 0.85rem 1.1rem;
+  border-left: 4px solid var(--color-lx-macaw);
+  border-radius: 0 12px 12px 0;
+  background: color-mix(in srgb, var(--color-lx-macaw) 9%, white);
+  font-weight: 600;
+}
+:deep(.lesson-body pre) {
+  margin: 1rem 0;
+  padding: 0.9rem 1.1rem;
+  overflow-x: auto;
+  border: 2px solid var(--lm-line, #dfe1e5);
+  border-radius: 12px;
+  background: #f6f7f8;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace;
+  font-variant-numeric: normal;
+  letter-spacing: 0;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+:deep(.lesson-body code) {
+  padding: 0.1rem 0.35rem;
+  border-radius: 6px;
+  background: #f0f1f3;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace;
+  font-size: 0.92em;
+}
+:deep(.lesson-body pre code) {
+  padding: 0;
+  background: none;
 }
 :deep(.lesson-body a) {
   color: var(--color-lx-macaw-dark);
