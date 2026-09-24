@@ -2,8 +2,7 @@ package com.example.demo.gamification.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import jakarta.persistence.Convert;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -32,7 +31,7 @@ public class AchievementDefinition {
     @Column(name = "exp_reward", nullable = false)
     private int expReward;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = AchievementCriteriaTypeConverter.class)
     @Column(name = "criteria_type", nullable = false, length = 40)
     private AchievementCriteriaType criteriaType;
 
