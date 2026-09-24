@@ -19,26 +19,24 @@ defineEmits<{ close: [] }>()
     <div class="absolute inset-0 bg-[rgba(14,13,11,0.55)]" @click="$emit('close')" />
 
     <!-- Notification card -->
-    <div class="relative z-10 w-[min(620px,80%)] bg-lm-surface border-2 border-lm-line rounded-[24px] shadow-stamp-lg px-6 py-5 flex items-center gap-[18px]">
-      <div class="w-16 h-16 rounded-full bg-lm-blue-soft border-2 border-lm-line text-lm-blue shadow-stamp-sm flex items-center justify-center shrink-0">
-        <LmIcon name="shield" :size="36" :filled="true" />
+    <div class="anim-pop relative z-10 w-[min(620px,80%)] bg-white rounded-[24px] shadow-[0_24px_60px_-20px_rgba(0,0,0,0.4)] px-6 py-5 flex items-center gap-[18px]">
+      <div class="anim-ring w-16 h-16 rounded-2xl bg-lx-macaw/10 text-lx-macaw flex items-center justify-center shrink-0" style="--i: 2">
+        <LmIcon name="shield" :size="34" :filled="true" />
       </div>
       <div class="flex-1">
-        <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-blue block">SHIELD ACTIVATED</span>
-        <h2 class="font-display text-[26px] font-bold tracking-tight text-lm-ink mt-0.5 mb-1 m-0">Streak protected!</h2>
-        <p class="text-[14px] text-lm-ink-2 m-0">You missed yesterday — a shield kept your <strong>{{ streakDays }}-day streak</strong> alive.</p>
+        <span class="font-mono text-[11px] font-bold tracking-[0.06em] uppercase text-lx-macaw block">Shield activated</span>
+        <h2 class="font-display text-[24px] font-extrabold tracking-tight text-lx-ink mt-0.5 mb-1 m-0">Streak protected!</h2>
+        <p class="text-[14px] font-semibold text-lx-ink-soft m-0">You missed yesterday — a shield kept your <strong class="text-lx-ink">{{ streakDays }}-day streak</strong> alive.</p>
       </div>
       <div class="text-right shrink-0">
-        <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3 block mb-1">SHIELDS LEFT</span>
+        <span class="font-mono text-[11px] font-bold tracking-[0.06em] uppercase text-lx-ink-faint block mb-1">Shields left</span>
         <div class="flex gap-1 justify-end">
           <div
             v-for="i in shieldMax"
             :key="i"
             :class="[
-              'w-7 h-8 rounded-[4px] border-2 flex items-center justify-center',
-              i <= shieldsRemaining
-                ? 'bg-lm-blue-soft border-lm-line border-solid text-lm-blue'
-                : 'bg-lm-bg-soft border-dashed border-lm-line text-lm-ink-3'
+              'w-7 h-8 rounded-lg flex items-center justify-center',
+              i <= shieldsRemaining ? 'bg-lx-macaw/10 text-lx-macaw' : 'bg-lx-surface-soft text-lx-ink-faint'
             ]"
           >
             <LmIcon name="shield" :size="18" :filled="i <= shieldsRemaining" />
@@ -49,7 +47,7 @@ defineEmits<{ close: [] }>()
 
     <button
       @click="$emit('close')"
-      class="relative z-10 mt-5 px-[18px] py-[9px] text-[15px] font-semibold border-2 border-lm-line rounded-full bg-lm-ink text-lm-bg shadow-stamp-sm hover:-translate-y-px hover:shadow-stamp-md transition-all duration-200"
+      class="relative z-10 mt-5 px-5 py-2.5 text-[14px] font-extrabold rounded-2xl bg-lx-macaw text-white shadow-[0_4px_0_var(--color-lx-macaw-dark)] transition-transform duration-75 active:translate-y-1 active:shadow-none"
     >
       Got it
     </button>

@@ -7,6 +7,7 @@ import { resetPassword } from '@/features/auth/services/auth'
 
 const route = useRoute()
 const password = ref('')
+const passwordFocused = ref(false)
 const confirmPassword = ref('')
 const message = ref('')
 const error = ref('')
@@ -24,11 +25,11 @@ const strengthLevel = computed(() => {
 })
 
 const strengthLabel = computed(() => ['', 'Weak', 'Fair', 'Good', 'Strong'][strengthLevel.value] ?? '')
-const strengthColor = computed(() => ['', 'text-lm-red', 'text-lm-rust', 'text-lm-yellow', 'text-lm-green'][strengthLevel.value] ?? '')
+const strengthColor = computed(() => ['', 'text-red-500', 'text-lx-fox-dark', 'text-lx-macaw-dark', 'text-lx-feather-dark'][strengthLevel.value] ?? '')
 const barColor = (i: number) => {
-  if (i > strengthLevel.value) return 'bg-lm-bg-soft border-lm-line-soft'
-  const c = ['', 'bg-lm-red', 'bg-lm-rust', 'bg-lm-yellow', 'bg-lm-green']
-  return (c[strengthLevel.value] ?? 'bg-lm-bg-soft') + ' border-lm-line'
+  if (i > strengthLevel.value) return 'bg-lx-surface-soft'
+  const c = ['', 'bg-red-500', 'bg-lx-fox', 'bg-lx-macaw', 'bg-lx-feather']
+  return c[strengthLevel.value] ?? 'bg-lx-surface-soft'
 }
 
 function getToken() {
@@ -66,80 +67,84 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <AuthPageLayout medium tight mood="happy" holding="key" bubble="Got your shiny new key!">
+  <AuthPageLayout medium tight :mood="error ? 'oops' : 'happy'" :cover="passwordFocused" holding="key" bubble="Got your shiny new key!">
     <header class="mb-4">
-      <h1 class="font-display text-[28px] font-bold leading-tight tracking-tight text-lm-ink">Choose a new password</h1>
-      <p v-if="message" class="mt-2 rounded-xl border-2 border-lm-green bg-lm-green-soft px-3 py-2.5 text-[12px] font-medium text-lm-green">{{ message }}</p>
-      <p v-else class="mt-1.5 text-[14px] text-lm-ink-2">Make it strong. You won't need it again for a while.</p>
+      <h1 class="m-0 font-display text-[28px] font-bold leading-tight tracking-tight text-lx-ink">Choose a new password</h1>
+      <p v-if="message" class="mt-3 auth-alert auth-alert-success">{{ message }}</p>
+      <p v-else class="mt-1.5 text-[14px] text-lx-ink-soft">Make it strong. You won't need it again for a while.</p>
     </header>
 
     <form v-if="!message" class="flex flex-col gap-2.5" @submit.prevent="handleSubmit">
-      <div v-if="error" class="rounded-xl border-2 border-lm-red bg-lm-red-soft px-3 py-2.5 text-[12px] font-medium text-lm-red" role="alert">
+      <div v-if="error" class="auth-alert auth-alert-error" role="alert">
         {{ error }}
       </div>
 
       <!-- New password with strength meter -->
       <div class="flex flex-col gap-1.5">
-        <label class="font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-lm-ink-3" for="reset-password">New Password</label>
+        <label class="auth-label" for="reset-password">New Password</label>
         <input
           id="reset-password"
+          @focus="passwordFocused = true"
+          @blur="passwordFocused = false"
           v-model="password"
           type="password"
           autocomplete="new-password"
           required
           minlength="8"
-          class="w-full rounded-xl border-2 border-lm-line-soft bg-lm-bg-soft px-3.5 py-3 text-[14px] font-medium text-lm-ink outline-none transition focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
+          class="auth-input"
         />
         <!-- Strength bar -->
         <div class="flex gap-1.5">
-          <div v-for="i in 4" :key="i" class="h-1.5 flex-1 rounded-full border-[1.5px] transition-all duration-200" :class="barColor(i)" />
+          <div v-for="i in 4" :key="i" class="h-1.5 flex-1 rounded-full transition-all duration-200" :class="barColor(i)" />
         </div>
         <div v-if="password" class="flex justify-between text-[11px]">
           <span>Strength: <b :class="strengthColor">{{ strengthLabel }}</b></span>
-          <span class="font-mono text-lm-ink-3">{{ password.length }} / 8+ chars</span>
+          <span class="font-mono text-lx-ink-faint">{{ password.length }} / 8+ chars</span>
         </div>
       </div>
 
       <!-- Checklist -->
-      <div class="grid grid-cols-2 gap-1 rounded-xl border-2 border-dashed border-lm-line bg-lm-bg-soft p-2.5 text-[12px]">
-        <div class="flex items-center gap-1.5" :class="password.length >= 8 ? 'text-lm-green' : 'text-lm-ink-3'">
+      <div class="auth-checklist grid grid-cols-2 gap-1.5">
+        <div class="flex items-center gap-1.5" :class="password.length >= 8 ? 'text-lx-feather-dark' : 'text-lx-ink-faint'">
           <svg v-if="password.length >= 8" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 13l5 5L20 6" /></svg>
-          <span v-else class="inline-block h-3.5 w-3.5 rounded-full border-[1.5px] border-lm-ink-3" />
+          <span v-else class="inline-block h-3.5 w-3.5 rounded-full border-[1.5px] border-lx-ink-faint" />
           8+ characters
         </div>
-        <div class="flex items-center gap-1.5" :class="/\d/.test(password) ? 'text-lm-green' : 'text-lm-ink-3'">
+        <div class="flex items-center gap-1.5" :class="/\d/.test(password) ? 'text-lx-feather-dark' : 'text-lx-ink-faint'">
           <svg v-if="/\d/.test(password)" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 13l5 5L20 6" /></svg>
-          <span v-else class="inline-block h-3.5 w-3.5 rounded-full border-[1.5px] border-lm-ink-3" />
+          <span v-else class="inline-block h-3.5 w-3.5 rounded-full border-[1.5px] border-lx-ink-faint" />
           One number
         </div>
-        <div class="flex items-center gap-1.5" :class="/[a-z]/.test(password) && /[A-Z]/.test(password) ? 'text-lm-green' : 'text-lm-ink-3'">
+        <div class="flex items-center gap-1.5" :class="/[a-z]/.test(password) && /[A-Z]/.test(password) ? 'text-lx-feather-dark' : 'text-lx-ink-faint'">
           <svg v-if="/[a-z]/.test(password) && /[A-Z]/.test(password)" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 13l5 5L20 6" /></svg>
-          <span v-else class="inline-block h-3.5 w-3.5 rounded-full border-[1.5px] border-lm-ink-3" />
+          <span v-else class="inline-block h-3.5 w-3.5 rounded-full border-[1.5px] border-lx-ink-faint" />
           Upper &amp; lowercase
         </div>
-        <div class="flex items-center gap-1.5" :class="/[^a-zA-Z0-9]/.test(password) ? 'text-lm-green' : 'text-lm-ink-3'">
+        <div class="flex items-center gap-1.5" :class="/[^a-zA-Z0-9]/.test(password) ? 'text-lx-feather-dark' : 'text-lx-ink-faint'">
           <svg v-if="/[^a-zA-Z0-9]/.test(password)" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 13l5 5L20 6" /></svg>
-          <span v-else class="inline-block h-3.5 w-3.5 rounded-full border-[1.5px] border-lm-ink-3" />
+          <span v-else class="inline-block h-3.5 w-3.5 rounded-full border-[1.5px] border-lx-ink-faint" />
           One symbol (!@#$)
         </div>
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <label class="font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-lm-ink-3" for="reset-confirm">Confirm Password</label>
+        <label class="auth-label" for="reset-confirm">Confirm Password</label>
         <input
           id="reset-confirm"
+          @focus="passwordFocused = true"
+          @blur="passwordFocused = false"
           v-model="confirmPassword"
           type="password"
           autocomplete="new-password"
           required
           minlength="8"
-          class="w-full rounded-xl border-2 border-lm-line-soft bg-lm-bg-soft px-3.5 py-3 text-[14px] font-medium text-lm-ink outline-none transition focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
+          class="auth-input"
         />
       </div>
 
       <button
         type="submit"
-        class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border-2 border-lm-line bg-lm-yellow px-6 py-3 text-[16px] font-semibold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+        class="auth-btn"
         :disabled="isSubmitting"
       >
         {{ isSubmitting ? 'Resetting...' : 'Reset password' }}
@@ -148,7 +153,7 @@ async function handleSubmit() {
     </form>
 
     <template #footer>
-      <RouterLink class="font-bold text-lm-ink" to="/login">← Back to sign in</RouterLink>
+      <RouterLink class="auth-link" to="/login">← Back to sign in</RouterLink>
     </template>
   </AuthPageLayout>
 </template>

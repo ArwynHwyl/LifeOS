@@ -1,85 +1,77 @@
 <script setup lang="ts">
-import ToraMascot from './ToraMascot.vue'
+import LogoMark from '@/components/brand/LogoMark.vue'
+import ToraMascot, { type ToraHolding, type ToraMood } from '@/components/tora/ToraMascot.vue'
 
 withDefaults(defineProps<{
   bubble: string
-  mood?: 'happy' | 'wave' | 'think' | 'cheer'
-  holding?: 'none' | 'pencil' | 'key' | 'envelope' | 'check'
+  mood?: ToraMood
+  holding?: ToraHolding
+  cover?: boolean
   wide?: boolean
   medium?: boolean
   tight?: boolean
-}>(), { mood: 'happy', holding: 'none', wide: false, medium: false, tight: false })
+}>(), { mood: 'happy', holding: 'none', cover: false, wide: false, medium: false, tight: false })
+
+const GLYPHS = [
+  { g: 'x²', l: '9%', t: '16%', s: 60, d: 0 },
+  { g: '√', l: '82%', t: '11%', s: 74, d: 0.8 },
+  { g: 'π', l: '8%', t: '74%', s: 80, d: 1.4 },
+  { g: '∫', l: '84%', t: '70%', s: 92, d: 2.1 },
+  { g: '∑', l: '16%', t: '46%', s: 44, d: 0.4 },
+  { g: 'sin', l: '78%', t: '42%', s: 40, d: 1.6 },
+  { g: '∞', l: '48%', t: '7%', s: 52, d: 1.2 },
+  { g: 'Δ', l: '56%', t: '90%', s: 46, d: 2.4 },
+]
 </script>
 
 <template>
-  <div class="relative min-h-screen overflow-hidden bg-lm-bg">
-    <!-- Dot grid -->
-    <div class="pointer-events-none absolute inset-0 bg-dot-grid opacity-50" />
+  <div class="min-h-screen bg-white font-body lg:flex">
+    <!-- Brand panel -->
+    <aside class="relative hidden overflow-hidden bg-lx-macaw lg:flex lg:w-[46%] lg:flex-col">
+      <div class="pointer-events-none absolute -left-32 -top-32 h-[420px] w-[420px] rounded-full bg-white/10" />
+      <div class="pointer-events-none absolute -bottom-40 -right-24 h-[460px] w-[460px] rounded-full bg-white/10" />
 
-    <!-- Floating math glyphs -->
-    <div class="pointer-events-none absolute inset-0 overflow-hidden">
-      <span class="glyph" style="left:8%;top:14%;font-size:56px;color:rgba(196,74,26,0.18);transform:rotate(-8deg);animation-delay:0s">x²</span>
-      <span class="glyph" style="left:88%;top:10%;font-size:70px;color:rgba(26,24,20,0.12);transform:rotate(12deg);animation-delay:0.8s">√</span>
-      <span class="glyph" style="left:5%;top:78%;font-size:84px;color:rgba(255,211,51,0.45);transform:rotate(-6deg);animation-delay:1.4s">π</span>
-      <span class="glyph" style="left:92%;top:72%;font-size:96px;color:rgba(26,24,20,0.10);transform:rotate(8deg);animation-delay:2.1s">∫</span>
-      <span class="glyph" style="left:14%;top:44%;font-size:42px;color:rgba(196,74,26,0.14);transform:rotate(14deg);animation-delay:0.4s">∑</span>
-      <span class="glyph" style="left:84%;top:40%;font-size:38px;color:rgba(26,24,20,0.12);transform:rotate(-10deg);animation-delay:1.6s">sin</span>
-      <span class="glyph" style="left:50%;top:6%;font-size:50px;color:rgba(255,211,51,0.5);transform:rotate(4deg);animation-delay:1.2s">∞</span>
-      <span class="glyph" style="left:50%;top:92%;font-size:44px;color:rgba(26,24,20,0.10);transform:rotate(-3deg);animation-delay:2.4s">Δ</span>
-      <span class="glyph" style="left:23%;top:88%;font-size:36px;color:rgba(196,74,26,0.18);transform:rotate(12deg);animation-delay:0.6s">÷</span>
-      <span class="glyph" style="left:78%;top:88%;font-size:38px;color:rgba(26,24,20,0.13);transform:rotate(-8deg);animation-delay:1.9s">∠</span>
-    </div>
+      <span
+        v-for="item in GLYPHS"
+        :key="item.g"
+        class="auth-glyph pointer-events-none absolute font-math font-bold italic text-white/20"
+        :style="{ left: item.l, top: item.t, fontSize: `${item.s}px`, animationDelay: `${item.d}s` }"
+      >{{ item.g }}</span>
 
-    <!-- Brand — top left -->
-    <div class="absolute left-8 top-6 z-10 flex items-center -gap-1">
-      <img src="@/assets/Logo.png" alt="LifeOS" class="h-25" />
-      <span class="font-display text-[20px] font-bold text-lm-ink">LifeOS</span>
-    </div>
+      <div class="relative z-10 flex items-center gap-2.5 px-10 pt-9">
+        <LogoMark :size="44" />
+        <span class="font-display text-[22px] font-bold tracking-tight text-white">LifeOS</span>
+      </div>
 
-    <!-- Main content -->
-    <div :class="tight ? 'py-6' : 'py-20'" class="relative z-10 flex min-h-screen items-center justify-center px-8">
-      <div class="flex items-center gap-8">
-        <!-- Mascot column -->
-        <div class="flex flex-col items-center gap-0 pb-2">
-          <!-- Speech bubble -->
-          <div class="relative translate-y-4 -rotate-[1.5deg] rounded-[14px] border-2 border-lm-line bg-lm-surface px-4 py-2.5 font-display text-[14px] font-bold whitespace-nowrap shadow-stamp-sm text-lm-ink">
-            {{ bubble }}
-            <!-- Bubble tail -->
-            <svg width="22" height="20" viewBox="0 0 22 20" class="absolute -bottom-[17px] left-7">
-              <path d="M2 2 L 18 2 L 8 18 Z" fill="white" stroke="#1a1814" stroke-width="2" stroke-linejoin="round" />
-              <path d="M3 2 L 17 2" stroke="white" stroke-width="3" />
-            </svg>
-          </div>
-          <ToraMascot :mood="mood" :holding="holding" :size="260" />
+      <div class="relative z-10 flex flex-1 flex-col items-center justify-center pb-10">
+        <div :key="bubble" class="auth-bubble relative mb-1 rounded-[20px] bg-white px-5 py-3 font-display text-[16px] font-semibold whitespace-nowrap text-lx-ink shadow-[0_10px_24px_-10px_rgba(0,0,0,0.3)]">
+          {{ bubble }}
+          <span class="absolute -bottom-2 left-1/2 h-4 w-4 -translate-x-1/2 rotate-45 rounded-[3px] bg-white" />
         </div>
+        <ToraMascot :mood="mood" :holding="holding" :cover="cover" :size="340" />
+      </div>
+    </aside>
 
-        <!-- Form column -->
-        <div>
-          <div :class="wide ? 'w-[560px]' : medium ? 'w-[500px]' : 'w-[440px]'" class="rounded-[24px] border-[2.5px] border-lm-line bg-lm-surface p-8 shadow-stamp-lg">
-            <slot />
-          </div>
-          <div class="mt-[18px] text-center text-[13px] text-lm-ink-2">
-            <slot name="footer" />
-          </div>
+    <!-- Form panel -->
+    <main :class="tight ? 'py-8' : 'py-14'" class="flex flex-1 items-center justify-center px-6">
+      <div :class="wide ? 'max-w-[500px]' : medium ? 'max-w-[440px]' : 'max-w-[400px]'" class="w-full">
+        <div class="mb-8 flex items-center gap-2.5 lg:hidden">
+          <LogoMark :size="38" />
+          <span class="font-display text-[20px] font-bold tracking-tight text-lx-ink">LifeOS</span>
+        </div>
+        <slot />
+        <div class="mt-6 text-center text-[14px] text-lx-ink-soft">
+          <slot name="footer" />
         </div>
       </div>
-    </div>
+    </main>
   </div>
 </template>
 
 <style scoped>
-.glyph {
-  position: absolute;
-  font-family: 'Iowan Old Style', 'Cambria', 'Times New Roman', serif;
-  font-style: italic;
-  font-weight: 700;
-  line-height: 1;
-  transform-origin: center center;
-  animation: glyph-float 6s ease-in-out infinite;
-}
-
-@keyframes glyph-float {
-  0%, 100% { translate: 0 0; }
-  50%       { translate: 0 -14px; }
-}
+.auth-glyph { animation: auth-float 6s ease-in-out infinite; line-height: 1; }
+.auth-bubble { animation: auth-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+@keyframes auth-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -14px; } }
+@keyframes auth-pop { from { opacity: 0; transform: translateY(8px) scale(0.92); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .auth-glyph, .auth-bubble { animation: none; } }
 </style>

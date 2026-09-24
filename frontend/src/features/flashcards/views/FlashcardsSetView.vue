@@ -3,6 +3,9 @@ import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import LmIcon from '@/features/learning/components/LmIcon.vue'
 import FlashcardFace from '../components/FlashcardFace.vue'
+import { watch } from 'vue'
+import ToraMascot from '@/components/tora/ToraMascot.vue'
+import ConfettiBurst from '@/components/motion/ConfettiBurst.vue'
 import { getDeckDetail, type FlashcardCardDto, type FlashcardDeckDetailDto } from '../services/flashcard'
 
 const route = useRoute()
@@ -24,6 +27,8 @@ const roundMissed = ref(0)
 const isFlipped = ref(false)
 const isComplete = ref(false)
 const roundComplete = ref(false)
+const confettiKey = ref(0)
+watch([isComplete, roundComplete], ([done, round]) => { if (done || round) confettiKey.value += 1 })
 
 const currentCard = computed<FlashcardCardDto | null>(() => round.value[roundIndex.value] ?? null)
 const totalCards = computed(() => deck.value?.cards.length ?? 0)
@@ -127,26 +132,24 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
-  <main class="flex-1 flex flex-col bg-lm-bg overflow-hidden relative">
-    <div class="absolute inset-0 bg-dot-grid opacity-40 pointer-events-none" />
+  <main class="flex-1 flex flex-col bg-lx-surface-soft overflow-hidden relative">
 
     <!-- Top bar -->
-    <div class="relative flex items-center gap-3.5 px-6 py-3.5 bg-lm-surface border-b-2 border-lm-line shrink-0">
+    <div class="relative flex items-center gap-3.5 px-6 py-3.5 bg-white border-b border-lx-line shrink-0">
       <button
         @click="router.back()"
-        class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold border-2 border-lm-line rounded-full bg-lm-surface shadow-stamp-sm hover:-translate-y-px transition-all duration-200 text-lm-ink shrink-0"
+        class="flex items-center gap-1.5 px-3.5 py-2 text-sm font-extrabold rounded-2xl bg-lx-surface-soft hover:bg-lx-line transition-colors duration-150 text-lx-ink shrink-0"
       >
         <LmIcon name="back" :size="14" />
         Back to decks
       </button>
       <div class="flex-1 text-center">
-        <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3 block">PRACTICE{{ deck ? ' · ' + deck.tag : '' }}</span>
-        <span class="font-display font-bold text-[18px] text-lm-ink leading-tight block">{{ deck?.title ?? 'Loading…' }}</span>
+        <span class="font-display font-extrabold text-[18px] text-lx-ink leading-tight block">{{ deck?.title ?? 'Loading…' }}</span>
       </div>
       <button
         @click="restart"
         :disabled="!deck"
-        class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold border-2 border-lm-line rounded-full bg-lm-surface shadow-stamp-sm hover:-translate-y-px transition-all duration-200 text-lm-ink shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+        class="flex items-center gap-1.5 px-3.5 py-2 text-sm font-extrabold rounded-2xl bg-lx-surface-soft hover:bg-lx-line transition-colors duration-150 text-lx-ink shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
       >
         <LmIcon name="refresh" :size="14" />
         Restart
@@ -154,47 +157,51 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
     </div>
 
     <div v-if="loading" class="flex-1 flex items-center justify-center relative">
-      <p class="text-[14px] text-lm-ink-2">Loading deck…</p>
+      <p class="text-[14px] text-lx-ink-faint">Loading deck…</p>
     </div>
 
     <div v-else-if="loadError" class="flex-1 flex items-center justify-center relative">
-      <p class="text-[14px] text-lm-ink-2">Couldn't load this deck. <button class="underline" @click="loadDeck">Try again</button></p>
+      <p class="text-[14px] text-lx-ink-faint">Couldn't load this deck. <button class="underline font-bold" @click="loadDeck">Try again</button></p>
     </div>
 
     <template v-else-if="deck">
       <!-- Score strip -->
-      <div class="relative flex items-center gap-3.5 px-6 py-2.5 bg-lm-surface border-b border-lm-line-soft shrink-0">
-        <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3 shrink-0">CARD {{ Math.min(cardsSeen + 1, totalCards) }} / {{ totalCards }}</span>
-        <span class="flex items-center gap-1.5 text-[13px]">
-          <span class="text-lm-green"><LmIcon name="check" :size="14" /></span>
+      <div class="relative flex items-center gap-3.5 px-6 py-2.5 bg-white border-b border-lx-line shrink-0">
+        <span class="font-mono text-[11px] font-bold tracking-[0.06em] uppercase text-lx-ink-faint shrink-0">CARD {{ Math.min(cardsSeen + 1, totalCards) }} / {{ totalCards }}</span>
+        <span class="flex items-center gap-1.5 text-[13px] font-semibold text-lx-ink">
+          <span class="text-lx-feather"><LmIcon name="check" :size="14" /></span>
           <strong>{{ passedCount }}</strong> passed
         </span>
-        <span class="flex items-center gap-1.5 text-[13px]">
-          <span class="text-lm-red"><LmIcon name="close" :size="14" /></span>
+        <span class="flex items-center gap-1.5 text-[13px] font-semibold text-lx-ink">
+          <span class="text-red-500"><LmIcon name="close" :size="14" /></span>
           <strong>{{ missedCount }}</strong> missed
         </span>
         <div class="flex-1" />
-        <div class="w-[180px] h-2.5 bg-lm-bg-soft rounded-full overflow-hidden border border-lm-line">
-          <div class="h-full bg-lm-green transition-all duration-200" :style="{ width: `${progressPercent}%` }" />
+        <div class="w-[180px] h-2.5 bg-lx-surface-soft rounded-full overflow-hidden">
+          <div class="h-full bg-lx-feather rounded-full transition-all duration-200" :style="{ width: `${progressPercent}%` }" />
         </div>
-        <span class="font-mono text-[11px] text-lm-ink-2">{{ Math.round(progressPercent) }}%</span>
+        <span class="font-mono text-[11px] font-bold text-lx-ink-faint">{{ Math.round(progressPercent) }}%</span>
       </div>
 
       <!-- Complete state -->
       <div v-if="isComplete" class="flex-1 flex flex-col items-center justify-center gap-4 relative px-6 text-center">
-        <h2 class="font-display text-[32px] font-bold text-lm-ink m-0">Deck complete!</h2>
-        <p class="text-[15px] text-lm-ink-2 m-0">You passed all {{ totalCards }} cards in this deck.</p>
+      <div class="relative">
+        <ConfettiBurst :fire="confettiKey" :count="60" :spread="300" />
+        <ToraMascot mood="cheer" :size="190" :track="false" />
+      </div>
+        <h2 class="font-display text-[30px] font-extrabold text-lx-ink m-0">Deck complete!</h2>
+        <p class="text-[15px] text-lx-ink-soft m-0">You passed all {{ totalCards }} cards in this deck.</p>
         <div class="flex gap-3 mt-2">
           <button
             @click="restart"
-            class="flex items-center gap-2 px-6 py-3 text-[15px] font-semibold border-2 border-lm-line rounded-full bg-lm-ink text-lm-bg shadow-stamp-sm hover:-translate-y-px hover:shadow-stamp-md transition-all duration-200"
+            class="flex items-center gap-2 px-6 py-3 text-[15px] font-extrabold rounded-2xl bg-lx-feather text-white shadow-[0_4px_0_var(--color-lx-feather-dark)] transition-transform duration-75 active:translate-y-1 active:shadow-none"
           >
             <LmIcon name="refresh" :size="16" />
             Practice again
           </button>
           <button
             @click="router.push('/learn/flashcards')"
-            class="flex items-center gap-2 px-6 py-3 text-[15px] font-semibold border-2 border-lm-line rounded-full bg-lm-surface text-lm-ink shadow-stamp-sm hover:-translate-y-px hover:shadow-stamp-md transition-all duration-200"
+            class="flex items-center gap-2 px-6 py-3 text-[15px] font-extrabold rounded-2xl bg-lx-surface-soft text-lx-ink hover:bg-lx-line transition-colors duration-150"
           >
             Back to decks
           </button>
@@ -203,25 +210,29 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
       <!-- Round complete interstitial -->
       <div v-else-if="roundComplete" class="flex-1 flex flex-col items-center justify-center gap-4 relative px-6 text-center">
-        <h2 class="font-display text-[32px] font-bold text-lm-ink m-0">Round complete</h2>
-        <p class="text-[15px] text-lm-ink-2 m-0">
-          You got <strong class="text-lm-green">{{ roundPassed }}</strong> right and
-          <strong class="text-lm-red">{{ roundMissed }}</strong> wrong this round.
+      <div class="relative">
+        <ConfettiBurst :fire="confettiKey" :count="60" :spread="300" />
+        <ToraMascot mood="happy" :size="190" :track="false" />
+      </div>
+        <h2 class="font-display text-[30px] font-extrabold text-lx-ink m-0">Round complete</h2>
+        <p class="text-[15px] text-lx-ink-soft m-0">
+          You got <strong class="text-lx-feather-dark">{{ roundPassed }}</strong> right and
+          <strong class="text-red-500">{{ roundMissed }}</strong> wrong this round.
         </p>
-        <p class="text-[14px] text-lm-ink-2 m-0">
+        <p class="text-[14px] text-lx-ink-faint m-0">
           {{ notPassed.length }} card{{ notPassed.length === 1 ? '' : 's' }} still need{{ notPassed.length === 1 ? 's' : '' }} review.
         </p>
         <div class="flex gap-3 mt-2">
           <button
             @click="reviewMissed"
-            class="flex items-center gap-2 px-6 py-3 text-[15px] font-semibold border-2 border-lm-line rounded-full bg-lm-ink text-lm-bg shadow-stamp-sm hover:-translate-y-px hover:shadow-stamp-md transition-all duration-200"
+            class="flex items-center gap-2 px-6 py-3 text-[15px] font-extrabold rounded-2xl bg-lx-feather text-white shadow-[0_4px_0_var(--color-lx-feather-dark)] transition-transform duration-75 active:translate-y-1 active:shadow-none"
           >
             <LmIcon name="refresh" :size="16" />
             Review missed cards
           </button>
           <button
             @click="exitToDecks"
-            class="flex items-center gap-2 px-6 py-3 text-[15px] font-semibold border-2 border-lm-line rounded-full bg-lm-surface text-lm-ink shadow-stamp-sm hover:-translate-y-px hover:shadow-stamp-md transition-all duration-200"
+            class="flex items-center gap-2 px-6 py-3 text-[15px] font-extrabold rounded-2xl bg-lx-surface-soft text-lx-ink hover:bg-lx-line transition-colors duration-150"
           >
             Exit to decks
           </button>
@@ -231,8 +242,10 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
       <template v-else-if="currentCard">
         <!-- Card pair -->
         <div class="flex-1 flex flex-col px-6 py-6 min-h-0 relative">
-          <FlashcardFace
-            :card-key="currentCard.id"
+          <Transition name="card-swap" mode="out-in">
+            <FlashcardFace
+              :key="currentCard.id"
+              :card-key="currentCard.id"
             :front="currentCard.front"
             :formula="currentCard.backText"
             :label="currentCard.front"
@@ -240,28 +253,28 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
             :example="currentCard.example ?? undefined"
             :tags="currentCard.tags"
             @flip="onFlip"
-          />
+            />
+          </Transition>
         </div>
 
         <!-- Pass / Not pass -->
-        <div class="shrink-0 px-6 pb-5 pt-3.5 bg-lm-surface border-t-2 border-lm-line">
-          <p class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3 text-center mb-2.5">
-            {{ isFlipped ? 'DID YOU GET IT?' : 'CLICK THE CARD TO REVEAL THE ANSWER FIRST' }}
+        <div class="shrink-0 px-6 pb-5 pt-3.5 bg-white border-t border-lx-line">
+          <p class="font-mono text-[11px] font-bold tracking-[0.06em] uppercase text-lx-ink-faint text-center mb-2.5">
+            {{ isFlipped ? 'Did you get it?' : 'Click the card to reveal the answer first' }}
           </p>
           <div class="grid grid-cols-2 gap-3.5">
             <!-- Not pass -->
             <button
               @click="markNotPass"
               :disabled="!isFlipped"
-              class="flex items-center justify-center gap-4 px-6 py-[18px] bg-lm-red-soft border-2 border-lm-line rounded-[24px] shadow-stamp-md cursor-pointer hover:-translate-y-0.5 hover:shadow-stamp-lg transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-stamp-md"
+              class="flex items-center justify-center gap-4 px-6 py-[18px] bg-red-50 rounded-[24px] cursor-pointer transition-all duration-150 hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0"
             >
-              <div class="w-[52px] h-[52px] rounded-full bg-lm-red text-lm-bg border-2 border-lm-line flex items-center justify-center shrink-0">
+              <div class="w-[52px] h-[52px] rounded-full bg-red-500 text-white flex items-center justify-center shrink-0">
                 <LmIcon name="close" :size="28" />
               </div>
               <div>
-                <p class="font-display font-bold text-[24px] leading-none text-lm-ink m-0">Not pass</p>
-                <p class="text-[12px] text-lm-ink-2 mt-1 m-0">will show again at end ·
-                  <span class="font-mono">[1] or ←</span>
+                <p class="font-display font-extrabold text-[22px] leading-none text-lx-ink m-0">Not pass</p>
+                <p class="text-[12px] font-semibold text-lx-ink-faint mt-1 m-0">Will show again at end of round
                 </p>
               </div>
             </button>
@@ -270,15 +283,14 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
             <button
               @click="markPass"
               :disabled="!isFlipped"
-              class="flex items-center justify-center gap-4 px-6 py-[18px] bg-lm-green-soft border-2 border-lm-line rounded-[24px] shadow-stamp-md cursor-pointer hover:-translate-y-0.5 hover:shadow-stamp-lg transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-stamp-md"
+              class="flex items-center justify-center gap-4 px-6 py-[18px] bg-lx-feather/10 rounded-[24px] cursor-pointer transition-all duration-150 hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0"
             >
-              <div class="w-[52px] h-[52px] rounded-full bg-lm-green text-lm-bg border-2 border-lm-line flex items-center justify-center shrink-0">
+              <div class="w-[52px] h-[52px] rounded-full bg-lx-feather text-white flex items-center justify-center shrink-0">
                 <LmIcon name="check" :size="28" />
               </div>
               <div>
-                <p class="font-display font-bold text-[24px] leading-none text-lm-ink m-0">Pass</p>
-                <p class="text-[12px] text-lm-ink-2 mt-1 m-0">continue to next card ·
-                  <span class="font-mono">[2] or →</span>
+                <p class="font-display font-extrabold text-[22px] leading-none text-lx-ink m-0">Pass</p>
+                <p class="text-[12px] font-semibold text-lx-ink-faint mt-1 m-0">Continue to next card
                 </p>
               </div>
             </button>
@@ -288,3 +300,11 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
     </template>
   </main>
 </template>
+
+<style scoped>
+.card-swap-enter-active { transition: opacity 0.28s ease, transform 0.34s cubic-bezier(0.22, 1, 0.36, 1); }
+.card-swap-leave-active { transition: opacity 0.14s ease, transform 0.16s ease-in; }
+.card-swap-enter-from { opacity: 0; transform: translateX(48px) rotate(2deg); }
+.card-swap-leave-to { opacity: 0; transform: translateX(-48px) rotate(-2deg); }
+@media (prefers-reduced-motion: reduce) { .card-swap-enter-active, .card-swap-leave-active { transition: none; } }
+</style>

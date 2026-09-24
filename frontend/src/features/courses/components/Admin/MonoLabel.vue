@@ -1,5 +1,5 @@
 <template>
-  <p class="m-0 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-lm-ink-3">
+  <p class="m-0 text-[12.5px] font-semibold text-lm-ink-2">
     <slot />
   </p>
 </template>

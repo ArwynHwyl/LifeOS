@@ -16,19 +16,19 @@ defineProps<{
 </script>
 
 <template>
-  <div class="rounded-[18px] border-2 border-lm-line bg-lm-surface p-5 shadow-stamp-sm">
-    <div class="mb-5 flex items-start justify-between">
+  <div class="rounded-[20px] border border-lm-line bg-lm-surface p-5 transition-shadow duration-150 hover:shadow-stamp-md">
+    <div class="mb-4 flex items-start justify-between">
       <MonoLabel>{{ label }}</MonoLabel>
       <div
-        class="grid h-8 w-8 place-items-center rounded-[8px] border border-lm-line-soft"
+        class="grid h-9 w-9 place-items-center rounded-xl"
         :style="{ background: icon.bg, color: icon.color }"
       >
-        <AdminIcon :name="icon.name" :size="16" />
+        <AdminIcon :name="icon.name" :size="17" />
       </div>
     </div>
-    <p class="m-0 mb-[4px] font-display text-[28px] font-bold leading-none" :style="{ color: color || 'var(--lm-ink)' }">
+    <p class="m-0 mb-1 font-display text-[32px] font-bold leading-none" :style="{ color: color || 'var(--lm-ink)' }">
       {{ value }}
     </p>
-    <p class="m-0 font-mono text-[11px] font-semibold text-lm-ink-3">{{ sub }}</p>
+    <p class="m-0 text-[13px] font-medium text-lm-ink-3">{{ sub }}</p>
   </div>
 </template>

@@ -14,7 +14,7 @@
     <div>
       <div class="flex items-center justify-between mb-2">
         <MonoLabel>Answer options</MonoLabel>
-        <button type="button" @click="addOption" class="font-display text-[11px] font-bold border-2 border-lm-line rounded-[8px] bg-lm-surface px-2.5 py-1 cursor-pointer text-lm-ink">+ Add option</button>
+        <button type="button" @click="addOption" class="font-display text-[11px] font-bold border border-lm-line rounded-[8px] bg-lm-surface px-2.5 py-1 cursor-pointer text-lm-ink">+ Add option</button>
       </div>
 
       <div

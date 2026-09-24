@@ -37,54 +37,43 @@ function toggleFlip() {
       >
         <!-- Front face -->
         <div
-          class="absolute inset-0 flex flex-col gap-3 p-7 bg-lm-surface border-2 border-lm-line rounded-[24px] shadow-stamp-md overflow-hidden"
+          class="absolute inset-0 flex flex-col gap-3 p-7 bg-white border border-lx-line rounded-[24px] shadow-[0_1px_2px_rgba(0,0,0,0.04),0_24px_48px_-24px_rgba(0,0,0,0.18)] overflow-hidden"
           style="backface-visibility: hidden"
         >
-          <div class="absolute inset-0 bg-dot-grid opacity-35 pointer-events-none" />
-          <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3 relative">FRONT · CLICK TO FLIP</span>
+          <span class="font-mono text-[11px] font-bold tracking-[0.06em] uppercase text-lx-ink-faint relative">Front Side</span>
 
           <div class="flex-1 flex flex-col items-center justify-center gap-4 text-center relative">
-            <h2 class="font-display text-[40px] font-bold tracking-tight text-lm-ink leading-tight m-0">{{ front }}</h2>
-            <svg width="80" height="6" viewBox="0 0 80 6">
-              <path d="M2 3 Q 15 0, 28 3 T 54 3 T 78 3" stroke="#1a1814" stroke-width="2" fill="none" stroke-linecap="round"/>
-            </svg>
-            <p class="text-[14px] text-lm-ink-2">click the card to reveal the answer</p>
+            <h2 class="font-display text-[38px] font-extrabold tracking-tight text-lx-ink leading-tight m-0">{{ front }}</h2>
+            <p class="text-[14px] font-semibold text-lx-ink-faint">click the card to reveal the answer</p>
           </div>
-
-          <!-- Dot ornament -->
-          <svg class="absolute bottom-2.5 right-2.5 opacity-20 pointer-events-none" width="50" height="50" viewBox="0 0 80 80">
-            <template v-for="i in 25" :key="i">
-              <circle :cx="10 + ((i - 1) % 5) * 15" :cy="10 + Math.floor((i - 1) / 5) * 15" r="1.5" fill="#1a1814"/>
-            </template>
-          </svg>
         </div>
 
         <!-- Back face -->
         <div
-          class="absolute inset-0 flex flex-col gap-3.5 p-7 bg-lm-surface border-2 border-lm-line rounded-[24px] shadow-stamp-md overflow-auto"
+          class="absolute inset-0 flex flex-col gap-3.5 p-7 bg-white border border-lx-line rounded-[24px] shadow-[0_1px_2px_rgba(0,0,0,0.04),0_24px_48px_-24px_rgba(0,0,0,0.18)] overflow-auto"
           style="backface-visibility: hidden; transform: rotateY(180deg)"
         >
           <div class="flex items-center justify-between shrink-0">
-            <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3">BACK · ANSWER</span>
-            <span v-if="label" class="text-[13px] text-lm-ink-2">{{ label }}</span>
+            <span class="font-mono text-[11px] font-bold tracking-[0.06em] uppercase text-lx-ink-faint">Back Side</span>
+            <span v-if="label" class="text-[13px] font-semibold text-lx-ink-soft">{{ label }}</span>
           </div>
 
           <!-- Formula chalkboard -->
-          <div class="relative bg-lm-ink rounded-[12px] border-2 border-lm-line px-[18px] py-[22px] text-center overflow-hidden shrink-0">
+          <div class="relative bg-lx-eel rounded-2xl px-[18px] py-[22px] text-center overflow-hidden shrink-0">
             <div class="absolute inset-0 bg-chalk-dots pointer-events-none" />
-            <em class="relative font-math italic font-semibold text-[26px] text-lm-bg not-italic">{{ formula }}</em>
+            <em class="relative font-math italic font-semibold text-[26px] text-white not-italic">{{ formula }}</em>
           </div>
 
           <!-- When to use -->
-          <div v-if="note" class="bg-lm-bg-soft border-2 border-dashed border-lm-line rounded-[12px] p-3 shrink-0">
-            <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3">WHEN TO USE</span>
-            <p class="text-[14px] text-lm-ink mt-1 leading-snug m-0">{{ note }}</p>
+          <div v-if="note" class="bg-lx-surface-soft rounded-2xl p-3 shrink-0">
+            <span class="font-mono text-[11px] font-bold tracking-[0.06em] uppercase text-lx-ink-faint">When to use</span>
+            <p class="text-[14px] font-semibold text-lx-ink mt-1 leading-snug m-0">{{ note }}</p>
           </div>
 
           <!-- Example -->
-          <div v-if="example" class="bg-lm-yellow-soft border-2 border-dashed border-lm-line rounded-[12px] p-3 shrink-0">
-            <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3">EXAMPLE</span>
-            <em class="block font-math italic text-[16px] text-lm-ink mt-1">{{ example }}</em>
+          <div v-if="example" class="bg-lx-macaw/10 rounded-2xl p-3 shrink-0">
+            <span class="font-mono text-[11px] font-bold tracking-[0.06em] uppercase text-lx-macaw-dark">Example</span>
+            <em class="block font-math italic text-[16px] text-lx-ink mt-1">{{ example }}</em>
           </div>
 
           <!-- Tags -->
@@ -92,7 +81,7 @@ function toggleFlip() {
             <span
               v-for="t in tags"
               :key="t"
-              class="px-2.5 py-1 text-[11px] font-semibold border border-lm-line rounded-full bg-lm-bg-soft text-lm-ink"
+              class="px-2.5 py-1 text-[11px] font-bold rounded-full bg-lx-surface-soft text-lx-ink-soft"
             >#{{ t }}</span>
           </div>
         </div>

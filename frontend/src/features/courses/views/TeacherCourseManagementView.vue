@@ -61,23 +61,11 @@ function getErrorMessage(error: unknown, fallback: string) {
 
     <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
       <!-- Toolbar header -->
-      <div class="flex shrink-0 items-center justify-between border-b-2 border-lm-line bg-lm-surface px-7 py-3">
+      <div class="flex shrink-0 items-center justify-between border-b border-lm-line bg-lm-surface px-7 py-3">
         <!-- Stats chips -->
         <div class="flex items-center gap-2">
-          <span class="inline-flex items-center gap-1.5 rounded-full border-2 border-lm-line bg-lm-surface px-2.5 py-1 font-mono text-[11px] font-medium text-lm-ink shadow-stamp-sm">
+          <span class="inline-flex items-center gap-1.5 rounded-full border border-lm-line bg-lm-surface px-2.5 py-1 font-mono text-[11px] font-medium text-lm-ink shadow-stamp-sm">
             <span class="font-bold">{{ stats.total }}</span> total
-          </span>
-          <span class="inline-flex items-center gap-1.5 rounded-full border-2 border-lm-line bg-lm-green-soft px-2.5 py-1 font-mono text-[11px] font-semibold text-lm-green shadow-stamp-sm">
-            <span class="h-1.5 w-1.5 rounded-full bg-lm-green" />
-            {{ stats.published }} published
-          </span>
-          <span class="inline-flex items-center gap-1.5 rounded-full border-2 border-lm-line bg-lm-yellow px-2.5 py-1 font-mono text-[11px] font-semibold text-lm-ink shadow-stamp-sm">
-            <span class="h-1.5 w-1.5 rounded-full bg-lm-ink" />
-            {{ stats.pending }} pending
-          </span>
-          <span class="inline-flex items-center gap-1.5 rounded-full border-2 border-lm-line bg-lm-red-soft px-2.5 py-1 font-mono text-[11px] font-semibold text-lm-red shadow-stamp-sm">
-            <span class="h-1.5 w-1.5 rounded-full bg-lm-red" />
-            {{ stats.revision }} revision
           </span>
         </div>
 
@@ -142,7 +130,7 @@ function getErrorMessage(error: unknown, fallback: string) {
             v-else
             class="flex flex-col items-center justify-center rounded-[18px] border-2 border-dashed border-lm-line-soft bg-lm-surface py-24 text-center"
           >
-            <div class="flex h-14 w-14 items-center justify-center rounded-[18px] bg-lm-yellow border-2 border-lm-line shadow-stamp-sm text-lm-ink">
+            <div class="flex h-14 w-14 items-center justify-center rounded-[18px] bg-lx-macaw shadow-[0_4px_0_var(--color-lx-macaw-dark)] active:translate-y-1 active:shadow-none transition-transform duration-75 text-white">
               <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
                 <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />

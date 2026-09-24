@@ -2,7 +2,7 @@
   <div class="flex flex-col gap-4">
     <!-- Preset cards -->
     <div>
-      <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-2">Quick start</p>
+      <p class="font-mono text-[11.5px] font-bold text-lm-ink-3 m-0 mb-2">Quick start</p>
       <div class="grid grid-cols-4 gap-2 mt-2">
         <button
           v-for="p in VL_PRESETS"
@@ -13,18 +13,18 @@
         >
           <!-- SVG icon representation -->
           <svg v-if="p.id === 'venn-2'" viewBox="0 0 80 48" width="80" height="48" class="block max-w-full">
-            <circle cx="28" cy="24" r="17" fill="#ffd333" fill-opacity=".35" stroke="#ffd333" stroke-width="1.5"/>
-            <circle cx="52" cy="24" r="17" fill="#8fb3ff" fill-opacity=".35" stroke="#8fb3ff" stroke-width="1.5"/>
+            <circle cx="28" cy="24" r="17" fill="#1cb0f6" fill-opacity=".35" stroke="#1cb0f6" stroke-width="1.5"/>
+            <circle cx="52" cy="24" r="17" fill="#7cd0fa" fill-opacity=".35" stroke="#7cd0fa" stroke-width="1.5"/>
           </svg>
           <svg v-else-if="p.id === 'venn-3'" viewBox="0 0 80 56" width="80" height="56" class="block max-w-full">
-            <circle cx="30" cy="22" r="15" fill="#ffd333" fill-opacity=".35" stroke="#ffd333" stroke-width="1.5"/>
-            <circle cx="50" cy="22" r="15" fill="#8fb3ff" fill-opacity=".35" stroke="#8fb3ff" stroke-width="1.5"/>
-            <circle cx="40" cy="38" r="15" fill="#8fe0aa" fill-opacity=".35" stroke="#8fe0aa" stroke-width="1.5"/>
+            <circle cx="30" cy="22" r="15" fill="#1cb0f6" fill-opacity=".35" stroke="#1cb0f6" stroke-width="1.5"/>
+            <circle cx="50" cy="22" r="15" fill="#7cd0fa" fill-opacity=".35" stroke="#7cd0fa" stroke-width="1.5"/>
+            <circle cx="40" cy="38" r="15" fill="#a6e26c" fill-opacity=".35" stroke="#a6e26c" stroke-width="1.5"/>
           </svg>
           <svg v-else-if="p.id === 'hotspot'" viewBox="0 0 80 48" width="80" height="48" class="block max-w-full">
-            <rect x="4" y="12" width="20" height="16" rx="3" fill="#ffd333" fill-opacity=".35" stroke="#ffd333" stroke-width="1.5"/>
-            <rect x="30" y="8" width="20" height="24" rx="3" fill="#8fb3ff" fill-opacity=".35" stroke="#8fb3ff" stroke-width="1.5"/>
-            <rect x="56" y="12" width="20" height="16" rx="3" fill="#8fe0aa" fill-opacity=".35" stroke="#8fe0aa" stroke-width="1.5"/>
+            <rect x="4" y="12" width="20" height="16" rx="3" fill="#1cb0f6" fill-opacity=".35" stroke="#1cb0f6" stroke-width="1.5"/>
+            <rect x="30" y="8" width="20" height="24" rx="3" fill="#7cd0fa" fill-opacity=".35" stroke="#7cd0fa" stroke-width="1.5"/>
+            <rect x="56" y="12" width="20" height="16" rx="3" fill="#a6e26c" fill-opacity=".35" stroke="#a6e26c" stroke-width="1.5"/>
             <line x1="24" y1="20" x2="30" y2="20" stroke="var(--lm-ink-3)" stroke-width="1.5" stroke-dasharray="2 2"/>
             <line x1="50" y1="20" x2="56" y2="20" stroke="var(--lm-ink-3)" stroke-width="1.5" stroke-dasharray="2 2"/>
           </svg>
@@ -33,7 +33,7 @@
             <text x="40" y="28" text-anchor="middle" style="font-size: 10px; fill: var(--lm-ink-3); font-weight: 600;">Empty</text>
           </svg>
           <span class="font-display text-[11px] font-bold text-lm-ink">{{ p.label }}</span>
-          <span class="font-mono text-[9px] text-lm-ink-3 text-center">{{ p.desc }}</span>
+          <span class="font-mono text-[11px] text-lm-ink-3 text-center">{{ p.desc }}</span>
         </button>
       </div>
     </div>
@@ -41,7 +41,7 @@
     <!-- Drawing tools & settings -->
     <div class="flex items-center justify-between p-[6px_8px] bg-lm-bg-soft rounded-[10px] border-2 border-lm-line-soft flex-wrap gap-2">
       <div class="flex items-center gap-1 flex-wrap">
-        <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mr-1.5 tracking-wider mb-0">Tools</p>
+        <p class="font-mono text-[11.5px] font-bold text-lm-ink-3 m-0 mr-1.5 tracking-wider mb-0">Tools</p>
         <button
           v-for="[t, l] in [['select', 'Select'], ['zone-circle', '○ Circle'], ['zone-rect', '□ Rect'], ['button', 'Button'], ['hotspot', 'Hotspot'], ['line', '⏤ Line'], ['region', '✏ Region']]"
           :key="t"
@@ -74,7 +74,7 @@
     </div>
 
     <!-- Practice Mode Warning / Info Banner -->
-    <div v-if="overlap?.enabled" class="flex flex-col gap-2.5 p-4 border-2 border-lm-yellow bg-lm-yellow-soft rounded-[14px] text-left shadow-stamp-sm">
+    <div v-if="overlap?.enabled" class="flex flex-col gap-2.5 p-4 border-2 border-lm-yellow bg-lx-macaw-soft rounded-[14px] text-left shadow-[0_4px_0_var(--color-lx-macaw-dark)] active:translate-y-1 active:shadow-none transition-transform duration-75">
       <div class="flex items-start gap-2.5">
         <span class="w-5 h-5 rounded-full bg-lm-yellow text-lm-ink grid place-items-center text-[12px] font-extrabold shrink-0 border border-lm-line">!</span>
         <div class="flex-1">
@@ -97,7 +97,7 @@
     </div>
 
     <!-- Canvas -->
-    <div class="border-2 border-lm-line rounded-[14px] overflow-hidden bg-[#fffdf8] shadow-stamp-sm">
+    <div class="border border-lm-line rounded-[14px] overflow-hidden bg-[#ffffff] shadow-stamp-sm">
         <svg
           viewBox="0 0 900 520"
           class="block w-full h-auto select-none"
@@ -307,7 +307,7 @@
             @pointerdown="startMoveDrag(el, 'element', $event)"
             class="cursor-pointer"
             :class="{ 'cursor-move': tool === 'select' }"
-            :style="{ color: el.color || '#1a1814' }"
+            :style="{ color: el.color || '#232323' }"
           >
             <!-- Normal elements (rect/button/hotspot) -->
             <template v-if="el.kind !== 'line'">
@@ -498,7 +498,7 @@
             y="260"
             text-anchor="middle"
             dominant-baseline="central"
-            class="font-mono text-[13px] fill-lm-ink-3 tracking-[0.06em]"
+            class="font-mono text-[13px] fill-lm-ink-3"
           >
             Select a preset or use tools to draw zones
           </text>
@@ -510,22 +510,22 @@
       <!-- Header -->
       <div class="flex items-center justify-between border-b-2 border-lm-line-soft pb-2.5">
         <div class="flex items-center gap-2">
-          <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0">Properties</p>
+          <p class="font-mono text-[11.5px] font-bold text-lm-ink-3 m-0">Properties</p>
           <div v-if="selectedZone" class="flex items-center gap-1.5">
             <div class="w-3 h-3 rounded-full border border-lm-line" :style="{ background: selectedZone.color }" />
             <span class="font-display text-[12px] font-bold text-lm-ink">{{ selectedZone.label }}</span>
-            <span class="font-mono text-[9px] text-lm-ink-3">({{ selectedZone.shape }})</span>
+            <span class="font-mono text-[11px] text-lm-ink-3">({{ selectedZone.shape }})</span>
           </div>
           <div v-else-if="selectedElement" class="flex items-center gap-1.5">
             <span class="font-display text-[12px] font-bold text-lm-ink">{{ selectedElement.label }}</span>
-            <span class="font-mono text-[9px] text-lm-ink-3">({{ selectedElement.kind }})</span>
+            <span class="font-mono text-[11px] text-lm-ink-3">({{ selectedElement.kind }})</span>
           </div>
           <div v-else-if="selectedRegion" class="flex items-center gap-1.5">
             <span class="font-display text-[12px] font-bold text-lm-ink">{{ selectedRegion.label }}</span>
-            <span class="font-mono text-[9px] text-lm-ink-3">(Exact Region)</span>
+            <span class="font-mono text-[11px] text-lm-ink-3">(Exact Region)</span>
           </div>
         </div>
-        <button @click="clearSelection" class="font-display text-[10px] font-bold text-lm-ink-3 hover:text-lm-ink bg-transparent border-none cursor-pointer">✕ Close</button>
+        <button @click="clearSelection" class="font-display text-[11.5px] font-bold text-lm-ink-3 hover:text-lm-ink bg-transparent border-none cursor-pointer">✕ Close</button>
       </div>
 
       <!-- Zone Properties Grid -->
@@ -533,11 +533,11 @@
         <!-- Col 1: Basic Info -->
         <div class="flex flex-col gap-3">
           <div>
-            <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Label</p>
+            <p class="font-mono text-[11px] font-bold text-lm-ink-3 m-0 mb-1">Label</p>
             <input v-model="selectedZone.label" @input="onZoneChange" class="w-full box-border font-display text-[12px] px-2.5 py-1.75 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink" />
           </div>
           <div>
-            <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Shape</p>
+            <p class="font-mono text-[11px] font-bold text-lm-ink-3 m-0 mb-1">Shape</p>
             <select v-model="selectedZone.shape" @change="onZoneChange" class="w-full box-border font-display text-[12px] px-2.5 py-1.75 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink">
               <option value="circle">Circle</option>
               <option value="rectangle">Rectangle</option>
@@ -560,7 +560,7 @@
         <!-- Col 2: Color and Opacity -->
         <div class="flex flex-col gap-3">
           <div>
-            <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Color</p>
+            <p class="font-mono text-[11px] font-bold text-lm-ink-3 m-0 mb-1">Color</p>
             <div class="flex gap-1.5 flex-wrap">
               <button
                 v-for="c in VL_COLORS"
@@ -573,7 +573,7 @@
             </div>
           </div>
           <div>
-            <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Highlight opacity</p>
+            <p class="font-mono text-[11px] font-bold text-lm-ink-3 m-0 mb-1">Highlight opacity</p>
             <div class="flex items-center gap-2">
               <input
                 type="range"
@@ -584,7 +584,7 @@
                 @input="onZoneChange"
                 class="flex-1"
               />
-              <span class="font-mono text-[10px] text-lm-ink-3 min-w-[28px]">{{ selectedZone.highlightOpacity ?? 0.82 }}</span>
+              <span class="font-mono text-[11.5px] text-lm-ink-3 min-w-[28px]">{{ selectedZone.highlightOpacity ?? 0.82 }}</span>
             </div>
           </div>
         </div>
@@ -592,7 +592,7 @@
         <!-- Col 3: Feedback & Actions -->
         <div class="flex flex-col justify-between gap-3">
           <div>
-            <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Zone feedback</p>
+            <p class="font-mono text-[11px] font-bold text-lm-ink-3 m-0 mb-1">Zone feedback</p>
             <textarea
               v-model="selectedZone.feedback"
               @input="onZoneChange"
@@ -612,12 +612,12 @@
         <!-- Col 1: Basic Info -->
         <div class="flex flex-col gap-3">
           <div>
-            <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Label</p>
+            <p class="font-mono text-[11px] font-bold text-lm-ink-3 m-0 mb-1">Label</p>
             <input v-model="selectedElement.label" @input="onElementChange" class="w-full box-border font-display text-[12px] px-2.5 py-1.75 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink" />
           </div>
           <div v-if="selectedElement.kind === 'line'" class="flex flex-col gap-3">
             <div>
-              <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Flow Direction</p>
+              <p class="font-mono text-[11px] font-bold text-lm-ink-3 m-0 mb-1">Flow Direction</p>
               <select v-model="selectedElement.flow" @change="onElementChange" class="w-full box-border font-display text-[12px] px-2.5 py-1.75 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink">
                 <option value="none">None (Static)</option>
                 <option value="forward">Forward (Start → End)</option>
@@ -625,7 +625,7 @@
               </select>
             </div>
             <div>
-              <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Arrowhead</p>
+              <p class="font-mono text-[11px] font-bold text-lm-ink-3 m-0 mb-1">Arrowhead</p>
               <select v-model="selectedElement.arrow" @change="onElementChange" class="w-full box-border font-display text-[12px] px-2.5 py-1.75 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink">
                 <option value="none">None</option>
                 <option value="end">At End (Start → End)</option>
@@ -640,29 +640,29 @@
         <div class="flex flex-col gap-3">
           <template v-if="selectedElement.kind === 'line'">
             <div>
-              <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Thickness</p>
+              <p class="font-mono text-[11px] font-bold text-lm-ink-3 m-0 mb-1">Thickness</p>
               <div class="flex items-center gap-2">
                 <input type="range" min="1" max="10" step="1" v-model.number="selectedElement.strokeWidth" @input="onElementChange" class="flex-1" />
-                <span class="font-mono text-[10px] text-lm-ink-3 min-w-[24px]">{{ selectedElement.strokeWidth || 3 }}px</span>
+                <span class="font-mono text-[11.5px] text-lm-ink-3 min-w-[24px]">{{ selectedElement.strokeWidth || 3 }}px</span>
               </div>
             </div>
             <div>
-              <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Line Color</p>
+              <p class="font-mono text-[11px] font-bold text-lm-ink-3 m-0 mb-1">Line Color</p>
               <div class="flex gap-1.5 flex-wrap">
                 <button
-                  v-for="c in ['#1a1814', '#ffd333', '#8fb3ff', '#8fe0aa', '#ff9aa8']"
+                  v-for="c in ['#232323', '#1cb0f6', '#7cd0fa', '#a6e26c', '#ff8fa3']"
                   :key="c"
                   @click="selectedElement.color = c; onElementChange()"
                   class="w-6 h-6 rounded-full border-2 border-lm-line-soft cursor-pointer"
                   :style="{ background: c }"
-                  :class="{ 'border-3 border-lm-ink': selectedElement.color === c || (!selectedElement.color && c === '#1a1814') }"
+                  :class="{ 'border-3 border-lm-ink': selectedElement.color === c || (!selectedElement.color && c === '#232323') }"
                 />
               </div>
             </div>
           </template>
           <template v-else-if="selectedElementInteraction">
             <div>
-              <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">On click → Highlight</p>
+              <p class="font-mono text-[11px] font-bold text-lm-ink-3 m-0 mb-1">On click → Highlight</p>
               <select v-model="selectedElementInteraction.targetZoneId" @change="onInteractionChange" class="w-full box-border font-display text-[12px] px-2.5 py-1.75 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink">
                 <optgroup label="Zones">
                   <option v-for="z in zones" :key="z.id" :value="z.id">{{ z.label }}</option>
@@ -678,7 +678,7 @@
         <!-- Col 3: Feedback & Actions -->
         <div class="flex flex-col justify-between gap-3">
           <div v-if="selectedElementInteraction && selectedElement.kind !== 'line'">
-            <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Feedback</p>
+            <p class="font-mono text-[11px] font-bold text-lm-ink-3 m-0 mb-1">Feedback</p>
             <textarea
               v-model="selectedElementInteraction.feedback"
               @input="onInteractionChange"
@@ -698,7 +698,7 @@
         <!-- Col 1: Basic Info -->
         <div class="flex flex-col gap-3">
           <div>
-            <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Label</p>
+            <p class="font-mono text-[11px] font-bold text-lm-ink-3 m-0 mb-1">Label</p>
             <input
               :value="selectedRegion.label"
               @input="updateRegionLabel(selectedRegion.id, $event.target.value)"
@@ -706,7 +706,7 @@
             />
           </div>
           <div>
-            <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Value (Computed)</p>
+            <p class="font-mono text-[11px] font-bold text-lm-ink-3 m-0 mb-1">Value (Computed)</p>
             <div class="w-full box-border font-display text-[12px] px-2.5 py-1.75 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft text-lm-ink-3 select-none">
               {{ selectedRegion.value }}
             </div>
@@ -716,7 +716,7 @@
         <!-- Col 2 & 3: Feedback -->
         <div class="flex flex-col gap-3 md:col-span-2">
           <div>
-            <p class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Region feedback</p>
+            <p class="font-mono text-[11px] font-bold text-lm-ink-3 m-0 mb-1">Region feedback</p>
             <textarea
               :value="selectedRegion.feedback || ''"
               @input="updateRegionFeedback(selectedRegion.id, $event.target.value)"
@@ -730,15 +730,15 @@
     </div>
 
     <!-- Practice Math Targets & Region Answers section -->
-    <div v-if="overlap?.sourceZoneIds?.length > 0" class="border-2 border-lm-line rounded-[14px] bg-[#fffdf8] overflow-hidden shadow-stamp-sm text-left">
-      <div class="flex items-center justify-between p-[10px_14px] border-b-2 border-lm-line bg-lm-bg-soft">
+    <div v-if="overlap?.sourceZoneIds?.length > 0" class="border border-lm-line rounded-[14px] bg-[#ffffff] overflow-hidden shadow-stamp-sm text-left">
+      <div class="flex items-center justify-between p-[10px_14px] border-b border-lm-line bg-lm-bg-soft">
         <div class="flex items-center gap-2">
-          <span class="w-[22px] h-[22px] rounded-[7px] bg-lm-purple border-2 border-lm-line grid place-items-center font-math text-[13px] font-bold italic text-white shadow-stamp-xs">∩</span>
-          <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink m-0">
+          <span class="w-[22px] h-[22px] rounded-[7px] bg-lm-purple border border-lm-line grid place-items-center font-math text-[13px] font-bold italic text-white shadow-stamp-xs">∩</span>
+          <p class="font-mono text-[11.5px] font-bold text-lm-ink m-0">
             {{ overlap.enabled ? 'Practice Math Targets (Given Values)' : 'Venn Overlap Settings' }}
           </p>
         </div>
-        <span class="font-mono text-[9px] text-lm-ink-3 bg-lm-surface px-2 py-[2px] rounded border border-lm-line-soft">
+        <span class="font-mono text-[11px] text-lm-ink-3 bg-lm-surface px-2 py-[2px] rounded border border-lm-line-soft">
           {{ overlap.enabled ? 'Inclusion-Exclusion Principle' : 'Visual Mode' }}
         </span>
       </div>
@@ -765,9 +765,9 @@
               type="number"
               v-model.number="inp_item.value"
               @input="onOverlapInputChange"
-              class="w-[70px] box-border font-display text-[13px] font-bold p-[4px_6px] border-2 border-lm-line rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink text-center"
+              class="w-[70px] box-border font-display text-[13px] font-bold p-[4px_6px] border border-lm-line rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink text-center"
             />
-            <span class="font-mono text-[8px] text-lm-ink-3 uppercase leading-tight font-bold tracking-wide select-none">
+            <span class="font-mono text-[8px] text-lm-ink-3 leading-tight font-bold tracking-wide select-none">
               {{ getOverlapInputHelperText(inp_item.zoneIds) }}
             </span>
           </div>
@@ -776,7 +776,7 @@
         <!-- Computed exact regions / Student Answers Preview -->
         <div v-if="exactRegions.length > 0" class="mt-4 border-t border-[rgba(26,24,20,0.06)] pt-4">
           <div class="flex items-center gap-2.5 mb-2.5">
-            <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-2 m-0 leading-none">
+            <p class="font-mono text-[11.5px] font-bold text-lm-ink-2 m-0 leading-none">
               {{ overlap.enabled ? 'Expected Region Answers (Student Inputs Preview)' : 'Exact regions' }}
             </p>
             <div class="flex-1 border-t border-lm-line-soft" />
@@ -786,7 +786,7 @@
             <div
               v-for="r in exactRegions"
               :key="r.id"
-              class="flex items-center gap-2 p-[6px_12px] border-2 border-lm-line rounded-[10px] cursor-pointer transition-all duration-120 bg-lm-surface"
+              class="flex items-center gap-2 p-[6px_12px] border border-lm-line rounded-[10px] cursor-pointer transition-all duration-120 bg-lm-surface"
               :class="{
                 'border-lm-line bg-lm-yellow shadow-stamp-sm': selectedId === r.id && selectedKind === 'region',
                 'border-lm-red bg-lm-red-soft': r.value < 0 && !(selectedId === r.id && selectedKind === 'region')
@@ -814,7 +814,7 @@
           </div>
 
           <p v-if="exactRegions.some(r => r.value < 0)" class="font-display text-[11px] font-semibold text-lm-red mt-2.5 flex items-center gap-1.5 text-left">
-            <span class="w-3.5 h-3.5 rounded-full bg-lm-red text-white grid place-items-center text-[9px] font-[800] shrink-0 border border-lm-line">!</span>
+            <span class="w-3.5 h-3.5 rounded-full bg-lm-red text-white grid place-items-center text-[11px] font-[800] shrink-0 border border-lm-line">!</span>
             Some regions are negative — check the totals and intersections.
           </p>
         </div>
@@ -824,8 +824,8 @@
     <!-- Zones list -->
     <div>
       <div class="flex items-center justify-between mb-2">
-        <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0">Zones ({{ zones.length }})</p>
-        <button @click="addZone" class="font-display text-[11px] font-bold border-2 border-lm-line rounded-[8px] bg-lm-surface px-2.5 py-1 cursor-pointer text-lm-ink">+ Add zone</button>
+        <p class="font-mono text-[11.5px] font-bold text-lm-ink-3 m-0">Zones ({{ zones.length }})</p>
+        <button @click="addZone" class="font-display text-[11px] font-bold border border-lm-line rounded-[8px] bg-lm-surface px-2.5 py-1 cursor-pointer text-lm-ink">+ Add zone</button>
       </div>
 
       <div v-if="zones.length === 0" class="text-[12px] text-lm-ink-3 m-0 text-left">
@@ -839,9 +839,9 @@
           class="flex items-center gap-2 p-[8px_12px] w-full box-border text-left border-2 border-lm-line-soft rounded-[10px] cursor-pointer transition-all duration-120 bg-lm-surface"
           :class="{ 'border-lm-line bg-lm-yellow shadow-stamp-sm': selectedId === z.id && selectedKind === 'zone' }"
         >
-          <div class="w-3.5 h-3.5 rounded-full border-2 border-lm-line shrink-0" :style="{ background: z.color }" />
+          <div class="w-3.5 h-3.5 rounded-full border border-lm-line shrink-0" :style="{ background: z.color }" />
           <span class="flex-1 font-display text-[12px] font-bold text-lm-ink">{{ z.label }}</span>
-          <span class="font-mono text-[9px] text-lm-ink-3">{{ z.shape }} {{ z.width }}×{{ z.height }}</span>
+          <span class="font-mono text-[11px] text-lm-ink-3">{{ z.shape }} {{ z.width }}×{{ z.height }}</span>
           <button @click.stop="deleteZone(z.id)" class="grid place-items-center w-6 h-6 rounded-[6px] border border-lm-line-soft bg-transparent cursor-pointer text-lm-ink-3 shrink-0">
             <AdminIcon name="trash" :size="11" />
           </button>
@@ -852,7 +852,7 @@
     <!-- Triggers list (Excludes Lines) -->
     <div v-if="elements.filter(e => e.kind !== 'line').length > 0">
       <div class="flex items-center justify-between mb-2">
-        <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0">Triggers ({{ elements.filter(e => e.kind !== 'line').length }})</p>
+        <p class="font-mono text-[11.5px] font-bold text-lm-ink-3 m-0">Triggers ({{ elements.filter(e => e.kind !== 'line').length }})</p>
       </div>
       <div class="flex flex-col gap-1">
         <div
@@ -864,7 +864,7 @@
         >
           <span class="w-[22px] h-[22px] rounded-[6px] bg-lm-bg-soft border-2 border-lm-line-soft grid place-items-center font-mono text-[8px] text-lm-ink-3 shrink-0">▸</span>
           <span class="flex-1 font-display text-[12px] font-bold text-lm-ink">{{ el.label }}</span>
-          <span v-if="getInteraction(el.id)" class="font-mono text-[9px] text-lm-ink-3">
+          <span v-if="getInteraction(el.id)" class="font-mono text-[11px] text-lm-ink-3">
             → {{ zones.find(z => z.id === getInteraction(el.id).targetZoneId)?.label || '?' }}
           </span>
           <button @click.stop="deleteElement(el.id)" class="grid place-items-center w-6 h-6 rounded-[6px] border border-lm-line-soft bg-transparent cursor-pointer text-lm-ink-3 shrink-0">
@@ -877,7 +877,7 @@
     <!-- Lines list -->
     <div v-if="elements.filter(e => e.kind === 'line').length > 0">
       <div class="flex items-center justify-between mb-2">
-        <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0">Lines ({{ elements.filter(e => e.kind === 'line').length }})</p>
+        <p class="font-mono text-[11.5px] font-bold text-lm-ink-3 m-0">Lines ({{ elements.filter(e => e.kind === 'line').length }})</p>
       </div>
       <div class="flex flex-col gap-1">
         <div
@@ -889,7 +889,7 @@
         >
           <span class="w-[22px] h-[22px] rounded-[6px] bg-lm-bg-soft border-2 border-lm-line-soft grid place-items-center font-mono text-[8px] text-lm-ink-3 shrink-0">⏤</span>
           <span class="flex-1 font-display text-[12px] font-bold text-lm-ink">{{ el.label }}</span>
-          <span class="font-mono text-[9px] text-lm-ink-3">
+          <span class="font-mono text-[11px] text-lm-ink-3">
             flow: {{ el.flow || 'none' }}
           </span>
           <button @click.stop="deleteElement(el.id)" class="grid place-items-center w-6 h-6 rounded-[6px] border border-lm-line-soft bg-transparent cursor-pointer text-lm-ink-3 shrink-0">
@@ -902,11 +902,11 @@
     <!-- Feedback practice mode -->
     <div v-if="overlap?.enabled" class="grid grid-cols-2 gap-2.5 text-left">
       <div>
-        <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Success feedback</p>
+        <p class="font-mono text-[11.5px] font-bold text-lm-ink-3 m-0 mb-1">Success feedback</p>
         <input v-model="feedback.success" @input="onFeedbackChange" class="w-full box-border font-display text-[12px] px-2.5 py-1.75 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink" placeholder="Correct!" />
       </div>
       <div>
-        <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Failure feedback</p>
+        <p class="font-mono text-[11.5px] font-bold text-lm-ink-3 m-0 mb-1">Failure feedback</p>
         <input v-model="feedback.failure" @input="onFeedbackChange" class="w-full box-border font-display text-[12px] px-2.5 py-1.75 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink" placeholder="Try again." />
       </div>
     </div>
@@ -930,7 +930,7 @@ const emit = defineEmits(['change'])
 
 const instanceId = 'vle-' + Math.random().toString(36).substring(2, 9)
 
-const VL_COLORS = ['#ffd333', '#8fb3ff', '#8fe0aa', '#ff9aa8', '#e3d4ff']
+const VL_COLORS = ['#1cb0f6', '#7cd0fa', '#a6e26c', '#ff8fa3', '#f3e6ff']
 
 const hasHiddenElements = computed(() => {
   if (!overlap.value?.enabled) return false
@@ -961,8 +961,8 @@ function getStudentRegionLabel(region) {
 const VL_PRESETS = [
   { id:'venn-2', label:'2-set Venn', desc:'Two overlapping sets',
     zones:[
-      { id:'zone_a', label:'A', shape:'circle', x:250, y:130, width:260, height:260, color:'#ffd333', highlightColor:'#ff8f1f', highlightOpacity:0.82 },
-      { id:'zone_b', label:'B', shape:'circle', x:390, y:130, width:260, height:260, color:'#8fb3ff', highlightColor:'#4f8cff', highlightOpacity:0.82 },
+      { id:'zone_a', label:'A', shape:'circle', x:250, y:130, width:260, height:260, color:'#1cb0f6', highlightColor:'#ff9600', highlightOpacity:0.82 },
+      { id:'zone_b', label:'B', shape:'circle', x:390, y:130, width:260, height:260, color:'#7cd0fa', highlightColor:'#1cb0f6', highlightOpacity:0.82 },
     ], elements:[], interactions:[],
     overlap:{ enabled:true, sourceZoneIds:['zone_a','zone_b'],
       inputs:[
@@ -974,9 +974,9 @@ const VL_PRESETS = [
   },
   { id:'venn-3', label:'3-set Venn', desc:'Three overlapping sets',
     zones:[
-      { id:'zone_a', label:'A', shape:'circle', x:250, y:100, width:260, height:260, color:'#ffd333', highlightColor:'#ff8f1f', highlightOpacity:0.82 },
-      { id:'zone_b', label:'B', shape:'circle', x:390, y:100, width:260, height:260, color:'#8fb3ff', highlightColor:'#4f8cff', highlightOpacity:0.82 },
-      { id:'zone_c', label:'C', shape:'circle', x:320, y:220, width:260, height:260, color:'#8fe0aa', highlightColor:'#3aa66b', highlightOpacity:0.82 },
+      { id:'zone_a', label:'A', shape:'circle', x:250, y:100, width:260, height:260, color:'#1cb0f6', highlightColor:'#ff9600', highlightOpacity:0.82 },
+      { id:'zone_b', label:'B', shape:'circle', x:390, y:100, width:260, height:260, color:'#7cd0fa', highlightColor:'#1cb0f6', highlightOpacity:0.82 },
+      { id:'zone_c', label:'C', shape:'circle', x:320, y:220, width:260, height:260, color:'#a6e26c', highlightColor:'#58cc02', highlightOpacity:0.82 },
     ], elements:[], interactions:[],
     overlap:{ enabled:true, sourceZoneIds:['zone_a','zone_b','zone_c'],
       inputs:[
@@ -992,9 +992,9 @@ const VL_PRESETS = [
   },
   { id:'hotspot', label:'Hotspot', desc:'Labeled regions with buttons',
     zones:[
-      { id:'zone_input', label:'Input', shape:'rectangle', x:90, y:160, width:190, height:130, color:'#ffd333', highlightColor:'#ff8f1f', highlightOpacity:0.82 },
-      { id:'zone_process', label:'Process', shape:'rectangle', x:355, y:140, width:190, height:170, color:'#8fb3ff', highlightColor:'#4f8cff', highlightOpacity:0.82 },
-      { id:'zone_output', label:'Output', shape:'rectangle', x:620, y:160, width:190, height:130, color:'#8fe0aa', highlightColor:'#3aa66b', highlightOpacity:0.82 },
+      { id:'zone_input', label:'Input', shape:'rectangle', x:90, y:160, width:190, height:130, color:'#1cb0f6', highlightColor:'#ff9600', highlightOpacity:0.82 },
+      { id:'zone_process', label:'Process', shape:'rectangle', x:355, y:140, width:190, height:170, color:'#7cd0fa', highlightColor:'#1cb0f6', highlightOpacity:0.82 },
+      { id:'zone_output', label:'Output', shape:'rectangle', x:620, y:160, width:190, height:130, color:'#a6e26c', highlightColor:'#58cc02', highlightOpacity:0.82 },
     ],
     elements:[
       { id:'btn_input', label:'Show Input', kind:'button', x:110, y:370, width:150, height:44 },
@@ -1408,7 +1408,7 @@ function onCanvasClick(e) {
       x2: clickX + 100,
       y2: clickY,
       flow: 'forward',
-      color: '#1a1814',
+      color: '#232323',
       strokeWidth: 3
     }
     elements.value.push(newEl)

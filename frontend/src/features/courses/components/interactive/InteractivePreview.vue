@@ -717,7 +717,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
       <svg class="graph-canvas" viewBox="0 0 520 260" role="img" :aria-label="(config as Graph2DConfig).title">
         <defs>
           <pattern id="graph-grid" width="26" height="26" patternUnits="userSpaceOnUse">
-            <path d="M 26 0 L 0 0 0 26" fill="none" stroke="#e4ded6" stroke-width="1" />
+            <path d="M 26 0 L 0 0 0 26" fill="none" stroke="#ebedf0" stroke-width="1" />
           </pattern>
         </defs>
         <rect width="520" height="260" fill="url(#graph-grid)" />
@@ -727,7 +727,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
           y1="0"
           :x2="axisPosition((config as Graph2DConfig).xMin, (config as Graph2DConfig).xMax, 520) ?? 0"
           y2="260"
-          stroke="#9e9892"
+          stroke="#b7bbc2"
           stroke-width="1.5"
         />
         <line
@@ -736,11 +736,11 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
           :y1="axisPosition((config as Graph2DConfig).yMin, (config as Graph2DConfig).yMax, 260, true) ?? 0"
           x2="520"
           :y2="axisPosition((config as Graph2DConfig).yMin, (config as Graph2DConfig).yMax, 260, true) ?? 0"
-          stroke="#9e9892"
+          stroke="#b7bbc2"
           stroke-width="1.5"
         />
-        <circle v-if="targetGraphPoint" :cx="targetGraphPoint.x" :cy="targetGraphPoint.y" r="7" fill="#e15f41" stroke="#1a1814" stroke-width="2" />
-        <path v-if="graphPath" :d="graphPath" fill="none" stroke="#1a1814" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+        <circle v-if="targetGraphPoint" :cx="targetGraphPoint.x" :cy="targetGraphPoint.y" r="7" fill="#e23c3c" stroke="#232323" stroke-width="2" />
+        <path v-if="graphPath" :d="graphPath" fill="none" stroke="#232323" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
         <text v-else x="260" y="135" text-anchor="middle" class="graph-error">Invalid expression</text>
       </svg>
       <div v-if="config.mode === 'PRACTICE'" class="space-y-3">
@@ -1128,7 +1128,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
             <g
               v-for="element in (config as VisualLayerConfig).elements.filter(e => e.kind === 'line')"
               :key="element.id"
-              :style="{ color: element.color || '#1a1814' }"
+              :style="{ color: element.color || '#232323' }"
             >
               <!-- Base path for click/trigger (if they have interaction) -->
               <path
@@ -1245,7 +1245,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
             <div class="custom-card-graphic continuous-graphic">
               <div class="ruler-box">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ruler-icon-svg">
-                  <rect x="2" y="7" width="20" height="10" rx="3" fill="#d0e1fd" stroke="currentColor" stroke-width="2" />
+                  <rect x="2" y="7" width="20" height="10" rx="3" fill="#e0f4fd" stroke="currentColor" stroke-width="2" />
                   <path d="M6 10v4M10 10v4M14 10v4M18 10v4" />
                   <path d="M2 12h20" />
                 </svg>
@@ -1279,11 +1279,11 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   max-width: 100%;
   box-sizing: border-box;
   overflow: hidden;
-  border: 2px solid #1a1814;
+  border: 2px solid #dfe1e5;
   border-radius: 10px;
-  background: #fbf7ef;
+  background: #f6f7f8;
   padding: 1rem;
-  color: #1a1814;
+  color: #232323;
 }
 .interactive-preview--quiz {
   border: 0;
@@ -1293,7 +1293,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   box-shadow: none;
 }
 .interactive-empty {
-  color: #8c3322;
+  color: #dc2626;
   font-size: 13px;
   font-weight: 700;
 }
@@ -1312,7 +1312,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
 .interactive-header code,
 .interactive-header span {
   border-radius: 6px;
-  background: #f0ece4;
+  background: #ebedf0;
   padding: 0.2rem 0.45rem;
   font-size: 11px;
   font-weight: 700;
@@ -1321,21 +1321,21 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   display: block;
   width: 100%;
   min-height: 220px;
-  border: 2px solid #d4cec6;
+  border: 2px solid #dfe1e5;
   border-radius: 8px;
-  background: #fffdf8;
+  background: #ffffff;
 }
 .graph-error {
-  fill: #8c3322;
+  fill: #dc2626;
   font-size: 13px;
   font-weight: 700;
 }
 .formula-result {
   display: inline-flex;
   min-width: 8rem;
-  border: 2px solid #1a1814;
+  border: 2px solid #dfe1e5;
   border-radius: 8px;
-  background: #ffd333;
+  background: #1cb0f6;
   padding: 0.6rem 0.8rem;
   font-size: 1.4rem;
   font-weight: 900;
@@ -1345,26 +1345,26 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   flex-wrap: wrap;
   align-items: center;
   gap: 0.45rem;
-  border: 2px solid #d4cec6;
+  border: 2px solid #dfe1e5;
   border-radius: 8px;
-  background: #fffdf8;
+  background: #ffffff;
   padding: 0.65rem 0.75rem;
-  color: #4f4942;
+  color: #4a4f57;
   font-size: 13px;
   font-weight: 900;
 }
 .formula-equation code {
   border-radius: 6px;
-  background: #f0ece4;
+  background: #ebedf0;
   padding: 0.25rem 0.45rem;
-  color: #1a1814;
+  color: #232323;
   font-size: 12px;
 }
 .formula-equation strong {
   border-radius: 6px;
-  background: #ffd333;
+  background: #1cb0f6;
   padding: 0.25rem 0.55rem;
-  color: #1a1814;
+  color: #232323;
 }
 .formula-choice-row {
   display: flex;
@@ -1374,18 +1374,18 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
 .formula-choice,
 .mini-step-button {
   min-height: 2.2rem;
-  border: 2px solid #1a1814;
+  border: 2px solid #dfe1e5;
   border-radius: 8px;
-  background: #fffdf8;
+  background: #ffffff;
   padding: 0 0.75rem;
-  color: #1a1814;
+  color: #232323;
   font-size: 12px;
   font-weight: 900;
 }
 .formula-choice--active,
 .formula-choice:hover,
 .mini-step-button:hover:not(:disabled) {
-  background: #ffd333;
+  background: #1cb0f6;
 }
 .mini-step-button:disabled {
   cursor: not-allowed;
@@ -1397,9 +1397,9 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   box-sizing: border-box;
   max-width: 100%;
   overflow: auto;
-  border: 2px solid #d4cec6;
+  border: 2px solid #dfe1e5;
   border-radius: 10px;
-  background: #fffdf8;
+  background: #ffffff;
   padding: 0.75rem;
 }
 .visual-layer-stage {
@@ -1408,7 +1408,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   background:
     linear-gradient(90deg, rgba(26, 24, 20, 0.055) 1px, transparent 1px),
     linear-gradient(rgba(26, 24, 20, 0.055) 1px, transparent 1px),
-    #fbf7ef;
+    #f6f7f8;
   background-size: 24px 24px;
 }
 .visual-layer-stage--practice {
@@ -1422,11 +1422,11 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
 }
 .visual-add-button {
   min-height: 2.25rem;
-  border: 2px solid #1a1814;
+  border: 2px solid #dfe1e5;
   border-radius: 8px;
-  background: #ffd333;
+  background: #1cb0f6;
   padding: 0 0.75rem;
-  color: #1a1814;
+  color: #232323;
   font-size: 12px;
   font-weight: 900;
 }
@@ -1455,23 +1455,23 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   pointer-events: none;
 }
 .visual-overlap-label rect {
-  fill: #fffdf8;
-  stroke: #1a1814;
+  fill: #ffffff;
+  stroke: #232323;
   stroke-width: 2;
 }
 .visual-overlap-label text {
-  fill: #1a1814;
+  fill: #232323;
   font-size: 13px;
   font-weight: 900;
 }
 .visual-overlap-label--active rect {
-  fill: #ffd333;
+  fill: #1cb0f6;
 }
 .visual-layer-bg-text {
   position: absolute;
   inset: 1rem;
   margin: 0;
-  color: #8f887e;
+  color: #8b8f96;
   font-size: 18px;
   font-weight: 900;
   line-height: 1.35;
@@ -1496,32 +1496,32 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   align-items: center;
   justify-content: center;
   min-height: 11rem;
-  border: 1.5px solid #1a1814;
+  border: 1.5px solid #dfe1e5;
   border-radius: 16px;
   background: #ffffff;
   padding: 1.5rem;
-  color: #1a1814;
+  color: #232323;
   cursor: pointer;
-  box-shadow: 3px 3px 0 #1a1814;
+  box-shadow: 0 1px 3px rgba(20,24,31,0.12), 0 4px 10px -4px rgba(20,24,31,0.12);
   transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
 .quiz-option-custom-card:hover {
   transform: translateY(-2px);
-  box-shadow: 4px 4px 0 #1a1814;
+  box-shadow: 0 1px 3px rgba(20,24,31,0.12), 0 4px 10px -4px rgba(20,24,31,0.12);
 }
 .quiz-option-custom-card--selected {
-  background: #fff4bf !important;
-  border-color: #1a1814 !important;
+  background: #e3f5fd !important;
+  border-color: #dfe1e5 !important;
 }
 .quiz-option-custom-card--correct {
-  background: #dff4df !important;
-  border-color: #245e3e !important;
-  box-shadow: 3px 3px 0 #245e3e !important;
+  background: #e6f7d5 !important;
+  border-color: #46a302 !important;
+  box-shadow: 3px 3px 0 #46a302 !important;
 }
 .quiz-option-custom-card--wrong {
-  background: #f9d3c5 !important;
-  border-color: #8c3322 !important;
-  box-shadow: 3px 3px 0 #8c3322 !important;
+  background: #fdeceb !important;
+  border-color: #dc2626 !important;
+  box-shadow: 3px 3px 0 #dc2626 !important;
 }
 .custom-card-graphic {
   display: flex;
@@ -1531,7 +1531,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   margin-bottom: 0.5rem;
 }
 .discrete-graphic {
-  font-family: 'Bricolage Grotesque', sans-serif;
+  font-family: var(--font-display);
   font-weight: 800;
   font-size: 1.5rem;
   letter-spacing: -0.02em;
@@ -1541,12 +1541,12 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   align-items: center;
 }
 .highlight-nt {
-  background: #ffd333;
-  border: 1.5px solid #1a1814;
+  background: #1cb0f6;
+  border: 1.5px solid #dfe1e5;
   border-radius: 6px;
   padding: 0.1rem 0.35rem;
   margin-left: 0.1rem;
-  box-shadow: 1px 1px 0 #1a1814;
+  box-shadow: 0 1px 3px rgba(20,24,31,0.12), 0 4px 10px -4px rgba(20,24,31,0.12);
 }
 .count-line {
   margin-left: 0.2rem;
@@ -1565,7 +1565,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   justify-content: center;
 }
 .ruler-icon-svg {
-  color: #1a1814;
+  color: #232323;
 }
 .custom-card-title {
   margin: 0;
@@ -1574,7 +1574,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
 }
 .custom-card-subtitle {
   margin: 0.25rem 0 0 0;
-  color: #8f887e;
+  color: #8b8f96;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 10px;
   font-weight: 900;
@@ -1586,7 +1586,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   gap: 0.35rem;
 }
 .quiz-stage__header span {
-  color: #8f887e;
+  color: #8b8f96;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 11px;
   font-weight: 900;
@@ -1598,15 +1598,15 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   min-height: 8.5rem;
   place-items: center;
   overflow: hidden;
-  border: 2px solid #1a1814;
+  border: 2px solid #dfe1e5;
   border-radius: 18px;
   background:
     radial-gradient(circle, rgba(255, 253, 248, 0.08) 1px, transparent 1.5px),
-    #171611;
+    #232323;
   background-size: 18px 18px;
   padding: 1.5rem;
-  color: #fffdf8;
-  box-shadow: 3px 3px 0 #1a1814;
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(20,24,31,0.12), 0 4px 10px -4px rgba(20,24,31,0.12);
 }
 .quiz-question-panel p {
   max-width: 100%;
@@ -1630,72 +1630,72 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   align-items: center;
   gap: 1rem;
   min-height: 5rem;
-  border: 2px solid #1a1814;
+  border: 2px solid #dfe1e5;
   border-radius: 14px;
-  background: #fffdf8;
+  background: #ffffff;
   padding: 0.85rem 1.2rem;
-  color: #1a1814;
+  color: #232323;
   text-align: left;
   font-size: 1.1rem;
   font-weight: 900;
   line-height: 1.25;
-  box-shadow: 3px 3px 0 #1a1814;
+  box-shadow: 0 1px 3px rgba(20,24,31,0.12), 0 4px 10px -4px rgba(20,24,31,0.12);
   transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
 }
 .quiz-option:hover {
   transform: translateY(-1px);
-  box-shadow: 4px 4px 0 #1a1814;
+  box-shadow: 0 1px 3px rgba(20,24,31,0.12), 0 4px 10px -4px rgba(20,24,31,0.12);
 }
 .quiz-option--selected {
-  background: #ffd333;
+  background: #1cb0f6;
 }
 .quiz-option--correct {
-  background: #dff4df;
+  background: #e6f7d5;
 }
 .quiz-option--wrong {
-  background: #f9d3c5;
+  background: #fdeceb;
 }
 .quiz-option__badge {
   display: inline-grid;
   width: 2.35rem;
   height: 2.35rem;
   place-items: center;
-  border: 2px solid #1a1814;
+  border: 2px solid #dfe1e5;
   border-radius: 999px;
-  background: #fbf7ef;
-  color: #1a1814;
+  background: #f6f7f8;
+  color: #232323;
   font-size: 0.85rem;
   font-weight: 950;
 }
 .quiz-option--selected .quiz-option__badge {
-  background: #1a1814;
-  color: #ffd333;
+  background: #232323;
+  color: #1cb0f6;
 }
 .quiz-feedback {
   display: flex;
   align-items: center;
   gap: 0.55rem;
   width: min(100%, 520px);
-  border: 2px solid #1a1814;
+  border: 2px solid #dfe1e5;
   border-radius: 12px;
-  background: #fffdf8;
+  background: #ffffff;
   padding: 0.85rem 1rem;
-  color: #1a1814;
+  color: #232323;
   font-size: 0.9rem;
   font-weight: 750;
   line-height: 1.45;
-  box-shadow: 3px 3px 0 #1a1814;
+  box-shadow: 0 1px 3px rgba(20,24,31,0.12), 0 4px 10px -4px rgba(20,24,31,0.12);
 }
 .quiz-feedback {
   font-weight: 900;
 }
 .quiz-feedback--success {
-  background: #dff4df;
-  color: #245e3e;
+  background: #e6f7d5;
+  color: #46a302;
 }
 .quiz-feedback--failure {
-  background: #f9d3c5;
-  color: #8c3322;
+  background: #fdeceb;
+  color: #dc2626;
 }
 .quiz-action-row {
   display: flex;
@@ -1703,27 +1703,27 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  border-top: 2px solid #e4ded6;
+  border-top: 2px solid #ebedf0;
   padding-top: 0.75rem;
 }
 .quiz-check-button {
   min-height: 3rem;
-  border: 2px solid #1a1814;
+  border: 2px solid #dfe1e5;
   border-radius: 999px;
   padding: 0 1.25rem;
   font-size: 0.95rem;
   font-weight: 950;
-  box-shadow: 3px 3px 0 #1a1814;
+  box-shadow: 0 1px 3px rgba(20,24,31,0.12), 0 4px 10px -4px rgba(20,24,31,0.12);
   transition: transform 150ms ease, box-shadow 150ms ease;
 }
 .quiz-check-button {
   margin-left: auto;
-  background: #1a1814;
-  color: #fffdf8;
+  background: #232323;
+  color: #ffffff;
 }
 .quiz-check-button:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 4px 4px 0 #1a1814;
+  box-shadow: 0 1px 3px rgba(20,24,31,0.12), 0 4px 10px -4px rgba(20,24,31,0.12);
 }
 .quiz-check-button:disabled {
   cursor: not-allowed;
@@ -1734,9 +1734,9 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   position: absolute;
   display: grid;
   place-items: center;
-  border: 2px solid #1a1814;
+  border: 2px solid #dfe1e5;
   border-radius: 8px;
-  color: #1a1814;
+  color: #232323;
   font-size: 12px;
   font-weight: 900;
 }
@@ -1783,9 +1783,9 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   display: flex;
   gap: 0.25rem;
   transform: translate(-50%, -100%);
-  border: 2px solid #1a1814;
+  border: 2px solid #dfe1e5;
   border-radius: 8px;
-  background: #fffdf8;
+  background: #ffffff;
   padding: 0.25rem;
   box-shadow: 0 8px 18px rgba(26, 24, 20, 0.16);
 }
@@ -1795,30 +1795,30 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   border-radius: 6px;
   background: transparent;
   padding: 0 0.45rem;
-  color: #1a1814;
+  color: #232323;
   font-size: 11px;
   font-weight: 900;
 }
 .visual-zone-toolbar__button:hover {
-  background: #f7f2ea;
+  background: #f6f7f8;
 }
 .visual-zone-toolbar__button--danger {
-  color: #9b2614;
+  color: #dc2626;
 }
 .visual-zone-resize {
   position: absolute;
   z-index: 13;
-  border: 2px solid #1a1814;
+  border: 2px solid #dfe1e5;
   border-radius: 999px;
-  background: #fffdf8;
-  color: #1a1814;
+  background: #ffffff;
+  color: #232323;
   font-weight: 900;
   width: 0.8rem;
   height: 0.8rem;
   transform: translate(-50%, -50%);
 }
 .visual-zone-resize:hover {
-  background: #ffd333;
+  background: #1cb0f6;
 }
 .visual-zone-resize--nw,
 .visual-zone-resize--se {
@@ -1858,25 +1858,25 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
 }
 .visual-region-answer input {
   width: 100%;
-  border: 2px solid #1a1814;
+  border: 2px solid #dfe1e5;
   border-radius: 6px;
-  background: #fffdf8;
+  background: #ffffff;
   padding: 0.22rem 0.25rem;
-  color: #1a1814;
+  color: #232323;
   font-size: 12px;
   font-weight: 900;
   text-align: center;
 }
 .visual-trigger {
-  background: #ffd333;
+  background: #1cb0f6;
 }
 .visual-trigger--hotspot {
   background: rgba(255, 211, 51, 0.45);
 }
 .step-panel {
-  border: 2px solid #d4cec6;
+  border: 2px solid #dfe1e5;
   border-radius: 8px;
-  background: #fffdf8;
+  background: #ffffff;
   padding: 0.75rem;
 }
 .step-nav {
@@ -1885,7 +1885,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   align-items: center;
   justify-content: space-between;
   gap: 0.6rem;
-  color: #6b6660;
+  color: #5c5c5c;
   font-size: 12px;
   font-weight: 900;
 }
@@ -1905,22 +1905,22 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
 .step-card code {
   width: fit-content;
   border-radius: 6px;
-  background: #f0ece4;
+  background: #ebedf0;
   padding: 0.25rem 0.45rem;
   font-size: 12px;
   font-weight: 800;
 }
 .step-card strong {
   width: fit-content;
-  border: 2px solid #1a1814;
+  border: 2px solid #dfe1e5;
   border-radius: 8px;
-  background: #ffd333;
+  background: #1cb0f6;
   padding: 0.45rem 0.65rem;
   font-size: 1.1rem;
   font-weight: 900;
 }
 .step-card p {
-  color: #4f4942;
+  color: #4a4f57;
   font-size: 13px;
   font-weight: 700;
 }
@@ -1935,11 +1935,11 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
 }
 .check-button {
   height: 2.4rem;
-  border: 2px solid #1a1814;
+  border: 2px solid #dfe1e5;
   border-radius: 8px;
-  background: #1a1814;
+  background: #232323;
   padding: 0 1rem;
-  color: #fbf7ef;
+  color: #f6f7f8;
   font-size: 13px;
   font-weight: 800;
 }
@@ -1949,14 +1949,14 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
 }
 .feedback {
   margin: 0;
-  border-left: 3px solid #1a1814;
+  border-left: 3px solid #dfe1e5;
   padding-left: 0.75rem;
   font-size: 13px;
   font-weight: 700;
 }
 .practice-prompt {
   margin: 0;
-  color: #4f4942;
+  color: #4a4f57;
   font-size: 13px;
   font-weight: 700;
 }
@@ -1971,9 +1971,9 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
 .logic-answer {
   display: grid;
   gap: 0.35rem;
-  border: 2px solid #e4ded6;
+  border: 2px solid #ebedf0;
   border-radius: 8px;
-  background: #fffdf8;
+  background: #ffffff;
   padding: 0.75rem;
   font-size: 13px;
   font-weight: 800;
@@ -1988,9 +1988,9 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
 }
 .logic-answer input {
   width: min(100%, 32rem);
-  border: 2px solid #1a1814;
+  border: 2px solid #dfe1e5;
   border-radius: 8px;
-  background: #fbf7ef;
+  background: #f6f7f8;
   padding: 0.65rem 0.75rem;
   font-family: Georgia, serif;
   font-size: 1rem;
@@ -1999,11 +1999,11 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
 .logic-syntax-help {
   display: grid;
   gap: 0.5rem;
-  border: 1.5px solid #d9d2c7;
+  border: 1.5px solid #dfe1e5;
   border-radius: 10px;
-  background: #f7f3ea;
+  background: #f6f7f8;
   padding: 0.7rem 0.8rem;
-  color: #4f4942;
+  color: #4a4f57;
   font-size: 12px;
   line-height: 1.45;
 }
@@ -2012,9 +2012,9 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
 }
 .logic-syntax-help code {
   border-radius: 4px;
-  background: #fffdf8;
+  background: #ffffff;
   padding: 0.08rem 0.25rem;
-  color: #1a1814;
+  color: #232323;
   font-weight: 800;
 }
 .logic-symbol-toolbar {
@@ -2024,23 +2024,23 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
 }
 .logic-symbol-toolbar button {
   min-width: 2.25rem;
-  border: 1.5px solid #1a1814;
+  border: 1.5px solid #dfe1e5;
   border-radius: 7px;
-  background: #fffdf8;
+  background: #ffffff;
   padding: 0.3rem 0.55rem;
-  color: #1a1814;
+  color: #232323;
   font-family: Georgia, serif;
   font-size: 1rem;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 1px 2px 0 #1a1814;
+  box-shadow: 0 1px 3px rgba(20,24,31,0.12), 0 4px 10px -4px rgba(20,24,31,0.12);
 }
 .logic-symbol-toolbar button:active {
   transform: translate(1px, 2px);
   box-shadow: none;
 }
 .logic-syntax-error {
-  color: #a63a13;
+  color: #d97e00;
   font-weight: 800;
 }
 @media (max-width: 700px) {

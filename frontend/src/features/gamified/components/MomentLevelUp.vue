@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import LmIcon from '../../learning/components/LmIcon.vue'
+import ToraMascot from '@/components/tora/ToraMascot.vue'
+import ConfettiBurst from '@/components/motion/ConfettiBurst.vue'
+import CountUp from '@/components/motion/CountUp.vue'
 
 const props = withDefaults(defineProps<{
   fromLevel: number
@@ -28,65 +31,48 @@ const xpPercent = computed(() => {
   <div class="absolute inset-0 flex items-center justify-center z-50">
     <div class="absolute inset-0 bg-[rgba(14,13,11,0.55)]" @click="$emit('close')" />
 
-    <!-- Confetti -->
-    <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 1280 800" preserveAspectRatio="none">
-      <g v-for="i in 45" :key="i"
-        :transform="`translate(${(i * 67 + i * i * 11) % 1280} ${(i * 43 + i * i * 7) % 800}) rotate(${(i * 53) % 360})`"
-      >
-        <rect x="-3" y="-5" width="6" height="10"
-          :fill="['#ffd333','#c44a1a','#3b6cb5','#3a7d44','#6b4ec1'][i % 5]"
-          stroke="#1a1814" stroke-width="1"/>
-      </g>
-    </svg>
+    <ConfettiBurst :fire="1" mode="rain" :count="90" />
 
     <!-- Modal -->
-    <div class="relative z-10 w-[min(560px,76%)] bg-lm-yellow border-2 border-lm-line rounded-[24px] shadow-stamp-lg p-8 flex flex-col items-center gap-[18px] text-center overflow-hidden">
-      <svg class="absolute top-0 left-0 opacity-15 pointer-events-none" width="120" height="120" viewBox="0 0 80 80">
-        <path d="M2 30 Q 15 5, 28 30 T 54 30 T 78 30" stroke="#1a1814" stroke-width="2" fill="none" stroke-linecap="round"/>
-      </svg>
-      <svg class="absolute bottom-2 right-2 opacity-18 pointer-events-none" width="70" height="70" viewBox="0 0 80 80">
-        <template v-for="i in 25" :key="i">
-          <circle :cx="10 + ((i-1) % 5) * 15" :cy="10 + Math.floor((i-1) / 5) * 15" r="1.5" fill="#1a1814"/>
-        </template>
-      </svg>
+    <div class="anim-pop relative z-10 w-[min(560px,76%)] bg-lx-feather rounded-[28px] shadow-[0_32px_72px_-24px_rgba(0,0,0,0.45)] p-8 flex flex-col items-center gap-[18px] text-center ">
 
-      <span class="relative font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-2">LEVEL UP!</span>
+      <div class="relative -mt-32 -mb-4"><ToraMascot mood="cheer" :size="170" :track="false" /></div>
+      <span class="relative font-mono text-[11px] font-bold tracking-[0.08em] uppercase text-white/80">Level up!</span>
 
       <!-- Level transition -->
-      <div class="relative flex items-center gap-[22px]">
-        <div class="w-[84px] h-[84px] rounded-full bg-lm-surface border-2 border-lm-line flex items-center justify-center font-display font-bold text-[36px] text-lm-ink-3 opacity-55">{{ fromLevel }}</div>
-        <span class="font-display text-[38px] text-lm-ink">→</span>
-        <div class="relative w-[116px] h-[116px] rounded-full bg-lm-ink border-[3px] border-lm-line shadow-stamp-md flex items-center justify-center font-display font-bold text-[52px] text-lm-bg">
-          {{ toLevel }}
-          <span class="absolute -top-2.5 -right-1 text-[22px] text-lm-yellow">✦</span>
-          <span class="absolute bottom-0.5 -left-3.5 text-[16px] text-lm-rust">✦</span>
-          <span class="absolute top-4 -left-5 text-[13px] text-lm-bg">✧</span>
+      <div class="relative flex items-center gap-5">
+        <div class="w-[80px] h-[80px] rounded-full bg-white/15 flex items-center justify-center font-display font-extrabold text-[32px] text-white/60">{{ fromLevel }}</div>
+        <span class="font-display text-[32px] text-white/70">→</span>
+        <div class="relative w-[112px] h-[112px] rounded-full bg-white flex items-center justify-center font-display font-extrabold text-[48px] text-lx-feather-dark">
+          <CountUp :value="toLevel" :duration="1000" />
+          <span class="absolute -top-2.5 -right-1 text-[22px] text-lx-fox">✦</span>
+          <span class="absolute bottom-0.5 -left-3.5 text-[16px] text-lx-macaw">✦</span>
         </div>
       </div>
 
-      <h2 class="relative font-display text-[30px] font-bold tracking-tight text-lm-ink m-0">You reached Level {{ toLevel }}!</h2>
+      <h2 class="relative font-display text-[28px] font-extrabold tracking-tight text-white m-0">You reached Level {{ toLevel }}!</h2>
 
       <!-- XP bar -->
       <div class="relative w-4/5">
-        <div class="h-4 bg-lm-surface rounded-full overflow-hidden border border-lm-line">
-          <div class="h-full bg-lm-ink" :style="{ width: xpPercent + '%' }" />
+        <div class="h-3.5 bg-white/25 rounded-full overflow-hidden">
+          <div class="h-full bg-white rounded-full" :style="{ width: xpPercent + '%' }" />
         </div>
         <div class="flex justify-between mt-1.5">
-          <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-2">{{ currentExp }} / {{ expRequiredForNextLevel }} XP</span>
-          <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-2">NEXT LEVEL: {{ toLevel + 1 }}</span>
+          <span class="font-mono text-[11px] font-bold tracking-[0.04em] uppercase text-white/80">{{ currentExp }} / {{ expRequiredForNextLevel }} XP</span>
+          <span class="font-mono text-[11px] font-bold tracking-[0.04em] uppercase text-white/80">Next level: {{ toLevel + 1 }}</span>
         </div>
       </div>
 
       <!-- Unlocks -->
-      <div class="relative w-[88%] bg-lm-surface border-2 border-dashed border-lm-line rounded-[18px] p-3.5 text-left">
-        <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3">UNLOCKED</span>
-        <ul class="mt-1.5 ml-[18px] p-0 text-[14px] leading-relaxed text-lm-ink">
+      <div class="relative w-[88%] bg-white/12 rounded-2xl p-3.5 text-left">
+        <span class="font-mono text-[11px] font-bold tracking-[0.06em] uppercase text-white/70">Unlocked</span>
+        <ul class="mt-1.5 ml-[18px] p-0 text-[14px] font-semibold leading-relaxed text-white">
           <li><strong>Rank:</strong> {{ rankName }}</li>
           <li><strong>Shield capacity</strong> ×{{ shieldMax }}</li>
         </ul>
       </div>
 
-      <button @click="$emit('close')" class="relative flex items-center gap-2 px-6 py-3 text-[17px] font-semibold border-2 border-lm-line rounded-full bg-lm-ink text-lm-bg shadow-stamp-sm hover:-translate-y-px hover:shadow-stamp-md transition-all duration-200 mt-1">
+      <button @click="$emit('close')" class="relative flex items-center gap-2 px-7 py-3 text-[16px] font-extrabold rounded-2xl bg-white text-lx-feather-dark shadow-[0_4px_0_rgba(0,0,0,0.14)] transition-transform duration-75 active:translate-y-1 active:shadow-none mt-1">
         Continue
         <LmIcon name="arrow" :size="18" />
       </button>

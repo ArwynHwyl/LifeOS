@@ -3,8 +3,8 @@
     <svg :viewBox="`0 0 ${W} ${H}`" class="block w-full" :style="{ height: height || 'auto' }">
       <defs>
         <linearGradient id="lc-tank" x1="0" y1="1" x2="0" y2="0">
-          <stop offset="0%" stop-color="#3b6cb5" />
-          <stop offset="100%" stop-color="#5b9bd8" />
+          <stop offset="0%" stop-color="#0d8fd1" />
+          <stop offset="100%" stop-color="#1cb0f6" />
         </linearGradient>
       </defs>
 
@@ -14,7 +14,7 @@
         :y1="PADY - 10"
         :x2="PADX - 48"
         :y2="H - PADY + 10"
-        stroke="#3b6cb5"
+        stroke="#0d8fd1"
         stroke-width="9"
         stroke-linecap="round"
         opacity="0.5"
@@ -24,7 +24,7 @@
         :y1="PADY - 10"
         :x2="PADX - 48"
         :y2="H - PADY + 10"
-        stroke="#5b9bd8"
+        stroke="#1cb0f6"
         stroke-width="3"
         stroke-linecap="round"
         stroke-dasharray="3 9"
@@ -34,7 +34,7 @@
         :x="PADX - 48"
         :y="PADY - 22"
         text-anchor="middle"
-        class="font-mono text-[10px] font-bold fill-lm-ink-3 tracking-wider"
+        class="font-mono text-[11.5px] font-bold fill-lm-ink-3 tracking-wider"
       >
         SUPPLY
       </text>
@@ -47,7 +47,7 @@
         :y1="yOf(n.slot)"
         :x2="n.x - n.rw"
         :y2="yOf(n.slot)"
-        stroke="#3b6cb5"
+        stroke="#0d8fd1"
         stroke-width="7"
         stroke-linecap="round"
         opacity="0.5"
@@ -58,7 +58,7 @@
         <path
           :d="pipePath(e)"
           fill="none"
-          :stroke="e.wet ? '#3b6cb5' : '#d8d2c4'"
+          :stroke="e.wet ? '#0d8fd1' : '#dfe1e5'"
           stroke-width="8"
           stroke-linecap="round"
           :opacity="e.wet ? 0.55 : 0.9"
@@ -67,7 +67,7 @@
           v-if="e.wet"
           :d="pipePath(e)"
           fill="none"
-          stroke="#5b9bd8"
+          stroke="#1cb0f6"
           stroke-width="3"
           stroke-linecap="round"
           stroke-dasharray="3 9"
@@ -82,7 +82,7 @@
           :y1="yOf(rootNode.slot)"
           :x2="outX"
           :y2="tankY"
-          :stroke="result ? '#3b6cb5' : '#d8d2c4'"
+          :stroke="result ? '#0d8fd1' : '#dfe1e5'"
           stroke-width="8"
           stroke-linecap="round"
           :opacity="result ? 0.55 : 0.9"
@@ -93,7 +93,7 @@
           :y1="yOf(rootNode.slot)"
           :x2="outX"
           :y2="tankY"
-          stroke="#5b9bd8"
+          stroke="#1cb0f6"
           stroke-width="3"
           stroke-linecap="round"
           stroke-dasharray="3 9"
@@ -134,8 +134,8 @@
             :y="yOf(n.slot) + 13"
             text-anchor="middle"
             dominant-baseline="central"
-            class="font-mono text-[9px] font-bold tracking-[0.06em] pointer-events-none"
-            :style="{ fill: n.val ? '#3b6cb5' : 'var(--lm-ink-3)' }"
+            class="font-mono text-[11px] font-bold pointer-events-none"
+            :style="{ fill: n.val ? '#0d8fd1' : 'var(--lm-ink-3)' }"
           >
             {{ n.val ? 'OPEN · T' : 'SHUT · F' }}
           </text>
@@ -211,7 +211,7 @@
           :clip-path="`url(#lc-tankclip-${uniqueId})`"
           class="transition-all duration-500 ease-[cubic-bezier(.4,0,.2,1)]"
         />
-        <text :x="tankX + 32" :y="tankY - 56" text-anchor="middle" class="font-mono text-[10px] font-bold fill-lm-ink-3 tracking-wider">
+        <text :x="tankX + 32" :y="tankY - 56" text-anchor="middle" class="font-mono text-[11.5px] font-bold fill-lm-ink-3 tracking-wider">
           OUTPUT
         </text>
         <text

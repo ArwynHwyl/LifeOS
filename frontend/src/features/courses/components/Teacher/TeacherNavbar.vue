@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import LogoMark from '@/components/brand/LogoMark.vue'
 import { RouterLink, useRouter } from 'vue-router'
 
 defineProps<{
@@ -21,15 +22,15 @@ function logout() {
     <div class="pointer-events-none absolute inset-0 bg-chalk-dots" />
 
     <!-- Logo -->
-    <div class="relative z-10 flex h-20 shrink-0 items-center -gap-1 px-5">
-      <img src="@/assets/Logo.png" alt="LifeOS" class="h-24" />
+    <div class="relative z-10 flex h-20 shrink-0 items-center gap-2.5 px-5">
+      <LogoMark :size="36" />
       <span class="font-display text-[20px] font-bold tracking-tight text-lm-bg">LifeOS</span>
     </div>
 
     <!-- Nav -->
     <nav class="relative z-10 flex flex-1 flex-col gap-6 overflow-y-auto px-4 py-2">
       <div>
-        <p class="mb-2 px-2.5 font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-lm-bg/35">Main Menu</p>
+        <p class="mb-2 px-2.5 font-mono text-[11px] font-bold text-lm-bg/35">Main Menu</p>
         <ul class="space-y-1">
           <li>
             <RouterLink
@@ -50,7 +51,7 @@ function logout() {
       </div>
 
       <div>
-        <p class="mb-2 px-2.5 font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-lm-bg/35">Systems</p>
+        <p class="mb-2 px-2.5 font-mono text-[11px] font-bold text-lm-bg/35">Systems</p>
         <ul class="space-y-1">
           <li>
             <a
@@ -81,7 +82,7 @@ function logout() {
         </div>
         <div class="min-w-0 flex-1">
           <p class="font-display truncate text-[13px] font-bold text-lm-bg">Teacher</p>
-          <p class="font-mono text-[10px] text-lm-bg/50">Review</p>
+          <p class="font-mono text-[11.5px] text-lm-bg/50">Review</p>
         </div>
         <button
           type="button"

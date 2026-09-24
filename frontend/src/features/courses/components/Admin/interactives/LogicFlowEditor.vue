@@ -2,7 +2,7 @@
   <div class="flex flex-col gap-4">
     <!-- mode toggle -->
     <div>
-      <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-2 text-left">Logic activity type</p>
+      <p class="font-mono text-[11.5px] font-bold text-lm-ink-3 m-0 mb-2 text-left">Logic activity type</p>
       <div class="flex gap-2">
         <button
           @click="changeKind('CIRCUIT')"
@@ -30,11 +30,11 @@
     <div v-if="kind === 'CIRCUIT'" class="flex flex-col gap-4">
       <!-- expression -->
       <div>
-        <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-2 text-left">Statement</p>
+        <p class="font-mono text-[11.5px] font-bold text-lm-ink-3 m-0 mb-2 text-left">Statement</p>
         <input
           v-model="expr"
           @input="onExprInput"
-          class="w-full box-border font-math italic text-[18px] font-bold px-3.5 py-2.5 border-2 border-lm-line rounded-[10px] bg-lm-surface outline-none text-lm-ink"
+          class="w-full box-border font-math italic text-[18px] font-bold px-3.5 py-2.5 border border-lm-line rounded-[10px] bg-lm-surface outline-none text-lm-ink"
           :class="{ 'border-lm-red': !exprParse.ast }"
           placeholder="(P ∧ Q) ∨ ¬R"
         />
@@ -44,18 +44,18 @@
             :key="sym"
             @click="insertOp(sym)"
             :title="name"
-            class="font-math italic text-[16px] min-w-[38px] font-bold border-2 border-lm-line rounded-[8px] bg-lm-surface px-2.75 py-1.25 cursor-pointer text-lm-ink"
+            class="font-math italic text-[16px] min-w-[38px] font-bold border border-lm-line rounded-[8px] bg-lm-surface px-2.75 py-1.25 cursor-pointer text-lm-ink"
           >
             {{ sym }}
           </button>
-          <button @click="clearExpr" class="font-display text-[11px] font-bold border-2 border-lm-line rounded-[8px] bg-lm-surface px-2.75 py-1.25 cursor-pointer text-lm-ink-3">Clear</button>
+          <button @click="clearExpr" class="font-display text-[11px] font-bold border border-lm-line rounded-[8px] bg-lm-surface px-2.75 py-1.25 cursor-pointer text-lm-ink-3">Clear</button>
         </div>
-        <p v-if="!exprParse.ast" class="font-mono text-[10px] text-lm-red m-[6px_0_0] text-left">⚠ {{ exprParse.error }}</p>
+        <p v-if="!exprParse.ast" class="font-mono text-[11.5px] text-lm-red m-[6px_0_0] text-left">⚠ {{ exprParse.error }}</p>
       </div>
 
       <!-- goal -->
       <div>
-        <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-2 text-left">Learner goal</p>
+        <p class="font-mono text-[11.5px] font-bold text-lm-ink-3 m-0 mb-2 text-left">Learner goal</p>
         <div class="flex gap-2 flex-wrap">
           <button
             v-for="[g, l] in [['TRUE', 'Make it flow (output T)'], ['FALSE', 'Stop the flow (output F)'], ['EXPLORE', 'Free explore']]"
@@ -70,12 +70,12 @@
       </div>
 
       <!-- live preview -->
-      <div class="border-2 border-lm-line rounded-[14px] bg-[#fffdf8] overflow-hidden shadow-stamp-sm">
+      <div class="border border-lm-line rounded-[14px] bg-[#ffffff] overflow-hidden shadow-stamp-sm">
         <div class="flex items-center justify-between px-3.5 py-2.25 border-b-2 border-lm-line-soft bg-lm-bg-soft">
-          <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-0">Learner preview · click valves to toggle</p>
+          <p class="font-mono text-[11.5px] font-bold text-lm-ink-3 m-0 mb-0">Learner preview · click valves to toggle</p>
           <span
             v-if="goal !== 'EXPLORE' && exprParse.ast"
-            class="font-mono text-[9px] font-bold px-[9px] py-[3px] rounded-full border-2 border-lm-line bg-lm-bg-soft text-lm-ink-3"
+            class="font-mono text-[11px] font-bold px-[9px] py-[3px] rounded-full border border-lm-line bg-lm-bg-soft text-lm-ink-3"
             :class="{ 'bg-lm-green-soft text-lm-green border-lm-green': isGoalMet }"
           >
             {{ isGoalMet ? '✓ GOAL MET' : 'GOAL: ' + goal }}
@@ -96,13 +96,13 @@
       <!-- truth table + feedback -->
       <div class="grid grid-cols-[auto_1fr] gap-3.5 items-start">
         <div class="border-2 border-lm-line-soft rounded-[12px] bg-lm-surface p-[10px_12px] text-left">
-          <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1.5">Truth table</p>
+          <p class="font-mono text-[11.5px] font-bold text-lm-ink-3 m-0 mb-1.5">Truth table</p>
           <div v-if="exprParse.ast" class="max-h-[240px] overflow-y-auto">
             <table class="border-collapse">
               <thead>
                 <tr>
                   <th v-for="v in variables" :key="v" class="font-math italic text-[12px] normal-case color-lm-ink-3 p-[4px_8px]">{{ v }}</th>
-                  <th class="font-mono text-[9px] font-bold tracking-wider color-lm-ink-3 p-[4px_8px] uppercase border-l-[1.5px] border-lm-line-soft">OUT</th>
+                  <th class="font-mono text-[11px] font-bold tracking-wider color-lm-ink-3 p-[4px_8px] border-l-[1.5px] border-lm-line-soft">OUT</th>
                 </tr>
               </thead>
               <tbody>
@@ -118,11 +118,11 @@
 
         <div v-if="goal !== 'EXPLORE'" class="flex flex-col gap-2.5">
           <div>
-            <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Success feedback</p>
+            <p class="font-mono text-[11.5px] font-bold text-lm-ink-3 m-0 mb-1">Success feedback</p>
             <input v-model="cFb.success" @input="emitChange" class="w-full box-border font-display not-italic text-[13px] font-semibold px-3.5 py-2.5 border-2 border-lm-line-soft rounded-[10px] bg-lm-bg-soft outline-none text-lm-ink" />
           </div>
           <div>
-            <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Hint / failure</p>
+            <p class="font-mono text-[11.5px] font-bold text-lm-ink-3 m-0 mb-1">Hint / failure</p>
             <input v-model="cFb.failure" @input="emitChange" class="w-full box-border font-display not-italic text-[13px] font-semibold px-3.5 py-2.5 border-2 border-lm-line-soft rounded-[10px] bg-lm-bg-soft outline-none text-lm-ink" />
           </div>
         </div>
@@ -133,21 +133,21 @@
     <div v-else class="flex flex-col gap-4">
       <!-- start -->
       <div>
-        <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-2 text-left">Starting statement</p>
+        <p class="font-mono text-[11.5px] font-bold text-lm-ink-3 m-0 mb-2 text-left">Starting statement</p>
         <input
           v-model="start"
           @input="onStartInput"
-          class="w-full box-border font-math italic text-[18px] font-bold px-3.5 py-2.5 border-2 border-lm-line rounded-[10px] bg-lm-surface outline-none text-lm-ink"
+          class="w-full box-border font-math italic text-[18px] font-bold px-3.5 py-2.5 border border-lm-line rounded-[10px] bg-lm-surface outline-none text-lm-ink"
           :class="{ 'border-lm-red': !startParse.ast }"
         />
-        <p v-if="!startParse.ast" class="font-mono text-[10px] text-lm-red m-[6px_0_0] text-left">⚠ {{ startParse.error }}</p>
+        <p v-if="!startParse.ast" class="font-mono text-[11.5px] text-lm-red m-[6px_0_0] text-left">⚠ {{ startParse.error }}</p>
       </div>
 
       <!-- steps -->
       <div>
         <div class="flex items-center justify-between mb-2">
-          <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-0">Simplification steps ({{ steps.length }})</p>
-          <button @click="addStep" class="font-display text-[11px] font-bold border-2 border-lm-line rounded-[8px] bg-lm-surface px-2.75 py-1.25 cursor-pointer text-lm-ink">+ Add step</button>
+          <p class="font-mono text-[11.5px] font-bold text-lm-ink-3 m-0 mb-0">Simplification steps ({{ steps.length }})</p>
+          <button @click="addStep" class="font-display text-[11px] font-bold border border-lm-line rounded-[8px] bg-lm-surface px-2.75 py-1.25 cursor-pointer text-lm-ink">+ Add step</button>
         </div>
 
         <div class="flex flex-col gap-2">
@@ -157,12 +157,12 @@
             class="border-2 border-lm-line-soft rounded-[12px] bg-lm-surface p-[10px_12px] flex flex-col gap-1.5"
           >
             <div class="flex items-center gap-2">
-              <span class="font-mono text-[10px] font-bold text-lm-ink-3">{{ i + 1 }}</span>
+              <span class="font-mono text-[11.5px] font-bold text-lm-ink-3">{{ i + 1 }}</span>
               <select v-model="s.law" @change="emitChange" class="flex-1 font-display text-[12px] font-bold px-2 py-1.5 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft text-lm-ink outline-none">
                 <option v-for="l in Logic.LAWS" :key="l.id" :value="l.id">{{ l.name }}</option>
               </select>
               <span
-                class="font-mono text-[9px] font-bold px-2 py-[3px] rounded-full border-2 border-lm-red bg-lm-red-soft text-lm-red shrink-0 cursor-default"
+                class="font-mono text-[11px] font-bold px-2 py-[3px] rounded-full border-2 border-lm-red bg-lm-red-soft text-lm-red shrink-0 cursor-default"
                 :class="{ 'border-lm-green bg-lm-green-soft text-lm-green': isEquiv(s.result) }"
                 :title="isEquiv(s.result) ? 'Result is logically equivalent to the start' : 'Result is NOT equivalent — check it'"
               >
@@ -178,15 +178,15 @@
         </div>
 
         <div class="mt-3.5">
-          <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-1">Completion message</p>
+          <p class="font-mono text-[11.5px] font-bold text-lm-ink-3 m-0 mb-1">Completion message</p>
           <input v-model="sFb" @input="emitChange" class="w-full box-border font-display not-italic text-[13px] font-semibold px-3.5 py-2.5 border-2 border-lm-line-soft rounded-[10px] bg-lm-bg-soft outline-none text-lm-ink" />
         </div>
       </div>
 
       <!-- live preview -->
-      <div class="border-2 border-lm-line rounded-[14px] bg-[#fffdf8] overflow-hidden shadow-stamp-sm">
+      <div class="border border-lm-line rounded-[14px] bg-[#ffffff] overflow-hidden shadow-stamp-sm">
         <div class="flex items-center justify-between px-3.5 py-2.25 border-b-2 border-lm-line-soft bg-lm-bg-soft">
-          <p class="font-mono text-[10px] font-bold tracking-[0.12em] uppercase text-lm-ink-3 m-0 mb-0">Learner preview · pick the law for each step</p>
+          <p class="font-mono text-[11.5px] font-bold text-lm-ink-3 m-0 mb-0">Learner preview · pick the law for each step</p>
         </div>
         <div class="p-[10px_8px]">
           <LogicSimplify

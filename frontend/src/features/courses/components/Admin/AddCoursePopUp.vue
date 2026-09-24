@@ -134,14 +134,14 @@ watch(aiEnabled, (enabled) => {
           enter-to-class="opacity-100 scale-100 translate-y-0" leave-active-class="transition duration-150 ease-in"
           leave-from-class="opacity-100 scale-100 translate-y-0" leave-to-class="opacity-0 scale-95 translate-y-2">
           <div v-if="open" role="dialog" aria-modal="true" aria-labelledby="add-course-title"
-            class="relative z-10 flex max-h-[min(90vh,760px)] w-full max-w-lg flex-col overflow-hidden rounded-[18px] border-2 border-lm-line bg-lm-surface shadow-stamp-md"
+            class="relative z-10 flex max-h-[min(90vh,760px)] w-full max-w-lg flex-col overflow-hidden rounded-[18px] border border-lm-line bg-lm-surface shadow-stamp-md"
             @click.stop>
 
             <!-- Header -->
-            <header class="shrink-0 border-b-2 border-lm-line px-6 py-5">
+            <header class="shrink-0 border-b border-lm-line px-6 py-5">
               <div class="flex items-start justify-between gap-4">
                 <div class="flex items-center gap-3">
-                  <div class="flex h-9 w-9 items-center justify-center rounded-[10px] border-2 border-lm-line bg-lm-yellow shadow-stamp-sm">
+                  <div class="flex h-9 w-9 items-center justify-center rounded-[10px] bg-lx-macaw shadow-[0_4px_0_var(--color-lx-macaw-dark)] active:translate-y-1 active:shadow-none transition-transform duration-75">
                     <svg class="h-4 w-4 text-lm-ink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
                       <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
@@ -187,7 +187,7 @@ watch(aiEnabled, (enabled) => {
                   <div class="mb-3 flex items-start gap-4">
                     <!-- Live preview -->
                     <div
-                      class="flex h-14 w-14 shrink-0 items-center justify-center rounded-[14px] border-2 border-lm-line font-math text-2xl font-bold italic shadow-stamp-sm transition-all duration-150"
+                      class="flex h-14 w-14 shrink-0 items-center justify-center rounded-[14px] border border-lm-line font-math text-2xl font-bold italic shadow-stamp-sm transition-all duration-150"
                       :class="[selectedPreview.bgClass, selectedPreview.textClass]"
                     >
                       {{ selectedPreview.symbol }}
@@ -281,8 +281,8 @@ watch(aiEnabled, (enabled) => {
                         <span class="text-[13px] font-medium text-lm-ink-2">Click to upload PDF</span>
                         <span class="text-[11px] text-lm-ink-3">PDF files only</span>
                       </button>
-                      <div v-else class="flex items-center gap-3 rounded-[10px] border-2 border-lm-line bg-lm-surface px-4 py-3">
-                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] border-2 border-lm-line bg-lm-red-soft text-lm-red">
+                      <div v-else class="flex items-center gap-3 rounded-[10px] border border-lm-line bg-lm-surface px-4 py-3">
+                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] border border-lm-line bg-lm-red-soft text-lm-red">
                           <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                             <polyline points="14 2 14 8 20 8" />
@@ -297,7 +297,7 @@ watch(aiEnabled, (enabled) => {
                 </Transition>
               </div>
 
-              <footer class="relative flex shrink-0 gap-2.5 border-t-2 border-lm-line px-6 py-4">
+              <footer class="relative flex shrink-0 gap-2.5 border-t border-lm-line px-6 py-4">
                 <p
                   v-if="errorMessage"
                   class="absolute bottom-[70px] left-6 right-6 rounded-[8px] border-2 border-lm-red bg-lm-red-soft px-3 py-2 text-[12px] font-medium text-lm-red"
@@ -305,11 +305,11 @@ watch(aiEnabled, (enabled) => {
                   {{ errorMessage }}
                 </p>
                 <button type="button"
-                  class="h-10 flex-1 rounded-full border-2 border-lm-line bg-lm-surface px-4 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
+                  class="h-10 flex-1 rounded-full border border-lm-line bg-lm-surface px-4 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
                   :disabled="submitting"
                   @click="close">Cancel</button>
                 <button type="submit"
-                  class="h-10 flex-1 rounded-full border-2 border-lm-line bg-lm-yellow px-4 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md disabled:cursor-not-allowed disabled:opacity-50">
+                  class="h-10 flex-1 rounded-2xl bg-lx-macaw px-4 text-[13px] font-bold text-white shadow-[0_4px_0_var(--color-lx-macaw-dark)] active:translate-y-1 active:shadow-none transition-transform duration-75 disabled:cursor-not-allowed disabled:opacity-50">
                   {{ submitting ? 'Creating...' : 'Create course' }}
                 </button>
               </footer>

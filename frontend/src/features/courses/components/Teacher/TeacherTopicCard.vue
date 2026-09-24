@@ -147,14 +147,14 @@ function formatInteractionType(value: string | null | undefined): string {
 </script>
 
 <template>
-  <div class="overflow-hidden rounded-[18px] border-2 border-lm-line bg-lm-surface shadow-stamp-sm transition-all duration-200 hover:shadow-stamp-md">
+  <div class="overflow-hidden rounded-[18px] border border-lm-line bg-lm-surface shadow-stamp-sm transition-all duration-200 hover:shadow-stamp-md">
 
     <!-- Accordion header -->
     <div
       class="group flex cursor-pointer select-none items-center gap-4 px-5 py-4"
       @click="expanded = !expanded"
     >
-      <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] border-2 border-lm-line bg-lm-yellow font-display text-[12px] font-bold text-lm-ink shadow-stamp-sm">
+      <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-lx-macaw font-display text-[12px] font-bold text-white shadow-[0_4px_0_var(--color-lx-macaw-dark)] active:translate-y-1 active:shadow-none transition-transform duration-75">
         {{ index }}
       </div>
       <span class="flex-1 text-[13.5px] font-semibold leading-snug text-lm-ink">{{ name }}</span>
@@ -162,7 +162,7 @@ function formatInteractionType(value: string | null | undefined): string {
       <!-- Comment count indicator -->
       <span
         v-if="comments.length > 0"
-        class="inline-flex items-center gap-1.5 rounded-full border-2 border-lm-line bg-lm-yellow/40 px-2.5 py-0.5 font-mono text-[10px] font-bold text-lm-ink"
+        class="inline-flex items-center gap-1.5 rounded-full border border-lm-line bg-lm-yellow/40 px-2.5 py-0.5 font-mono text-[11.5px] font-bold text-lm-ink"
       >
         <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -210,13 +210,13 @@ function formatInteractionType(value: string | null | undefined): string {
 
                   <span
                     v-if="subTopic.interactionType !== 'NONE'"
-                    class="hidden shrink-0 rounded-full border border-lm-line-soft bg-lm-surface px-2 py-0.5 font-mono text-[9px] font-bold text-lm-purple sm:inline"
+                    class="hidden shrink-0 rounded-full border border-lm-line-soft bg-lm-surface px-2 py-0.5 font-mono text-[11px] font-bold text-lm-purple sm:inline"
                   >
                     {{ formatInteractionType(subTopic.interactionType) }}
                   </span>
                   <span
                     v-if="subTopic.pageStart && subTopic.pageEnd"
-                    class="hidden shrink-0 font-mono text-[9px] font-bold uppercase tracking-[0.08em] text-lm-ink-3 md:inline"
+                    class="hidden shrink-0 font-mono text-[11px] font-bold text-lm-ink-3 md:inline"
                   >
                     p.{{ subTopic.pageStart }}–{{ subTopic.pageEnd }}
                   </span>
@@ -224,7 +224,7 @@ function formatInteractionType(value: string | null | undefined): string {
                   <!-- Comment button / count -->
                   <button
                     type="button"
-                    class="flex shrink-0 cursor-pointer items-center gap-1 rounded-full border-2 px-2 py-0.5 font-mono text-[10px] font-bold transition-all duration-200"
+                    class="flex shrink-0 cursor-pointer items-center gap-1 rounded-full border-2 px-2 py-0.5 font-mono text-[11.5px] font-bold transition-all duration-200"
                     :class="subTopicComments(subTopic.id).length
                       ? 'border-lm-line bg-lm-yellow text-lm-ink shadow-stamp-xs'
                       : 'border-transparent text-lm-ink-3 opacity-0 hover:border-lm-line hover:bg-lm-surface hover:text-lm-ink group-hover/row:opacity-100'"
@@ -265,7 +265,7 @@ function formatInteractionType(value: string | null | undefined): string {
                         <button
                           v-if="subTopic.interactionType !== 'NONE' && previewConfig(subTopic)"
                           type="button"
-                          class="flex cursor-pointer items-center gap-1.5 rounded-full border-2 px-2.5 py-1 font-mono text-[10px] font-bold transition-all duration-200"
+                          class="flex cursor-pointer items-center gap-1.5 rounded-full border-2 px-2.5 py-1 font-mono text-[11.5px] font-bold transition-all duration-200"
                           :class="activePreviewSubTopicId === subTopic.id
                             ? 'border-lm-line bg-lm-purple/15 text-lm-purple shadow-stamp-xs'
                             : 'border-lm-line-soft bg-lm-surface text-lm-purple hover:-translate-y-px hover:border-lm-line hover:shadow-stamp-xs'"
@@ -281,8 +281,8 @@ function formatInteractionType(value: string | null | undefined): string {
                           {{ formatInteractionType(subTopic.interactionType) }}
                           <span class="font-normal opacity-70">· {{ activePreviewSubTopicId === subTopic.id ? 'Hide' : 'Try it' }}</span>
                         </button>
-                        <span v-else-if="subTopic.interactionType !== 'NONE'" class="rounded-full border border-lm-line-soft bg-lm-surface px-2 py-0.5 font-mono text-[10px] font-bold text-lm-purple">{{ formatInteractionType(subTopic.interactionType) }}</span>
-                        <span v-if="subTopic.interactionPrompt" class="min-w-0 flex-1 text-[10px] font-medium leading-relaxed text-lm-purple">{{ subTopic.interactionPrompt }}</span>
+                        <span v-else-if="subTopic.interactionType !== 'NONE'" class="rounded-full border border-lm-line-soft bg-lm-surface px-2 py-0.5 font-mono text-[11.5px] font-bold text-lm-purple">{{ formatInteractionType(subTopic.interactionType) }}</span>
+                        <span v-if="subTopic.interactionPrompt" class="min-w-0 flex-1 text-[11.5px] font-medium leading-relaxed text-lm-purple">{{ subTopic.interactionPrompt }}</span>
                       </div>
 
                       <!-- Interactive activity preview (compact) -->
@@ -296,7 +296,7 @@ function formatInteractionType(value: string | null | undefined): string {
                       >
                         <div v-if="activePreviewSubTopicId === subTopic.id" class="mt-3">
                           <div class="mb-1.5 flex items-center gap-2">
-                            <span class="font-mono text-[9px] font-bold uppercase tracking-[0.14em] text-lm-ink-3">Learner Preview</span>
+                            <span class="font-mono text-[11px] font-bold text-lm-ink-3">Learner Preview</span>
                             <div class="flex-1 border-t border-dashed border-lm-line-soft" />
                           </div>
                           <div class="compact-preview max-w-[640px] mx-auto">
@@ -314,7 +314,7 @@ function formatInteractionType(value: string | null | undefined): string {
                       <div v-if="subTopicComments(subTopic.id).length" class="flex flex-col gap-2.5" :class="{ 'mb-3': activeComposerSubTopicId === subTopic.id }">
                         <div v-for="comment in subTopicComments(subTopic.id)" :key="comment.id" class="flex gap-2.5">
                           <div
-                            class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[9px] font-bold text-white"
+                            class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white"
                             :class="avatarBg(comment.authorName)"
                           >
                             {{ initials(comment.authorName) }}
@@ -325,14 +325,14 @@ function formatInteractionType(value: string | null | undefined): string {
                               <span class="text-[10.5px] text-lm-ink-3">· {{ comment.createdAt }}</span>
                               <span
                                 v-if="isDraft(comment)"
-                                class="rounded-full border border-dashed border-lm-rust px-1.5 py-px font-mono text-[8.5px] font-bold uppercase tracking-[0.08em] text-lm-rust"
+                                class="rounded-full border border-dashed border-lm-rust px-1.5 py-px font-mono text-[8.5px] font-bold text-lm-rust"
                                 title="Sent with your revision request"
                               >
                                 Draft
                               </span>
                               <span
                                 v-if="comment.resolved"
-                                class="rounded-full border border-dashed border-lm-green px-1.5 py-px font-mono text-[8.5px] font-bold uppercase tracking-[0.08em] text-lm-green"
+                                class="rounded-full border border-dashed border-lm-green px-1.5 py-px font-mono text-[8.5px] font-bold text-lm-green"
                                 title="This feedback has been resolved"
                               >
                                 Resolved ✓
@@ -384,16 +384,16 @@ function formatInteractionType(value: string | null | undefined): string {
               <svg class="h-3.5 w-3.5 text-lm-ink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
-              <span class="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-lm-ink">Module Discussion</span>
+              <span class="font-mono text-[11px] font-bold text-lm-ink">Module Discussion</span>
               <span v-if="moduleComments.length > 0"
-                class="rounded-full border border-lm-line-soft bg-lm-yellow/30 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-lm-ink">
+                class="rounded-full border border-lm-line-soft bg-lm-yellow/30 px-1.5 py-0.5 font-mono text-[11.5px] font-semibold text-lm-ink">
                 {{ moduleComments.length }}
               </span>
             </div>
             <button
               v-if="!moduleComposerOpen && moduleComments.length === 0"
               type="button"
-              class="flex cursor-pointer items-center gap-1.5 rounded-full border-2 border-lm-line bg-lm-surface px-3 py-1 font-mono text-[10px] font-bold text-lm-ink shadow-stamp-xs transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-sm"
+              class="flex cursor-pointer items-center gap-1.5 rounded-full border border-lm-line bg-lm-surface px-3 py-1 font-mono text-[11.5px] font-bold text-lm-ink shadow-stamp-xs transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-sm"
               @click="moduleComposerOpen = true"
             >
               <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -406,7 +406,7 @@ function formatInteractionType(value: string | null | undefined): string {
           <div v-if="moduleComments.length" class="flex flex-col gap-3 px-5 pb-4">
             <div v-for="comment in moduleComments" :key="comment.id" class="flex gap-3">
               <div
-                class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11.5px] font-bold text-white"
                 :class="avatarBg(comment.authorName)"
               >
                 {{ initials(comment.authorName) }}
@@ -417,14 +417,14 @@ function formatInteractionType(value: string | null | undefined): string {
                   <span class="text-[11px] text-lm-ink-3">· {{ comment.createdAt }}</span>
                   <span
                     v-if="isDraft(comment)"
-                    class="rounded-full border border-dashed border-lm-rust px-1.5 py-px font-mono text-[8.5px] font-bold uppercase tracking-[0.08em] text-lm-rust"
+                    class="rounded-full border border-dashed border-lm-rust px-1.5 py-px font-mono text-[8.5px] font-bold text-lm-rust"
                     title="Sent with your revision request"
                   >
                     Draft
                   </span>
                   <span
                     v-if="comment.resolved"
-                    class="rounded-full border border-dashed border-lm-green px-1.5 py-px font-mono text-[8.5px] font-bold uppercase tracking-[0.08em] text-lm-green"
+                    class="rounded-full border border-dashed border-lm-green px-1.5 py-px font-mono text-[8.5px] font-bold text-lm-green"
                     title="This feedback has been resolved"
                   >
                     Resolved ✓
@@ -439,7 +439,7 @@ function formatInteractionType(value: string | null | undefined): string {
             v-if="moduleComposerOpen || moduleComments.length"
             class="flex items-start gap-3 border-t-2 border-dashed border-lm-line-soft px-5 py-4"
           >
-            <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-lm-line bg-lm-yellow font-display text-[10px] font-bold text-lm-ink shadow-stamp-sm">
+            <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-2xl bg-lx-macaw font-display text-[11.5px] font-bold text-white shadow-[0_4px_0_var(--color-lx-macaw-dark)] active:translate-y-1 active:shadow-none transition-transform duration-75">
               TC
             </div>
             <div class="flex flex-1 items-end gap-2">
@@ -471,9 +471,9 @@ function formatInteractionType(value: string | null | undefined): string {
 </template>
 
 <style scoped>
-.topic-preview :deep(h1) { font-size: 1.25rem; font-weight: 700; color: #1a1814; margin: 0.75rem 0 0.375rem; }
-.topic-preview :deep(h2) { font-size: 1.1rem; font-weight: 700; color: #1a1814; margin: 0.5rem 0 0.25rem; }
-.topic-preview :deep(h3) { font-size: 1rem; font-weight: 600; color: #1a1814; margin: 0.375rem 0 0.125rem; }
+.topic-preview :deep(h1) { font-size: 1.25rem; font-weight: 700; color: #232323; margin: 0.75rem 0 0.375rem; }
+.topic-preview :deep(h2) { font-size: 1.1rem; font-weight: 700; color: #232323; margin: 0.5rem 0 0.25rem; }
+.topic-preview :deep(h3) { font-size: 1rem; font-weight: 600; color: #232323; margin: 0.375rem 0 0.125rem; }
 .topic-preview :deep(ul) { list-style-type: disc; padding-left: 1.25rem; margin: 0.375rem 0; }
 .topic-preview :deep(ol) { list-style-type: decimal; padding-left: 1.25rem; margin: 0.375rem 0; }
 .topic-preview :deep(li) { margin-bottom: 0.125rem; }

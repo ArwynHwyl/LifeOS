@@ -195,7 +195,7 @@ function getErrorMessage(error: unknown, fallback: string) {
     <AppSidebar active-item="course" />
 
     <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
-      <header class="shrink-0 border-b-2 border-lm-line bg-lm-surface px-7 py-4">
+      <header class="shrink-0 border-b border-lm-line bg-lm-surface px-7 py-4">
         <div class="flex items-center justify-between gap-4">
           <div>
             <h1 class="m-0 mb-[2px] font-display text-[23px] font-bold text-lm-ink">Course Management</h1>
@@ -219,7 +219,7 @@ function getErrorMessage(error: unknown, fallback: string) {
 
             <button
               type="button"
-              class="inline-flex h-11 cursor-pointer items-center gap-2 rounded-full border-2 border-lm-line bg-lm-yellow px-5 font-display text-[13px] font-bold text-lm-ink shadow-stamp-sm"
+              class="inline-flex h-11 cursor-pointer items-center gap-2 rounded-2xl bg-lx-macaw px-5 font-display text-[13px] font-bold text-white shadow-[0_4px_0_var(--color-lx-macaw-dark)] active:translate-y-1 active:shadow-none transition-transform duration-75"
               @click="openAddModal"
             >
               <AdminIcon name="plus" :size="14" />
@@ -230,7 +230,7 @@ function getErrorMessage(error: unknown, fallback: string) {
       </header>
 
       <main class="relative flex-1 overflow-auto px-7 py-6">
-        <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle,#e3ddce_1px,transparent_1px)] bg-[length:18px_18px] opacity-40" />
+        <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle,transparent_1px,transparent_1px)] bg-[length:18px_18px] opacity-40" />
 
         <div class="relative">
           <section class="mb-6 grid grid-cols-4 gap-4">
@@ -284,7 +284,7 @@ function getErrorMessage(error: unknown, fallback: string) {
             v-else
             class="flex flex-col items-center justify-center rounded-[18px] border-2 border-dashed border-lm-line-soft bg-lm-surface py-24 text-center"
           >
-            <div class="flex h-14 w-14 items-center justify-center rounded-[18px] border-2 border-lm-line bg-lm-yellow text-lm-ink shadow-stamp-sm">
+            <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-lx-macaw/12 text-lx-macaw-dark">
               <AdminIcon name="courses" :size="28" />
             </div>
             <p class="mt-4 font-display text-[15px] font-semibold text-lm-ink">
@@ -296,7 +296,7 @@ function getErrorMessage(error: unknown, fallback: string) {
             <button
               v-if="!searchQuery"
               type="button"
-              class="mt-5 inline-flex h-11 items-center rounded-full border-2 border-lm-line bg-lm-yellow px-5 text-[14px] font-bold text-lm-ink shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
+              class="mt-5 inline-flex h-11 items-center rounded-2xl bg-lx-macaw px-5 text-[14px] font-bold text-white shadow-[0_4px_0_var(--color-lx-macaw-dark)] active:translate-y-1 active:shadow-none transition-transform duration-75"
               @click="openAddModal"
             >
               New Course
@@ -349,14 +349,14 @@ function getErrorMessage(error: unknown, fallback: string) {
               role="dialog"
               aria-modal="true"
               aria-labelledby="confirm-delete-course-title"
-              class="relative z-10 flex w-full max-w-md flex-col overflow-hidden rounded-[18px] border-2 border-lm-line bg-lm-surface shadow-stamp-md"
+              class="relative z-10 flex w-full max-w-md flex-col overflow-hidden rounded-[18px] border border-lm-line bg-lm-surface shadow-stamp-md"
               @click.stop
             >
               <!-- Header -->
-              <header class="shrink-0 border-b-2 border-lm-line px-6 py-5">
+              <header class="shrink-0 border-b border-lm-line px-6 py-5">
                 <div class="flex items-start justify-between gap-4">
                   <div class="flex items-center gap-3">
-                    <div class="flex h-9 w-9 items-center justify-center rounded-[10px] border-2 border-lm-line bg-lm-red-soft text-lm-red shadow-stamp-sm">
+                    <div class="flex h-9 w-9 items-center justify-center rounded-[10px] bg-red-500-soft text-lm-red shadow-[0_4px_0_#b91c1c] active:translate-y-1 active:shadow-none transition-transform duration-75">
                       <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
                         <line x1="12" y1="9" x2="12" y2="13" />
@@ -390,17 +390,17 @@ function getErrorMessage(error: unknown, fallback: string) {
               </div>
 
               <!-- Footer -->
-              <footer class="flex shrink-0 gap-2.5 border-t-2 border-lm-line px-6 py-4">
+              <footer class="flex shrink-0 gap-2.5 border-t border-lm-line px-6 py-4">
                 <button
                   type="button"
-                  class="h-10 flex-1 rounded-full border-2 border-lm-line bg-lm-surface px-4 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
+                  class="h-10 flex-1 rounded-full border border-lm-line bg-lm-surface px-4 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
                   @click="showDeleteConfirm = false"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
-                  class="h-10 flex-1 rounded-full border-2 border-lm-line bg-lm-red text-white px-4 text-[13px] font-bold shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md disabled:cursor-not-allowed disabled:opacity-50"
+                  class="h-10 flex-1 rounded-2xl bg-red-500 text-white px-4 text-[13px] font-bold shadow-[0_4px_0_#b91c1c] active:translate-y-1 active:shadow-none transition-transform duration-75 transition disabled:cursor-not-allowed disabled:opacity-50"
                   :disabled="deletingCourseFlag"
                   @click="proceedDeleteCourse"
                 >

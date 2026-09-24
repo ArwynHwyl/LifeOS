@@ -297,8 +297,8 @@ function twoSetVennPreset(): InteractiveConfig {
     title: 'Build the Venn diagram',
     canvas: { width: 900, height: 520, backgroundText: '' },
     zones: [
-      { id: 'zone_a', label: 'A', shape: 'circle', x: 250, y: 140, width: 280, height: 280, labelX: 34, labelY: 28, color: '#ffd333', highlightColor: '#ff8f1f', highlightOpacity: 0.82 },
-      { id: 'zone_b', label: 'B', shape: 'circle', x: 390, y: 140, width: 280, height: 280, labelX: 66, labelY: 28, color: '#8fb3ff', highlightColor: '#4f8cff', highlightOpacity: 0.82 },
+      { id: 'zone_a', label: 'A', shape: 'circle', x: 250, y: 140, width: 280, height: 280, labelX: 34, labelY: 28, color: '#1cb0f6', highlightColor: '#ff9600', highlightOpacity: 0.82 },
+      { id: 'zone_b', label: 'B', shape: 'circle', x: 390, y: 140, width: 280, height: 280, labelX: 66, labelY: 28, color: '#7cd0fa', highlightColor: '#1cb0f6', highlightOpacity: 0.82 },
     ],
     elements: [],
     interactions: [],
@@ -322,9 +322,9 @@ function hotspotPreset(): InteractiveConfig {
     title: 'Hotspot diagram',
     canvas: { width: 900, height: 520, backgroundText: 'Click a label to highlight the matching region.' },
     zones: [
-      { id: 'zone_input', label: 'Input', shape: 'rectangle', x: 90, y: 170, width: 190, height: 120, color: '#ffd333', highlightColor: '#ff8f1f', highlightOpacity: 0.82, feedback: 'Inputs are the values supplied to the process.' },
-      { id: 'zone_process', label: 'Process', shape: 'rectangle', x: 355, y: 150, width: 190, height: 160, color: '#8fb3ff', highlightColor: '#4f8cff', highlightOpacity: 0.82, feedback: 'The process transforms inputs into outputs.' },
-      { id: 'zone_output', label: 'Output', shape: 'rectangle', x: 620, y: 170, width: 190, height: 120, color: '#8fe0aa', highlightColor: '#3aa66b', highlightOpacity: 0.82, feedback: 'Outputs are the results produced by the process.' },
+      { id: 'zone_input', label: 'Input', shape: 'rectangle', x: 90, y: 170, width: 190, height: 120, color: '#1cb0f6', highlightColor: '#ff9600', highlightOpacity: 0.82, feedback: 'Inputs are the values supplied to the process.' },
+      { id: 'zone_process', label: 'Process', shape: 'rectangle', x: 355, y: 150, width: 190, height: 160, color: '#7cd0fa', highlightColor: '#1cb0f6', highlightOpacity: 0.82, feedback: 'The process transforms inputs into outputs.' },
+      { id: 'zone_output', label: 'Output', shape: 'rectangle', x: 620, y: 170, width: 190, height: 120, color: '#a6e26c', highlightColor: '#58cc02', highlightOpacity: 0.82, feedback: 'Outputs are the results produced by the process.' },
     ],
     elements: [
       { id: 'choice_input', label: 'Input', kind: 'button', x: 110, y: 365, width: 150, height: 48 },
@@ -970,8 +970,8 @@ function endVisualPointer(event: PointerEvent) {
         y: draft.y,
         width: draft.width,
         height: draft.height,
-        color: '#ffd333',
-        highlightColor: '#ff8f1f',
+        color: '#1cb0f6',
+        highlightColor: '#ff9600',
         highlightOpacity: 0.82,
         feedback: '',
       }
@@ -1870,29 +1870,29 @@ function labelFor(type: TemplateInteractionType) {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  border-bottom: 2px solid #d4cec6;
+  border-bottom: 2px solid #dfe1e5;
   padding-bottom: 0.55rem;
 }
 .studio-tab {
   min-height: 2.25rem;
-  border: 2px solid #1a1814;
+  border: 2px solid #dfe1e5;
   border-radius: 999px;
-  background: #fbf7ef;
+  background: #f6f7f8;
   padding: 0 0.9rem;
-  color: #1a1814;
+  color: #232323;
   font-size: 12px;
   font-weight: 900;
 }
 .studio-tab.active {
-  background: #1a1814;
-  color: #fbf7ef;
+  background: #232323;
+  color: #f6f7f8;
 }
 .studio-section {
   display: grid;
   gap: 0.75rem;
-  border: 2px solid #d4cec6;
+  border: 2px solid #dfe1e5;
   border-radius: 10px;
-  background: #fffdf8;
+  background: #ffffff;
   padding: 0.85rem;
 }
 .studio-section--fields {
@@ -1907,13 +1907,13 @@ function labelFor(type: TemplateInteractionType) {
 }
 .studio-section__header h3 {
   margin: 0;
-  color: #1a1814;
+  color: #232323;
   font-size: 13px;
   font-weight: 900;
 }
 .studio-section__header p {
   margin: 0.15rem 0 0;
-  color: #6b6660;
+  color: #5c5c5c;
   font-size: 11px;
   font-weight: 750;
   line-height: 1.35;
@@ -1924,25 +1924,25 @@ function labelFor(type: TemplateInteractionType) {
   min-width: min(100%, 220px);
 }
 .compact-select span {
-  color: #6b6660;
+  color: #5c5c5c;
   font-size: 10px;
   font-weight: 900;
   text-transform: uppercase;
 }
 .compact-select select {
   height: 2.2rem;
-  border: 2px solid #d4cec6;
+  border: 2px solid #dfe1e5;
   border-radius: 8px;
-  background: #f7f2ea;
+  background: #f6f7f8;
   padding: 0 0.55rem;
-  color: #1a1814;
+  color: #232323;
   font-size: 12px;
   font-weight: 800;
   outline: none;
 }
 .compact-select select:focus {
-  border-color: #1a1814;
-  background: #fffdf8;
+  border-color: #dfe1e5;
+  background: #ffffff;
 }
 .template-card-grid {
   display: grid;
@@ -1951,18 +1951,18 @@ function labelFor(type: TemplateInteractionType) {
 }
 .template-card {
   min-height: 5.4rem;
-  border: 2px solid #d4cec6;
+  border: 2px solid #dfe1e5;
   border-radius: 8px;
-  background: #fbf7ef;
+  background: #f6f7f8;
   padding: 0.65rem;
   text-align: left;
-  color: #1a1814;
+  color: #232323;
   transition: border-color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
 }
 .template-card:hover,
 .template-card.active {
-  border-color: #1a1814;
-  box-shadow: 2px 2px 0 #1a1814;
+  border-color: #dfe1e5;
+  box-shadow: 0 1px 3px rgba(20,24,31,0.12), 0 4px 10px -4px rgba(20,24,31,0.12);
   transform: translateY(-1px);
 }
 .template-card strong {
@@ -1973,7 +1973,7 @@ function labelFor(type: TemplateInteractionType) {
 }
 .template-card span {
   display: block;
-  color: #6b6660;
+  color: #5c5c5c;
   font-size: 11px;
   font-weight: 750;
   line-height: 1.35;
@@ -1985,17 +1985,17 @@ function labelFor(type: TemplateInteractionType) {
 }
 .preset-button {
   min-height: 2rem;
-  border: 2px solid #d4cec6;
+  border: 2px solid #dfe1e5;
   border-radius: 999px;
-  background: #fbf7ef;
+  background: #f6f7f8;
   padding: 0 0.7rem;
-  color: #1a1814;
+  color: #232323;
   font-size: 11px;
   font-weight: 900;
 }
 .preset-button:hover {
-  border-color: #1a1814;
-  background: #ffd333;
+  border-color: #dfe1e5;
+  background: #1cb0f6;
 }
 .interactive-config-controls,
 .interactive-config-preview {
@@ -2003,7 +2003,7 @@ function labelFor(type: TemplateInteractionType) {
 }
 .preview-label {
   margin-bottom: 0.4rem;
-  color: #6b6660;
+  color: #5c5c5c;
   font-size: 11px;
   font-weight: 900;
   text-transform: uppercase;
@@ -2030,18 +2030,18 @@ function labelFor(type: TemplateInteractionType) {
 .field span {
   font-size: 11px;
   font-weight: 800;
-  color: #6b6660;
+  color: #5c5c5c;
 }
 .field input,
 .field select,
 .field textarea,
 .json-box {
   width: 100%;
-  border: 2px solid #d4cec6;
+  border: 2px solid #dfe1e5;
   border-radius: 8px;
-  background: #f7f2ea;
+  background: #f6f7f8;
   padding: 0.45rem 0.6rem;
-  color: #1a1814;
+  color: #232323;
   font-size: 12px;
   outline: none;
 }
@@ -2053,8 +2053,8 @@ function labelFor(type: TemplateInteractionType) {
 .field select:focus,
 .field textarea:focus,
 .json-box:focus {
-  border-color: #1a1814;
-  background: #fffdf8;
+  border-color: #dfe1e5;
+  background: #ffffff;
 }
 .json-box {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -2065,7 +2065,7 @@ function labelFor(type: TemplateInteractionType) {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.5rem;
-  border: 2px solid #e4ded6;
+  border: 2px solid #ebedf0;
   border-radius: 8px;
   padding: 0.6rem;
 }
@@ -2081,10 +2081,10 @@ function labelFor(type: TemplateInteractionType) {
 .quiz-answer-card,
 .quiz-add-card {
   min-width: 0;
-  border: 2px solid #1a1814;
+  border: 2px solid #dfe1e5;
   border-radius: 8px;
-  background: #fffdf8;
-  color: #1a1814;
+  background: #ffffff;
+  color: #232323;
 }
 .quiz-answer-card {
   display: flex;
@@ -2094,8 +2094,8 @@ function labelFor(type: TemplateInteractionType) {
   box-shadow: 2px 2px 0 transparent;
 }
 .quiz-answer-card--correct {
-  background: #ffd333;
-  box-shadow: 2px 2px 0 #1a1814;
+  background: #1cb0f6;
+  box-shadow: 0 1px 3px rgba(20,24,31,0.12), 0 4px 10px -4px rgba(20,24,31,0.12);
 }
 .quiz-answer-card__main {
   display: grid;
@@ -2109,32 +2109,32 @@ function labelFor(type: TemplateInteractionType) {
   width: 1.6rem;
   height: 1.6rem;
   place-items: center;
-  border: 2px solid #1a1814;
+  border: 2px solid #dfe1e5;
   border-radius: 999px;
-  background: #fffdf8;
-  color: #1a1814;
+  background: #ffffff;
+  color: #232323;
   font-size: 13px;
   font-weight: 950;
 }
 .quiz-correct-button:hover {
-  background: #f0ece4;
+  background: #ebedf0;
 }
 .quiz-correct-button--selected {
-  background: #1a1814;
-  color: #ffd333;
+  background: #232323;
+  color: #1cb0f6;
 }
 .quiz-correct-button__dot {
   width: 0.55rem;
   height: 0.55rem;
   border-radius: 999px;
-  background: #ffd333;
+  background: #1cb0f6;
 }
 .quiz-answer-input {
   width: 100%;
   min-width: 0;
   border: 0;
   background: transparent;
-  color: #1a1814;
+  color: #232323;
   font-size: 14px;
   font-weight: 900;
   outline: none;
@@ -2155,14 +2155,14 @@ function labelFor(type: TemplateInteractionType) {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  border: 2px solid #d4cec6;
+  border: 2px solid #dfe1e5;
   border-radius: 999px;
-  background: #fbf7ef;
+  background: #f6f7f8;
   padding: 0.15rem 0.45rem;
 }
 .quiz-id-chip span,
 .quiz-answer-state {
-  color: #6b6660;
+  color: #5c5c5c;
   font-size: 10px;
   font-weight: 900;
   text-transform: uppercase;
@@ -2171,7 +2171,7 @@ function labelFor(type: TemplateInteractionType) {
   width: 2.4rem;
   border: 0;
   background: transparent;
-  color: #1a1814;
+  color: #232323;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 11px;
   font-weight: 900;
@@ -2179,22 +2179,22 @@ function labelFor(type: TemplateInteractionType) {
 }
 .quiz-answer-state {
   border-radius: 999px;
-  background: #f0ece4;
+  background: #ebedf0;
   padding: 0.25rem 0.5rem;
 }
 .quiz-answer-card--correct .quiz-answer-state {
-  background: #dff4df;
-  color: #245e3e;
+  background: #e6f7d5;
+  color: #46a302;
 }
 .quiz-add-card {
   min-height: 4.5rem;
   border-style: dashed;
-  background: #fbf7ef;
+  background: #f6f7f8;
   font-size: 13px;
   font-weight: 900;
 }
 .quiz-add-card:hover:not(:disabled) {
-  background: #ffd333;
+  background: #1cb0f6;
 }
 .quiz-add-card:disabled {
   cursor: not-allowed;
@@ -2207,9 +2207,9 @@ function labelFor(type: TemplateInteractionType) {
   gap: 0.75rem;
 }
 .section-card {
-  border: 2px solid #d4cec6;
+  border: 2px solid #dfe1e5;
   border-radius: 10px;
-  background: #fffdf8;
+  background: #ffffff;
   padding: 0.75rem;
 }
 .section-card__header,
@@ -2223,27 +2223,27 @@ function labelFor(type: TemplateInteractionType) {
 }
 .section-card__header h4 {
   margin: 0;
-  color: #1a1814;
+  color: #232323;
   font-size: 13px;
   font-weight: 900;
 }
 .section-card__header p,
 .empty-note {
   margin: 0;
-  color: #6b6660;
+  color: #5c5c5c;
   font-size: 11px;
   font-weight: 700;
   line-height: 1.45;
 }
 .option-card {
-  border: 2px solid #e4ded6;
+  border: 2px solid #ebedf0;
   border-radius: 10px;
-  background: #f7f2ea;
+  background: #f6f7f8;
   padding: 0.7rem;
 }
 .option-card__header strong,
 .subsection__header strong {
-  color: #1a1814;
+  color: #232323;
   font-size: 12px;
   font-weight: 900;
 }
@@ -2261,9 +2261,9 @@ function labelFor(type: TemplateInteractionType) {
 .formula-builder__list {
   display: grid;
   gap: 0.55rem;
-  border: 2px solid #d4cec6;
+  border: 2px solid #dfe1e5;
   border-radius: 10px;
-  background: #fffdf8;
+  background: #ffffff;
   padding: 0.65rem;
 }
 .formula-builder__list,
@@ -2284,41 +2284,41 @@ function labelFor(type: TemplateInteractionType) {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  border: 2px solid #d4cec6;
+  border: 2px solid #dfe1e5;
   border-radius: 10px;
-  background: #fffdf8;
+  background: #ffffff;
   padding: 0.65rem 0.75rem;
 }
 .canvas-toolbar strong,
 .properties-header strong {
   display: block;
-  color: #1a1814;
+  color: #232323;
   font-size: 13px;
   font-weight: 900;
 }
 .canvas-toolbar span,
 .properties-header span {
   display: block;
-  color: #6b6660;
+  color: #5c5c5c;
   font-size: 11px;
   font-weight: 800;
 }
 .canvas-stage {
   min-height: 520px;
   overflow: auto;
-  border: 2px solid #1a1814;
+  border: 2px solid #dfe1e5;
   border-radius: 12px;
   background:
     linear-gradient(90deg, rgba(26, 24, 20, 0.045) 1px, transparent 1px),
     linear-gradient(rgba(26, 24, 20, 0.045) 1px, transparent 1px),
-    #f7f2ea;
+    #f6f7f8;
   background-size: 24px 24px;
   padding: 1rem;
 }
 .canvas-stage :deep(.interactive-preview) {
   max-width: 100%;
   min-height: 480px;
-  background: #fffdf8;
+  background: #ffffff;
 }
 .visual-editor {
   display: grid;
@@ -2334,9 +2334,9 @@ function labelFor(type: TemplateInteractionType) {
   top: 1rem;
   max-height: calc(100vh - 2rem);
   overflow: auto;
-  border: 2px solid #d4cec6;
+  border: 2px solid #dfe1e5;
   border-radius: 10px;
-  background: #fffdf8;
+  background: #ffffff;
   padding: 0.75rem;
 }
 .visual-editor__canvas {
@@ -2350,38 +2350,38 @@ function labelFor(type: TemplateInteractionType) {
   gap: 0.4rem;
 }
 .mini-button.active {
-  background: #ffd333;
+  background: #1cb0f6;
 }
 .layer-group {
   display: grid;
   gap: 0.45rem;
 }
 .layer-group strong {
-  color: #1a1814;
+  color: #232323;
   font-size: 12px;
   font-weight: 900;
 }
 .layer-item {
-  border: 2px solid #d4cec6;
+  border: 2px solid #dfe1e5;
   border-radius: 8px;
-  background: #f7f2ea;
+  background: #f6f7f8;
   padding: 0.5rem 0.6rem;
-  color: #1a1814;
+  color: #232323;
   font-size: 12px;
   font-weight: 900;
   text-align: left;
 }
 .layer-item.active,
 .layer-item:hover {
-  border-color: #1a1814;
-  background: #ffd333;
+  border-color: #dfe1e5;
+  background: #1cb0f6;
 }
 .visual-admin-stage-wrap {
   max-width: 100%;
   overflow: auto;
-  border: 2px solid #1a1814;
+  border: 2px solid #dfe1e5;
   border-radius: 12px;
-  background: #f7f2ea;
+  background: #f6f7f8;
   padding: 0.75rem;
 }
 .visual-admin-stage {
@@ -2393,7 +2393,7 @@ function labelFor(type: TemplateInteractionType) {
   background:
     linear-gradient(90deg, rgba(26, 24, 20, 0.055) 1px, transparent 1px),
     linear-gradient(rgba(26, 24, 20, 0.055) 1px, transparent 1px),
-    #fffdf8;
+    #ffffff;
   background-size: 24px 24px;
 }
 .visual-admin-stage--drawing {
@@ -2403,7 +2403,7 @@ function labelFor(type: TemplateInteractionType) {
   position: absolute;
   inset: 1rem;
   margin: 0;
-  color: #8f887e;
+  color: #8b8f96;
   font-size: 20px;
   font-weight: 900;
   line-height: 1.35;
@@ -2415,9 +2415,9 @@ function labelFor(type: TemplateInteractionType) {
   position: absolute;
   display: grid;
   place-items: center;
-  border: 2px solid #1a1814;
+  border: 2px solid #dfe1e5;
   border-radius: 8px;
-  color: #1a1814;
+  color: #232323;
   font-size: 12px;
   font-weight: 900;
   user-select: none;
@@ -2449,7 +2449,7 @@ function labelFor(type: TemplateInteractionType) {
 }
 .admin-trigger {
   z-index: 3;
-  background: #ffd333;
+  background: #1cb0f6;
   cursor: move;
 }
 .admin-trigger--hotspot {
@@ -2472,33 +2472,33 @@ function labelFor(type: TemplateInteractionType) {
   pointer-events: auto;
 }
 .admin-overlap-label rect {
-  fill: #fffdf8;
-  stroke: #1a1814;
+  fill: #ffffff;
+  stroke: #232323;
   stroke-width: 2;
 }
 .admin-overlap-label text {
-  fill: #1a1814;
+  fill: #232323;
   font-size: 13px;
   font-weight: 900;
 }
 .admin-overlap-label.active rect,
 .admin-overlap-label:hover rect {
-  fill: #ffd333;
+  fill: #1cb0f6;
 }
 .admin-overlap-label.invalid rect {
-  fill: #ffe7e0;
-  stroke: #c93f24;
+  fill: #fff0d9;
+  stroke: #e23c3c;
 }
 .admin-overlap-label.invalid text {
-  fill: #9b2614;
+  fill: #dc2626;
 }
 .layer-item.invalid {
-  border-color: #c93f24;
-  color: #9b2614;
+  border-color: #e23c3c;
+  color: #dc2626;
 }
 .overlap-warning {
   margin: 0;
-  color: #9b2614;
+  color: #dc2626;
   font-size: 12px;
   font-weight: 800;
 }
@@ -2517,7 +2517,7 @@ function labelFor(type: TemplateInteractionType) {
 .admin-marquee {
   position: absolute;
   z-index: 20;
-  border: 2px dashed #1a1814;
+  border: 2px dashed #dfe1e5;
   border-radius: 6px;
   background: rgba(255, 211, 51, 0.18);
   pointer-events: none;
@@ -2529,15 +2529,15 @@ function labelFor(type: TemplateInteractionType) {
   align-items: center;
   gap: 0.35rem;
   transform: translate(-50%, -100%);
-  border: 2px solid #1a1814;
+  border: 2px solid #dfe1e5;
   border-radius: 8px;
-  background: #fffdf8;
+  background: #ffffff;
   padding: 0.25rem;
   box-shadow: 0 8px 18px rgba(26, 24, 20, 0.16);
 }
 .admin-edit-toolbar__count {
   padding: 0 0.35rem;
-  color: #6b6660;
+  color: #5c5c5c;
   font-size: 11px;
   font-weight: 900;
   white-space: nowrap;
@@ -2548,31 +2548,31 @@ function labelFor(type: TemplateInteractionType) {
   border-radius: 6px;
   background: transparent;
   padding: 0 0.5rem;
-  color: #1a1814;
+  color: #232323;
   font-size: 11px;
   font-weight: 900;
 }
 .admin-edit-toolbar__button:hover {
-  background: #f7f2ea;
+  background: #f6f7f8;
 }
 .admin-edit-toolbar__button--danger {
-  color: #9b2614;
+  color: #dc2626;
 }
 .admin-edit-toolbar__button--confirm {
-  background: #ffd333;
+  background: #1cb0f6;
 }
 .admin-resize-handle {
   position: absolute;
   z-index: 25;
   width: 12px;
   height: 12px;
-  border: 2px solid #1a1814;
+  border: 2px solid #dfe1e5;
   border-radius: 999px;
-  background: #fffdf8;
+  background: #ffffff;
   transform: translate(-50%, -50%);
 }
 .admin-resize-handle:hover {
-  background: #ffd333;
+  background: #1cb0f6;
 }
 .admin-resize-handle--nw,
 .admin-resize-handle--se {
@@ -2594,15 +2594,15 @@ function labelFor(type: TemplateInteractionType) {
   display: grid;
   gap: 0.2rem;
   width: 100%;
-  border: 2px solid #d4cec6;
+  border: 2px solid #dfe1e5;
   border-radius: 8px;
-  background: #f7f2ea;
+  background: #f6f7f8;
   padding: 0.55rem 0.65rem;
   text-align: left;
 }
 .section-list-item span {
   overflow: hidden;
-  color: #1a1814;
+  color: #232323;
   font-size: 12px;
   font-weight: 900;
   text-overflow: ellipsis;
@@ -2610,7 +2610,7 @@ function labelFor(type: TemplateInteractionType) {
 }
 .section-list-item small {
   overflow: hidden;
-  color: #6b6660;
+  color: #5c5c5c;
   font-size: 10px;
   font-weight: 800;
   text-overflow: ellipsis;
@@ -2618,11 +2618,11 @@ function labelFor(type: TemplateInteractionType) {
 }
 .section-list-item:hover,
 .section-list-item.active {
-  border-color: #1a1814;
-  background: #ffd333;
+  border-color: #dfe1e5;
+  background: #1cb0f6;
 }
 .subsection {
-  border-top: 2px solid #e4ded6;
+  border-top: 2px solid #ebedf0;
   padding-top: 0.7rem;
 }
 .overlap-source-list {
@@ -2631,23 +2631,23 @@ function labelFor(type: TemplateInteractionType) {
 }
 .mini-button {
   min-height: 2rem;
-  border: 2px solid #1a1814;
+  border: 2px solid #dfe1e5;
   border-radius: 8px;
-  background: #fffdf8;
+  background: #ffffff;
   padding: 0 0.65rem;
-  color: #1a1814;
+  color: #232323;
   font-size: 11px;
   font-weight: 800;
 }
 .mini-button:hover {
-  background: #ffd333;
+  background: #1cb0f6;
 }
 .mini-button--dark {
-  background: #1a1814;
-  color: #fffdf8;
+  background: #232323;
+  color: #ffffff;
 }
 .mini-button--dark:hover {
-  background: #3a332d;
+  background: #3a3a3a;
 }
 .mini-button:disabled {
   cursor: not-allowed;
@@ -2655,9 +2655,9 @@ function labelFor(type: TemplateInteractionType) {
 }
 .json-panel {
   overflow: hidden;
-  border: 2px solid #d4cec6;
+  border: 2px solid #dfe1e5;
   border-radius: 10px;
-  background: #fffdf8;
+  background: #ffffff;
 }
 .json-panel__header {
   display: flex;
@@ -2665,17 +2665,17 @@ function labelFor(type: TemplateInteractionType) {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  border-bottom: 2px solid #e4ded6;
+  border-bottom: 2px solid #ebedf0;
   padding: 0.75rem;
 }
 .json-panel__header h4 {
   margin: 0;
-  color: #1a1814;
+  color: #232323;
   font-size: 13px;
   font-weight: 900;
 }
 .json-panel__header span {
-  color: #6b6660;
+  color: #5c5c5c;
   font-size: 11px;
   font-weight: 800;
 }
@@ -2691,22 +2691,22 @@ function labelFor(type: TemplateInteractionType) {
   overflow: auto;
   border: 0;
   border-radius: 0;
-  background: #1f1d1a;
+  background: #232323;
   padding: 0.9rem;
-  color: #f8f1e7;
+  color: #f6f7f8;
   font-size: 12px;
   line-height: 1.65;
   tab-size: 2;
 }
 .json-box--advanced:focus {
-  background: #1f1d1a;
-  color: #f8f1e7;
+  background: #232323;
+  color: #f6f7f8;
 }
 .json-error {
   margin: 0;
-  border-top: 2px solid #e4ded6;
+  border-top: 2px solid #ebedf0;
   padding: 0.65rem 0.75rem;
-  color: #8c3322;
+  color: #dc2626;
   font-size: 12px;
   font-weight: 900;
 }
@@ -2714,26 +2714,26 @@ function labelFor(type: TemplateInteractionType) {
   display: inline-grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   overflow: hidden;
-  border: 2px solid #1a1814;
+  border: 2px solid #dfe1e5;
   border-radius: 8px;
 }
 .mode-row button {
   min-height: 2rem;
-  background: #fffdf8;
+  background: #ffffff;
   padding: 0 0.8rem;
-  color: #1a1814;
+  color: #232323;
   font-size: 11px;
   font-weight: 800;
 }
 .mode-row button.active {
-  background: #ffd333;
+  background: #1cb0f6;
 }
 .mode-row--fixed {
   grid-template-columns: 1fr;
   width: max-content;
-  background: #ffd333;
+  background: #1cb0f6;
   padding: 0.45rem 0.8rem;
-  color: #1a1814;
+  color: #232323;
   font-size: 11px;
   font-weight: 900;
 }

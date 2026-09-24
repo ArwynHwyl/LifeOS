@@ -1,6 +1,6 @@
 <script setup lang="ts">
 withDefaults(defineProps<{
-  name: 'book' | 'card' | 'user' | 'flame' | 'shield' | 'bolt' | 'arrow' | 'back' | 'check' | 'close' | 'lock' | 'refresh' | 'plus' | 'star' | 'search'
+  name: 'book' | 'card' | 'user' | 'flame' | 'shield' | 'bolt' | 'arrow' | 'back' | 'check' | 'close' | 'lock' | 'refresh' | 'plus' | 'star' | 'search' | 'dashboard' | 'trophy'
   size?: number
   filled?: boolean
   sw?: number
@@ -53,5 +53,11 @@ withDefaults(defineProps<{
   </svg>
   <svg v-else-if="name === 'search'" :width="size" :height="size" viewBox="0 0 24 24" fill="none" stroke="currentColor" :stroke-width="sw" stroke-linecap="round" stroke-linejoin="round">
     <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>
+  </svg>
+  <svg v-else-if="name === 'dashboard'" :width="size" :height="size" viewBox="0 0 24 24" fill="none" stroke="currentColor" :stroke-width="sw" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-4"/>
+  </svg>
+  <svg v-else-if="name === 'trophy'" :width="size" :height="size" viewBox="0 0 24 24" fill="none" stroke="currentColor" :stroke-width="sw" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 22h16"/><path d="M10 22V15a2 2 0 0 1 4 0v7"/><path d="M4 15V2h16v13"/>
   </svg>
 </template>

@@ -585,12 +585,12 @@ function getErrorMessage(error: unknown, fallback: string) {
 
     <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
 
-      <header class="flex shrink-0 items-center gap-3.5 border-b-2 border-lm-line bg-lm-surface px-5 py-3">
+      <header class="flex shrink-0 items-center gap-3.5 border-b border-lm-line bg-lm-surface px-5 py-3">
         <div class="flex min-w-0 flex-1 items-center gap-3.5">
           <div class="flex min-w-0 items-center gap-4">
             <button
               type="button"
-              class="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full border-2 border-lm-line bg-lm-bg-soft px-3.5 py-1.5 font-display text-[12px] font-semibold text-lm-ink shadow-stamp-sm"
+              class="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full border border-lm-line bg-lm-bg-soft px-3.5 py-1.5 font-display text-[12px] font-semibold text-lm-ink shadow-stamp-sm"
               @click="router.push('/admin/courses')"
             >
               <AdminIcon name="back" :size="13" />
@@ -599,7 +599,7 @@ function getErrorMessage(error: unknown, fallback: string) {
 
             <div
               v-if="course"
-              class="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-[10px] border-2 border-lm-line font-math text-[18px] font-bold italic shadow-stamp-sm"
+              class="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-[10px] border border-lm-line font-math text-[18px] font-bold italic shadow-stamp-sm"
               :class="[cover.bgClass, cover.textClass]"
             >
               {{ cover.symbol }}
@@ -632,12 +632,12 @@ function getErrorMessage(error: unknown, fallback: string) {
 
         <!-- LEFT: outline nav ─────────────────────────────────────── -->
         <aside
-          class="relative flex shrink-0 flex-col border-r-2 border-lm-line bg-lm-surface overflow-hidden transition-[width] duration-200 ease-out"
+          class="relative flex shrink-0 flex-col border-r border-lm-line bg-lm-surface overflow-hidden transition-[width] duration-200 ease-out"
           :style="{ width: outlineOpen ? '292px' : '44px' }"
         >
           <!-- Panel header -->
           <div
-            class="flex h-11 shrink-0 items-center border-b-2 border-lm-line"
+            class="flex h-11 shrink-0 items-center border-b border-lm-line"
             :class="outlineOpen ? 'justify-between px-4' : 'justify-center'"
           >
             <div v-if="outlineOpen" class="flex items-center gap-2">
@@ -645,11 +645,11 @@ function getErrorMessage(error: unknown, fallback: string) {
                 <line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" />
                 <line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" />
               </svg>
-              <span class="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-lm-ink-3">Outline</span>
+              <span class="font-mono text-[11px] font-bold text-lm-ink-3">Outline</span>
             </div>
             <button
               type="button"
-              class="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] border-2 border-lm-line bg-lm-bg text-lm-ink shadow-stamp-xs transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-sm"
+              class="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] border border-lm-line bg-lm-bg text-lm-ink shadow-stamp-xs transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-sm"
               :title="outlineOpen ? 'Collapse outline' : 'Expand outline'"
               @click="outlineOpen = !outlineOpen"
             >
@@ -673,7 +673,7 @@ function getErrorMessage(error: unknown, fallback: string) {
                     <path d="M3 6h18M3 12h18M3 18h18" />
                   </svg>
                 </div>
-                <p class="font-mono text-[10px] uppercase tracking-[0.06em] text-lm-ink-3">No modules yet</p>
+                <p class="font-mono text-[11.5px] text-lm-ink-3">No modules yet</p>
               </div>
 
               <div v-for="(module, moduleIndex) in modules" :key="module.id">
@@ -684,10 +684,10 @@ function getErrorMessage(error: unknown, fallback: string) {
                   :class="moduleIndex > 0 ? 'border-t border-lm-line-soft' : ''"
                 >
                   <!-- Left accent bar -->
-                  <div class="absolute left-0 top-0 h-full w-[3px] bg-lm-ink" />
+                  <div class="absolute left-0 top-0 h-full w-[3px] bg-lx-macaw" />
 
                   <!-- Filled number badge — heavier than any subtopic element -->
-                  <span class="ml-1 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[4px] bg-lm-ink font-mono text-[9px] font-bold text-lm-bg">
+                  <span class="ml-1 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md bg-lx-macaw/12 font-mono text-[11.5px] font-bold text-lx-macaw-dark">
                     {{ String(moduleIndex + 1).padStart(2, '0') }}
                   </span>
 
@@ -696,7 +696,7 @@ function getErrorMessage(error: unknown, fallback: string) {
                     <input
                       v-model="editingModuleTitle"
                       type="text"
-                      class="h-7 min-w-0 flex-1 rounded-[6px] border-2 border-lm-line bg-white px-2 font-display text-[12px] font-bold text-lm-ink outline-none focus:border-lm-ink"
+                      class="h-7 min-w-0 flex-1 rounded-[6px] border border-lm-line bg-white px-2 font-display text-[12px] font-bold text-lm-ink outline-none focus:border-lm-ink"
                       @keydown.enter="saveEditModule(module)"
                       @keydown.escape="cancelEditModule"
                     />
@@ -726,7 +726,7 @@ function getErrorMessage(error: unknown, fallback: string) {
                   </template>
 
                   <template v-else>
-                    <span class="min-w-0 flex-1 truncate font-display text-[12px] font-extrabold tracking-tight text-lm-ink">
+                    <span class="min-w-0 flex-1 truncate font-display text-[13px] font-bold text-lm-ink">
                       {{ module.title }}
                     </span>
                     <!-- Module action buttons -->
@@ -760,7 +760,7 @@ function getErrorMessage(error: unknown, fallback: string) {
                 </div>
 
                 <!-- Module update error -->
-                <p v-if="editingModuleId === module.id && moduleUpdateError" class="bg-lm-bg px-4 pb-1.5 pt-1 font-mono text-[10px] text-lm-red">{{ moduleUpdateError }}</p>
+                <p v-if="editingModuleId === module.id && moduleUpdateError" class="bg-lm-bg px-4 pb-1.5 pt-1 font-mono text-[11.5px] text-lm-red">{{ moduleUpdateError }}</p>
 
                 <!-- ── SUBTOPIC TREE — indented child zone ── -->
                 <div class="relative bg-lm-surface py-1.5 pl-5 pr-2">
@@ -774,7 +774,7 @@ function getErrorMessage(error: unknown, fallback: string) {
                       :key="subTopic.id"
                       class="group/st relative flex min-h-[34px] items-center gap-2 rounded-[7px] py-1.5 pl-3 pr-2 transition-all duration-150"
                       :class="selectedSubTopicId === subTopic.id
-                        ? 'bg-lm-yellow shadow-stamp-xs ring-[1.5px] ring-lm-line'
+                        ? 'bg-lx-macaw/12 ring-1 ring-lx-macaw/30'
                         : 'hover:bg-lm-bg'"
                     >
                       <!-- Horizontal tree branch -->
@@ -787,7 +787,7 @@ function getErrorMessage(error: unknown, fallback: string) {
                       >
                         <span
                           class="min-w-0 flex-1 truncate font-display text-[12px]"
-                          :class="selectedSubTopicId === subTopic.id ? 'font-bold text-lm-ink' : 'font-medium text-lm-ink-2'"
+                          :class="selectedSubTopicId === subTopic.id ? 'font-semibold text-lx-macaw-dark' : 'font-medium text-lm-ink-2'"
                         >
                           {{ subTopic.title }}
                         </span>
@@ -815,7 +815,7 @@ function getErrorMessage(error: unknown, fallback: string) {
                     <button
                       v-if="addingSubTopicModuleId !== module.id"
                       type="button"
-                      class="flex w-full items-center gap-1.5 rounded-[6px] py-1.5 pl-3 pr-2 font-mono text-[10px] font-bold text-lm-ink-3 transition-all duration-150 hover:bg-lm-bg hover:text-lm-ink"
+                      class="flex w-full items-center gap-1.5 rounded-[6px] py-1.5 pl-3 pr-2 font-mono text-[11.5px] font-bold text-lm-ink-3 transition-all duration-150 hover:bg-lm-bg hover:text-lm-ink"
                       @click="addingSubTopicModuleId = module.id; newSubTopicTitle = ''"
                     >
                       <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -823,7 +823,7 @@ function getErrorMessage(error: unknown, fallback: string) {
                       </svg>
                       Add subtopic
                     </button>
-                    <div v-else class="flex items-center gap-1.5 rounded-[8px] border-2 border-lm-line bg-white p-1.5">
+                    <div v-else class="flex items-center gap-1.5 rounded-[8px] border border-lm-line bg-white p-1.5">
                       <input
                         v-model="newSubTopicTitle"
                         type="text"
@@ -835,13 +835,13 @@ function getErrorMessage(error: unknown, fallback: string) {
                       <div class="flex shrink-0 items-center gap-1">
                         <button
                           type="button"
-                          class="h-7 rounded-[5px] border-2 border-lm-ink bg-lm-ink px-2 font-mono text-[10px] font-bold text-lm-bg transition hover:opacity-80 disabled:opacity-50"
+                          class="h-7 rounded-[5px] border-2 border-lm-ink bg-lm-ink px-2 font-mono text-[11.5px] font-bold text-lm-bg transition hover:opacity-80 disabled:opacity-50"
                           :disabled="subTopicCreating || !newSubTopicTitle.trim()"
                           @click="addSubTopicInline(module.id)"
                         >Save</button>
                         <button
                           type="button"
-                          class="h-7 rounded-[5px] border-2 border-lm-line-soft px-2 font-mono text-[10px] font-bold text-lm-ink-2 transition hover:bg-lm-bg"
+                          class="h-7 rounded-[5px] border-2 border-lm-line-soft px-2 font-mono text-[11.5px] font-bold text-lm-ink-2 transition hover:bg-lm-bg"
                           @click="addingSubTopicModuleId = null"
                         >×</button>
                       </div>
@@ -853,8 +853,8 @@ function getErrorMessage(error: unknown, fallback: string) {
             </div>
 
             <!-- Add module — pinned to the bottom -->
-            <div v-if="course.status !== 'PENDING_REVIEW'" class="shrink-0 border-t-2 border-lm-line bg-lm-surface px-3 py-3">
-              <p class="mb-2 font-mono text-[9px] font-bold uppercase tracking-[0.14em] text-lm-ink-3">New Module</p>
+            <div v-if="course.status !== 'PENDING_REVIEW'" class="shrink-0 border-t border-lm-line bg-lm-surface px-3 py-3">
+              <p class="mb-2 font-mono text-[11px] font-bold text-lm-ink-3">New Module</p>
               <div class="flex items-center gap-1.5">
                 <input
                   v-model="newModuleTitle"
@@ -865,7 +865,7 @@ function getErrorMessage(error: unknown, fallback: string) {
                 />
                 <button
                   type="button"
-                  class="flex h-8 shrink-0 items-center gap-1 rounded-[7px] border-2 border-lm-ink bg-lm-ink px-2.5 font-mono text-[10px] font-bold text-lm-bg shadow-stamp-xs transition hover:opacity-80 disabled:opacity-50"
+                  class="flex h-8 shrink-0 items-center gap-1 rounded-[7px] border-2 border-lm-ink bg-lm-ink px-2.5 font-mono text-[11.5px] font-bold text-lm-bg shadow-stamp-xs transition hover:opacity-80 disabled:opacity-50"
                   :disabled="moduleCreating || !newModuleTitle.trim()"
                   @click="addModuleInline"
                 >
@@ -875,7 +875,7 @@ function getErrorMessage(error: unknown, fallback: string) {
                   {{ moduleCreating ? '…' : 'Add' }}
                 </button>
               </div>
-              <p v-if="moduleError" class="mt-1.5 font-mono text-[10px] text-lm-red">{{ moduleError }}</p>
+              <p v-if="moduleError" class="mt-1.5 font-mono text-[11.5px] text-lm-red">{{ moduleError }}</p>
             </div>
           </div>
 
@@ -888,7 +888,7 @@ function getErrorMessage(error: unknown, fallback: string) {
               :title="subTopic.title"
               class="h-4 w-4 shrink-0 rounded-full border-2 transition-all duration-150"
               :class="selectedSubTopicId === subTopic.id
-                ? 'border-lm-line bg-lm-yellow'
+                ? 'border-lx-macaw bg-lx-macaw'
                 : 'border-lm-line-soft bg-transparent hover:border-lm-line'"
               @click="selectSubTopic(subTopic.id)"
             />
@@ -896,24 +896,24 @@ function getErrorMessage(error: unknown, fallback: string) {
         </aside>
 
         <!-- CENTRE: subtopic viewer + manage section ──────────────── -->
-        <section class="relative flex flex-1 min-w-0 flex-col overflow-y-auto" style="background:#fffdf8">
+        <section class="relative flex flex-1 min-w-0 flex-col overflow-y-auto" style="background:#ffffff">
           <div class="pointer-events-none absolute inset-0 bg-dot-grid opacity-40" />
 
           <!-- AI Outline Generation Status Container -->
           <div v-if="outlineGenerationLog" class="relative flex flex-1 items-center justify-center p-7 z-10">
-            <div class="w-full max-w-lg rounded-[18px] border-2 border-lm-line bg-white p-8 shadow-stamp-md text-center">
+            <div class="w-full max-w-lg rounded-[18px] border border-lm-line bg-white p-8 shadow-stamp-md text-center">
               
               <!-- State: PENDING or RUNNING -->
               <div v-if="outlineGenerationLog.status === 'PENDING' || outlineGenerationLog.status === 'RUNNING'">
                 <!-- Pulsing AI Brain/Spark Icon -->
-                <div class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-[20px] border-2 border-lm-line bg-lm-yellow shadow-stamp-sm animate-bounce">
-                  <svg class="h-8 w-8 text-lm-ink animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <div class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-[20px] bg-lx-macaw/12 animate-bounce">
+                  <svg class="h-8 w-8 text-lx-macaw-dark animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z" />
                   </svg>
                 </div>
                 
                 <h3 class="font-display text-[20px] font-extrabold text-lm-ink">AI Course Generation in Progress</h3>
-                <p class="mt-2 font-mono text-[11px] uppercase tracking-[0.1em] text-lm-ink-3">
+                <p class="mt-2 font-mono text-[11px] text-lm-ink-3">
                   Status: <span class="rounded bg-lm-yellow-soft px-1.5 py-0.5 font-bold text-lm-ink">{{ outlineGenerationLog.status }}</span>
                 </p>
 
@@ -924,16 +924,16 @@ function getErrorMessage(error: unknown, fallback: string) {
 
                 <div class="space-y-3.5 text-left border-t border-lm-line-soft pt-5">
                   <div>
-                    <span class="block font-mono text-[10px] font-bold uppercase tracking-[0.08em] text-lm-ink-3">Prompt / Requirements</span>
+                    <span class="block font-mono text-[11.5px] font-bold text-lm-ink-3">Prompt / Requirements</span>
                     <p class="mt-1 text-[12px] text-lm-ink-2 line-clamp-3 italic">"{{ outlineGenerationLog.prompt || outlineGenerationLog.requirements }}"</p>
                   </div>
                   <div class="flex justify-between text-[11px]">
                     <div>
-                      <span class="block font-mono text-[9px] font-bold uppercase tracking-[0.08em] text-lm-ink-3">Pages analyzed</span>
+                      <span class="block font-mono text-[11px] font-bold text-lm-ink-3">Pages analyzed</span>
                       <span class="font-semibold text-lm-ink">{{ outlineGenerationLog.pageStart }} - {{ outlineGenerationLog.pageEnd }}</span>
                     </div>
                     <div>
-                      <span class="block font-mono text-[9px] font-bold uppercase tracking-[0.08em] text-lm-ink-3">Log Reference</span>
+                      <span class="block font-mono text-[11px] font-bold text-lm-ink-3">Log Reference</span>
                       <span class="font-mono text-lm-ink">#{{ outlineGenerationLog.id }}</span>
                     </div>
                   </div>
@@ -942,7 +942,7 @@ function getErrorMessage(error: unknown, fallback: string) {
 
               <!-- State: FAILED -->
               <div v-else-if="outlineGenerationLog.status === 'FAILED'">
-                <div class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-[20px] border-2 border-lm-line bg-lm-red-soft text-lm-red shadow-stamp-sm">
+                <div class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-[20px] bg-red-500-soft text-lm-red shadow-[0_4px_0_#b91c1c] active:translate-y-1 active:shadow-none transition-transform duration-75">
                   <svg class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                   </svg>
@@ -960,14 +960,14 @@ function getErrorMessage(error: unknown, fallback: string) {
                 <div class="mt-6 flex flex-wrap gap-2.5">
                   <button 
                     type="button" 
-                    class="h-10 flex-1 min-w-[80px] rounded-full border-2 border-lm-line bg-lm-surface px-4 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
+                    class="h-10 flex-1 min-w-[80px] rounded-full border border-lm-line bg-lm-surface px-4 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
                     @click="outlineGenerationLog = null"
                   >
                     Close
                   </button>
                   <button 
                     type="button" 
-                    class="h-10 flex-1 min-w-[100px] rounded-full border-2 border-lm-line bg-lm-bg-soft px-4 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
+                    class="h-10 flex-1 min-w-[100px] rounded-full border border-lm-line bg-lm-bg-soft px-4 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
                     @click="checkActiveOutlineGeneration"
                   >
                     Retry Check
@@ -975,7 +975,7 @@ function getErrorMessage(error: unknown, fallback: string) {
                   <button 
                     v-if="!retryingOutlineGen"
                     type="button" 
-                    class="h-10 flex-1 min-w-[140px] rounded-full border-2 border-lm-line bg-lm-yellow px-4 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
+                    class="h-10 flex-1 min-w-[140px] rounded-2xl bg-lx-macaw px-4 text-[13px] font-bold text-white shadow-[0_4px_0_var(--color-lx-macaw-dark)] active:translate-y-1 active:shadow-none transition-transform duration-75"
                     @click="retryOutlineGeneration"
                   >
                     Retry Gen Outline
@@ -984,7 +984,7 @@ function getErrorMessage(error: unknown, fallback: string) {
                     v-else
                     disabled
                     type="button" 
-                    class="h-10 flex-1 min-w-[140px] rounded-full border-2 border-lm-line bg-lm-yellow px-4 text-[13px] font-bold text-lm-ink opacity-50 cursor-not-allowed"
+                    class="h-10 flex-1 min-w-[140px] rounded-full border border-lm-line bg-lm-yellow px-4 text-[13px] font-bold text-lm-ink opacity-50 cursor-not-allowed"
                   >
                     Retrying...
                   </button>
@@ -1007,13 +1007,13 @@ function getErrorMessage(error: unknown, fallback: string) {
                   </h2>
                   <div class="mt-2 flex gap-1.5">
                     <ITypeBadge :type="selectedSubTopic.interactionType" />
-                    <span v-if="selectedSubTopic.interactionType !== 'NONE'" class="font-mono text-[10px] text-lm-ink-3">Topic #{{ selectedSubTopic.id }}</span>
+                    <span v-if="selectedSubTopic.interactionType !== 'NONE'" class="font-mono text-[11.5px] text-lm-ink-3">Topic #{{ selectedSubTopic.id }}</span>
                   </div>
                 </div>
                 <button
                   v-if="course.status !== 'PENDING_REVIEW'"
                   type="button"
-                  class="inline-flex h-10 shrink-0 items-center gap-2 rounded-full border-2 border-lm-line bg-lm-surface px-5 py-2.5 text-[14px] font-bold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-md"
+                  class="inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-lm-line bg-lm-surface px-5 py-2.5 text-[14px] font-bold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-md"
                   @click="editingInCentre = true; centreMessage = ''"
                 >
                   <AdminIcon name="edit" :size="14" />
@@ -1026,15 +1026,15 @@ function getErrorMessage(error: unknown, fallback: string) {
                 <!-- Quiz layout -->
                 <div
                   v-if="lessonHtml(selectedSubTopic)"
-                  class="lesson-preview mb-6 rounded-[12px] border-2 border-lm-line bg-white px-7 py-6 text-[15.5px] leading-[1.75] text-[#3b3630] shadow-stamp-sm"
+                  class="lesson-preview mb-6 rounded-[12px] border border-lm-line bg-white px-7 py-6 text-[15.5px] leading-[1.75] text-[#3a3a3a] shadow-stamp-sm"
                   v-html="lessonHtml(selectedSubTopic)"
                 />
-                <div class="rounded-xl border-2 border-lm-line bg-white p-6 shadow-stamp-sm">
+                <div class="rounded-xl border border-lm-line bg-white p-6 shadow-stamp-sm">
                   <div class="mb-4 flex items-center gap-2">
-                    <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-[6px] border-2 border-lm-line bg-lm-yellow">
+                    <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-[6px] border border-lm-line bg-lm-yellow">
                       <AdminIcon name="spark" :size="13" />
                     </div>
-                    <p class="font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-lm-ink-3">
+                    <p class="font-mono text-[11.5px] font-bold text-lm-ink-3">
                       Quiz Preview (Learner View)
                     </p>
                   </div>
@@ -1051,11 +1051,11 @@ function getErrorMessage(error: unknown, fallback: string) {
                 <!-- Standard lesson layout -->
                 <div
                   v-if="lessonHtml(selectedSubTopic)"
-                  class="lesson-preview rounded-[12px] border-2 border-lm-line bg-white px-7 py-6 text-[15.5px] leading-[1.75] text-[#3b3630] shadow-stamp-sm"
+                  class="lesson-preview rounded-[12px] border border-lm-line bg-white px-7 py-6 text-[15.5px] leading-[1.75] text-[#3a3a3a] shadow-stamp-sm"
                   v-html="lessonHtml(selectedSubTopic)"
                 />
                 <div v-else class="rounded-[14px] border-2 border-dashed border-lm-line-soft py-14 text-center">
-                  <p class="font-mono text-[11px] uppercase tracking-[0.06em] text-lm-ink-3">
+                  <p class="font-mono text-[11px] text-lm-ink-3">
                     No content yet — click Edit to add
                   </p>
                 </div>
@@ -1100,7 +1100,7 @@ function getErrorMessage(error: unknown, fallback: string) {
 
           <!-- No subtopic selected -->
           <div v-else class="relative flex flex-1 items-center justify-center py-24">
-            <p class="font-mono text-[11px] uppercase tracking-[0.06em] text-lm-ink-3">Select a topic from the outline</p>
+            <p class="font-mono text-[11px] text-lm-ink-3">Select a topic from the outline</p>
           </div>
 
           <!-- ── Reviewer Feedback (collapsible, always accessible) ── -->
@@ -1111,7 +1111,7 @@ function getErrorMessage(error: unknown, fallback: string) {
               @click="manageOpen = !manageOpen"
             >
               <div class="flex-1 border-t-2 border-lm-line-soft" />
-              <span class="font-mono text-[9px] font-bold uppercase tracking-[0.14em] text-lm-ink-3">Reviewer Feedback</span>
+              <span class="font-mono text-[11px] font-bold text-lm-ink-3">Reviewer Feedback</span>
               <svg
                 class="h-3 w-3 text-lm-ink-3 transition-transform duration-200"
                 :class="manageOpen ? 'rotate-180' : ''"
@@ -1135,7 +1135,7 @@ function getErrorMessage(error: unknown, fallback: string) {
 
         <!-- RIGHT: AI generation panel ────────────────────────────── -->
         <aside
-          class="flex shrink-0 flex-col border-l-2 border-lm-line bg-lm-surface overflow-hidden transition-[width] duration-200 ease-out"
+          class="flex shrink-0 flex-col border-l border-lm-line bg-lm-surface overflow-hidden transition-[width] duration-200 ease-out"
           :style="{ width: aiPanelOpen ? '332px' : '44px' }"
         >
           <!-- Panel header -->
@@ -1144,16 +1144,16 @@ function getErrorMessage(error: unknown, fallback: string) {
             :class="aiPanelOpen ? 'justify-between px-4' : 'justify-center'"
           >
             <div v-if="aiPanelOpen" class="flex items-center gap-2">
-              <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-[6px] border-2 border-lm-line bg-lm-yellow">
+              <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-[6px] border border-lm-line bg-lm-yellow">
                 <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z" />
                 </svg>
               </div>
-              <p class="font-mono text-[11px] font-bold uppercase tracking-[0.24em] text-lm-ink-3">AI Generation</p>
+              <p class="font-mono text-[11px] font-bold text-lm-ink-3">AI Generation</p>
             </div>
             <button
               type="button"
-              class="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] border-2 border-lm-line bg-lm-bg-soft text-lm-ink shadow-stamp-xs transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-sm"
+              class="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] border border-lm-line bg-lm-bg-soft text-lm-ink shadow-stamp-xs transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-sm"
               :title="aiPanelOpen ? 'Collapse AI panel' : 'Expand AI panel'"
               @click="aiPanelOpen = !aiPanelOpen"
             >
@@ -1169,7 +1169,7 @@ function getErrorMessage(error: unknown, fallback: string) {
 
             <!-- Target module -->
             <div>
-              <p class="mb-2 font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-lm-ink-3">Target Module</p>
+              <p class="mb-2 font-mono text-[11px] font-bold text-lm-ink-3">Target Module</p>
               <select
                 v-if="modules.length"
                 v-model="selectedModuleId"
@@ -1184,7 +1184,7 @@ function getErrorMessage(error: unknown, fallback: string) {
 
             <!-- Requirements -->
             <div>
-              <p class="mb-2 font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-lm-ink-3">Requirements</p>
+              <p class="mb-2 font-mono text-[11px] font-bold text-lm-ink-3">Requirements</p>
               <textarea
                 v-model="aiRequirements"
                 rows="5"
@@ -1196,7 +1196,7 @@ function getErrorMessage(error: unknown, fallback: string) {
             <!-- Generate button -->
             <button
               type="button"
-              class="flex h-11 w-full items-center justify-center gap-2 rounded-full border-2 border-lm-line bg-lm-yellow px-4 text-[14px] font-bold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md disabled:cursor-not-allowed disabled:opacity-50"
+              class="flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-lx-macaw px-4 text-[14px] font-bold text-white shadow-[0_4px_0_var(--color-lx-macaw-dark)] active:translate-y-1 active:shadow-none transition-transform duration-75 duration-200 disabled:cursor-not-allowed disabled:opacity-50"
               :disabled="aiSubmitting || aiPolling || !selectedModuleId || !selectedDocument"
               @click="generateFromSelection"
             >
@@ -1216,8 +1216,8 @@ function getErrorMessage(error: unknown, fallback: string) {
             <!-- PDF Sources -->
             <div>
               <div class="mb-2 flex items-center justify-between">
-                <p class="font-mono text-[9px] font-bold uppercase tracking-[0.14em] text-lm-ink-3">PDF Sources</p>
-                <span class="font-mono text-[10px] font-semibold text-lm-ink-3">{{ documents.length }}</span>
+                <p class="font-mono text-[11px] font-bold text-lm-ink-3">PDF Sources</p>
+                <span class="font-mono text-[11.5px] font-semibold text-lm-ink-3">{{ documents.length }}</span>
               </div>
               <div v-if="documents.length" class="space-y-1.5">
                 <button
@@ -1231,7 +1231,7 @@ function getErrorMessage(error: unknown, fallback: string) {
                   @click="selectDocument(document)"
                 >
                   <p class="truncate font-display text-[11px] font-semibold text-lm-ink">{{ document.displayName }}</p>
-                  <p class="mt-0.5 font-mono text-[10px] text-lm-ink-3">{{ document.pageCount ?? 0 }} pages · {{ formatFileSize(document.fileSizeBytes) }}</p>
+                  <p class="mt-0.5 font-mono text-[11.5px] text-lm-ink-3">{{ document.pageCount ?? 0 }} pages · {{ formatFileSize(document.fileSizeBytes) }}</p>
                 </button>
               </div>
               <p v-else class="rounded-lg border-2 border-dashed border-lm-line-soft py-6 text-center text-[11px] text-lm-ink-3">
@@ -1242,7 +1242,7 @@ function getErrorMessage(error: unknown, fallback: string) {
             <!-- PDF Preview toggle -->
             <button
               type="button"
-              class="flex items-center gap-1.5 font-mono text-[9px] font-bold uppercase tracking-[0.1em] text-lm-ink-3 transition hover:text-lm-ink"
+              class="flex items-center gap-1.5 font-mono text-[11px] font-bold text-lm-ink-3 transition hover:text-lm-ink"
               @click="pdfOpen = !pdfOpen"
             >
               <svg class="h-3 w-3 transition-transform duration-200" :class="pdfOpen ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1255,13 +1255,13 @@ function getErrorMessage(error: unknown, fallback: string) {
             <template v-if="pdfOpen">
               <div class="flex gap-2">
                 <div class="flex-1">
-                  <label class="mb-1 block font-mono text-[9px] font-bold uppercase tracking-[0.1em] text-lm-ink-3">Start</label>
+                  <label class="mb-1 block font-mono text-[11px] font-bold text-lm-ink-3">Start</label>
                   <input v-model.number="pageStart" type="number" min="1"
                     class="w-full rounded-lg border-2 border-lm-line-soft bg-lm-bg-soft px-2 py-1.5 text-[12px] text-lm-ink outline-none focus:border-lm-line"
                     @change="clampPageRange" />
                 </div>
                 <div class="flex-1">
-                  <label class="mb-1 block font-mono text-[9px] font-bold uppercase tracking-[0.1em] text-lm-ink-3">End</label>
+                  <label class="mb-1 block font-mono text-[11px] font-bold text-lm-ink-3">End</label>
                   <input v-model.number="pageEnd" type="number" min="1"
                     class="w-full rounded-lg border-2 border-lm-line-soft bg-lm-bg-soft px-2 py-1.5 text-[12px] text-lm-ink outline-none focus:border-lm-line"
                     @change="clampPageRange" />
@@ -1279,10 +1279,10 @@ function getErrorMessage(error: unknown, fallback: string) {
                 {{ previewError }}
               </p>
               <div v-if="preview" class="space-y-2">
-                <iframe :src="preview.fileUrl" class="h-64 w-full rounded-lg border-2 border-lm-line shadow-stamp-sm" title="PDF preview" />
-                <div class="h-52 overflow-y-auto rounded-lg border-2 border-lm-line bg-lm-bg-soft p-3 shadow-stamp-sm">
+                <iframe :src="preview.fileUrl" class="h-64 w-full rounded-lg border border-lm-line shadow-stamp-sm" title="PDF preview" />
+                <div class="h-52 overflow-y-auto rounded-lg border border-lm-line bg-lm-bg-soft p-3 shadow-stamp-sm">
                   <div v-for="page in preview.pages" :key="page.pageNumber" class="mb-3 last:mb-0">
-                    <p class="mb-1 font-mono text-[9px] font-bold uppercase tracking-[0.1em] text-lm-ink-3">Page {{ page.pageNumber }}</p>
+                    <p class="mb-1 font-mono text-[11px] font-bold text-lm-ink-3">Page {{ page.pageNumber }}</p>
                     <p class="whitespace-pre-wrap text-[11px] leading-relaxed text-lm-ink-2">{{ page.text || 'No extractable text.' }}</p>
                   </div>
                 </div>
@@ -1292,7 +1292,7 @@ function getErrorMessage(error: unknown, fallback: string) {
 
           <!-- Collapsed: spark icon -->
           <div v-else class="flex flex-1 flex-col items-center pt-3">
-            <div class="flex h-6 w-6 items-center justify-center rounded-[6px] border-2 border-lm-line bg-lm-yellow">
+            <div class="flex h-6 w-6 items-center justify-center rounded-[6px] border border-lm-line bg-lm-yellow">
               <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z" />
               </svg>
@@ -1330,14 +1330,14 @@ function getErrorMessage(error: unknown, fallback: string) {
             role="dialog"
             aria-modal="true"
             aria-labelledby="confirm-delete-title"
-            class="relative z-10 flex w-full max-w-md flex-col overflow-hidden rounded-[18px] border-2 border-lm-line bg-lm-surface shadow-stamp-md"
+            class="relative z-10 flex w-full max-w-md flex-col overflow-hidden rounded-[18px] border border-lm-line bg-lm-surface shadow-stamp-md"
             @click.stop
           >
             <!-- Header -->
-            <header class="shrink-0 border-b-2 border-lm-line px-6 py-5">
+            <header class="shrink-0 border-b border-lm-line px-6 py-5">
               <div class="flex items-start justify-between gap-4">
                 <div class="flex items-center gap-3">
-                  <div class="flex h-9 w-9 items-center justify-center rounded-[10px] border-2 border-lm-line bg-lm-red-soft text-lm-red shadow-stamp-sm">
+                  <div class="flex h-9 w-9 items-center justify-center rounded-[10px] bg-red-500-soft text-lm-red shadow-[0_4px_0_#b91c1c] active:translate-y-1 active:shadow-none transition-transform duration-75">
                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
                       <line x1="12" y1="9" x2="12" y2="13" />
@@ -1379,17 +1379,17 @@ function getErrorMessage(error: unknown, fallback: string) {
             </div>
 
             <!-- Footer -->
-            <footer class="flex shrink-0 gap-2.5 border-t-2 border-lm-line px-6 py-4">
+            <footer class="flex shrink-0 gap-2.5 border-t border-lm-line px-6 py-4">
               <button
                 type="button"
-                class="h-10 flex-1 rounded-full border-2 border-lm-line bg-lm-surface px-4 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
+                class="h-10 flex-1 rounded-full border border-lm-line bg-lm-surface px-4 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
                 @click="showDeleteConfirm = false"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                class="h-10 flex-1 rounded-full border-2 border-lm-line bg-lm-red text-white px-4 text-[13px] font-bold shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md disabled:cursor-not-allowed disabled:opacity-50"
+                class="h-10 flex-1 rounded-2xl bg-red-500 text-white px-4 text-[13px] font-bold shadow-[0_4px_0_#b91c1c] active:translate-y-1 active:shadow-none transition-transform duration-75 transition disabled:cursor-not-allowed disabled:opacity-50"
                 :disabled="deletingInProgress"
                 @click="proceedDelete"
               >
@@ -1404,17 +1404,17 @@ function getErrorMessage(error: unknown, fallback: string) {
 </template>
 
 <style scoped>
-.lesson-preview :deep(h2) { margin: 0.9rem 0 0.35rem; font-size: 1.05rem; font-weight: 800; color: #1a1814; }
-.lesson-preview :deep(h3) { margin: 0.75rem 0 0.25rem; font-size: 0.95rem; font-weight: 800; color: #1a1814; }
+.lesson-preview :deep(h2) { margin: 0.9rem 0 0.35rem; font-size: 1.05rem; font-weight: 800; color: #232323; }
+.lesson-preview :deep(h3) { margin: 0.75rem 0 0.25rem; font-size: 0.95rem; font-weight: 800; color: #232323; }
 .lesson-preview :deep(p),
 .lesson-preview :deep(ul),
 .lesson-preview :deep(ol),
 .lesson-preview :deep(blockquote) { margin: 0.5rem 0; }
 .lesson-preview :deep(ul) { list-style: disc; padding-left: 1.25rem; }
 .lesson-preview :deep(ol) { list-style: decimal; padding-left: 1.25rem; }
-.lesson-preview :deep(strong) { font-weight: 700; color: #1a1814; }
+.lesson-preview :deep(strong) { font-weight: 700; color: #232323; }
 .lesson-preview :deep(em) { font-style: italic; }
-.lesson-preview :deep(code) { border-radius: 4px; background: #f0ece4; color: #1a1814; padding: 0.1rem 0.3rem; font-size: 0.85em; }
+.lesson-preview :deep(code) { border-radius: 4px; background: #ebedf0; color: #232323; padding: 0.1rem 0.3rem; font-size: 0.85em; }
 .lesson-preview :deep(img) { max-width: 100%; border-radius: 0.5rem; }
 
 @keyframes loading-bar {

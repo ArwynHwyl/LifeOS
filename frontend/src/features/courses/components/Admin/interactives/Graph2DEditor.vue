@@ -61,7 +61,7 @@
       />
     </div>
 
-    <p class="m-0 font-mono text-[10px] leading-relaxed text-lm-ink-3 uppercase tracking-wider">
+    <p class="m-0 font-mono text-[11.5px] leading-relaxed text-lm-ink-3 tracking-wider">
       Graph activities use Visualization mode. Learners explore the function and its controls without answer grading.
     </p>
   </div>

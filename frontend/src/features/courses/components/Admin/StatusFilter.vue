@@ -32,7 +32,7 @@ function select(value: 'all' | CourseStatus) {
   <div class="relative">
     <button
       type="button"
-      class="inline-flex h-11 min-w-[140px] cursor-pointer items-center justify-between gap-2 rounded-[12px] border-2 border-lm-line-soft bg-lm-bg-soft px-3.5 font-display text-[12px] font-bold text-lm-ink-2"
+      class="inline-flex h-11 min-w-[150px] cursor-pointer items-center justify-between gap-2 rounded-2xl border-2 border-lm-line-soft bg-lm-bg-soft px-4 text-[14px] font-semibold text-lm-ink-2 transition-colors duration-150 hover:border-lm-line"
       @click="open = !open"
     >
       {{ currentLabel }}
@@ -40,14 +40,14 @@ function select(value: 'all' | CourseStatus) {
     </button>
     <div
       v-if="open"
-      class="absolute right-0 top-[calc(100%+6px)] z-20 w-[170px] overflow-hidden rounded-[12px] border-2 border-lm-line bg-lm-surface shadow-stamp-md"
+      class="absolute right-0 top-[calc(100%+6px)] z-20 w-[190px] overflow-hidden rounded-2xl border border-lm-line bg-lm-surface p-1.5 shadow-stamp-lg"
     >
       <button
         v-for="[value, label] in statuses"
         :key="value"
         type="button"
-        class="flex w-full cursor-pointer items-center gap-2.5 border-none bg-transparent px-3.5 py-2.5 text-left font-display text-[12px] font-semibold text-lm-ink-2"
-        :class="{ 'bg-[rgba(255,211,51,0.35)] font-bold text-lm-ink': modelValue === value }"
+        class="flex w-full cursor-pointer items-center gap-2.5 rounded-xl border-none bg-transparent px-3 py-2.5 text-left text-[14px] font-medium text-lm-ink-2 transition-colors duration-100 hover:bg-lm-bg-soft"
+        :class="{ '!bg-lx-macaw/10 !font-semibold !text-lx-macaw-dark': modelValue === value }"
         @click="select(value)"
       >
         {{ label }}

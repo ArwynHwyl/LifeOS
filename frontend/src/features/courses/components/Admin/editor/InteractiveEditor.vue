@@ -1,10 +1,10 @@
 <template>
-  <div class="border-2 border-lm-line-soft rounded-[14px] bg-[#fffdf8] overflow-hidden">
+  <div class="border-2 border-lm-line-soft rounded-[14px] bg-[#ffffff] overflow-hidden">
     <!-- Header -->
     <div class="flex items-center justify-between p-3 py-3.5 border-b-2 border-lm-line-soft">
       <div class="flex items-center gap-2">
         <h3 class="font-display text-[14px] font-[800] text-lm-ink m-0">Interactive</h3>
-        <span v-if="type !== 'NONE'" class="font-mono text-[10px] font-bold px-2 py-[2px] border-2 border-lm-line-soft rounded-full bg-lm-bg-soft text-lm-ink-3 uppercase">{{ type }}</span>
+        <span v-if="type !== 'NONE'" class="font-mono text-[11.5px] font-bold px-2 py-[2px] border-2 border-lm-line-soft rounded-full bg-lm-bg-soft text-lm-ink-3">{{ type }}</span>
       </div>
     </div>
 
@@ -25,7 +25,7 @@
         </div>
 
         <!-- Type-specific form -->
-        <div v-if="type === 'NONE'" class="font-mono text-[11px] text-lm-ink-3 uppercase tracking-[0.06em] m-0">
+        <div v-if="type === 'NONE'" class="font-mono text-[11px] text-lm-ink-3 m-0">
           No interaction — text lesson only
         </div>
         <div v-else-if="type === 'QUIZ'">
@@ -53,8 +53,8 @@
             class="w-full box-border font-mono text-[11px] px-3 py-2.5 border-2 border-lm-line-soft rounded-[8px] bg-lm-bg-soft outline-none text-lm-ink resize-y"
           />
           <div class="flex gap-2">
-            <button @click="applyJson" class="px-3.5 py-[7px] font-display text-[12px] font-bold border-2 border-lm-line rounded-full bg-lm-yellow cursor-pointer text-lm-ink shadow-stamp-sm">Apply</button>
-            <button @click="resetJson" class="px-3.5 py-[7px] font-display text-[12px] font-bold border-2 border-lm-line rounded-full bg-lm-surface cursor-pointer text-lm-ink">Reset</button>
+            <button @click="applyJson" class="px-3.5 py-[7px] font-display text-[12px] font-bold rounded-2xl bg-lx-macaw cursor-pointer text-white shadow-[0_4px_0_var(--color-lx-macaw-dark)] active:translate-y-1 active:shadow-none transition-transform duration-75">Apply</button>
+            <button @click="resetJson" class="px-3.5 py-[7px] font-display text-[12px] font-bold border border-lm-line rounded-full bg-lm-surface cursor-pointer text-lm-ink">Reset</button>
           </div>
         </div>
       </template>

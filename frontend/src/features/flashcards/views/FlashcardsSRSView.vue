@@ -3,6 +3,9 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import LmIcon from '@/features/learning/components/LmIcon.vue'
 import FlashcardFace from '../components/FlashcardFace.vue'
+import { watch } from 'vue'
+import ToraMascot from '@/components/tora/ToraMascot.vue'
+import ConfettiBurst from '@/components/motion/ConfettiBurst.vue'
 import { getSrsDueSession, submitSrsReview, type SrsCardDto, type SrsOutcome } from '../services/flashcard'
 import { useGamificationStore } from '@/features/gamified/stores/gamification'
 
@@ -14,6 +17,8 @@ const loadError = ref(false)
 const submitting = ref(false)
 const isFlipped = ref(false)
 const isComplete = ref(false)
+const confettiKey = ref(0)
+watch(isComplete, (done) => { if (done && sessionCards.value.length > 0) confettiKey.value += 1 })
 
 const sessionCards = ref<SrsCardDto[]>([])
 const cardIndex = ref(0)
@@ -23,11 +28,11 @@ const totalCards = computed(() => sessionCards.value.length)
 const progressPercent = computed(() => (totalCards.value === 0 ? 0 : (cardIndex.value / totalCards.value) * 100))
 const streak = computed(() => gamificationStore.profile?.currentStreak ?? 0)
 
-const recallButtons: { label: string; sub: string; next: string; key: string; bgClass: string; outcome: SrsOutcome }[] = [
-  { label: 'Again', sub: 'forgot', next: '< 1 min', key: '1', bgClass: 'bg-lm-red-soft', outcome: 'AGAIN' },
-  { label: 'Hard', sub: 'barely', next: '10 min', key: '2', bgClass: 'bg-lm-yellow-soft', outcome: 'HARD' },
-  { label: 'Good', sub: 'solid', next: '1 day', key: '3', bgClass: 'bg-lm-green-soft', outcome: 'GOOD' },
-  { label: 'Easy', sub: 'instant', next: '4 days', key: '4', bgClass: 'bg-lm-blue-soft', outcome: 'EASY' },
+const recallButtons: { label: string; sub: string; next: string; key: string; bgClass: string; textClass: string; outcome: SrsOutcome }[] = [
+  { label: 'Again', sub: 'forgot', next: '1 min', key: '1', bgClass: 'bg-red-50', textClass: 'text-red-600', outcome: 'AGAIN' },
+  { label: 'Hard', sub: 'barely', next: '10 min', key: '2', bgClass: 'bg-lx-fox/10', textClass: 'text-lx-fox-dark', outcome: 'HARD' },
+  { label: 'Good', sub: 'solid', next: '1 day', key: '3', bgClass: 'bg-lx-feather/10', textClass: 'text-lx-feather-dark', outcome: 'GOOD' },
+  { label: 'Easy', sub: 'instant', next: '4 days', key: '4', bgClass: 'bg-lx-beetle/10', textClass: 'text-lx-beetle-dark', outcome: 'EASY' },
 ]
 
 async function loadSession() {
@@ -79,49 +84,52 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
-  <main class="flex-1 flex flex-col bg-lm-yellow-soft overflow-hidden relative">
-    <div class="absolute inset-0 bg-dot-grid opacity-40 pointer-events-none" />
+  <main class="flex-1 flex flex-col bg-lx-surface-soft overflow-hidden relative">
 
     <!-- Top bar -->
-    <div class="relative flex items-center gap-3.5 px-6 py-3.5 bg-lm-surface border-b-2 border-lm-line shrink-0">
+    <div class="relative flex items-center gap-3.5 px-6 py-3.5 bg-white border-b border-lx-line shrink-0">
       <button
         @click="router.push('/learn/flashcards')"
-        class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold border-2 border-lm-line rounded-full bg-lm-surface shadow-stamp-sm hover:-translate-y-px transition-all duration-200 text-lm-ink shrink-0"
+        class="flex items-center gap-1.5 px-3.5 py-2 text-sm font-extrabold rounded-2xl bg-lx-surface-soft hover:bg-lx-line transition-colors duration-150 text-lx-ink shrink-0"
       >
         <LmIcon name="back" :size="14" />
         Exit
       </button>
       <div class="flex-1 text-center">
-        <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3 block">SRS QUEUE</span>
-        <span class="font-display font-bold text-[18px] text-lm-ink leading-tight block">Review queue</span>
+        <span class="font-mono text-[11px] font-bold tracking-[0.06em] uppercase text-lx-ink-faint block">SRS queue</span>
+        <span class="font-display font-extrabold text-[18px] text-lx-ink leading-tight block">Review queue</span>
       </div>
-      <span class="flex items-center gap-1.5 px-3 py-1 text-sm font-semibold border border-lm-line rounded-full bg-lm-rust-soft shrink-0">
-        <span class="text-lm-rust"><LmIcon name="flame" :size="14" :filled="true" /></span>
+      <span class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-extrabold rounded-full bg-lx-fox/10 text-lx-fox-dark shrink-0">
+        <LmIcon name="flame" :size="14" :filled="true" />
         {{ streak }} day streak
       </span>
-      <span class="px-3 py-1 text-sm font-semibold border border-lm-line rounded-full bg-lm-bg-soft text-lm-ink shrink-0">
+      <span class="px-3 py-1.5 text-sm font-extrabold rounded-full bg-lx-surface-soft text-lx-ink shrink-0">
         {{ Math.min(cardIndex + 1, totalCards) }} / {{ totalCards }}
       </span>
     </div>
 
     <div v-if="loading" class="flex-1 flex items-center justify-center relative">
-      <p class="text-[14px] text-lm-ink-2">Loading your queue…</p>
+      <p class="text-[14px] text-lx-ink-faint">Loading your queue…</p>
     </div>
 
     <div v-else-if="loadError" class="flex-1 flex items-center justify-center relative">
-      <p class="text-[14px] text-lm-ink-2">Couldn't load your queue. <button class="underline" @click="loadSession">Try again</button></p>
+      <p class="text-[14px] text-lx-ink-faint">Couldn't load your queue. <button class="underline font-bold" @click="loadSession">Try again</button></p>
     </div>
 
     <div v-else-if="isComplete" class="flex-1 flex flex-col items-center justify-center gap-4 relative px-6 text-center">
-      <h2 class="font-display text-[32px] font-bold text-lm-ink m-0">
+      <div class="relative">
+        <ConfettiBurst :fire="confettiKey" :count="60" :spread="300" />
+        <ToraMascot mood="cheer" :size="190" :track="false" />
+      </div>
+      <h2 class="font-display text-[30px] font-extrabold text-lx-ink m-0">
         {{ totalCards === 0 ? 'Nothing due right now' : 'Queue cleared!' }}
       </h2>
-      <p class="text-[15px] text-lm-ink-2 m-0">
+      <p class="text-[15px] text-lx-ink-soft m-0">
         {{ totalCards === 0 ? 'Check back later as your cards become due.' : `You reviewed ${totalCards} card${totalCards === 1 ? '' : 's'}.` }}
       </p>
       <button
         @click="router.push('/learn/flashcards')"
-        class="flex items-center gap-2 mt-2 px-6 py-3 text-[15px] font-semibold border-2 border-lm-line rounded-full bg-lm-ink text-lm-bg shadow-stamp-sm hover:-translate-y-px hover:shadow-stamp-md transition-all duration-200"
+        class="flex items-center gap-2 mt-2 px-6 py-3 text-[15px] font-extrabold rounded-2xl bg-lx-feather text-white shadow-[0_4px_0_var(--color-lx-feather-dark)] transition-transform duration-75 active:translate-y-1 active:shadow-none"
       >
         Back to flashcards
       </button>
@@ -129,16 +137,18 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
     <template v-else-if="currentCard">
       <!-- Progress strip -->
-      <div class="shrink-0 px-6 py-2.5 bg-lm-surface border-b border-lm-line-soft">
-        <div class="h-3.5 bg-lm-bg-soft rounded-full overflow-hidden border border-lm-line">
-          <div class="h-full bg-lm-rust transition-all duration-200" :style="{ width: `${progressPercent}%` }" />
+      <div class="shrink-0 px-6 py-2.5 bg-white border-b border-lx-line">
+        <div class="h-2.5 bg-lx-surface-soft rounded-full overflow-hidden">
+          <div class="h-full bg-lx-fox rounded-full transition-all duration-200" :style="{ width: `${progressPercent}%` }" />
         </div>
       </div>
 
       <!-- Card pair -->
       <div class="flex-1 flex flex-col px-6 py-6 min-h-0 relative">
-        <FlashcardFace
-          :card-key="currentCard.srsCardId"
+        <Transition name="card-swap" mode="out-in">
+          <FlashcardFace
+            :key="currentCard.srsCardId"
+            :card-key="currentCard.srsCardId"
           :front="currentCard.front"
           :formula="currentCard.backText"
           :label="currentCard.deckTitle"
@@ -146,13 +156,14 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
           :example="currentCard.example ?? undefined"
           :tags="currentCard.tags"
           @flip="onFlip"
-        />
+          />
+        </Transition>
       </div>
 
       <!-- SRS recall bar -->
-      <div class="shrink-0 px-6 pb-5 pt-3.5 bg-lm-surface border-t-2 border-lm-line">
-        <p class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3 text-center mb-2.5">
-          {{ isFlipped ? 'HOW WELL DID YOU RECALL?' : 'CLICK THE CARD TO REVEAL THE ANSWER FIRST' }}
+      <div class="shrink-0 px-6 pb-5 pt-3.5 bg-white border-t border-lx-line">
+        <p class="font-mono text-[11px] font-bold tracking-[0.06em] uppercase text-lx-ink-faint text-center mb-2.5">
+          {{ isFlipped ? 'How well did you recall?' : 'Click the card to reveal the answer first' }}
         </p>
         <div class="grid grid-cols-4 gap-3">
           <button
@@ -160,15 +171,23 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
             :key="b.label"
             @click="submitOutcome(b.outcome)"
             :disabled="!isFlipped || submitting"
-            :class="['flex flex-col items-center px-3.5 py-3 border-2 border-lm-line rounded-[18px] shadow-stamp-sm cursor-pointer hover:-translate-y-px hover:shadow-stamp-md transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-stamp-sm', b.bgClass]"
+            :class="['flex flex-col items-center px-3.5 py-3 rounded-2xl cursor-pointer transition-all duration-150 hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0', b.bgClass]"
           >
-            <span class="font-display font-bold text-[22px] tracking-tight text-lm-ink">{{ b.label }}</span>
-            <span class="text-[13px] text-lm-ink-2 mt-0.5">{{ b.sub }}</span>
-            <span class="font-mono text-[10px] text-lm-ink-3 mt-1.5">NEXT: {{ b.next }}</span>
-            <span class="font-mono text-[9px] text-lm-ink-3 mt-0.5">PRESS [{{ b.key }}]</span>
+            <span :class="['font-display font-extrabold text-[20px] tracking-tight', b.textClass]">{{ b.label }}</span>
+            <span class="text-[13px] font-semibold text-lx-ink-soft mt-0.5">{{ b.sub }}</span>
+            <span class="font-mono text-[10px] font-bold text-lx-ink-faint mt-1.5">Recall Time: {{ b.next }}</span>
+            <span class="font-mono text-[9px] font-bold text-lx-ink-faint mt-0.5">PRESS [{{ b.key }}]</span>
           </button>
         </div>
       </div>
     </template>
   </main>
 </template>
+
+<style scoped>
+.card-swap-enter-active { transition: opacity 0.28s ease, transform 0.34s cubic-bezier(0.22, 1, 0.36, 1); }
+.card-swap-leave-active { transition: opacity 0.14s ease, transform 0.16s ease-in; }
+.card-swap-enter-from { opacity: 0; transform: translateX(48px) rotate(2deg); }
+.card-swap-leave-to { opacity: 0; transform: translateX(-48px) rotate(-2deg); }
+@media (prefers-reduced-motion: reduce) { .card-swap-enter-active, .card-swap-leave-active { transition: none; } }
+</style>

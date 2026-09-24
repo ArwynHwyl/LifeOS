@@ -34,35 +34,35 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <AuthPageLayout mood="think" holding="none" bubble="Hmm, can't remember?">
+  <AuthPageLayout :mood="error ? 'oops' : message ? 'happy' : 'think'" holding="none" bubble="Hmm, can't remember?">
     <header class="mb-5">
-      <h1 class="font-display text-[30px] font-bold leading-tight tracking-tight text-lm-ink">Reset password</h1>
-      <p class="mt-1.5 text-[14px] text-lm-ink-2">Enter your email and we'll send a recovery link.</p>
+      <h1 class="m-0 font-display text-[30px] font-bold leading-tight tracking-tight text-lx-ink">Reset password</h1>
+      <p class="mt-1.5 text-[14px] text-lx-ink-soft">Enter your email and we'll send a recovery link.</p>
     </header>
 
     <form class="flex flex-col gap-3.5" @submit.prevent="handleSubmit">
-      <div v-if="error" class="rounded-xl border-2 border-lm-red bg-lm-red-soft px-3 py-2.5 text-[12px] font-medium text-lm-red" role="alert">
+      <div v-if="error" class="auth-alert auth-alert-error" role="alert">
         {{ error }}
       </div>
-      <div v-if="message" class="rounded-xl border-2 border-lm-green bg-lm-green-soft px-3 py-2.5 text-[12px] font-medium text-lm-green">
+      <div v-if="message" class="auth-alert auth-alert-success">
         {{ message }}
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <label class="font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-lm-ink-3" for="forgot-email">Email</label>
+        <label class="auth-label" for="forgot-email">Email</label>
         <input
           id="forgot-email"
           v-model="email"
           type="email"
           autocomplete="email"
           required
-          class="w-full rounded-xl border-2 border-lm-line-soft bg-lm-bg-soft px-3.5 py-3 text-[14px] font-medium text-lm-ink outline-none transition focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
+          class="auth-input"
         />
       </div>
 
       <button
         type="submit"
-        class="mt-1.5 flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border-2 border-lm-line bg-lm-yellow px-6 py-3 text-[16px] font-semibold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+        class="auth-btn"
         :disabled="isSubmitting"
       >
         {{ isSubmitting ? 'Sending...' : 'Send reset link' }}
@@ -71,7 +71,7 @@ async function handleSubmit() {
     </form>
 
     <template #footer>
-      <RouterLink class="font-bold text-lm-ink" to="/login">← Back to sign in</RouterLink>
+      <RouterLink class="auth-link" to="/login">← Back to sign in</RouterLink>
     </template>
   </AuthPageLayout>
 </template>

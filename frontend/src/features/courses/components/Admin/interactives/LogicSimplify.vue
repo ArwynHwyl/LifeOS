@@ -4,20 +4,20 @@
     <div class="flex-[1_1_340px] min-w-[320px] flex flex-col gap-3">
       <!-- progress -->
       <div class="flex items-center gap-2">
-        <p class="font-mono text-[10px] font-bold tracking-[0.1em] uppercase text-lm-ink-3 m-0 whitespace-nowrap shrink-0">
+        <p class="font-mono text-[11.5px] font-bold text-lm-ink-3 m-0 whitespace-nowrap shrink-0">
           Step {{ Math.min(pos + (done ? 0 : 1), steps.length) }} / {{ steps.length }}
         </p>
         <div class="flex-1 h-1.5 rounded-full bg-lm-bg-soft border-[1.5px] border-lm-line-soft overflow-hidden">
           <div class="h-full bg-lm-yellow transition-[width] duration-350" :style="{ width: `${steps.length ? (pos / steps.length) * 100 : 0}%` }" />
         </div>
-        <button v-if="interactive && pos > 0" @click="resetStepper" class="font-mono text-[9px] font-bold tracking-[0.06em] uppercase border-2 border-lm-line-soft rounded-full bg-lm-surface text-lm-ink-3 px-2.5 py-[3px] cursor-pointer">
+        <button v-if="interactive && pos > 0" @click="resetStepper" class="font-mono text-[11px] font-bold border-2 border-lm-line-soft rounded-full bg-lm-surface text-lm-ink-3 px-2.5 py-[3px] cursor-pointer">
           Reset
         </button>
       </div>
 
       <!-- start line -->
-      <div class="border-2 border-lm-line-soft rounded-[14px] bg-lm-surface p-[14px_18px] bg-[#fffdf8]">
-        <p class="font-mono text-[9px] font-bold tracking-[0.1em] uppercase text-lm-ink-3 m-0 mb-1.5 text-left">Start</p>
+      <div class="border-2 border-lm-line-soft rounded-[14px] bg-lm-surface p-[14px_18px] bg-[#ffffff]">
+        <p class="font-mono text-[11px] font-bold text-lm-ink-3 m-0 mb-1.5 text-left">Start</p>
         <p class="font-math italic text-[24px] font-bold text-lm-ink m-0 text-left">{{ lsPretty(start) }}</p>
       </div>
 
@@ -28,7 +28,7 @@
         class="border-2 border-lm-line-soft rounded-[14px] bg-lm-surface p-[12px_16px] border-lm-line shadow-stamp-sm ls-pop"
       >
         <div class="flex items-center gap-2 mb-1.75">
-          <span class="font-mono text-[9px] font-bold tracking-[0.04em] uppercase px-[9px] py-[2px] rounded-full border-2 border-lm-line bg-lm-yellow text-lm-ink">{{ getLawName(s.law) }}</span>
+          <span class="font-mono text-[11px] font-bold px-[9px] py-[2px] rounded-full border border-lm-line bg-lm-yellow text-lm-ink">{{ getLawName(s.law) }}</span>
           <span class="font-display text-[12px] text-lm-ink-2">{{ s.note || getLawNote(s.law) }}</span>
         </div>
         <p class="font-math italic text-[24px] font-bold text-lm-ink m-0 text-left">{{ lsPretty(s.result) }}</p>
@@ -38,7 +38,7 @@
       <div v-if="!done && interactive" class="border-2 border-lm-line-soft rounded-[14px] bg-lm-surface p-[14px_16px] border-dashed">
         <div class="flex items-center justify-between mb-2.5">
           <p class="font-display text-[13px] font-bold text-lm-ink m-0">Which law transforms this next?</p>
-          <button @click="showHint = !showHint" class="font-mono text-[9px] font-bold tracking-[0.06em] uppercase border-2 border-lm-line rounded-full bg-lm-bg-soft text-lm-ink px-2.5 py-[3px] cursor-pointer">
+          <button @click="showHint = !showHint" class="font-mono text-[11px] font-bold border border-lm-line rounded-full bg-lm-bg-soft text-lm-ink px-2.5 py-[3px] cursor-pointer">
             {{ showHint ? 'Hide hint' : 'Hint' }}
           </button>
         </div>
@@ -50,7 +50,7 @@
             v-for="id in palette"
             :key="id"
             @click="pick(id)"
-            class="flex flex-col items-start gap-[3px] p-[8px_12px] cursor-pointer border-2 border-lm-line rounded-[10px] bg-lm-surface shadow-stamp-sm"
+            class="flex flex-col items-start gap-[3px] p-[8px_12px] cursor-pointer border border-lm-line rounded-[10px] bg-lm-surface shadow-stamp-sm"
             :class="{ 'ls-shake': wrong === id }"
             :title="getLawForms(id)"
           >
@@ -80,9 +80,9 @@
     <div class="flex-[1_1_240px] min-w-[230px] sticky top-0">
       <div class="border-2 border-lm-line-soft rounded-[14px] bg-lm-surface overflow-hidden">
         <div class="flex items-center justify-between p-[9px_12px] bg-lm-bg-soft border-b border-lm-line-soft">
-          <p class="font-mono text-[10px] font-bold tracking-[0.1em] uppercase text-lm-ink-3 m-0">Equivalence proof</p>
+          <p class="font-mono text-[11.5px] font-bold text-lm-ink-3 m-0">Equivalence proof</p>
           <span
-            class="inline-flex items-center gap-1.25 font-mono text-[9px] font-bold tracking-[0.04em] uppercase px-[9px] py-[3px] border-2 border-lm-line rounded-full bg-lm-red-soft text-lm-red"
+            class="inline-flex items-center gap-1.25 font-mono text-[11px] font-bold px-[9px] py-[3px] border border-lm-line rounded-full bg-lm-red-soft text-lm-red"
             :class="{ 'bg-lm-green-soft text-lm-green': proofResult.identical }"
           >
             {{ proofResult.identical ? '≡ IDENTICAL' : '✕ DIFFERS' }}
@@ -98,8 +98,8 @@
               >
                 {{ v }}
               </th>
-              <th class="font-mono text-[9px] font-bold tracking-[0.06em] color-lm-ink-3 p-[4px_8px] uppercase border-left border-l border-lm-line-soft">Start</th>
-              <th class="font-mono text-[9px] font-bold tracking-[0.06em] color-lm-ink-3 p-[4px_8px] uppercase">Now</th>
+              <th class="font-mono text-[11px] font-bold color-lm-ink-3 p-[4px_8px] border-left border-l border-lm-line-soft">Start</th>
+              <th class="font-mono text-[11px] font-bold color-lm-ink-3 p-[4px_8px]">Now</th>
             </tr>
           </thead>
           <tbody>

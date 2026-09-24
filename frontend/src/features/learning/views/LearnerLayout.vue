@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import LearnerNav from '../components/LearnerNav.vue'
+import LearnerSidebar from '../components/LearnerSidebar.vue'
 import AchievementToast from '@/features/gamified/components/AchievementToast.vue'
 import MomentLevelUp from '@/features/gamified/components/MomentLevelUp.vue'
 import MomentShieldUsed from '@/features/gamified/components/MomentShieldUsed.vue'
@@ -11,11 +11,12 @@ import { useGamificationStore } from '@/features/gamified/stores/gamification'
 const route = useRoute()
 const gamificationStore = useGamificationStore()
 
-const activeTab = computed<'courses' | 'assessments' | 'flashcards' | 'dashboard'>(() => {
+const activeTab = computed<'courses' | 'assessments' | 'flashcards' | 'dashboard' | 'levels'>(() => {
   const path = route.path
   if (path.includes('/assessments')) return 'assessments'
   if (path.includes('/flashcards')) return 'flashcards'
-  if (path.includes('/dashboard') || path.includes('/levels')) return 'dashboard'
+  if (path.includes('/levels')) return 'levels'
+  if (path.includes('/dashboard')) return 'dashboard'
   return 'courses'
 })
 
@@ -25,9 +26,13 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="learning-app flex flex-col h-screen overflow-hidden bg-lm-bg">
-    <LearnerNav :active="activeTab" />
-    <router-view class="flex-1 min-h-0" />
+  <div class="learning-app flex h-screen overflow-hidden bg-white font-body">
+    <LearnerSidebar :active="activeTab" />
+    <router-view v-slot="{ Component, route: current }">
+      <Transition name="page" mode="out-in">
+        <component :is="Component" :key="current.path" class="flex-1 min-h-0 min-w-0 overflow-auto" />
+      </Transition>
+    </router-view>
 
     <MomentLevelUp
       v-if="gamificationStore.pendingLevelUp"
@@ -55,3 +60,13 @@ onMounted(() => {
     <AchievementToast />
   </div>
 </template>
+
+<style scoped>
+.page-enter-active { transition: opacity 0.28s ease, transform 0.32s cubic-bezier(0.22, 1, 0.36, 1); }
+.page-leave-active { transition: opacity 0.12s ease; }
+.page-enter-from { opacity: 0; transform: translateY(10px); }
+.page-leave-to { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .page-enter-active, .page-leave-active { transition: none; }
+}
+</style>

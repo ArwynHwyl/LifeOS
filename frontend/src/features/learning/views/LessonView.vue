@@ -16,7 +16,7 @@ import {
   type PublishedSubTopicDto,
 } from '@/features/learning/services/learnerCourses'
 import { useGamificationStore } from '@/features/gamified/stores/gamification'
-import toraMascotUrl from '@/assets/tora-mascot.svg'
+import ConfettiBurst from '@/components/motion/ConfettiBurst.vue'
 
 const gamificationStore = useGamificationStore()
 
@@ -30,6 +30,7 @@ const error = ref('')
 const interactiveServerFeedback = ref('')
 const canvasEl = ref<HTMLElement | null>(null)
 const showMasteryFlash = ref(false)
+const completeFire = ref(0)
 const masteryExpAwarded = ref(0)
 const masteryLeveledUp = ref(false)
 const masteryNewLevel = ref(0)
@@ -67,16 +68,16 @@ const currentInteractiveMode = computed(() => {
 })
 const selectedLessonHtml = computed(() => {
   let html = selectedSubTopic.value?.contentHtml || selectedSubTopic.value?.content || ''
+  // The page header already shows the title, so drop a leading <h2> that repeats it.
+  const leading = /^\s*<h[12][^>]*>([\s\S]*?)<\/h[12]>/i.exec(html)
+  const normalize = (text: string) => text.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().toLowerCase()
+  if (leading && normalize(leading[1]) === normalize(selectedSubTopic.value?.title ?? '')) {
+    html = html.slice(leading[0].length)
+  }
   // Safe replacement of discrete/continuous words outside HTML tags
   html = html.replace(/(?<!<[^>]*)\bdiscrete\b(?![^<>]*>)/gi, '<span class="math-word-discrete">discrete</span>')
   html = html.replace(/(?<!<[^>]*)\bcontinuous\b(?![^<>]*>)/gi, '<span class="math-word-continuous">continuous</span>')
   return html
-})
-const mascotPrompt = computed(() => {
-  const current = selectedSubTopic.value
-  const prompt = current?.mascotPrompt?.trim()
-  if (prompt) return prompt
-  return current ? `Think about how "${current.title}" connects to this lesson.` : ''
 })
 
 const isSidebarOpen = ref(false)
@@ -438,6 +439,7 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
       <!-- Mastery celebration overlay -->
       <Transition name="mastery-flash">
         <div v-if="showMasteryFlash" class="mastery-overlay">
+          <ConfettiBurst :fire="1" :count="48" :spread="260" />
           <div class="mastery-burst" />
           <svg class="mastery-check" viewBox="0 0 64 64" fill="none">
             <circle cx="32" cy="32" r="28" stroke="#245e3e" stroke-width="3" fill="#dff4df" />
@@ -457,18 +459,7 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
       <Transition :name="contentTransitionDir === 'next' ? 'slide-next' : 'slide-prev'" mode="out-in">
         <article v-if="selectedSubTopic" :key="selectedSubTopic.id" class="lesson-content">
           <header class="lesson-content__header">
-            <div class="lesson-hero-copy">
-              <span>{{ selectedModule?.title }} • LESSON {{ selectedIndex + 1 }}</span>
-              <div class="lesson-hero-title-wrap">
-                <h1>{{ selectedSubTopic.title }}</h1>
-              </div>
-            </div>
-            <div class="lesson-mascot">
-              <p>{{ mascotPrompt }}</p>
-              <button class="lesson-mascot__avatar" type="button" aria-label="Ask Tora about this lesson" @click="assistantOpen = true">
-                <img :src="toraMascotUrl" alt="" />
-              </button>
-            </div>
+            <h1>{{ selectedSubTopic.title }}</h1>
           </header>
 
           <!-- Lesson body — open flow, no box wrapper -->
@@ -492,13 +483,14 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
           <!-- Mark as Completed button for reading-only lessons or visualization-only interactives -->
           <div
             v-if="selectedSubTopic.interactionType === 'NONE' || currentInteractiveMode !== 'PRACTICE'"
-            class="reading-complete-section"
+            class="reading-complete-section relative"
           >
+            <ConfettiBurst :fire="completeFire" :count="34" :spread="170" />
             <button
               v-if="currentProgressStatus !== 'MASTERED'"
               type="button"
               class="complete-btn complete-btn--uncompleted"
-              @click="persistInteractiveProgress('MASTERED')"
+              @click="completeFire += 1; persistInteractiveProgress('MASTERED')"
             >
               <svg class="complete-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                 <polyline points="20 6 9 17 4 12" />
@@ -573,9 +565,9 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  border-top: 2px solid #1a1814;
-  background: #eae5da;
-  color: #1a1814;
+  background: var(--color-lx-surface-soft);
+  color: var(--color-lx-ink);
+  font-family: var(--font-body);
 }
 .lesson-sidebar {
   position: absolute;
@@ -587,11 +579,11 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   display: flex;
   min-height: 0;
   flex-direction: column;
-  border-right: 2px solid #1a1814;
-  background: #f6f0e7;
+  border-right: 1px solid var(--color-lx-line);
+  background: #ffffff;
   transform: translateX(-100%);
   transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  box-shadow: 4px 0 24px rgba(26, 24, 20, 0.15);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.08);
 }
 .lesson-sidebar--open {
   transform: translateX(0);
@@ -599,21 +591,22 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
 .lesson-sidebar__header {
   display: grid;
   gap: 0.75rem;
-  border-bottom: 1px solid #e4ded6;
+  border-bottom: 1px solid var(--color-lx-line);
   padding: 2rem 1.15rem 1.5rem;
 }
 .lesson-sidebar__header span {
-  color: #8f887e;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: var(--color-lx-ink-faint);
+  font-family: var(--font-mono);
   font-size: 10px;
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 .lesson-sidebar__header h1 {
   margin: 0;
+  font-family: var(--font-display);
   font-size: 1rem;
-  font-weight: 950;
+  font-weight: 800;
   line-height: 1.25;
 }
 .lesson-progress {
@@ -623,23 +616,23 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   gap: 0.6rem;
 }
 .lesson-progress div {
-  height: 0.45rem;
+  height: 0.4rem;
   overflow: hidden;
-  border: 1px solid #1a1814;
+  border: none;
   border-radius: 999px;
-  background: #fffdf8;
+  background: var(--color-lx-surface-soft);
 }
 .lesson-progress span {
   display: block;
   height: 100%;
-  background: #1a1814;
+  background: var(--color-lx-macaw);
   transition: width 400ms cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 .lesson-progress strong {
-  color: #8f887e;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: var(--color-lx-ink-faint);
+  font-family: var(--font-mono);
   font-size: 10px;
-  font-weight: 900;
+  font-weight: 700;
 }
 .lesson-module-list {
   min-height: 0;
@@ -661,15 +654,16 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
 .lesson-module__header h2 {
   min-width: 0;
   margin: 0;
+  font-family: var(--font-display);
   font-size: 0.84rem;
-  font-weight: 950;
+  font-weight: 800;
   line-height: 1.25;
 }
 .lesson-module__header strong {
-  color: #8f887e;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: var(--color-lx-ink-faint);
+  font-family: var(--font-mono);
   font-size: 10px;
-  font-weight: 900;
+  font-weight: 700;
 }
 .lesson-topic {
   display: grid;
@@ -679,14 +673,14 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   width: 100%;
   min-height: 2.2rem;
   border: 0;
-  border-left: 4px solid transparent;
+  border-left: 3px solid transparent;
   background: transparent;
   padding: 0.45rem 1rem 0.45rem 2.4rem;
-  color: #8f887e;
+  color: var(--color-lx-ink-faint);
   text-align: left;
   font-size: 0.8rem;
-  font-weight: 850;
-  transition: background 150ms ease, border-color 200ms ease;
+  font-weight: 700;
+  transition: background 150ms ease, border-color 200ms ease, color 150ms ease;
 }
 .lesson-topic span:last-child {
   min-width: 0;
@@ -695,38 +689,38 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   white-space: nowrap;
 }
 .lesson-topic:hover {
-  background: #fff4bf;
-  color: #1a1814;
+  background: var(--color-lx-surface-soft);
+  color: var(--color-lx-ink);
 }
 .lesson-topic--active {
-  border-left-color: #1a1814;
-  background: #ffd333;
-  color: #1a1814;
+  border-left-color: var(--color-lx-macaw);
+  background: rgba(28, 176, 246, 0.1);
+  color: var(--color-lx-macaw-dark);
 }
 .lesson-sidebar__empty,
 .lesson-state {
   padding: 2rem;
-  color: #1a1814;
-  font-weight: 900;
+  color: var(--color-lx-ink);
+  font-weight: 700;
 }
 .lesson-state {
   position: relative;
   z-index: 1;
 }
 .lesson-state--error {
-  color: #8c3322;
+  color: #dc2626;
 }
 .selection-ask-button {
   position: fixed;
   z-index: 120;
-  border: 2px solid #1d1b17;
+  border: none;
   border-radius: 999px;
-  background: #ffd333;
-  padding: 0.4rem 0.75rem;
-  color: #1d1b17;
-  font-size: 0.7rem;
-  font-weight: 950;
-  box-shadow: 2px 3px 0 #1d1b17;
+  background: var(--color-lx-macaw);
+  padding: 0.45rem 0.9rem;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(28, 176, 246, 0.4);
   cursor: pointer;
 }
 .selection-limit-notice {
@@ -735,37 +729,34 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   display: grid;
   width: 260px;
   gap: 0.15rem;
-  border: 2px solid #1d1b17;
+  border: none;
   border-radius: 12px;
-  background: #fff0ed;
+  background: #fef2f2;
   padding: 0.55rem 0.7rem;
-  color: #8c3322;
+  color: #dc2626;
   font-size: 0.68rem;
-  box-shadow: 2px 3px 0 #1d1b17;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
   pointer-events: none;
 }
 .selection-limit-notice strong {
-  font-weight: 950;
+  font-weight: 800;
 }
 .selection-limit-notice span {
-  color: #6b6660;
+  color: var(--color-lx-ink-soft);
   font-size: 0.6rem;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .lesson-canvas {
   position: relative;
   min-height: 0;
   overflow: auto;
-  background: #eae5da;
+  background: var(--color-lx-surface-soft);
 }
 .lesson-canvas__bg {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(circle, rgba(26, 24, 20, 0.12) 1px, transparent 1.5px),
-    #eae5da;
-  background-size: 20px 20px;
+  background: var(--color-lx-surface-soft);
   pointer-events: none;
 }
 .lesson-top-bar {
@@ -789,17 +780,17 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   justify-content: center;
   width: 2.25rem;
   height: 2.25rem;
-  border: 2px solid #1d1b17;
+  border: none;
   border-radius: 50%;
-  background: #fffdf8;
-  color: #1d1b17;
+  background: #ffffff;
+  color: var(--color-lx-ink);
   cursor: pointer;
-  box-shadow: 2px 2px 0 #1d1b17;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
 .sidebar-toggle-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 3px 3px 0 #1d1b17;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.14);
 }
 .toggle-icon {
   width: 1.1rem;
@@ -809,10 +800,10 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  color: #6b6660;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: var(--color-lx-ink-soft);
+  font-family: var(--font-mono);
   font-size: 11px;
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: 0.08em;
 }
 .clock-icon {
@@ -824,21 +815,21 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   align-items: center;
   gap: 0.4rem;
   min-height: 2.25rem;
-  border: 2px solid #1d1b17;
+  border: none;
   border-radius: 999px;
-  background: #fffdf8;
+  background: #ffffff;
   padding: 0 1.25rem;
-  color: #1d1b17;
+  color: var(--color-lx-ink);
   font-size: 0.8rem;
-  font-weight: 900;
-  box-shadow: 2px 2px 0 #1d1b17;
+  font-weight: 800;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   cursor: pointer;
   transition: transform 0.1s ease, box-shadow 0.1s ease;
   text-transform: uppercase;
 }
 .lesson-exit-button:hover {
   transform: translateY(-1px);
-  box-shadow: 3px 3px 0 #1d1b17;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.14);
 }
 .exit-icon {
   width: 12px;
@@ -854,18 +845,18 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   justify-content: center;
   width: 3.5rem;
   height: 3.5rem;
-  border: 2px solid #1d1b17;
+  border: none;
   border-radius: 50%;
-  background: #fffdf8;
-  color: #1d1b17;
+  background: #ffffff;
+  color: var(--color-lx-ink);
   cursor: pointer;
-  box-shadow: 3px 3px 0 #1d1b17;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
-  opacity: 0.7;
+  opacity: 0.8;
 }
 .floating-nav-btn:hover:not(:disabled) {
   transform: translateY(-50%) translateY(-2px);
-  box-shadow: 4px 4px 0 #1d1b17;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
   opacity: 1;
 }
 .floating-nav-btn:disabled {
@@ -890,99 +881,24 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   gap: 1.5rem;
   width: min(calc(100% - 12rem), 1200px);
   margin: 6.5rem auto 4rem;
-  border: 2.5px solid #1d1b17;
-  border-radius: 32px;
-  background: #fffdf8;
+  border: none;
+  border-radius: 28px;
+  background: #ffffff;
   padding: 3.5rem;
-  box-shadow: 4px 4px 0px 0px #1d1b17;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 24px 48px -24px rgba(0, 0, 0, 0.18);
 }
 
 .lesson-content__header {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(270px, 420px);
-  align-items: center;
-  gap: 2rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
-.lesson-hero-copy span {
-  display: block;
-  color: #8f887e;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  margin-bottom: 0.5rem;
-}
-.lesson-hero-title-wrap {
-  display: inline-block;
-  background: #ffd333;
-  border: 2px solid #1d1b17;
-  padding: 0.6rem 1.25rem;
-  border-radius: 12px;
-  margin-bottom: 0.75rem;
-  box-shadow: 2px 2px 0px 0px #1d1b17;
-}
-.lesson-hero-copy h1 {
+.lesson-content__header h1 {
   margin: 0;
-  color: #1d1b17;
-  font-size: clamp(2.35rem, 5vw, 4rem);
-  font-weight: 950;
-  line-height: 0.96;
-}
-.lesson-mascot {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  justify-self: end;
-  align-self: flex-end;
-}
-.lesson-mascot p {
-  position: relative;
-  min-width: 0;
-  margin: 0;
-  border: 2px solid #1d1b17;
-  border-radius: 16px;
-  background: #ffffff;
-  padding: 1rem;
-  color: #1d1b17;
-  font-size: 0.75rem;
-  font-style: italic;
-  font-weight: 650;
-  line-height: 1.45;
-  box-shadow: 2px 2px 0px 0px #1d1b17;
-  max-width: 240px;
-}
-.lesson-mascot p::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  right: -8px;
-  width: 12px;
-  height: 12px;
-  border-top: 2px solid #1d1b17;
-  border-right: 2px solid #1d1b17;
-  background: #ffffff;
-  transform: translateY(-50%) rotate(45deg);
-}
-.lesson-mascot__avatar {
-  display: grid;
-  width: 64px;
-  height: 64px;
-  flex-shrink: 0;
-  place-items: center;
-  overflow: hidden;
-  border: 2px solid #1d1b17;
-  border-radius: 50%;
-  background: #ffd333;
-  padding: 4px;
-  box-shadow: 2px 2px 0px 0px #1d1b17;
-  cursor: pointer;
-}
-.lesson-mascot__avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+  font-family: var(--font-display);
+  color: var(--color-lx-ink);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 800;
+  line-height: 1.1;
+  text-wrap: balance;
 }
 
 .lesson-body {
@@ -1005,19 +921,19 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   line-height: 1;
 }
 .progress-marker--not-started {
-  color: #8f887e;
+  color: var(--color-lx-ink-faint);
   background: transparent;
 }
 .progress-marker--tried {
-  border-color: #1a1814;
-  background: #ffd333;
-  color: #1a1814;
+  border-color: var(--color-lx-macaw);
+  background: rgba(28, 176, 246, 0.15);
+  color: var(--color-lx-macaw-dark);
 }
 .progress-marker--mastered {
-  border-color: #245e3e;
-  background: #dff4df;
-  color: #245e3e;
-  font-weight: 900;
+  border-color: var(--color-lx-feather-dark);
+  background: rgba(88, 204, 2, 0.15);
+  color: var(--color-lx-feather-dark);
+  font-weight: 800;
 }
 
 /* ── Pagination Dots ── */
@@ -1036,17 +952,17 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #d4cec6;
+  background: var(--color-lx-line);
   cursor: pointer;
   transition: width 0.2s ease, border-radius 0.2s ease, background-color 0.2s ease;
 }
 .pagination-dot:hover {
-  background: #9e9892;
+  background: var(--color-lx-ink-faint);
 }
 .pagination-dot--active {
   width: 24px;
   border-radius: 4px;
-  background: #1d1b17;
+  background: var(--color-lx-macaw);
 }
 
 /* ── Mastery celebration overlay ── */
@@ -1063,14 +979,14 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   width: 200px;
   height: 200px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(223, 244, 223, 0.7) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(88, 204, 2, 0.22) 0%, transparent 70%);
   animation: burst-expand 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 .mastery-check {
   width: 64px;
   height: 64px;
   animation: check-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-  filter: drop-shadow(0 4px 12px rgba(36, 94, 62, 0.25));
+  filter: drop-shadow(0 4px 12px rgba(70, 163, 2, 0.3));
 }
 @keyframes burst-expand {
   0% { transform: scale(0.3); opacity: 1; }
@@ -1092,17 +1008,18 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   animation: exp-rise 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 .mastery-exp__amount {
+  font-family: var(--font-display);
   font-weight: 700;
   font-size: 20px;
-  color: #245e3e;
-  text-shadow: 0 2px 8px rgba(36, 94, 62, 0.2);
+  color: var(--color-lx-feather-dark);
+  text-shadow: 0 2px 8px rgba(70, 163, 2, 0.2);
 }
 .mastery-exp__levelup {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #b45309;
+  color: var(--color-lx-fox-dark);
 }
 @keyframes exp-rise {
   0% { transform: translateY(8px); opacity: 0; }
@@ -1139,34 +1056,48 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   transform: translateX(24px);
 }
 
+/* ── Content entrance ── */
+:deep(.lesson-body > *) { animation: rise-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+:deep(.lesson-body > *:nth-child(2)) { animation-delay: 0.06s; }
+:deep(.lesson-body > *:nth-child(3)) { animation-delay: 0.12s; }
+:deep(.lesson-body > *:nth-child(4)) { animation-delay: 0.18s; }
+:deep(.lesson-body > *:nth-child(5)) { animation-delay: 0.24s; }
+:deep(.lesson-body > *:nth-child(n + 6)) { animation-delay: 0.3s; }
+.complete-btn--uncompleted { transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease; }
+.complete-btn--uncompleted:hover { filter: brightness(1.06); }
+.complete-btn--completed { animation: pop-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+@media (prefers-reduced-motion: reduce) { :deep(.lesson-body > *), .complete-btn--completed { animation: none; } }
+
 /* ── Typography for lesson body content ── */
 :deep(.lesson-body h2) {
   margin-top: 2.5rem;
   margin-bottom: 1.5rem;
-  font-family: 'Bricolage Grotesque', sans-serif;
-  font-size: 2rem;
+  font-family: var(--font-display);
+  font-size: 1.85rem;
   font-weight: 700;
   line-height: 1.2;
-  border-bottom: 1px solid #e2e0db;
+  border-bottom: 1px solid var(--color-lx-line);
   padding-bottom: 0.5rem;
+  color: var(--color-lx-ink);
 }
 :deep(.lesson-body h3) {
   margin-top: 2rem;
   margin-bottom: 1rem;
-  font-family: 'Bricolage Grotesque', sans-serif;
-  font-size: 1.5rem;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
   font-weight: 700;
   line-height: 1.3;
+  color: var(--color-lx-ink);
 }
 :deep(.lesson-body p),
 :deep(.lesson-body ul),
 :deep(.lesson-body ol),
 :deep(.lesson-body figure) {
   margin: 1.25rem 0;
-  color: rgba(29, 27, 23, 0.9);
-  font-family: 'Bricolage Grotesque', sans-serif;
-  font-size: 1.125rem;
-  line-height: 1.6;
+  color: var(--color-lx-ink-soft);
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  line-height: 1.65;
 }
 :deep(.lesson-body ul),
 :deep(.lesson-body ol) {
@@ -1180,36 +1111,36 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   border-radius: 8px;
 }
 :deep(.lesson-body a) {
-  color: #1f63d4;
-  font-weight: 800;
+  color: var(--color-lx-macaw-dark);
+  font-weight: 700;
   text-decoration: underline;
   text-decoration-thickness: 2px;
   text-underline-offset: 0.18em;
 }
 :deep(.lesson-body a:hover) {
-  color: #174a9b;
+  color: var(--color-lx-macaw);
 }
 :deep(.lesson-body figcaption) {
   margin-top: -0.35rem;
-  color: #6b6660;
+  color: var(--color-lx-ink-faint);
   font-size: 0.86rem;
   font-weight: 700;
 }
 
 /* ── Inline math word highlights ── */
 :deep(.lesson-body .math-word-discrete) {
-  color: #a63a13;
-  font-weight: 900;
+  color: var(--color-lx-fox-dark);
+  font-weight: 800;
   text-decoration: underline;
-  text-decoration-color: #a63a13;
+  text-decoration-color: var(--color-lx-fox-dark);
   text-decoration-thickness: 2.5px;
   text-underline-offset: 4px;
 }
 :deep(.lesson-body .math-word-continuous) {
-  color: #2563eb;
-  font-weight: 900;
+  color: var(--color-lx-macaw-dark);
+  font-weight: 800;
   text-decoration: underline;
-  text-decoration-color: #2563eb;
+  text-decoration-color: var(--color-lx-macaw-dark);
   text-decoration-thickness: 2.5px;
   text-underline-offset: 4px;
 }
@@ -1220,28 +1151,6 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
     margin: 5.2rem auto 6rem;
     padding: 2rem;
     border-radius: 32px;
-  }
-  .lesson-content__header {
-    grid-template-columns: 1fr;
-    gap: 1.25rem;
-  }
-  .lesson-mascot {
-    justify-self: stretch;
-    width: 100%;
-    display: flex;
-    gap: 1rem;
-  }
-  .lesson-mascot p {
-    flex: 1;
-    max-width: none;
-  }
-  .lesson-mascot__avatar {
-    width: 64px;
-    height: 64px;
-  }
-  .lesson-mascot__avatar img {
-    width: 100%;
-    height: 100%;
   }
   .floating-nav-btn {
     width: 3rem;
@@ -1283,37 +1192,34 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   justify-content: center;
   margin-top: 2.5rem;
   padding-top: 1.5rem;
-  border-top: 2px dashed #e4ded6;
+  border-top: 1px solid var(--color-lx-line);
 }
 .complete-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   min-height: 2.75rem;
-  border: 2px solid #1d1b17;
+  border: none;
   border-radius: 999px;
   padding: 0 1.75rem;
-  font-family: 'Bricolage Grotesque', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.95rem;
-  font-weight: 900;
+  font-weight: 800;
   cursor: pointer;
-  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease;
-  box-shadow: 3px 3px 0 #1d1b17;
+  transition: transform 0.08s ease, box-shadow 0.08s ease, background-color 0.15s ease;
 }
 .complete-btn--uncompleted {
-  background: #ffd333;
-  color: #1d1b17;
+  background: var(--color-lx-feather);
+  color: #fff;
+  box-shadow: 0 4px 0 var(--color-lx-feather-dark);
 }
-.complete-btn--uncompleted:hover {
-  transform: translateY(-1px);
-  box-shadow: 4px 4px 0 #1d1b17;
-  background: #ffdb58;
+.complete-btn--uncompleted:active {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 transparent;
 }
 .complete-btn--completed {
-  border-color: #245e3e;
-  background: #dff4df;
-  color: #245e3e;
-  box-shadow: 3px 3px 0 #245e3e;
+  background: rgba(88, 204, 2, 0.12);
+  color: var(--color-lx-feather-dark);
   cursor: default;
 }
 .complete-btn-icon {

@@ -204,7 +204,7 @@ function getErrorMessage(error: unknown, fallback: string) {
     <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
 
       <!-- Breadcrumb header -->
-      <div class="flex shrink-0 items-center justify-between border-b-2 border-lm-line bg-lm-surface px-7 py-3">
+      <div class="flex shrink-0 items-center justify-between border-b border-lm-line bg-lm-surface px-7 py-3">
         <div class="flex items-center gap-1.5 text-[12px]">
           <button
             type="button"
@@ -225,7 +225,7 @@ function getErrorMessage(error: unknown, fallback: string) {
         <div v-if="course" class="flex items-center gap-2">
           <span
             v-if="newComments.length > 0"
-            class="inline-flex items-center gap-1.5 rounded-full border-2 border-dashed border-lm-rust bg-lm-surface px-2.5 py-1 font-mono text-[10px] font-bold text-lm-rust"
+            class="inline-flex items-center gap-1.5 rounded-full border-2 border-dashed border-lm-rust bg-lm-surface px-2.5 py-1 font-mono text-[11.5px] font-bold text-lm-rust"
             title="Draft comments are sent with your revision request (Reject)"
           >
             <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -246,7 +246,7 @@ function getErrorMessage(error: unknown, fallback: string) {
           </button>
           <button
             type="button"
-            class="inline-flex items-center gap-1.5 cursor-pointer rounded-lg border-2 border-lm-red bg-lm-red-soft px-3 py-1.5 text-[12px] font-semibold text-lm-red shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md disabled:cursor-not-allowed disabled:opacity-50"
+            class="inline-flex items-center gap-1.5 cursor-pointer rounded-lg border-2 border-lm-red bg-red-500-soft px-3 py-1.5 text-[12px] font-semibold text-lm-red shadow-[0_4px_0_#b91c1c] active:translate-y-1 active:shadow-none transition-transform duration-75 transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50"
             :disabled="approving || rejecting"
             @click="handleReject"
           >
@@ -273,16 +273,16 @@ function getErrorMessage(error: unknown, fallback: string) {
           </div>
 
           <!-- Loading -->
-          <div v-if="loading" class="rounded-[18px] border-2 border-lm-line bg-lm-surface px-5 py-4 text-[13px] text-lm-ink-3 shadow-stamp-sm">
+          <div v-if="loading" class="rounded-[18px] border border-lm-line bg-lm-surface px-5 py-4 text-[13px] text-lm-ink-3 shadow-stamp-sm">
             Loading course...
           </div>
 
           <template v-else-if="course">
             <!-- Course summary card -->
-            <div class="mb-6 rounded-[18px] bg-lm-surface border-2 border-lm-line px-6 py-5 shadow-stamp-sm">
+            <div class="mb-6 rounded-[18px] bg-lm-surface border border-lm-line px-6 py-5 shadow-stamp-sm">
               <div class="flex items-center gap-5">
                 <div
-                  class="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-[18px] border-2 border-lm-line font-display text-[32px] font-bold shadow-stamp-md"
+                  class="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-[18px] border border-lm-line font-display text-[32px] font-bold shadow-stamp-md"
                   :class="[coverPreset.bgClass, coverPreset.textClass]"
                 >
                   {{ coverPreset.symbol }}
@@ -301,28 +301,28 @@ function getErrorMessage(error: unknown, fallback: string) {
                   </span>
                   <span
                     v-if="courseStatus === 'published'"
-                    class="inline-flex items-center gap-1 rounded-full border-2 border-lm-line bg-lm-green-soft px-2 py-0.5 font-mono text-[10px] font-bold text-lm-green shadow-stamp-sm"
+                    class="inline-flex items-center gap-1 rounded-full border border-lm-line bg-lm-green-soft px-2 py-0.5 font-mono text-[11.5px] font-bold text-lm-green shadow-stamp-sm"
                   >
                     <span class="h-1.5 w-1.5 rounded-full bg-lm-green" />
                     Published
                   </span>
                   <span
                     v-else-if="courseStatus === 'pending'"
-                    class="inline-flex items-center gap-1 rounded-full border-2 border-lm-line bg-lm-yellow px-2 py-0.5 font-mono text-[10px] font-bold text-lm-ink shadow-stamp-sm"
+                    class="inline-flex items-center gap-1 rounded-2xl bg-lx-macaw px-2 py-0.5 font-mono text-[11.5px] font-bold text-white shadow-[0_4px_0_var(--color-lx-macaw-dark)] active:translate-y-1 active:shadow-none transition-transform duration-75"
                   >
                     <span class="h-1.5 w-1.5 rounded-full bg-lm-ink" />
                     Pending Review
                   </span>
                   <span
                     v-else-if="courseStatus === 'revision'"
-                    class="inline-flex items-center gap-1 rounded-full border-2 border-lm-line bg-lm-red-soft px-2 py-0.5 font-mono text-[10px] font-bold text-lm-red shadow-stamp-sm"
+                    class="inline-flex items-center gap-1 rounded-2xl bg-red-500-soft px-2 py-0.5 font-mono text-[11.5px] font-bold text-lm-red shadow-[0_4px_0_#b91c1c] active:translate-y-1 active:shadow-none transition-transform duration-75"
                   >
                     <span class="h-1.5 w-1.5 rounded-full bg-lm-red" />
                     Needs Revision
                   </span>
                   <span
                     v-else
-                    class="inline-flex items-center gap-1 rounded-full border-2 border-lm-line-soft bg-lm-bg-soft px-2 py-0.5 font-mono text-[10px] font-bold text-lm-ink-3"
+                    class="inline-flex items-center gap-1 rounded-full border-2 border-lm-line-soft bg-lm-bg-soft px-2 py-0.5 font-mono text-[11.5px] font-bold text-lm-ink-3"
                   >
                     <span class="h-1.5 w-1.5 rounded-full bg-lm-ink-3" />
                     Draft
@@ -333,7 +333,7 @@ function getErrorMessage(error: unknown, fallback: string) {
 
             <!-- Modules section label -->
             <div class="mb-3 flex items-center justify-between px-0.5">
-              <p class="font-mono text-[10px] font-bold uppercase tracking-[0.13em] text-lm-ink-3">Modules</p>
+              <p class="font-mono text-[11.5px] font-bold text-lm-ink-3">Modules</p>
               <span class="font-mono text-[11px] text-lm-ink-3">{{ modules.length }}</span>
             </div>
 
@@ -357,7 +357,7 @@ function getErrorMessage(error: unknown, fallback: string) {
               v-else
               class="flex flex-col items-center justify-center rounded-[18px] border-2 border-dashed border-lm-line-soft bg-lm-surface py-20 text-center"
             >
-              <div class="flex h-14 w-14 items-center justify-center rounded-[18px] bg-lm-yellow border-2 border-lm-line shadow-stamp-sm text-lm-ink">
+              <div class="flex h-14 w-14 items-center justify-center rounded-[18px] bg-lx-macaw shadow-[0_4px_0_var(--color-lx-macaw-dark)] active:translate-y-1 active:shadow-none transition-transform duration-75 text-white">
                 <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                   <polyline points="14 2 14 8 20 8" />
@@ -376,7 +376,7 @@ function getErrorMessage(error: unknown, fallback: string) {
             <p class="text-[13px] text-lm-ink-3">This course does not exist or has been removed.</p>
             <button
               type="button"
-              class="mt-4 rounded-full bg-lm-yellow border-2 border-lm-line px-5 py-2.5 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
+              class="mt-4 rounded-2xl bg-lx-macaw px-5 py-2.5 text-[13px] font-bold text-white shadow-[0_4px_0_var(--color-lx-macaw-dark)] active:translate-y-1 active:shadow-none transition-transform duration-75 duration-200"
               @click="router.push('/teacher/courses')"
             >
               Go to Courses
@@ -413,14 +413,14 @@ function getErrorMessage(error: unknown, fallback: string) {
             role="dialog"
             aria-modal="true"
             aria-labelledby="confirm-discard-title"
-            class="relative z-10 flex w-full max-w-md flex-col overflow-hidden rounded-[18px] border-2 border-lm-line bg-lm-surface shadow-stamp-md"
+            class="relative z-10 flex w-full max-w-md flex-col overflow-hidden rounded-[18px] border border-lm-line bg-lm-surface shadow-stamp-md"
             @click.stop
           >
             <!-- Header -->
-            <header class="shrink-0 border-b-2 border-lm-line px-6 py-5">
+            <header class="shrink-0 border-b border-lm-line px-6 py-5">
               <div class="flex items-start justify-between gap-4">
                 <div class="flex items-center gap-3">
-                  <div class="flex h-9 w-9 items-center justify-center rounded-[10px] border-2 border-lm-line bg-lm-rust-soft text-lm-rust shadow-stamp-sm">
+                  <div class="flex h-9 w-9 items-center justify-center rounded-[10px] border border-lm-line bg-lm-rust-soft text-lm-rust shadow-stamp-sm">
                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
                       <line x1="12" y1="9" x2="12" y2="13" />
@@ -457,17 +457,17 @@ function getErrorMessage(error: unknown, fallback: string) {
             </div>
 
             <!-- Footer -->
-            <footer class="flex shrink-0 gap-2.5 border-t-2 border-lm-line px-6 py-4">
+            <footer class="flex shrink-0 gap-2.5 border-t border-lm-line px-6 py-4">
               <button
                 type="button"
-                class="h-10 flex-1 rounded-full border-2 border-lm-line bg-lm-surface px-4 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
+                class="h-10 flex-1 rounded-full border border-lm-line bg-lm-surface px-4 text-[13px] font-bold text-lm-ink shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
                 @click="showDiscardConfirm = false"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                class="h-10 flex-1 rounded-full border-2 border-lm-line bg-lm-rust px-4 text-[13px] font-bold text-lm-bg shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
+                class="h-10 flex-1 rounded-full border border-lm-line bg-lm-rust px-4 text-[13px] font-bold text-lm-bg shadow-stamp-sm transition hover:-translate-y-px hover:shadow-stamp-md"
                 @click="() => { showDiscardConfirm = false; proceedApprove(); }"
               >
                 Discard & Approve

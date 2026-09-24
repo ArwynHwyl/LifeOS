@@ -23,12 +23,12 @@ const cover = computed(() => getCoverPreset(props.coverId))
 
 <template>
   <article
-    class="group flex cursor-pointer flex-col overflow-hidden rounded-[18px] border-2 border-lm-line bg-lm-surface shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
+    class="group flex cursor-pointer flex-col overflow-hidden rounded-[18px] border border-lm-line bg-lm-surface shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
     @click="emit('open')"
   >
     <!-- Colored top band -->
     <div
-      class="relative flex h-[140px] shrink-0 items-center justify-center overflow-hidden border-b-2 border-lm-line"
+      class="relative flex h-[140px] shrink-0 items-center justify-center overflow-hidden border-b border-lm-line"
       :class="cover.bgClass"
     >
       <span
@@ -47,28 +47,28 @@ const cover = computed(() => getCoverPreset(props.coverId))
         <h3 class="text-[13.5px] font-bold leading-snug text-lm-ink">{{ title }}</h3>
         <span
           v-if="status === 'published'"
-          class="inline-flex items-center gap-1 rounded-full border border-lm-line-soft bg-lm-green-soft px-2 py-0.5 font-mono text-[10px] font-semibold text-lm-green"
+          class="inline-flex items-center gap-1 rounded-full border border-lm-line-soft bg-lm-green-soft px-2 py-0.5 font-mono text-[11.5px] font-semibold text-lm-green"
         >
           <span class="h-1.5 w-1.5 rounded-full bg-lm-green" />
           Published
         </span>
         <span
           v-else-if="status === 'pending'"
-          class="inline-flex items-center gap-1 rounded-full border border-lm-line-soft bg-lm-yellow/60 px-2 py-0.5 font-mono text-[10px] font-semibold text-lm-ink"
+          class="inline-flex items-center gap-1 rounded-full border border-lm-line-soft bg-lm-yellow/60 px-2 py-0.5 font-mono text-[11.5px] font-semibold text-lm-ink"
         >
           <span class="h-1.5 w-1.5 rounded-full bg-lm-ink" />
           Pending Review
         </span>
         <span
           v-else-if="status === 'revision'"
-          class="inline-flex items-center gap-1 rounded-full border border-lm-line-soft bg-lm-red-soft px-2 py-0.5 font-mono text-[10px] font-semibold text-lm-red"
+          class="inline-flex items-center gap-1 rounded-full border border-lm-line-soft bg-lm-red-soft px-2 py-0.5 font-mono text-[11.5px] font-semibold text-lm-red"
         >
           <span class="h-1.5 w-1.5 rounded-full bg-lm-red" />
           Needs Revision
         </span>
         <span
           v-else
-          class="inline-flex items-center gap-1 rounded-full border border-lm-line-soft bg-lm-bg-soft px-2 py-0.5 font-mono text-[10px] font-semibold text-lm-ink-3"
+          class="inline-flex items-center gap-1 rounded-full border border-lm-line-soft bg-lm-bg-soft px-2 py-0.5 font-mono text-[11.5px] font-semibold text-lm-ink-3"
         >
           <span class="h-1.5 w-1.5 rounded-full bg-lm-ink-3" />
           Draft

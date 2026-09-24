@@ -1,5 +1,5 @@
 <template>
-  <div class="border-2 border-lm-line rounded-[12px] bg-lm-surface overflow-hidden">
+  <div class="border border-lm-line rounded-[12px] bg-lm-surface overflow-hidden">
     <!-- Toolbar -->
     <div class="flex flex-wrap items-center gap-[2px] p-[6px_8px] border-b-2 border-lm-line-soft bg-lm-bg-soft">
       <select
@@ -139,7 +139,7 @@
   white-space: pre-wrap;
   word-break: break-word;
   overflow-x: auto;
-  background: var(--color-lm-bg-soft, #f5f5f5);
+  background: var(--color-lm-bg-soft, #f6f7f8);
   padding: 0.6rem 0.875rem;
   border-radius: 6px;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;

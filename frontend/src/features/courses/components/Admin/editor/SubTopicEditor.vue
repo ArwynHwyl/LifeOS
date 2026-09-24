@@ -33,10 +33,10 @@
     />
 
     <div class="flex gap-2.5 pt-1">
-      <button @click="onSave" :disabled="!title.trim()" class="inline-flex items-center gap-2 px-5 py-2.5 font-display text-[14px] font-bold border-2 border-lm-line rounded-full bg-lm-ink text-lm-bg cursor-pointer shadow-stamp-sm transition-opacity duration-150 disabled:cursor-not-allowed disabled:opacity-45">
+      <button @click="onSave" :disabled="!title.trim()" class="inline-flex items-center gap-2 px-5 py-2.5 font-display text-[14px] font-bold border border-lm-line rounded-full bg-lm-ink text-lm-bg cursor-pointer shadow-stamp-sm transition-opacity duration-150 disabled:cursor-not-allowed disabled:opacity-45">
         <AdminIcon name="check" :size="16" /> Save
       </button>
-      <button @click="$emit('cancel')" class="inline-flex items-center gap-2 px-5 py-2.5 font-display text-[14px] font-bold border-2 border-lm-line rounded-full bg-lm-surface text-lm-ink cursor-pointer">
+      <button @click="$emit('cancel')" class="inline-flex items-center gap-2 px-5 py-2.5 font-display text-[14px] font-bold border border-lm-line rounded-full bg-lm-surface text-lm-ink cursor-pointer">
         Cancel
       </button>
     </div>

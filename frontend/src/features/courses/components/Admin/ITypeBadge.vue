@@ -7,21 +7,20 @@ const props = defineProps<{
 }>()
 
 const info = computed(() => {
-  if (props.type === 'QUIZ') return { label: 'Quiz', bg: 'var(--lm-blue-soft)', color: 'var(--lm-blue)' }
-  if (props.type === 'GRAPH_2D') return { label: 'Graph', bg: 'var(--lm-purple-soft)', color: 'var(--lm-purple)' }
-  if (props.type === 'FORMULA_EXPLORER') return { label: 'Formula', bg: 'var(--lm-purple-soft)', color: 'var(--lm-purple)' }
-  if (props.type === 'VISUAL_LAYER') return { label: 'Visual', bg: 'var(--lm-green-soft)', color: 'var(--lm-green)' }
-  if (props.type === 'LOGIC_FLOW') return { label: 'Logic', bg: 'var(--lm-yellow-soft)', color: 'var(--lm-ink)' }
-  if (props.type === 'OTHER') return { label: 'Other', bg: 'var(--lm-bg-soft)', color: 'var(--lm-ink-2)' }
-  return { label: '', bg: 'transparent', color: 'var(--lm-ink-3)' }
+  if (props.type === 'QUIZ') return { label: 'Quiz', cls: 'bg-lx-macaw/12 text-lx-macaw-dark' }
+  if (props.type === 'GRAPH_2D') return { label: 'Graph', cls: 'bg-lx-beetle/15 text-lx-beetle-dark' }
+  if (props.type === 'FORMULA_EXPLORER') return { label: 'Formula', cls: 'bg-lx-beetle/15 text-lx-beetle-dark' }
+  if (props.type === 'VISUAL_LAYER') return { label: 'Visual', cls: 'bg-lx-feather/12 text-lx-feather-dark' }
+  if (props.type === 'LOGIC_FLOW') return { label: 'Logic', cls: 'bg-lx-fox/12 text-lx-fox-dark' }
+  if (props.type === 'OTHER') return { label: 'Other', cls: 'bg-lx-surface-soft text-lx-ink-soft' }
+  return { label: '', cls: '' }
 })
 </script>
 
 <template>
   <span
     v-if="type && type !== 'NONE'"
-    class="shrink-0 rounded-full px-[6px] py-[2px] font-mono text-[9px] font-bold uppercase tracking-[0.04em]"
-    :style="{ background: info.bg, color: info.color }"
+    :class="['shrink-0 rounded-full px-2 py-[2px] text-[11px] font-semibold', info.cls]"
   >
     {{ info.label }}
   </span>

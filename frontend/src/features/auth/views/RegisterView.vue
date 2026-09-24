@@ -10,6 +10,7 @@ const password = ref('')
 const confirmPassword = ref('')
 const showPassword = ref(false)
 const showConfirm = ref(false)
+const passwordFocused = ref(false)
 const formError = ref('')
 const isSubmitting = ref(false)
 const successMessage = ref('')
@@ -55,21 +56,21 @@ async function handleRegister() {
 </script>
 
 <template>
-  <AuthPageLayout tight mood="cheer" holding="pencil" bubble="Yes! Let's begin!">
+  <AuthPageLayout tight :mood="formError ? 'oops' : 'cheer'" :cover="passwordFocused && !(showPassword && showConfirm)" holding="pencil" bubble="Yes! Let's begin!">
     <header class="mb-4">
-      <h1 class="font-display text-[28px] font-bold leading-tight tracking-tight text-lm-ink">Create account</h1>
-      <p v-if="successMessage" class="mt-2 rounded-xl border-2 border-lm-green bg-lm-green-soft px-3 py-2.5 text-[12px] font-medium text-lm-green">
+      <h1 class="m-0 font-display text-[28px] font-bold leading-tight tracking-tight text-lx-ink">Create account</h1>
+      <p v-if="successMessage" class="mt-3 auth-alert auth-alert-success">
         {{ successMessage }}
       </p>
     </header>
 
     <form v-if="!successMessage" class="flex flex-col gap-3" @submit.prevent="handleRegister">
-      <div v-if="formError" class="rounded-xl border-2 border-lm-red bg-lm-red-soft px-3 py-2 text-[12px] font-medium text-lm-red" role="alert">
+      <div v-if="formError" class="auth-alert auth-alert-error" role="alert">
         {{ formError }}
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <label class="font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-lm-ink-3" for="reg-username">Username</label>
+        <label class="auth-label" for="reg-username">Username</label>
         <input
           id="reg-username"
           v-model="username"
@@ -78,12 +79,12 @@ async function handleRegister() {
           autocomplete="username"
           required
           minlength="3"
-          class="w-full rounded-xl border-2 border-lm-line-soft bg-lm-bg-soft px-3.5 py-2.5 text-[14px] font-medium text-lm-ink outline-none transition focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
+          class="auth-input"
         />
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <label class="font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-lm-ink-3" for="reg-email">Email</label>
+        <label class="auth-label" for="reg-email">Email</label>
         <input
           id="reg-email"
           v-model="email"
@@ -91,24 +92,26 @@ async function handleRegister() {
           name="email"
           autocomplete="email"
           required
-          class="w-full rounded-xl border-2 border-lm-line-soft bg-lm-bg-soft px-3.5 py-2.5 text-[14px] font-medium text-lm-ink outline-none transition focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
+          class="auth-input"
         />
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <label class="font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-lm-ink-3" for="reg-password">Password</label>
+        <label class="auth-label" for="reg-password">Password</label>
         <div class="relative">
           <input
             id="reg-password"
+          @focus="passwordFocused = true"
+          @blur="passwordFocused = false"
             v-model="password"
             :type="showPassword ? 'text' : 'password'"
             name="new-password"
             autocomplete="new-password"
             required
             minlength="8"
-            class="w-full rounded-xl border-2 border-lm-line-soft bg-lm-bg-soft py-2.5 pl-3.5 pr-11 text-[14px] font-medium text-lm-ink outline-none transition focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
+            class="auth-input pr-11"
           />
-          <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-lm-ink-3 transition hover:text-lm-ink" @click="showPassword = !showPassword">
+          <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-lx-ink-faint transition hover:text-lx-ink" @click="showPassword = !showPassword">
             <svg v-if="showPassword" class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
             <svg v-else class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
           </button>
@@ -116,43 +119,45 @@ async function handleRegister() {
       </div>
 
       <!-- Password checklist -->
-      <div class="grid grid-cols-2 gap-1 rounded-xl border-2 border-dashed border-lm-line bg-lm-bg-soft p-2.5 text-[12px]">
-        <div class="flex items-center gap-1.5" :class="passwordRules.length ? 'text-lm-green' : 'text-lm-ink-3'">
+      <div class="auth-checklist grid grid-cols-2 gap-1.5">
+        <div class="flex items-center gap-1.5" :class="passwordRules.length ? 'text-lx-feather-dark' : 'text-lx-ink-faint'">
           <svg v-if="passwordRules.length" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 13l5 5L20 6" /></svg>
-          <span v-else class="inline-block h-3.5 w-3.5 rounded-full border-[1.5px] border-lm-ink-3" />
+          <span v-else class="inline-block h-3.5 w-3.5 rounded-full border-[1.5px] border-lx-ink-faint" />
           8+ characters
         </div>
-        <div class="flex items-center gap-1.5" :class="passwordRules.number ? 'text-lm-green' : 'text-lm-ink-3'">
+        <div class="flex items-center gap-1.5" :class="passwordRules.number ? 'text-lx-feather-dark' : 'text-lx-ink-faint'">
           <svg v-if="passwordRules.number" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 13l5 5L20 6" /></svg>
-          <span v-else class="inline-block h-3.5 w-3.5 rounded-full border-[1.5px] border-lm-ink-3" />
+          <span v-else class="inline-block h-3.5 w-3.5 rounded-full border-[1.5px] border-lx-ink-faint" />
           One number
         </div>
-        <div class="flex items-center gap-1.5" :class="passwordRules.cases ? 'text-lm-green' : 'text-lm-ink-3'">
+        <div class="flex items-center gap-1.5" :class="passwordRules.cases ? 'text-lx-feather-dark' : 'text-lx-ink-faint'">
           <svg v-if="passwordRules.cases" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 13l5 5L20 6" /></svg>
-          <span v-else class="inline-block h-3.5 w-3.5 rounded-full border-[1.5px] border-lm-ink-3" />
+          <span v-else class="inline-block h-3.5 w-3.5 rounded-full border-[1.5px] border-lx-ink-faint" />
           Upper &amp; lowercase
         </div>
-        <div class="flex items-center gap-1.5" :class="passwordRules.symbol ? 'text-lm-green' : 'text-lm-ink-3'">
+        <div class="flex items-center gap-1.5" :class="passwordRules.symbol ? 'text-lx-feather-dark' : 'text-lx-ink-faint'">
           <svg v-if="passwordRules.symbol" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 13l5 5L20 6" /></svg>
-          <span v-else class="inline-block h-3.5 w-3.5 rounded-full border-[1.5px] border-lm-ink-3" />
+          <span v-else class="inline-block h-3.5 w-3.5 rounded-full border-[1.5px] border-lx-ink-faint" />
           One symbol (!@#$)
         </div>
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <label class="font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-lm-ink-3" for="reg-confirm">Confirm Password</label>
+        <label class="auth-label" for="reg-confirm">Confirm Password</label>
         <div class="relative">
           <input
             id="reg-confirm"
+          @focus="passwordFocused = true"
+          @blur="passwordFocused = false"
             v-model="confirmPassword"
             :type="showConfirm ? 'text' : 'password'"
             name="new-password"
             autocomplete="new-password"
             required
             minlength="8"
-            class="w-full rounded-xl border-2 border-lm-line-soft bg-lm-bg-soft py-2.5 pl-3.5 pr-11 text-[14px] font-medium text-lm-ink outline-none transition focus:border-lm-line focus:bg-lm-surface focus:ring-2 focus:ring-lm-yellow/40"
+            class="auth-input pr-11"
           />
-          <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-lm-ink-3 transition hover:text-lm-ink" @click="showConfirm = !showConfirm">
+          <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-lx-ink-faint transition hover:text-lx-ink" @click="showConfirm = !showConfirm">
             <svg v-if="showConfirm" class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
             <svg v-else class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
           </button>
@@ -161,7 +166,7 @@ async function handleRegister() {
 
       <button
         type="submit"
-        class="mt-1 flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border-2 border-lm-line bg-lm-yellow px-6 py-2.5 text-[15px] font-semibold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+        class="auth-btn"
         :disabled="isSubmitting"
       >
         {{ isSubmitting ? 'Creating account...' : 'Create account' }}
@@ -171,7 +176,7 @@ async function handleRegister() {
 
     <template #footer>
       Already on board?
-      <RouterLink class="ml-1 font-bold text-lm-ink" to="/login">Sign in →</RouterLink>
+      <RouterLink class="auth-link ml-1" to="/login">Sign in →</RouterLink>
     </template>
   </AuthPageLayout>
 </template>

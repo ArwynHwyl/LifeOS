@@ -74,30 +74,29 @@ const feedbackLabel = computed(() => effectiveMode.value === 'PRACTICE'
 .challenge-badge {
   display: inline-flex;
   align-items: center;
-  border: 2px solid #1a1814;
+  border: none;
   border-radius: 8px;
-  background: #a63a13;
+  background: var(--color-lx-fox);
   padding: 0.35rem 0.85rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
-  font-weight: 900;
-  color: #fffdf8;
-  box-shadow: 2px 2px 0 #1a1814;
+  font-weight: 700;
+  color: #fff;
   letter-spacing: 0.04em;
 }
 
 .challenge-divider-line {
   flex: 1;
-  height: 1.5px;
-  background: #e4ded6;
+  height: 1px;
+  background: var(--color-lx-line);
   margin: 0 1rem;
 }
 
 .challenge-activity-label {
-  color: #8f887e;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: var(--color-lx-ink-faint);
+  font-family: var(--font-mono);
   font-size: 10px;
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: 0.06em;
 }
 
@@ -108,10 +107,10 @@ const feedbackLabel = computed(() => effectiveMode.value === 'PRACTICE'
   max-width: 100%;
   box-sizing: border-box;
   overflow: hidden;
-  border: 1.5px solid #1a1814;
+  border: none;
   border-radius: 20px;
-  background: #fcfaf4;
-  color: #1a1814;
+  background: var(--color-lx-surface-soft);
+  color: var(--color-lx-ink);
 }
 
 .challenge-section__body {
@@ -122,9 +121,9 @@ const feedbackLabel = computed(() => effectiveMode.value === 'PRACTICE'
 
 .challenge-section__objective {
   margin: 0;
-  color: #1a1814;
+  color: var(--color-lx-ink);
   text-align: center;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: var(--font-math, Georgia, serif);
   font-size: 1.15rem;
   font-style: italic;
   font-weight: 600;
@@ -141,22 +140,22 @@ const feedbackLabel = computed(() => effectiveMode.value === 'PRACTICE'
   align-items: center;
   gap: 0.45rem;
   border-radius: 8px;
-  background: #edfbf2;
+  background: rgba(88, 204, 2, 0.12);
   padding: 0.5rem 0.75rem;
-  border: 1.5px solid #245e3e;
+  border: none;
 }
 .challenge-section__check-icon {
   width: 0.95rem;
   height: 0.95rem;
-  color: #245e3e;
+  color: var(--color-lx-feather-dark);
   flex-shrink: 0;
 }
 .challenge-section__feedback p {
   min-width: 0;
   margin: 0;
-  color: #245e3e;
+  color: var(--color-lx-feather-dark);
   font-size: 12.5px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.5;
 }
 
