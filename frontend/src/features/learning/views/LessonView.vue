@@ -416,41 +416,9 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
         </button>
       </div>
 
-      <!-- Floating Prev/Next Buttons outside the card -->
-      <button
-        type="button"
-        class="floating-nav-btn floating-nav-btn--prev"
-        :disabled="selectedIndex <= 0"
-        @click.stop="goToOffset(-1)"
-        aria-label="Previous Page"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="nav-arrow-icon"><polyline points="15 18 9 12 15 6"/></svg>
-      </button>
-      <button
-        type="button"
-        class="floating-nav-btn floating-nav-btn--next"
-        :disabled="selectedIndex >= allSubTopics.length - 1"
-        @click.stop="goToOffset(1)"
-        aria-label="Next Page"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="nav-arrow-icon"><polyline points="9 18 15 12 9 6"/></svg>
-      </button>
+      
 
-      <!-- Mastery celebration overlay -->
-      <Transition name="mastery-flash">
-        <div v-if="showMasteryFlash" class="mastery-overlay">
-          <ConfettiBurst :fire="1" :count="48" :spread="260" />
-          <div class="mastery-burst" />
-          <svg class="mastery-check" viewBox="0 0 64 64" fill="none">
-            <circle cx="32" cy="32" r="28" stroke="#245e3e" stroke-width="3" fill="#dff4df" />
-            <polyline points="20 33 28 41 44 25" stroke="#245e3e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-          <div v-if="masteryExpAwarded > 0" class="mastery-exp">
-            <span class="mastery-exp__amount">+{{ masteryExpAwarded }} XP</span>
-            <span v-if="masteryLeveledUp" class="mastery-exp__levelup">LEVEL UP! → {{ masteryNewLevel }}</span>
-          </div>
-        </div>
-      </Transition>
+      
 
       <div v-if="loading" class="lesson-state">Loading lesson...</div>
       <div v-else-if="error" class="lesson-state lesson-state--error">{{ error }}</div>
@@ -553,6 +521,40 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
         @clear-selection="clearAssistantSelection"
       />
     </section>
+    <!-- Mastery celebration overlay -->
+        <Transition name="mastery-flash">
+          <div v-if="showMasteryFlash" class="mastery-overlay">
+            <ConfettiBurst :fire="1" :count="48" :spread="260" />
+            <div class="mastery-burst" />
+            <svg class="mastery-check" viewBox="0 0 64 64" fill="none">
+              <circle cx="32" cy="32" r="28" stroke="#58cc02" stroke-width="3.5" fill="#ffffff" />
+              <polyline points="20 33 28 41 44 25" stroke="#58cc02" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <div v-if="masteryExpAwarded > 0" class="mastery-exp">
+              <span class="mastery-exp__amount">+{{ masteryExpAwarded }} XP</span>
+              <span v-if="masteryLeveledUp" class="mastery-exp__levelup">LEVEL UP! → {{ masteryNewLevel }}</span>
+            </div>
+          </div>
+        </Transition>
+    <!-- Floating Prev/Next Buttons outside the card -->
+        <button
+          type="button"
+          class="floating-nav-btn floating-nav-btn--prev"
+          :disabled="selectedIndex <= 0"
+          @click.stop="goToOffset(-1)"
+          aria-label="Previous Page"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="nav-arrow-icon"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button
+          type="button"
+          class="floating-nav-btn floating-nav-btn--next"
+          :disabled="selectedIndex >= allSubTopics.length - 1"
+          @click.stop="goToOffset(1)"
+          aria-label="Next Page"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="nav-arrow-icon"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
   </main>
 </template>
 
@@ -836,7 +838,7 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   height: 12px;
 }
 .floating-nav-btn {
-  position: fixed;
+  position: absolute;
   top: 50%;
   transform: translateY(-50%);
   z-index: 40;
@@ -967,7 +969,7 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
 
 /* ── Mastery celebration overlay ── */
 .mastery-overlay {
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: 100;
   display: grid;
