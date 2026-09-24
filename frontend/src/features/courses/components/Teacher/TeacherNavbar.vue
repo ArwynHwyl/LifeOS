@@ -37,7 +37,7 @@ function logout() {
               to="/teacher/courses"
               class="relative flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-semibold transition-all duration-200"
               :class="activeItem === 'courses'
-                ? 'bg-lm-yellow text-lm-ink shadow-stamp-sm border-2 border-lm-bg/30'
+                ? 'bg-lm-yellow-soft text-lm-ink shadow-stamp-sm border-2 border-lm-bg/30'
                 : 'text-lm-bg/50 hover:bg-lm-bg/10 hover:text-lm-bg/80'"
             >
               <svg class="h-[15px] w-[15px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -58,7 +58,7 @@ function logout() {
               href="#"
               class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-semibold transition-all duration-200"
               :class="activeItem === 'help'
-                ? 'bg-lm-yellow text-lm-ink shadow-stamp-sm border-2 border-lm-bg/30'
+                ? 'bg-lm-yellow-soft text-lm-ink shadow-stamp-sm border-2 border-lm-bg/30'
                 : 'text-lm-bg/50 hover:bg-lm-bg/10 hover:text-lm-bg/80'"
               @click.prevent
             >

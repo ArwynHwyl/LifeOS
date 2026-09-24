@@ -249,7 +249,7 @@ onBeforeUnmount(() => {
               <path d="M218 326 L222 334 L226 326Z" fill="#33241A" />
             </g>
             <g v-else-if="holding === 'check'">
-              <circle cx="222" cy="282" r="20" fill="#58CC02" />
+              <circle cx="222" cy="282" r="20" fill="#0ea5a4" />
               <path d="M212 283 L220 291 L234 275" stroke="#fff" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round" />
             </g>
             <ellipse cx="216" cy="311" rx="9" ry="6" fill="#FFF0D4" />
@@ -272,9 +272,9 @@ onBeforeUnmount(() => {
         <!-- Cheer sparkles -->
         <g v-if="mood === 'cheer' && crop === 'full'" class="tora-sparkles">
           <path class="sp sp1" d="M40 90 L44 102 L56 106 L44 110 L40 122 L36 110 L24 106 L36 102Z" fill="#FFC800" />
-          <path class="sp sp2" d="M262 70 L265 79 L274 82 L265 85 L262 94 L259 85 L250 82 L259 79Z" fill="#1CB0F6" />
-          <path class="sp sp3" d="M254 200 L257 208 L265 211 L257 214 L254 222 L251 214 L243 211 L251 208Z" fill="#CE82FF" />
-          <circle class="sp sp4" cx="30" cy="206" r="5" fill="#58CC02" />
+          <path class="sp sp2" d="M262 70 L265 79 L274 82 L265 85 L262 94 L259 85 L250 82 L259 79Z" fill="#f59e0b" />
+          <path class="sp sp3" d="M254 200 L257 208 L265 211 L257 214 L254 222 L251 214 L243 211 L251 208Z" fill="#6366f1" />
+          <circle class="sp sp4" cx="30" cy="206" r="5" fill="#0ea5a4" />
           <circle class="sp sp5" cx="272" cy="130" r="4" fill="#FF8FA3" />
         </g>
       </g>

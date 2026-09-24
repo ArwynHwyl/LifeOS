@@ -54,7 +54,7 @@ const cover = computed(() => getCoverPreset(props.coverId))
         </span>
         <span
           v-else-if="status === 'pending'"
-          class="inline-flex items-center gap-1 rounded-full border border-lm-line-soft bg-lm-yellow/60 px-2 py-0.5 font-mono text-[11.5px] font-semibold text-lm-ink"
+          class="inline-flex items-center gap-1 rounded-full border border-lm-line-soft bg-lm-yellow-soft/60 px-2 py-0.5 font-mono text-[11.5px] font-semibold text-lm-ink"
         >
           <span class="h-1.5 w-1.5 rounded-full bg-lm-ink" />
           Pending Review

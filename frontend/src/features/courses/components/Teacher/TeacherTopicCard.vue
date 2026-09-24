@@ -162,7 +162,7 @@ function formatInteractionType(value: string | null | undefined): string {
       <!-- Comment count indicator -->
       <span
         v-if="comments.length > 0"
-        class="inline-flex items-center gap-1.5 rounded-full border border-lm-line bg-lm-yellow/40 px-2.5 py-0.5 font-mono text-[11.5px] font-bold text-lm-ink"
+        class="inline-flex items-center gap-1.5 rounded-full border border-lm-line bg-lm-yellow-soft/40 px-2.5 py-0.5 font-mono text-[11.5px] font-bold text-lm-ink"
       >
         <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -226,7 +226,7 @@ function formatInteractionType(value: string | null | undefined): string {
                     type="button"
                     class="flex shrink-0 cursor-pointer items-center gap-1 rounded-full border-2 px-2 py-0.5 font-mono text-[11.5px] font-bold transition-all duration-200"
                     :class="subTopicComments(subTopic.id).length
-                      ? 'border-lm-line bg-lm-yellow text-lm-ink shadow-stamp-xs'
+                      ? 'border-lm-line bg-lm-yellow-soft text-lm-ink shadow-stamp-xs'
                       : 'border-transparent text-lm-ink-3 opacity-0 hover:border-lm-line hover:bg-lm-surface hover:text-lm-ink group-hover/row:opacity-100'"
                     :title="'Comment on this subtopic'"
                     @click.stop="openComposer(subTopic.id)"
@@ -386,7 +386,7 @@ function formatInteractionType(value: string | null | undefined): string {
               </svg>
               <span class="font-mono text-[11px] font-bold text-lm-ink">Module Discussion</span>
               <span v-if="moduleComments.length > 0"
-                class="rounded-full border border-lm-line-soft bg-lm-yellow/30 px-1.5 py-0.5 font-mono text-[11.5px] font-semibold text-lm-ink">
+                class="rounded-full border border-lm-line-soft bg-lm-yellow-soft/30 px-1.5 py-0.5 font-mono text-[11.5px] font-semibold text-lm-ink">
                 {{ moduleComments.length }}
               </span>
             </div>

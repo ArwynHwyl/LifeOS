@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import CourseTile, { type LearnerCourseCard } from '../components/CourseTile.vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import CourseRow, { type LearnerCourseCard } from '../components/CourseRow.vue'
 import { getCoverPreset } from '@/features/courses/constants/courseCoverPresets'
 import { getPublishedCourse, listPublishedCourses } from '../services/learnerCourses'
 import { useGamificationStore } from '@/features/gamified/stores/gamification'
@@ -89,172 +89,213 @@ async function loadCourses() {
   }
 }
 
-type Filter = 'all' | 'progress' | 'done' | 'new'
+// ── Filtering, search, sort, paging ─────────────────────────────────────────
+type Filter = 'all' | 'progress' | 'new' | 'done'
+type Sort = 'recommended' | 'az' | 'progress'
+
+const PAGE_SIZE = 12
+
 const activeFilter = ref<Filter>('all')
+const query = ref('')
+const sort = ref<Sort>('recommended')
+const visibleCount = ref(PAGE_SIZE)
 
-const filters: { id: Filter; label: string }[] = [
-  { id: 'all',      label: 'All courses' },
-  { id: 'progress', label: 'In progress' },
-  { id: 'done',     label: 'Mastered' },
-  { id: 'new',      label: 'Not started' },
-]
+const isDone = (c: LearnerCourseCard) => c.topics > 0 && c.done === c.topics
+const isInProgress = (c: LearnerCourseCard) => c.done > 0 && !isDone(c)
+const pctOf = (c: LearnerCourseCard) => (c.topics > 0 ? c.done / c.topics : 0)
 
-const filtered = computed(() => {
-  if (activeFilter.value === 'progress') return courses.value.filter(c => c.done > 0 && c.done < c.topics)
-  if (activeFilter.value === 'done')     return courses.value.filter(c => c.topics > 0 && c.done === c.topics)
-  if (activeFilter.value === 'new')      return courses.value.filter(c => c.done === 0)
-  return courses.value
+const counts = computed(() => ({
+  all: courses.value.length,
+  progress: courses.value.filter(isInProgress).length,
+  new: courses.value.filter((c) => c.done === 0).length,
+  done: courses.value.filter(isDone).length,
+}))
+
+const filters = computed<{ id: Filter; label: string; count: number }[]>(() => [
+  { id: 'all', label: 'All courses', count: counts.value.all },
+  { id: 'progress', label: 'In progress', count: counts.value.progress },
+  { id: 'new', label: 'Not started', count: counts.value.new },
+  { id: 'done', label: 'Mastered', count: counts.value.done },
+])
+
+const results = computed(() => {
+  const q = query.value.trim().toLowerCase()
+  let list = courses.value.filter((c) => {
+    if (activeFilter.value === 'progress' && !isInProgress(c)) return false
+    if (activeFilter.value === 'new' && c.done !== 0) return false
+    if (activeFilter.value === 'done' && !isDone(c)) return false
+    return !q || c.title.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q)
+  })
+  if (sort.value === 'az') list = list.slice().sort((a, b) => a.title.localeCompare(b.title))
+  else if (sort.value === 'progress') list = list.slice().sort((a, b) => pctOf(b) - pctOf(a))
+  // "Recommended": courses you have started come first, then untouched ones, mastered last.
+  else list = list.slice().sort((a, b) => rank(a) - rank(b))
+  return list
 })
 
-// The bento hero always leads with whatever's most worth doing next: an in-progress
-// course first, otherwise something not started yet, otherwise a mastered one to revisit.
-const heroCourse = computed(() => {
-  const list = filtered.value
-  return (
-    list.find((c) => c.done > 0 && c.done < c.topics) ??
-    list.find((c) => c.done === 0) ??
-    list[0] ??
-    null
-  )
-})
-
-const restCourses = computed(() => filtered.value.filter((c) => c.id !== heroCourse.value?.id))
-
-const heroColor = computed<'feather' | 'macaw'>(() => {
-  const hero = heroCourse.value
-  return hero && hero.topics > 0 && hero.done === hero.topics ? 'feather' : 'macaw'
-})
-
-function tileColor(course: LearnerCourseCard, index: number): 'feather' | 'macaw' | 'beetle' | 'eel' {
-  const isDone = course.topics > 0 && course.done === course.topics
-  if (isDone) return 'feather'
-  if (course.done > 0) {
-    // Start the cycle on whichever color the hero tile *isn't*, so the tile
-    // sitting right next to the hero never repeats its color.
-    const cycle: Array<'macaw' | 'beetle'> = heroColor.value === 'macaw' ? ['beetle', 'macaw'] : ['macaw', 'beetle']
-    return cycle[index % cycle.length]
-  }
-  return 'eel'
+function rank(c: LearnerCourseCard): number {
+  if (isInProgress(c)) return 0
+  if (c.done === 0) return 1
+  return 2
 }
 
-const inProgress = computed(() => courses.value.filter(c => c.done > 0 && c.done < c.topics).length)
-const completed = computed(() => courses.value.filter(c => c.topics > 0 && c.done === c.topics).length)
+const paged = computed(() => results.value.slice(0, visibleCount.value))
+const remaining = computed(() => Math.max(0, results.value.length - visibleCount.value))
+const filtering = computed(() => activeFilter.value !== 'all' || query.value.trim().length > 0)
 
+watch([activeFilter, query, sort], () => {
+  visibleCount.value = PAGE_SIZE
+})
+
+function reset() {
+  activeFilter.value = 'all'
+  query.value = ''
+}
+
+// ── Gamification rail ───────────────────────────────────────────────────────
 const streak = computed(() => gamificationStore.profile?.currentStreak ?? 0)
 const level = computed(() => gamificationStore.profile?.level ?? 1)
 const currentExp = computed(() => gamificationStore.profile?.currentExp ?? 0)
 const expRequired = computed(() => gamificationStore.profile?.expRequiredForNextLevel ?? 100)
-const xpPct = computed(() => expRequired.value <= 0 ? 100 : Math.min(100, Math.round((currentExp.value / expRequired.value) * 100)))
+const xpPct = computed(() => (expRequired.value <= 0 ? 100 : Math.min(100, Math.round((currentExp.value / expRequired.value) * 100))))
 </script>
 
 <template>
   <main class="flex-1 bg-white">
-    <div class="max-w-[1180px] mx-auto px-8 py-8">
-
+    <div class="mx-auto max-w-[1180px] px-8 py-8">
       <!-- Header -->
-      <div class="mb-6">
-        <span class="font-mono text-[11px] font-bold tracking-[0.08em] uppercase text-lx-ink-faint">{{ greeting }}, {{ greetingName }}</span>
-        <h1 class="font-display text-[34px] font-extrabold tracking-tight text-lx-ink leading-tight mt-1 m-0">
-          Ready to level up?
-        </h1>
-        <p class="text-[13.5px] font-semibold text-lx-ink-soft mt-1.5">
-          {{ courses.length }} courses available / {{ inProgress }} in progress / {{ completed }} mastered
-        </p>
+      <div class="mb-7">
+        <span class="font-mono text-[11px] font-bold uppercase tracking-[0.08em] text-lx-ink-faint">{{ greeting }}, {{ greetingName }}</span>
+        <h1 class="m-0 mt-1 font-display text-[34px] font-extrabold leading-tight tracking-tight text-lx-ink">Ready to level up?</h1>
       </div>
 
-      <!-- Filter chips -->
-      <div class="flex gap-2 mb-6">
-        <button
-          v-for="f in filters"
-          :key="f.id"
-          type="button"
-          @click="activeFilter = f.id"
-          :class="[
-            'press px-4 py-2 rounded-2xl border-2 font-extrabold text-[12.5px] transition-[transform,border-color] duration-100 active:translate-y-0.5',
-            activeFilter === f.id
-              ? 'bg-lx-feather border-lx-feather text-white shadow-[0_4px_0_var(--color-lx-feather-dark)] active:shadow-none'
-              : 'bg-white border-lx-line text-lx-ink-soft hover:border-lx-ink-faint'
-          ]"
-        >
-          {{ f.label }}
-        </button>
-      </div>
-
-      <!-- Error banner -->
-      <div
-        v-if="loadError"
-        class="mb-5 flex items-center justify-between rounded-2xl border-2 border-red-200 bg-red-50 px-4 py-3 text-[13px] font-semibold text-red-600"
-      >
-        <span>{{ loadError }}</span>
-        <button type="button" class="font-extrabold hover:opacity-70" @click="loadCourses">Retry</button>
-      </div>
-
-      <!-- Loading skeleton -->
-      <div v-if="loading" class="grid grid-cols-4 gap-4" style="grid-auto-rows:124px">
-        <div class="col-span-2 row-span-2 animate-pulse rounded-[22px] bg-lx-surface-soft" />
-        <div class="col-span-2 row-span-2 animate-pulse rounded-[22px] bg-lx-surface-soft" />
-        <div v-for="i in 4" :key="i" class="animate-pulse rounded-[22px] bg-lx-surface-soft" />
-      </div>
-
-      <!-- Bento grid -->
-      <div v-else-if="heroCourse" class="grid grid-cols-4 gap-4" style="grid-auto-rows:124px">
-
-        <CourseTile
-          :course="heroCourse"
-          variant="hero"
-          :color="heroColor"
-          class="anim-rise"
-          :style="{ '--i': 0 }"
-        />
-
-        <!-- Streak + XP tile -->
-        <div class="anim-rise col-span-2 row-span-2 flex flex-col justify-between rounded-[22px] bg-lx-fox p-5 text-white" style="--i: 1">
-          <div class="flex items-center gap-3">
-            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/20">
-              <svg class="anim-flame h-6 w-6" viewBox="0 0 24 24" fill="#fff" stroke="#fff" stroke-width="1">
-                <path d="M12 3c1 3 4 4 4 8a4 4 0 0 1-8 0c0-2 1-3 2-4 0 1 1 2 2 2 0-2-1-4 0-6z"/>
-              </svg>
+      <div class="grid grid-cols-[236px_minmax(0,1fr)] items-start gap-7">
+        <!-- Left rail -->
+        <aside class="sticky top-6 flex flex-col gap-4">
+          <div class="anim-rise rounded-[20px] border-2 border-lx-line p-4" style="--i: 0">
+            <div class="flex items-center gap-3">
+              <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-lx-fox">
+                <svg class="anim-flame h-6 w-6" viewBox="0 0 24 24" fill="#fff" stroke="#fff" stroke-width="1">
+                  <path d="M12 3c1 3 4 4 4 8a4 4 0 0 1-8 0c0-2 1-3 2-4 0 1 1 2 2 2 0-2-1-4 0-6z" />
+                </svg>
+              </span>
+              <div>
+                <div class="font-display text-[22px] font-extrabold leading-none text-lx-ink"><CountUp :value="streak" /> {{ streak === 1 ? 'day' : 'days' }}</div>
+                <div class="mt-1 text-[11px] font-bold text-lx-ink-faint">Current streak</div>
+              </div>
             </div>
-            <div>
-              <div class="font-display text-[24px] font-extrabold leading-none"><CountUp :value="streak" /> {{ streak === 1 ? 'day' : 'days' }}</div>
-              <div class="mt-0.5 text-[11px] font-bold text-white/80">Current streak</div>
+            <div class="mt-4">
+              <div class="mb-1.5 flex items-center justify-between">
+                <span class="text-[12px] font-extrabold text-lx-ink">Level {{ level }}</span>
+                <span class="font-mono text-[11px] font-bold text-lx-ink-faint"><CountUp :value="currentExp" />/{{ expRequired }} XP</span>
+              </div>
+              <div class="h-2 w-full overflow-hidden rounded-full bg-lx-surface-soft">
+                <div class="bar-grow h-full rounded-full bg-lx-beetle" :style="{ width: `${xpPct}%`, '--i': 3 }" />
+              </div>
             </div>
           </div>
 
-          <div>
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="text-[11.5px] font-extrabold">Level {{ level }}</span>
-              <span class="font-mono text-[11px] font-bold text-white/80"><CountUp :value="currentExp" />/{{ expRequired }} XP</span>
-            </div>
-            <div class="h-2 w-full overflow-hidden rounded-full bg-white/25">
-              <div class="bar-grow h-full rounded-full bg-white" :style="{ width: `${xpPct}%`, '--i': 4 }" />
+          <div class="anim-rise rounded-[20px] border-2 border-lx-line p-2" style="--i: 1">
+            <div class="px-3 pb-1.5 pt-2 font-mono text-[10px] font-bold uppercase tracking-[0.08em] text-lx-ink-faint">Show</div>
+            <button
+              v-for="f in filters"
+              :key="f.id"
+              type="button"
+              :class="[
+                'flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-[13px] font-bold transition-colors duration-150',
+                activeFilter === f.id ? 'bg-lx-macaw text-white' : 'text-lx-ink-soft hover:bg-lx-surface-soft',
+              ]"
+              @click="activeFilter = f.id"
+            >
+              {{ f.label }}
+              <span :class="['font-mono text-[11.5px]', activeFilter === f.id ? 'text-white/70' : 'text-lx-ink-faint']">{{ f.count }}</span>
+            </button>
+          </div>
+        </aside>
+
+        <!-- Course list -->
+        <section class="min-w-0">
+          <div
+            v-if="loadError"
+            class="mb-4 flex items-center justify-between rounded-2xl border-2 border-red-200 bg-red-50 px-4 py-3 text-[13px] font-semibold text-red-600"
+          >
+            <span>{{ loadError }}</span>
+            <button type="button" class="font-extrabold hover:opacity-70" @click="loadCourses">Retry</button>
+          </div>
+
+          <div class="mb-3 flex items-center gap-3">
+            <label class="relative min-w-0 flex-1">
+              <span class="sr-only">Search courses</span>
+              <svg class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-lx-ink-faint" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+              <input
+                v-model="query"
+                type="search"
+                placeholder="Search courses"
+                class="h-11 w-full rounded-2xl border-2 border-lx-line bg-lx-surface-soft pl-10 pr-3 text-[13.5px] font-semibold text-lx-ink outline-none transition-colors placeholder:text-lx-ink-faint focus:border-lx-macaw focus:bg-white"
+              />
+            </label>
+            <label class="flex items-center gap-2 text-[12.5px] font-bold text-lx-ink-soft">
+              Sort
+              <select
+                v-model="sort"
+                class="h-11 rounded-2xl border-2 border-lx-line bg-white px-3 text-[13px] font-bold text-lx-ink outline-none transition-colors focus:border-lx-macaw"
+              >
+                <option value="recommended">Recommended</option>
+                <option value="az">A – Z</option>
+                <option value="progress">Most progress</option>
+              </select>
+            </label>
+          </div>
+
+          <!-- Loading skeleton -->
+          <div v-if="loading" class="overflow-hidden rounded-[20px] border-2 border-lx-line">
+            <div v-for="i in 6" :key="i" class="flex items-center gap-4 border-t border-lx-line px-5 py-3.5 first:border-t-0">
+              <div class="h-11 w-11 animate-pulse rounded-[14px] bg-lx-surface-soft" />
+              <div class="flex-1 space-y-2">
+                <div class="h-3.5 w-40 animate-pulse rounded bg-lx-surface-soft" />
+                <div class="h-3 w-72 animate-pulse rounded bg-lx-surface-soft" />
+              </div>
+              <div class="h-8 w-24 animate-pulse rounded-xl bg-lx-surface-soft" />
             </div>
           </div>
-        </div>
 
-        <CourseTile
-          v-for="(course, index) in restCourses"
-          :key="course.id"
-          :course="course"
-          :variant="index % 5 === 4 ? 'wide' : 'normal'"
-          :color="tileColor(course, index)"
-          class="anim-rise"
-          :style="{ '--i': index + 2 }"
-        />
-      </div>
+          <!-- Rows -->
+          <template v-else-if="paged.length">
+            <div class="overflow-hidden rounded-[20px] border-2 border-lx-line">
+              <CourseRow
+                v-for="(course, index) in paged"
+                :key="course.id"
+                :course="course"
+                class="anim-rise"
+                :style="{ '--i': index % PAGE_SIZE }"
+              />
+            </div>
+            <p class="mt-3 px-1 text-[12px] font-semibold text-lx-ink-faint">
+              Showing {{ paged.length }} of {{ results.length }} {{ results.length === 1 ? 'course' : 'courses' }}
+            </p>
+            <div v-if="remaining > 0" class="mt-3 flex justify-center">
+              <button
+                type="button"
+                class="press rounded-2xl border-2 border-lx-line bg-white px-6 py-2.5 text-[13px] font-extrabold text-lx-ink shadow-[0_4px_0_var(--color-lx-line)] transition-[transform,border-color] duration-100 hover:border-lx-ink-faint active:translate-y-1 active:shadow-none"
+                @click="visibleCount += PAGE_SIZE"
+              >
+                Show {{ Math.min(PAGE_SIZE, remaining) }} more <span class="text-lx-ink-faint">· {{ remaining }} left</span>
+              </button>
+            </div>
+          </template>
 
-      <!-- Empty state -->
-      <div v-else class="rounded-[22px] border-2 border-dashed border-lx-line py-16 text-center">
-        <p class="font-display text-[16px] font-extrabold text-lx-ink-soft">No courses here yet</p>
-        <p class="mt-1 text-[13px] text-lx-ink-faint">Published courses will show up here.</p>
+          <!-- Empty states -->
+          <div v-else class="rounded-[20px] border-2 border-dashed border-lx-line py-16 text-center">
+            <p class="font-display text-[16px] font-extrabold text-lx-ink-soft">
+              {{ filtering ? 'No courses match' : 'No courses here yet' }}
+            </p>
+            <p class="mt-1 text-[13px] text-lx-ink-faint">
+              {{ filtering ? 'Try a different search or filter.' : 'Published courses will show up here.' }}
+            </p>
+            <button v-if="filtering" type="button" class="mt-3 text-[13px] font-extrabold text-lx-macaw-dark hover:underline" @click="reset">Clear filters</button>
+          </div>
+        </section>
       </div>
     </div>
   </main>
 </template>
-
-<style scoped>
-@keyframes flicker {
-  0%, 100% { transform: scale(1) rotate(-4deg); }
-  50% { transform: scale(1.12) rotate(4deg); }
-}
-</style>

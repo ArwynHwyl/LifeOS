@@ -140,7 +140,7 @@ const feedbackLabel = computed(() => effectiveMode.value === 'PRACTICE'
   align-items: center;
   gap: 0.45rem;
   border-radius: 8px;
-  background: rgba(88, 204, 2, 0.12);
+  background: rgba(14, 165, 164, 0.12);
   padding: 0.5rem 0.75rem;
   border: none;
 }

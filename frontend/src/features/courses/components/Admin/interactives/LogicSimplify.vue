@@ -28,7 +28,7 @@
         class="border-2 border-lm-line-soft rounded-[14px] bg-lm-surface p-[12px_16px] border-lm-line shadow-stamp-sm ls-pop"
       >
         <div class="flex items-center gap-2 mb-1.75">
-          <span class="font-mono text-[11px] font-bold px-[9px] py-[2px] rounded-full border border-lm-line bg-lm-yellow text-lm-ink">{{ getLawName(s.law) }}</span>
+          <span class="font-mono text-[11px] font-bold px-[9px] py-[2px] rounded-full border border-lm-line bg-lm-yellow-soft text-lm-ink">{{ getLawName(s.law) }}</span>
           <span class="font-display text-[12px] text-lm-ink-2">{{ s.note || getLawNote(s.law) }}</span>
         </div>
         <p class="font-math italic text-[24px] font-bold text-lm-ink m-0 text-left">{{ lsPretty(s.result) }}</p>

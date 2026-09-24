@@ -17,7 +17,7 @@
             :key="it.type"
             @click="$emit('type-change', it.type)"
             class="flex flex-col items-center gap-[2px] p-[8px_12px] border-2 border-lm-line-soft rounded-[10px] bg-lm-surface cursor-pointer min-w-[64px] transition-all duration-120"
-            :class="{ 'border-lm-line bg-lm-yellow shadow-stamp-sm': type === it.type }"
+            :class="{ 'border-lm-line bg-lm-yellow-soft shadow-stamp-sm': type === it.type }"
           >
             <span v-if="it.icon" class="font-math italic font-bold text-[14px] leading-none">{{ it.icon }}</span>
             <span class="font-display text-[11px] font-bold text-lm-ink">{{ it.label }}</span>

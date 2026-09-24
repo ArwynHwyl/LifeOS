@@ -30,7 +30,7 @@
           :aria-pressed="opt.correct"
           :aria-label="`Mark option ${idx + 1} as correct`"
         >
-          <span v-if="opt.correct" class="w-[8px] h-[8px] rounded-full bg-lm-yellow block" />
+          <span v-if="opt.correct" class="w-[8px] h-[8px] rounded-full bg-lm-yellow-soft block" />
         </button>
         <input
           :value="opt.label"
