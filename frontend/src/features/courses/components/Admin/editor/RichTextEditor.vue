@@ -18,7 +18,7 @@
         type="button"
         @mousedown.prevent="exec('bold')"
         class="h-8 min-w-[32px] px-2 rounded-[6px] border-none bg-transparent text-lm-ink-2 font-display text-[12px] font-bold cursor-pointer transition-colors duration-120 hover:bg-lm-line-soft"
-        :class="{ 'bg-lm-yellow text-lm-ink hover:bg-lm-yellow': activeFormats.bold }"
+        :class="{ 'bg-lm-yellow-soft text-lm-ink hover:bg-lm-yellow-soft': activeFormats.bold }"
         title="Bold"
       >
         B
@@ -27,7 +27,7 @@
         type="button"
         @mousedown.prevent="exec('underline')"
         class="h-8 min-w-[32px] px-2 rounded-[6px] border-none bg-transparent text-lm-ink-2 font-display text-[12px] underline font-bold cursor-pointer transition-colors duration-120 hover:bg-lm-line-soft"
-        :class="{ 'bg-lm-yellow text-lm-ink hover:bg-lm-yellow': activeFormats.underline }"
+        :class="{ 'bg-lm-yellow-soft text-lm-ink hover:bg-lm-yellow-soft': activeFormats.underline }"
         title="Underline"
       >
         U
@@ -45,7 +45,7 @@
         type="button"
         @mousedown.prevent="exec('insertUnorderedList')"
         class="h-8 min-w-[32px] px-2 rounded-[6px] border-none bg-transparent text-lm-ink-2 font-display text-[12px] font-bold cursor-pointer transition-colors duration-120 hover:bg-lm-line-soft"
-        :class="{ 'bg-lm-yellow text-lm-ink hover:bg-lm-yellow': activeFormats.bulletList }"
+        :class="{ 'bg-lm-yellow-soft text-lm-ink hover:bg-lm-yellow-soft': activeFormats.bulletList }"
         title="Bullet list"
       >
         • List
@@ -54,7 +54,7 @@
         type="button"
         @mousedown.prevent="exec('insertOrderedList')"
         class="h-8 min-w-[32px] px-2 rounded-[6px] border-none bg-transparent text-lm-ink-2 font-display text-[12px] font-bold cursor-pointer transition-colors duration-120 hover:bg-lm-line-soft"
-        :class="{ 'bg-lm-yellow text-lm-ink hover:bg-lm-yellow': activeFormats.orderedList }"
+        :class="{ 'bg-lm-yellow-soft text-lm-ink hover:bg-lm-yellow-soft': activeFormats.orderedList }"
         title="Numbered list"
       >
         1. List

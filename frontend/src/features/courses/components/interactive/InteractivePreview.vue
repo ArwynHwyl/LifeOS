@@ -772,7 +772,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
       </div>
       <p v-if="selectedFormulaOption?.description" class="practice-prompt">{{ selectedFormulaOption.description }}</p>
       <div class="formula-equation">
-        <span>สูตร</span>
+        <span>Formula</span>
         <code>{{ activeFormulaExpression }}</code>
         <span>=</span>
         <strong>{{ formulaResult }}</strong>
@@ -793,9 +793,9 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
       </template>
       <div v-if="selectedFormulaOption?.steps?.length" class="step-panel">
         <div class="step-nav">
-          <button type="button" class="mini-step-button" :disabled="formulaStepIndex === 0" @click="setFormulaStep(formulaStepIndex - 1)">ก่อนหน้า</button>
-          <span>ขั้นที่ {{ formulaStepIndex + 1 }} / {{ selectedFormulaOption.steps.length }}</span>
-          <button type="button" class="mini-step-button" :disabled="formulaStepIndex >= selectedFormulaOption.steps.length - 1" @click="setFormulaStep(formulaStepIndex + 1)">ถัดไป</button>
+          <button type="button" class="mini-step-button" :disabled="formulaStepIndex === 0" @click="setFormulaStep(formulaStepIndex - 1)">Previous</button>
+          <span>Step {{ formulaStepIndex + 1 }} / {{ selectedFormulaOption.steps.length }}</span>
+          <button type="button" class="mini-step-button" :disabled="formulaStepIndex >= selectedFormulaOption.steps.length - 1" @click="setFormulaStep(formulaStepIndex + 1)">Next</button>
         </div>
         <div v-if="activeFormulaStep" class="step-card">
           <h4>{{ activeFormulaStep.label }}</h4>
@@ -1245,7 +1245,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
             <div class="custom-card-graphic continuous-graphic">
               <div class="ruler-box">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ruler-icon-svg">
-                  <rect x="2" y="7" width="20" height="10" rx="3" fill="#e0f4fd" stroke="currentColor" stroke-width="2" />
+                  <rect x="2" y="7" width="20" height="10" rx="3" fill="#e8eaee" stroke="currentColor" stroke-width="2" />
                   <path d="M6 10v4M10 10v4M14 10v4M18 10v4" />
                   <path d="M2 12h20" />
                 </svg>
@@ -1335,7 +1335,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   min-width: 8rem;
   border: 2px solid #dfe1e5;
   border-radius: 8px;
-  background: #1cb0f6;
+  background: #e6e7fd;
   padding: 0.6rem 0.8rem;
   font-size: 1.4rem;
   font-weight: 900;
@@ -1362,7 +1362,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
 }
 .formula-equation strong {
   border-radius: 6px;
-  background: #1cb0f6;
+  background: #e6e7fd;
   padding: 0.25rem 0.55rem;
   color: #232323;
 }
@@ -1385,7 +1385,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
 .formula-choice--active,
 .formula-choice:hover,
 .mini-step-button:hover:not(:disabled) {
-  background: #1cb0f6;
+  background: #e6e7fd;
 }
 .mini-step-button:disabled {
   cursor: not-allowed;
@@ -1424,7 +1424,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   min-height: 2.25rem;
   border: 2px solid #dfe1e5;
   border-radius: 8px;
-  background: #1cb0f6;
+  background: #e6e7fd;
   padding: 0 0.75rem;
   color: #232323;
   font-size: 12px;
@@ -1465,7 +1465,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   font-weight: 900;
 }
 .visual-overlap-label--active rect {
-  fill: #1cb0f6;
+  fill: #e6e7fd;
 }
 .visual-layer-bg-text {
   position: absolute;
@@ -1510,13 +1510,13 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   box-shadow: 0 1px 3px rgba(20,24,31,0.12), 0 4px 10px -4px rgba(20,24,31,0.12);
 }
 .quiz-option-custom-card--selected {
-  background: #e3f5fd !important;
+  background: #e8eaee !important;
   border-color: #dfe1e5 !important;
 }
 .quiz-option-custom-card--correct {
-  background: #e6f7d5 !important;
-  border-color: #46a302 !important;
-  box-shadow: 3px 3px 0 #46a302 !important;
+  background: #d9f3f2 !important;
+  border-color: #0b8483 !important;
+  box-shadow: 3px 3px 0 #0b8483 !important;
 }
 .quiz-option-custom-card--wrong {
   background: #fdeceb !important;
@@ -1541,7 +1541,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   align-items: center;
 }
 .highlight-nt {
-  background: #1cb0f6;
+  background: #e6e7fd;
   border: 1.5px solid #dfe1e5;
   border-radius: 6px;
   padding: 0.1rem 0.35rem;
@@ -1647,10 +1647,10 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   box-shadow: 0 1px 3px rgba(20,24,31,0.12), 0 4px 10px -4px rgba(20,24,31,0.12);
 }
 .quiz-option--selected {
-  background: #1cb0f6;
+  background: #e6e7fd;
 }
 .quiz-option--correct {
-  background: #e6f7d5;
+  background: #d9f3f2;
 }
 .quiz-option--wrong {
   background: #fdeceb;
@@ -1669,7 +1669,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
 }
 .quiz-option--selected .quiz-option__badge {
   background: #232323;
-  color: #1cb0f6;
+  color: #ffffff;
 }
 .quiz-feedback {
   display: flex;
@@ -1690,8 +1690,8 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   font-weight: 900;
 }
 .quiz-feedback--success {
-  background: #e6f7d5;
-  color: #46a302;
+  background: #d9f3f2;
+  color: #0b8483;
 }
 .quiz-feedback--failure {
   background: #fdeceb;
@@ -1818,7 +1818,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   transform: translate(-50%, -50%);
 }
 .visual-zone-resize:hover {
-  background: #1cb0f6;
+  background: #6366f1;
 }
 .visual-zone-resize--nw,
 .visual-zone-resize--se {
@@ -1868,7 +1868,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   text-align: center;
 }
 .visual-trigger {
-  background: #1cb0f6;
+  background: rgba(99, 102, 241, 0.4);
 }
 .visual-trigger--hotspot {
   background: rgba(255, 211, 51, 0.45);
@@ -1914,7 +1914,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   width: fit-content;
   border: 2px solid #dfe1e5;
   border-radius: 8px;
-  background: #1cb0f6;
+  background: #e6e7fd;
   padding: 0.45rem 0.65rem;
   font-size: 1.1rem;
   font-weight: 900;
@@ -2040,7 +2040,7 @@ function learnerResizeHandleStyle(handle: LearnerResizeHandle, zone: VisualLayer
   box-shadow: none;
 }
 .logic-syntax-error {
-  color: #d97e00;
+  color: #c77f00;
   font-weight: 800;
 }
 @media (max-width: 700px) {

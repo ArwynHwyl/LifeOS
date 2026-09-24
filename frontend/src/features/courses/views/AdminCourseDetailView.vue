@@ -953,8 +953,8 @@ function getErrorMessage(error: unknown, fallback: string) {
                 
                 <!-- Busy/Rate-limited special prompt -->
                 <div v-if="isAiBusyError" class="mb-4 rounded-xl border-2 border-lm-rust bg-lm-rust-soft/50 p-4 text-left text-[12.5px] leading-relaxed text-lm-rust">
-                  <span class="font-bold flex items-center gap-1">⚠️ บริการ AI กำลังหนาแน่น (Gemini is overloaded)</span>
-                  <p class="mt-1 text-lm-ink-2 font-sans">ระบบ Google Gemini มีผู้ใช้งานจำนวนมากในขณะนี้ ทำให้เกินอัตราที่กำหนด (Rate Limit) กรุณารอสักครู่ (ประมาณ 1 นาที) แล้วกดปุ่ม <b>"Retry Gen Outline"</b> ด้านล่างเพื่อเริ่มสร้างอีกครั้งครับ</p>
+                  <span class="font-bold flex items-center gap-1">⚠️ The AI service is busy (Gemini is overloaded)</span>
+                  <p class="mt-1 text-lm-ink-2 font-sans">Google Gemini is handling a lot of requests right now and the rate limit was reached. Wait about a minute, then press <b>"Retry Gen Outline"</b> below to try again.</p>
                 </div>
 
                 <div class="mt-6 flex flex-wrap gap-2.5">
@@ -984,7 +984,7 @@ function getErrorMessage(error: unknown, fallback: string) {
                     v-else
                     disabled
                     type="button" 
-                    class="h-10 flex-1 min-w-[140px] rounded-full border border-lm-line bg-lm-yellow px-4 text-[13px] font-bold text-lm-ink opacity-50 cursor-not-allowed"
+                    class="h-10 flex-1 min-w-[140px] rounded-full border border-lm-line bg-lm-yellow-soft px-4 text-[13px] font-bold text-lm-ink opacity-50 cursor-not-allowed"
                   >
                     Retrying...
                   </button>
@@ -1031,7 +1031,7 @@ function getErrorMessage(error: unknown, fallback: string) {
                 />
                 <div class="rounded-xl border border-lm-line bg-white p-6 shadow-stamp-sm">
                   <div class="mb-4 flex items-center gap-2">
-                    <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-[6px] border border-lm-line bg-lm-yellow">
+                    <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-[6px] border border-lm-line bg-lm-yellow-soft">
                       <AdminIcon name="spark" :size="13" />
                     </div>
                     <p class="font-mono text-[11.5px] font-bold text-lm-ink-3">
@@ -1144,7 +1144,7 @@ function getErrorMessage(error: unknown, fallback: string) {
             :class="aiPanelOpen ? 'justify-between px-4' : 'justify-center'"
           >
             <div v-if="aiPanelOpen" class="flex items-center gap-2">
-              <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-[6px] border border-lm-line bg-lm-yellow">
+              <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-[6px] border border-lm-line bg-lm-yellow-soft">
                 <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z" />
                 </svg>
@@ -1177,7 +1177,7 @@ function getErrorMessage(error: unknown, fallback: string) {
               >
                 <option v-for="module in modules" :key="module.id" :value="module.id">{{ module.title }}</option>
               </select>
-              <div v-else class="rounded-lg border-2 border-lm-yellow bg-lm-yellow/20 px-3 py-2 text-[12px] text-lm-ink">
+              <div v-else class="rounded-lg border-2 border-lm-yellow bg-lm-yellow-soft/20 px-3 py-2 text-[12px] text-lm-ink">
                 Add a module in the sidebar first.
               </div>
             </div>
@@ -1226,7 +1226,7 @@ function getErrorMessage(error: unknown, fallback: string) {
                   type="button"
                   class="w-full rounded-lg border-2 px-3 py-2 text-left transition-all duration-150"
                   :class="selectedDocumentId === document.id
-                    ? 'border-lm-line bg-lm-yellow/20 shadow-stamp-sm'
+                    ? 'border-lm-line bg-lm-yellow-soft/20 shadow-stamp-sm'
                     : 'border-lm-line-soft bg-lm-bg-soft hover:border-lm-line'"
                   @click="selectDocument(document)"
                 >
@@ -1292,7 +1292,7 @@ function getErrorMessage(error: unknown, fallback: string) {
 
           <!-- Collapsed: spark icon -->
           <div v-else class="flex flex-1 flex-col items-center pt-3">
-            <div class="flex h-6 w-6 items-center justify-center rounded-[6px] border border-lm-line bg-lm-yellow">
+            <div class="flex h-6 w-6 items-center justify-center rounded-[6px] border border-lm-line bg-lm-yellow-soft">
               <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z" />
               </svg>

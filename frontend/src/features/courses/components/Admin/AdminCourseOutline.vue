@@ -181,7 +181,7 @@ function moduleCommentCount(moduleId: number): number {
         <div
           class="flex w-full items-center gap-3 px-4 py-3 text-left border-b-2 border-lm-line-soft"
         >
-          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-lm-line bg-lm-yellow font-display text-[12px] font-bold text-lm-ink shadow-stamp-sm">
+          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-lm-line bg-lm-yellow-soft font-display text-[12px] font-bold text-lm-ink shadow-stamp-sm">
             {{ moduleIndex + 1 }}
           </span>
           <span class="min-w-0 flex-1">
@@ -189,7 +189,7 @@ function moduleCommentCount(moduleId: number): number {
           </span>
           <span
             v-if="moduleCommentCount(module.id) > 0"
-            class="inline-flex items-center gap-1.5 rounded-full border border-lm-line bg-lm-yellow/40 px-2.5 py-0.5 font-mono text-[11.5px] font-bold text-lm-ink"
+            class="inline-flex items-center gap-1.5 rounded-full border border-lm-line bg-lm-yellow-soft/40 px-2.5 py-0.5 font-mono text-[11.5px] font-bold text-lm-ink"
           >
             <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />

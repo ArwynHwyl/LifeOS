@@ -527,8 +527,8 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
             <ConfettiBurst :fire="1" :count="48" :spread="260" />
             <div class="mastery-burst" />
             <svg class="mastery-check" viewBox="0 0 64 64" fill="none">
-              <circle cx="32" cy="32" r="28" stroke="#58cc02" stroke-width="3.5" fill="#ffffff" />
-              <polyline points="20 33 28 41 44 25" stroke="#58cc02" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+              <circle cx="32" cy="32" r="28" stroke="#0ea5a4" stroke-width="3.5" fill="#ffffff" />
+              <polyline points="20 33 28 41 44 25" stroke="#0ea5a4" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
             <div v-if="masteryExpAwarded > 0" class="mastery-exp">
               <span class="mastery-exp__amount">+{{ masteryExpAwarded }} XP</span>
@@ -696,7 +696,7 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
 }
 .lesson-topic--active {
   border-left-color: var(--color-lx-macaw);
-  background: rgba(28, 176, 246, 0.1);
+  background: rgba(31, 41, 55, 0.1);
   color: var(--color-lx-macaw-dark);
 }
 .lesson-sidebar__empty,
@@ -722,7 +722,7 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   color: #fff;
   font-size: 0.72rem;
   font-weight: 800;
-  box-shadow: 0 4px 12px rgba(28, 176, 246, 0.4);
+  box-shadow: 0 4px 12px rgba(31, 41, 55, 0.4);
   cursor: pointer;
 }
 .selection-limit-notice {
@@ -928,12 +928,12 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
 }
 .progress-marker--tried {
   border-color: var(--color-lx-macaw);
-  background: rgba(28, 176, 246, 0.15);
+  background: rgba(31, 41, 55, 0.15);
   color: var(--color-lx-macaw-dark);
 }
 .progress-marker--mastered {
   border-color: var(--color-lx-feather-dark);
-  background: rgba(88, 204, 2, 0.15);
+  background: rgba(14, 165, 164, 0.15);
   color: var(--color-lx-feather-dark);
   font-weight: 800;
 }
@@ -981,7 +981,7 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   width: 200px;
   height: 200px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(88, 204, 2, 0.22) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(14, 165, 164, 0.22) 0%, transparent 70%);
   animation: burst-expand 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 .mastery-check {
@@ -1118,9 +1118,9 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
 :deep(.lesson-body blockquote) {
   margin: 1.1rem 0;
   padding: 0.85rem 1.1rem;
-  border-left: 4px solid var(--color-lx-macaw);
+  border-left: 4px solid var(--color-lx-beetle);
   border-radius: 0 12px 12px 0;
-  background: color-mix(in srgb, var(--color-lx-macaw) 9%, white);
+  background: color-mix(in srgb, var(--color-lx-beetle) 10%, white);
   font-weight: 600;
 }
 :deep(.lesson-body pre) {
@@ -1255,7 +1255,7 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   box-shadow: 0 0 0 transparent;
 }
 .complete-btn--completed {
-  background: rgba(88, 204, 2, 0.12);
+  background: rgba(14, 165, 164, 0.12);
   color: var(--color-lx-feather-dark);
   cursor: default;
 }

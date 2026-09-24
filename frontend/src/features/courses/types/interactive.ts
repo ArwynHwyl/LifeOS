@@ -275,7 +275,7 @@ export const DEFAULT_INTERACTIVE_CONFIGS: Record<TemplateInteractionType, Intera
     canvas: {
       width: 900,
       height: 520,
-      backgroundText: 'ลากวาด zone บนพื้นที่นี้ แล้วสร้างปุ่ม/ hotspot เพื่อสั่ง highlight',
+      backgroundText: 'Drag to draw a zone on this area, then create a button or hotspot to trigger a highlight',
     },
     zones: [
       { id: 'zone_a', label: 'Zone A', shape: 'circle', x: 270, y: 150, width: 220, height: 220, color: '#ffd333', highlightColor: '#ff8f1f', highlightOpacity: 0.82, feedback: 'Zone A highlighted.' },

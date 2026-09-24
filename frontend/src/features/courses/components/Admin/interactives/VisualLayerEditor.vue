@@ -9,20 +9,20 @@
           :key="p.id"
           @click="applyPreset(p)"
           class="flex flex-col items-center gap-1 p-[10px_6px] border-2 border-lm-line-soft rounded-[12px] bg-lm-surface cursor-pointer transition-all duration-150"
-          :class="{ 'border-lm-line bg-lm-yellow shadow-stamp-sm': activePreset === p.id }"
+          :class="{ 'border-lm-line bg-lm-yellow-soft shadow-stamp-sm': activePreset === p.id }"
         >
           <!-- SVG icon representation -->
           <svg v-if="p.id === 'venn-2'" viewBox="0 0 80 48" width="80" height="48" class="block max-w-full">
-            <circle cx="28" cy="24" r="17" fill="#1cb0f6" fill-opacity=".35" stroke="#1cb0f6" stroke-width="1.5"/>
+            <circle cx="28" cy="24" r="17" fill="#6366f1" fill-opacity=".35" stroke="#6366f1" stroke-width="1.5"/>
             <circle cx="52" cy="24" r="17" fill="#7cd0fa" fill-opacity=".35" stroke="#7cd0fa" stroke-width="1.5"/>
           </svg>
           <svg v-else-if="p.id === 'venn-3'" viewBox="0 0 80 56" width="80" height="56" class="block max-w-full">
-            <circle cx="30" cy="22" r="15" fill="#1cb0f6" fill-opacity=".35" stroke="#1cb0f6" stroke-width="1.5"/>
+            <circle cx="30" cy="22" r="15" fill="#6366f1" fill-opacity=".35" stroke="#6366f1" stroke-width="1.5"/>
             <circle cx="50" cy="22" r="15" fill="#7cd0fa" fill-opacity=".35" stroke="#7cd0fa" stroke-width="1.5"/>
             <circle cx="40" cy="38" r="15" fill="#a6e26c" fill-opacity=".35" stroke="#a6e26c" stroke-width="1.5"/>
           </svg>
           <svg v-else-if="p.id === 'hotspot'" viewBox="0 0 80 48" width="80" height="48" class="block max-w-full">
-            <rect x="4" y="12" width="20" height="16" rx="3" fill="#1cb0f6" fill-opacity=".35" stroke="#1cb0f6" stroke-width="1.5"/>
+            <rect x="4" y="12" width="20" height="16" rx="3" fill="#6366f1" fill-opacity=".35" stroke="#6366f1" stroke-width="1.5"/>
             <rect x="30" y="8" width="20" height="24" rx="3" fill="#7cd0fa" fill-opacity=".35" stroke="#7cd0fa" stroke-width="1.5"/>
             <rect x="56" y="12" width="20" height="16" rx="3" fill="#a6e26c" fill-opacity=".35" stroke="#a6e26c" stroke-width="1.5"/>
             <line x1="24" y1="20" x2="30" y2="20" stroke="var(--lm-ink-3)" stroke-width="1.5" stroke-dasharray="2 2"/>
@@ -47,7 +47,7 @@
           :key="t"
           @click="tool = t"
           class="h-7 px-2.5 rounded-[7px] border-2 border-transparent bg-transparent font-display text-[11px] font-bold text-lm-ink cursor-pointer transition-all duration-100"
-          :class="{ 'border-lm-line bg-lm-yellow shadow-stamp-sm': tool === t }"
+          :class="{ 'border-lm-line bg-lm-yellow-soft shadow-stamp-sm': tool === t }"
         >
           {{ l }}
         </button>
@@ -66,7 +66,7 @@
           type="button"
           @click="toggleVisualOverlap(true)"
           class="h-7 px-3.5 rounded-[6px] border-none font-display text-[11px] font-bold cursor-pointer transition-all duration-100"
-          :class="overlap?.enabled ? 'bg-lm-yellow text-lm-ink border-2 border-lm-line shadow-stamp-sm' : 'bg-transparent text-lm-ink-3 hover:text-lm-ink'"
+          :class="overlap?.enabled ? 'bg-lm-yellow-soft text-lm-ink border-2 border-lm-line shadow-stamp-sm' : 'bg-transparent text-lm-ink-3 hover:text-lm-ink'"
         >
           ✏ Practice Mode
         </button>
@@ -76,7 +76,7 @@
     <!-- Practice Mode Warning / Info Banner -->
     <div v-if="overlap?.enabled" class="flex flex-col gap-2.5 p-4 border-2 border-lm-yellow bg-lx-macaw-soft rounded-[14px] text-left shadow-[0_4px_0_var(--color-lx-macaw-dark)] active:translate-y-1 active:shadow-none transition-transform duration-75">
       <div class="flex items-start gap-2.5">
-        <span class="w-5 h-5 rounded-full bg-lm-yellow text-lm-ink grid place-items-center text-[12px] font-extrabold shrink-0 border border-lm-line">!</span>
+        <span class="w-5 h-5 rounded-full bg-lm-yellow-soft text-lm-ink grid place-items-center text-[12px] font-extrabold shrink-0 border border-lm-line">!</span>
         <div class="flex-1">
           <p class="font-display text-[12px] font-bold text-lm-ink m-0">Venn Diagram Practice Mode Active</p>
           <p class="font-display text-[11px] text-lm-ink-2 m-0 mt-0.5 leading-normal">
@@ -650,7 +650,7 @@
               <p class="font-mono text-[11px] font-bold text-lm-ink-3 m-0 mb-1">Line Color</p>
               <div class="flex gap-1.5 flex-wrap">
                 <button
-                  v-for="c in ['#232323', '#1cb0f6', '#7cd0fa', '#a6e26c', '#ff8fa3']"
+                  v-for="c in ['#232323', '#6366f1', '#7cd0fa', '#a6e26c', '#ff8fa3']"
                   :key="c"
                   @click="selectedElement.color = c; onElementChange()"
                   class="w-6 h-6 rounded-full border-2 border-lm-line-soft cursor-pointer"
@@ -788,7 +788,7 @@
               :key="r.id"
               class="flex items-center gap-2 p-[6px_12px] border border-lm-line rounded-[10px] cursor-pointer transition-all duration-120 bg-lm-surface"
               :class="{
-                'border-lm-line bg-lm-yellow shadow-stamp-sm': selectedId === r.id && selectedKind === 'region',
+                'border-lm-line bg-lm-yellow-soft shadow-stamp-sm': selectedId === r.id && selectedKind === 'region',
                 'border-lm-red bg-lm-red-soft': r.value < 0 && !(selectedId === r.id && selectedKind === 'region')
               }"
               @click="selectRegion(r.id)"
@@ -837,7 +837,7 @@
           :key="z.id"
           @click="selectZone(z.id)"
           class="flex items-center gap-2 p-[8px_12px] w-full box-border text-left border-2 border-lm-line-soft rounded-[10px] cursor-pointer transition-all duration-120 bg-lm-surface"
-          :class="{ 'border-lm-line bg-lm-yellow shadow-stamp-sm': selectedId === z.id && selectedKind === 'zone' }"
+          :class="{ 'border-lm-line bg-lm-yellow-soft shadow-stamp-sm': selectedId === z.id && selectedKind === 'zone' }"
         >
           <div class="w-3.5 h-3.5 rounded-full border border-lm-line shrink-0" :style="{ background: z.color }" />
           <span class="flex-1 font-display text-[12px] font-bold text-lm-ink">{{ z.label }}</span>
@@ -860,7 +860,7 @@
           :key="el.id"
           @click="onElementListClick(el)"
           class="flex items-center gap-2 p-[8px_12px] w-full box-border text-left border-2 border-lm-line-soft rounded-[10px] cursor-pointer transition-all duration-120 bg-lm-surface"
-          :class="{ 'border-lm-line bg-lm-yellow shadow-stamp-sm': selectedId === el.id && selectedKind === 'element' }"
+          :class="{ 'border-lm-line bg-lm-yellow-soft shadow-stamp-sm': selectedId === el.id && selectedKind === 'element' }"
         >
           <span class="w-[22px] h-[22px] rounded-[6px] bg-lm-bg-soft border-2 border-lm-line-soft grid place-items-center font-mono text-[8px] text-lm-ink-3 shrink-0">▸</span>
           <span class="flex-1 font-display text-[12px] font-bold text-lm-ink">{{ el.label }}</span>
@@ -885,7 +885,7 @@
           :key="el.id"
           @click="onElementListClick(el)"
           class="flex items-center gap-2 p-[8px_12px] w-full box-border text-left border-2 border-lm-line-soft rounded-[10px] cursor-pointer transition-all duration-120 bg-lm-surface"
-          :class="{ 'border-lm-line bg-lm-yellow shadow-stamp-sm': selectedId === el.id && selectedKind === 'element' }"
+          :class="{ 'border-lm-line bg-lm-yellow-soft shadow-stamp-sm': selectedId === el.id && selectedKind === 'element' }"
         >
           <span class="w-[22px] h-[22px] rounded-[6px] bg-lm-bg-soft border-2 border-lm-line-soft grid place-items-center font-mono text-[8px] text-lm-ink-3 shrink-0">⏤</span>
           <span class="flex-1 font-display text-[12px] font-bold text-lm-ink">{{ el.label }}</span>
@@ -930,7 +930,7 @@ const emit = defineEmits(['change'])
 
 const instanceId = 'vle-' + Math.random().toString(36).substring(2, 9)
 
-const VL_COLORS = ['#1cb0f6', '#7cd0fa', '#a6e26c', '#ff8fa3', '#f3e6ff']
+const VL_COLORS = ['#6366f1', '#7cd0fa', '#a6e26c', '#ff8fa3', '#e6e7fd']
 
 const hasHiddenElements = computed(() => {
   if (!overlap.value?.enabled) return false
@@ -961,8 +961,8 @@ function getStudentRegionLabel(region) {
 const VL_PRESETS = [
   { id:'venn-2', label:'2-set Venn', desc:'Two overlapping sets',
     zones:[
-      { id:'zone_a', label:'A', shape:'circle', x:250, y:130, width:260, height:260, color:'#1cb0f6', highlightColor:'#ff9600', highlightOpacity:0.82 },
-      { id:'zone_b', label:'B', shape:'circle', x:390, y:130, width:260, height:260, color:'#7cd0fa', highlightColor:'#1cb0f6', highlightOpacity:0.82 },
+      { id:'zone_a', label:'A', shape:'circle', x:250, y:130, width:260, height:260, color:'#6366f1', highlightColor:'#f59e0b', highlightOpacity:0.82 },
+      { id:'zone_b', label:'B', shape:'circle', x:390, y:130, width:260, height:260, color:'#7cd0fa', highlightColor:'#6366f1', highlightOpacity:0.82 },
     ], elements:[], interactions:[],
     overlap:{ enabled:true, sourceZoneIds:['zone_a','zone_b'],
       inputs:[
@@ -974,9 +974,9 @@ const VL_PRESETS = [
   },
   { id:'venn-3', label:'3-set Venn', desc:'Three overlapping sets',
     zones:[
-      { id:'zone_a', label:'A', shape:'circle', x:250, y:100, width:260, height:260, color:'#1cb0f6', highlightColor:'#ff9600', highlightOpacity:0.82 },
-      { id:'zone_b', label:'B', shape:'circle', x:390, y:100, width:260, height:260, color:'#7cd0fa', highlightColor:'#1cb0f6', highlightOpacity:0.82 },
-      { id:'zone_c', label:'C', shape:'circle', x:320, y:220, width:260, height:260, color:'#a6e26c', highlightColor:'#58cc02', highlightOpacity:0.82 },
+      { id:'zone_a', label:'A', shape:'circle', x:250, y:100, width:260, height:260, color:'#6366f1', highlightColor:'#f59e0b', highlightOpacity:0.82 },
+      { id:'zone_b', label:'B', shape:'circle', x:390, y:100, width:260, height:260, color:'#7cd0fa', highlightColor:'#6366f1', highlightOpacity:0.82 },
+      { id:'zone_c', label:'C', shape:'circle', x:320, y:220, width:260, height:260, color:'#a6e26c', highlightColor:'#0ea5a4', highlightOpacity:0.82 },
     ], elements:[], interactions:[],
     overlap:{ enabled:true, sourceZoneIds:['zone_a','zone_b','zone_c'],
       inputs:[
@@ -992,9 +992,9 @@ const VL_PRESETS = [
   },
   { id:'hotspot', label:'Hotspot', desc:'Labeled regions with buttons',
     zones:[
-      { id:'zone_input', label:'Input', shape:'rectangle', x:90, y:160, width:190, height:130, color:'#1cb0f6', highlightColor:'#ff9600', highlightOpacity:0.82 },
-      { id:'zone_process', label:'Process', shape:'rectangle', x:355, y:140, width:190, height:170, color:'#7cd0fa', highlightColor:'#1cb0f6', highlightOpacity:0.82 },
-      { id:'zone_output', label:'Output', shape:'rectangle', x:620, y:160, width:190, height:130, color:'#a6e26c', highlightColor:'#58cc02', highlightOpacity:0.82 },
+      { id:'zone_input', label:'Input', shape:'rectangle', x:90, y:160, width:190, height:130, color:'#6366f1', highlightColor:'#f59e0b', highlightOpacity:0.82 },
+      { id:'zone_process', label:'Process', shape:'rectangle', x:355, y:140, width:190, height:170, color:'#7cd0fa', highlightColor:'#6366f1', highlightOpacity:0.82 },
+      { id:'zone_output', label:'Output', shape:'rectangle', x:620, y:160, width:190, height:130, color:'#a6e26c', highlightColor:'#0ea5a4', highlightOpacity:0.82 },
     ],
     elements:[
       { id:'btn_input', label:'Show Input', kind:'button', x:110, y:370, width:150, height:44 },

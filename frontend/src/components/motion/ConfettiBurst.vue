@@ -10,7 +10,7 @@ const props = withDefaults(defineProps<{
   mode?: 'burst' | 'rain'
 }>(), { count: 36, spread: 180, mode: 'burst' })
 
-const COLORS = ['#58cc02', '#1cb0f6', '#ff9600', '#ce82ff', '#ffc800', '#ff4b4b']
+const COLORS = ['#0ea5a4', '#6366f1', '#f59e0b', '#6366f1', '#ffc800', '#ff4b4b']
 const pieces = ref<Piece[]>([])
 let timer: ReturnType<typeof setTimeout> | undefined
 let seq = 0

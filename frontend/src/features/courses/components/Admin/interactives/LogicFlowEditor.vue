@@ -7,14 +7,14 @@
         <button
           @click="changeKind('CIRCUIT')"
           class="flex-1 py-2 px-1 font-display text-[12px] font-bold border-2 border-lm-line-soft rounded-[10px] bg-lm-surface text-lm-ink cursor-pointer shadow-none transition-all duration-150"
-          :class="{ 'border-lm-line bg-lm-yellow shadow-stamp-sm': kind === 'CIRCUIT' }"
+          :class="{ 'border-lm-line bg-lm-yellow-soft shadow-stamp-sm': kind === 'CIRCUIT' }"
         >
           🚰 Valve circuit
         </button>
         <button
           @click="changeKind('SIMPLIFY')"
           class="flex-1 py-2 px-1 font-display text-[12px] font-bold border-2 border-lm-line-soft rounded-[10px] bg-lm-surface text-lm-ink cursor-pointer shadow-none transition-all duration-150"
-          :class="{ 'border-lm-line bg-lm-yellow shadow-stamp-sm': kind === 'SIMPLIFY' }"
+          :class="{ 'border-lm-line bg-lm-yellow-soft shadow-stamp-sm': kind === 'SIMPLIFY' }"
         >
           ∴ Simplify statement
         </button>
@@ -62,7 +62,7 @@
             :key="g"
             @click="setGoal(g)"
             class="py-1.75 px-3.5 font-display text-[12px] font-bold border-2 border-lm-line-soft rounded-full bg-lm-surface text-lm-ink cursor-pointer transition-all duration-150"
-            :class="{ 'border-lm-line bg-lm-yellow shadow-stamp-sm': goal === g }"
+            :class="{ 'border-lm-line bg-lm-yellow-soft shadow-stamp-sm': goal === g }"
           >
             {{ l }}
           </button>

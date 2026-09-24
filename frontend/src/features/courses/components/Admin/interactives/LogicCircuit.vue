@@ -3,8 +3,8 @@
     <svg :viewBox="`0 0 ${W} ${H}`" class="block w-full" :style="{ height: height || 'auto' }">
       <defs>
         <linearGradient id="lc-tank" x1="0" y1="1" x2="0" y2="0">
-          <stop offset="0%" stop-color="#0d8fd1" />
-          <stop offset="100%" stop-color="#1cb0f6" />
+          <stop offset="0%" stop-color="#0b8483" />
+          <stop offset="100%" stop-color="#0ea5a4" />
         </linearGradient>
       </defs>
 
@@ -14,7 +14,7 @@
         :y1="PADY - 10"
         :x2="PADX - 48"
         :y2="H - PADY + 10"
-        stroke="#0d8fd1"
+        stroke="#0b8483"
         stroke-width="9"
         stroke-linecap="round"
         opacity="0.5"
@@ -24,7 +24,7 @@
         :y1="PADY - 10"
         :x2="PADX - 48"
         :y2="H - PADY + 10"
-        stroke="#1cb0f6"
+        stroke="#0ea5a4"
         stroke-width="3"
         stroke-linecap="round"
         stroke-dasharray="3 9"
@@ -47,7 +47,7 @@
         :y1="yOf(n.slot)"
         :x2="n.x - n.rw"
         :y2="yOf(n.slot)"
-        stroke="#0d8fd1"
+        stroke="#0b8483"
         stroke-width="7"
         stroke-linecap="round"
         opacity="0.5"
@@ -58,7 +58,7 @@
         <path
           :d="pipePath(e)"
           fill="none"
-          :stroke="e.wet ? '#0d8fd1' : '#dfe1e5'"
+          :stroke="e.wet ? '#0b8483' : '#dfe1e5'"
           stroke-width="8"
           stroke-linecap="round"
           :opacity="e.wet ? 0.55 : 0.9"
@@ -67,7 +67,7 @@
           v-if="e.wet"
           :d="pipePath(e)"
           fill="none"
-          stroke="#1cb0f6"
+          stroke="#0ea5a4"
           stroke-width="3"
           stroke-linecap="round"
           stroke-dasharray="3 9"
@@ -82,7 +82,7 @@
           :y1="yOf(rootNode.slot)"
           :x2="outX"
           :y2="tankY"
-          :stroke="result ? '#0d8fd1' : '#dfe1e5'"
+          :stroke="result ? '#0b8483' : '#dfe1e5'"
           stroke-width="8"
           stroke-linecap="round"
           :opacity="result ? 0.55 : 0.9"
@@ -93,7 +93,7 @@
           :y1="yOf(rootNode.slot)"
           :x2="outX"
           :y2="tankY"
-          stroke="#1cb0f6"
+          stroke="#0ea5a4"
           stroke-width="3"
           stroke-linecap="round"
           stroke-dasharray="3 9"
@@ -135,7 +135,7 @@
             text-anchor="middle"
             dominant-baseline="central"
             class="font-mono text-[11px] font-bold pointer-events-none"
-            :style="{ fill: n.val ? '#0d8fd1' : 'var(--lm-ink-3)' }"
+            :style="{ fill: n.val ? '#0b8483' : 'var(--lm-ink-3)' }"
           >
             {{ n.val ? 'OPEN · T' : 'SHUT · F' }}
           </text>

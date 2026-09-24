@@ -328,7 +328,7 @@ async function scrollToBottom() {
 .assistant-header>button{width:32px;height:32px;border:none;border-radius:50%;background:rgba(255,255,255,.2);color:#fff;font-size:1.3rem;line-height:1;cursor:pointer}
 .assistant-messages{min-height:0;overflow-y:auto;padding:1rem;background:var(--color-lx-surface-soft)}
 .assistant-state{padding:2rem;text-align:center;font-weight:700}
-.assistant-review-toggle{display:flex;width:100%;align-items:center;gap:.4rem;margin-bottom:.6rem;border:none;border-radius:12px;background:rgba(88,204,2,.12);padding:.5rem .65rem;color:var(--color-lx-feather-dark);font-size:.68rem;font-weight:800;cursor:pointer}
+.assistant-review-toggle{display:flex;width:100%;align-items:center;gap:.4rem;margin-bottom:.6rem;border:none;border-radius:12px;background:rgba(14, 165, 164,.12);padding:.5rem .65rem;color:var(--color-lx-feather-dark);font-size:.68rem;font-weight:800;cursor:pointer}
 .assistant-review-list{display:grid;gap:.3rem;margin:-.25rem 0 .7rem}
 .assistant-review-list div{display:grid;border-left:3px solid var(--color-lx-feather);background:#fff;border-radius:0 8px 8px 0;padding:.35rem .5rem}
 .assistant-review-list strong{font-size:.7rem}
@@ -338,7 +338,7 @@ async function scrollToBottom() {
 .assistant-message--assistant{align-items:flex-start}
 .assistant-bubble{max-width:86%;border:none;border-radius:16px;padding:.7rem .8rem;white-space:pre-wrap;font-size:.83rem;line-height:1.5;box-shadow:0 1px 2px rgba(0,0,0,.06)}
 .assistant-bubble--assistant{align-self:flex-start;background:#fff}
-.assistant-bubble--user{background:rgba(28,176,246,.14);color:var(--color-lx-ink)}
+.assistant-bubble--user{background:rgba(31, 41, 55,.14);color:var(--color-lx-ink)}
 .assistant-selection{position:relative;margin:.6rem 0;border-left:4px solid var(--color-lx-fox);background:#fff;border-radius:0 10px 10px 0;padding:.6rem .75rem;font-size:.75rem}
 .assistant-selection span{font-family:var(--font-mono);font-size:9px;font-weight:800;text-transform:uppercase;color:var(--color-lx-fox-dark)}
 .assistant-selection p{margin:.2rem 2.5rem 0 0;display:-webkit-box;overflow:hidden;-webkit-line-clamp:3;-webkit-box-orient:vertical}
@@ -346,10 +346,10 @@ async function scrollToBottom() {
 .assistant-message__quote{max-width:85%;margin-bottom:.25rem;border-left:3px solid var(--color-lx-fox);padding:.25rem .5rem;color:var(--color-lx-ink-faint);font-size:.68rem}
 .assistant-suggestions{display:flex;flex-wrap:wrap;gap:.4rem;margin:.8rem 0}
 .assistant-suggestions button,.assistant-modes button,.assistant-feedback button{border:1px solid var(--color-lx-line);border-radius:999px;background:#fff;padding:.35rem .65rem;color:var(--color-lx-ink);font-size:.68rem;font-weight:700;cursor:pointer;transition:background .12s}
-.assistant-suggestions button:hover{background:rgba(28,176,246,.1);border-color:var(--color-lx-macaw)}
+.assistant-suggestions button:hover{background:rgba(31, 41, 55,.1);border-color:var(--color-lx-macaw)}
 .assistant-feedback{display:flex;align-items:center;flex-wrap:wrap;gap:.3rem;margin-top:.4rem;color:var(--color-lx-ink-faint);font-size:.6rem}
 .assistant-feedback button{padding:.2rem .45rem;font-size:.6rem}
-.assistant-feedback button.active{background:rgba(88,204,2,.14);border-color:var(--color-lx-feather)}
+.assistant-feedback button.active{background:rgba(14, 165, 164,.14);border-color:var(--color-lx-feather)}
 .assistant-feedback button:last-child.active{background:#fef2f2;border-color:#fca5a5}
 .assistant-error{border-top:1px solid #fecaca;background:#fef2f2;padding:.45rem .8rem;color:#dc2626;font-size:.7rem;font-weight:600}
 .assistant-composer{border-top:1px solid var(--color-lx-line);background:#fff;padding:.65rem}

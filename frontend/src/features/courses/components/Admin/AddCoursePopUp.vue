@@ -235,7 +235,7 @@ watch(aiEnabled, (enabled) => {
                         class="flex aspect-square items-center justify-center rounded-[8px] font-math text-[13px] font-bold leading-none transition-all duration-100"
                         :class="
                           selectedSymbolId === sym.id
-                            ? 'border-2 border-lm-line bg-lm-yellow text-lm-ink shadow-stamp-sm'
+                            ? 'border-2 border-lm-line bg-lm-yellow-soft text-lm-ink shadow-stamp-sm'
                             : 'text-lm-ink-2 hover:bg-lm-surface hover:text-lm-ink'
                         "
                         :title="`${sym.label} · ${sym.category}`"

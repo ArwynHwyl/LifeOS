@@ -10,24 +10,24 @@
   --color-lm-ink-3: #8b8f96;
   --color-lm-line: #dfe1e5;
   --color-lm-line-soft: #ebedf0;
-  --color-lm-yellow: #1cb0f6;
-  --color-lm-yellow-soft: #e3f5fd;
-  --color-lm-rust: #d97e00;
+  --color-lm-yellow: #6366f1;
+  --color-lm-yellow-soft: #e6e7fd;
+  --color-lm-rust: #c77f00;
   --color-lm-rust-soft: #fff0d9;
-  --color-lm-blue: #0d8fd1;
-  --color-lm-blue-soft: #e0f4fd;
-  --color-lm-green: #46a302;
-  --color-lm-green-soft: #e6f7d5;
+  --color-lm-blue: #4f52d6;
+  --color-lm-blue-soft: #e6e7fd;
+  --color-lm-green: #0b8483;
+  --color-lm-green-soft: #d9f3f2;
   --color-lm-red: #e23c3c;
   --color-lm-red-soft: #fdeceb;
-  --color-lm-purple: #a854e0;
-  --color-lm-purple-soft: #f3e6ff;
-  --color-lm-alg: #dff3fd;
-  --color-lm-geo: #e6f7d5;
+  --color-lm-purple: #4f52d6;
+  --color-lm-purple-soft: #e6e7fd;
+  --color-lm-alg: #e8eaee;
+  --color-lm-geo: #d9f3f2;
   --color-lm-tri: #fff0d9;
   --color-lm-sta: #fdeceb;
-  --color-lm-cal: #f3e6ff;
-  --color-lm-lin: #e3f5fd;
+  --color-lm-cal: #e6e7fd;
+  --color-lm-lin: #e8eaee;
 
   /* Soft elevation (replaces the old offset stamp shadows) */
   --shadow-stamp-xs: 0 1px 2px rgba(20, 24, 31, 0.06);
@@ -42,21 +42,21 @@
   --font-body: "Lexend", "Noto Sans Thai", system-ui, sans-serif;
 
   /* ── Learner "bento" system (v2) — see /learn/courses ─────────────────── */
-  --color-lx-ink: #232323;
-  --color-lx-ink-soft: #5c5c5c;
-  --color-lx-ink-faint: #949494;
-  --color-lx-line: #ececec;
-  --color-lx-surface-soft: #f4f4f4;
-  --color-lx-feather: #58cc02;
-  --color-lx-feather-dark: #46a302;
-  --color-lx-macaw: #1cb0f6;
-  --color-lx-macaw-dark: #0d8fd1;
-  --color-lx-fox: #ff9600;
-  --color-lx-fox-dark: #d97e00;
-  --color-lx-beetle: #ce82ff;
-  --color-lx-beetle-dark: #a854e0;
-  --color-lx-eel: #3c3c3c;
-  --color-lx-eel-soft: #565656;
+  --color-lx-ink: #1c2129;
+  --color-lx-ink-soft: #586170;
+  --color-lx-ink-faint: #8b93a1;
+  --color-lx-line: #e6e8ec;
+  --color-lx-surface-soft: #f3f4f6;
+  --color-lx-feather: #0ea5a4;
+  --color-lx-feather-dark: #0b8483;
+  --color-lx-macaw: #1f2937;
+  --color-lx-macaw-dark: #0b111a;
+  --color-lx-fox: #f59e0b;
+  --color-lx-fox-dark: #c77f00;
+  --color-lx-beetle: #6366f1;
+  --color-lx-beetle-dark: #4f52d6;
+  --color-lx-eel: #374151;
+  --color-lx-eel-soft: #4b5563;
 }
 
 @layer components {
@@ -81,7 +81,7 @@
   .auth-input:focus {
     border-color: var(--color-lx-macaw);
     background: #fff;
-    box-shadow: 0 0 0 4px rgba(28, 176, 246, 0.15);
+    box-shadow: 0 0 0 4px rgba(31, 41, 55, 0.15);
   }
   .auth-btn {
     display: flex;
@@ -110,7 +110,7 @@
     line-height: 1.45;
   }
   .auth-alert-error { background: #fef2f2; color: #dc2626; }
-  .auth-alert-success { background: rgba(88, 204, 2, 0.12); color: var(--color-lx-feather-dark); }
+  .auth-alert-success { background: rgba(14, 165, 164, 0.12); color: var(--color-lx-feather-dark); }
   .auth-checklist {
     border-radius: 16px;
     background: var(--color-lx-surface-soft);
@@ -194,18 +194,18 @@
     --lm-ink-3: #8b8f96;
     --lm-line: #dfe1e5;
     --lm-line-soft: #ebedf0;
-    --lm-yellow: #1cb0f6;
-    --lm-yellow-soft: #e3f5fd;
-    --lm-rust: #d97e00;
+    --lm-yellow: #6366f1;
+    --lm-yellow-soft: #e6e7fd;
+    --lm-rust: #c77f00;
     --lm-rust-soft: #fff0d9;
-    --lm-blue: #0d8fd1;
-    --lm-blue-soft: #e0f4fd;
-    --lm-green: #46a302;
-    --lm-green-soft: #e6f7d5;
+    --lm-blue: #4f52d6;
+    --lm-blue-soft: #e6e7fd;
+    --lm-green: #0b8483;
+    --lm-green-soft: #d9f3f2;
     --lm-red: #e23c3c;
     --lm-red-soft: #fdeceb;
-    --lm-purple: #a854e0;
-    --lm-purple-soft: #f3e6ff;
+    --lm-purple: #4f52d6;
+    --lm-purple-soft: #e6e7fd;
     --font-sans: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
     --font-serif: 'Lora', Georgia, 'Times New Roman', serif;
     --text: #6b6375;
@@ -601,7 +601,7 @@
 @keyframes bar-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes wiggle { 0%, 100% { rotate: 0deg; } 20% { rotate: -14deg; } 45% { rotate: 12deg; } 70% { rotate: -6deg; } }
 @keyframes flame-flicker { 0%, 100% { transform: scale(1) rotate(-4deg); } 50% { transform: scale(1.14) rotate(4deg); } }
-@keyframes ring-pulse { 0% { box-shadow: 0 0 0 0 rgba(88, 204, 2, 0.55); } 100% { box-shadow: 0 0 0 14px rgba(88, 204, 2, 0); } }
+@keyframes ring-pulse { 0% { box-shadow: 0 0 0 0 rgba(14, 165, 164, 0.55); } 100% { box-shadow: 0 0 0 14px rgba(14, 165, 164, 0); } }
 @keyframes float-y { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 @keyframes option-pop { 0% { transform: scale(1); } 40% { transform: scale(1.03); } 100% { transform: scale(1); } }
 @keyframes shine { from { transform: translateX(-120%) skewX(-18deg); } to { transform: translateX(260%) skewX(-18deg); } }

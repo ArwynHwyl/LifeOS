@@ -33,7 +33,7 @@ function logout() {
       </p>
       <button
         type="button"
-        class="rounded-full border-2 border-lm-line bg-lm-yellow px-5 py-3 text-[14px] font-bold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
+        class="rounded-full border-2 border-lm-line bg-lm-yellow-soft px-5 py-3 text-[14px] font-bold text-lm-ink shadow-stamp-sm transition-all duration-200 hover:-translate-y-px hover:shadow-stamp-md"
         @click="logout"
       >
         Log out

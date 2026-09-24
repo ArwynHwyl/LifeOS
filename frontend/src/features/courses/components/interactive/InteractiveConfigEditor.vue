@@ -297,8 +297,8 @@ function twoSetVennPreset(): InteractiveConfig {
     title: 'Build the Venn diagram',
     canvas: { width: 900, height: 520, backgroundText: '' },
     zones: [
-      { id: 'zone_a', label: 'A', shape: 'circle', x: 250, y: 140, width: 280, height: 280, labelX: 34, labelY: 28, color: '#1cb0f6', highlightColor: '#ff9600', highlightOpacity: 0.82 },
-      { id: 'zone_b', label: 'B', shape: 'circle', x: 390, y: 140, width: 280, height: 280, labelX: 66, labelY: 28, color: '#7cd0fa', highlightColor: '#1cb0f6', highlightOpacity: 0.82 },
+      { id: 'zone_a', label: 'A', shape: 'circle', x: 250, y: 140, width: 280, height: 280, labelX: 34, labelY: 28, color: '#6366f1', highlightColor: '#f59e0b', highlightOpacity: 0.82 },
+      { id: 'zone_b', label: 'B', shape: 'circle', x: 390, y: 140, width: 280, height: 280, labelX: 66, labelY: 28, color: '#7cd0fa', highlightColor: '#6366f1', highlightOpacity: 0.82 },
     ],
     elements: [],
     interactions: [],
@@ -322,9 +322,9 @@ function hotspotPreset(): InteractiveConfig {
     title: 'Hotspot diagram',
     canvas: { width: 900, height: 520, backgroundText: 'Click a label to highlight the matching region.' },
     zones: [
-      { id: 'zone_input', label: 'Input', shape: 'rectangle', x: 90, y: 170, width: 190, height: 120, color: '#1cb0f6', highlightColor: '#ff9600', highlightOpacity: 0.82, feedback: 'Inputs are the values supplied to the process.' },
-      { id: 'zone_process', label: 'Process', shape: 'rectangle', x: 355, y: 150, width: 190, height: 160, color: '#7cd0fa', highlightColor: '#1cb0f6', highlightOpacity: 0.82, feedback: 'The process transforms inputs into outputs.' },
-      { id: 'zone_output', label: 'Output', shape: 'rectangle', x: 620, y: 170, width: 190, height: 120, color: '#a6e26c', highlightColor: '#58cc02', highlightOpacity: 0.82, feedback: 'Outputs are the results produced by the process.' },
+      { id: 'zone_input', label: 'Input', shape: 'rectangle', x: 90, y: 170, width: 190, height: 120, color: '#6366f1', highlightColor: '#f59e0b', highlightOpacity: 0.82, feedback: 'Inputs are the values supplied to the process.' },
+      { id: 'zone_process', label: 'Process', shape: 'rectangle', x: 355, y: 150, width: 190, height: 160, color: '#7cd0fa', highlightColor: '#6366f1', highlightOpacity: 0.82, feedback: 'The process transforms inputs into outputs.' },
+      { id: 'zone_output', label: 'Output', shape: 'rectangle', x: 620, y: 170, width: 190, height: 120, color: '#a6e26c', highlightColor: '#0ea5a4', highlightOpacity: 0.82, feedback: 'Outputs are the results produced by the process.' },
     ],
     elements: [
       { id: 'choice_input', label: 'Input', kind: 'button', x: 110, y: 365, width: 150, height: 48 },
@@ -970,8 +970,8 @@ function endVisualPointer(event: PointerEvent) {
         y: draft.y,
         width: draft.width,
         height: draft.height,
-        color: '#1cb0f6',
-        highlightColor: '#ff9600',
+        color: '#6366f1',
+        highlightColor: '#f59e0b',
         highlightOpacity: 0.82,
         feedback: '',
       }
@@ -1432,7 +1432,7 @@ function labelFor(type: TemplateInteractionType) {
           <div class="section-card__header">
             <div>
               <h4>Layers</h4>
-              <p>เลือกปุ่มสูตรที่ต้องการแก้</p>
+              <p>Select the formula button you want to edit</p>
             </div>
             <button type="button" class="mini-button" :disabled="(config.formulaOptions?.length ?? 0) >= 10" @click="addFormulaOption">Add</button>
           </div>
@@ -1458,7 +1458,7 @@ function labelFor(type: TemplateInteractionType) {
           <div class="canvas-toolbar">
             <div>
               <strong>Learner canvas</strong>
-              <span>คลิกปุ่มสูตรใน preview เพื่อจำลองสิ่งที่นักเรียนเห็น</span>
+              <span>Click a formula button in the preview to simulate what students see</span>
             </div>
           </div>
           <div class="canvas-stage">
@@ -1588,7 +1588,7 @@ function labelFor(type: TemplateInteractionType) {
         <div class="canvas-toolbar">
           <div>
             <strong>Visual Layer Canvas</strong>
-            <span>{{ visualTool === 'select' ? 'เลือก layer เพื่อแก้ properties' : 'คลิกบน canvas เพื่อเพิ่ม object' }}</span>
+            <span>{{ visualTool === 'select' ? 'Select a layer to edit its properties' : 'Click the canvas to add an object' }}</span>
           </div>
         </div>
         <div class="visual-admin-stage-wrap">
@@ -1751,8 +1751,8 @@ function labelFor(type: TemplateInteractionType) {
           <label class="field"><span>Computed exact value</span><input :value="selectedOverlapValue()?.value" disabled /></label>
           <label class="field"><span>Feedback</span><textarea rows="3" :value="selectedOverlapValue()?.feedback ?? ''" maxlength="500" @input="updateOverlapValue(selectedOverlapValue()!.id, { feedback: ($event.target as HTMLTextAreaElement).value })" /></label>
         </template>
-        <p v-else-if="selectedVisualGroup.length > 1" class="empty-note">ลาก object ในกลุ่มเพื่อขยับพร้อมกัน หรือใช้ toolbar บน canvas</p>
-        <p v-else class="empty-note">เลือก zone หรือ trigger เพื่อแก้ค่า</p>
+        <p v-else-if="selectedVisualGroup.length > 1" class="empty-note">Drag an object in the group to move them together, or use the toolbar on the canvas</p>
+        <p v-else class="empty-note">Select a zone or trigger to edit its values</p>
         <button v-if="selectedVisualId && selectedVisualKind !== 'overlap'" type="button" class="mini-button" @click="removeSelectedVisual">Delete selected</button>
       </aside>
     </div>
@@ -1995,7 +1995,7 @@ function labelFor(type: TemplateInteractionType) {
 }
 .preset-button:hover {
   border-color: #dfe1e5;
-  background: #1cb0f6;
+  background: #e6e7fd;
 }
 .interactive-config-controls,
 .interactive-config-preview {
@@ -2094,7 +2094,7 @@ function labelFor(type: TemplateInteractionType) {
   box-shadow: 2px 2px 0 transparent;
 }
 .quiz-answer-card--correct {
-  background: #1cb0f6;
+  background: #d9f3f2;
   box-shadow: 0 1px 3px rgba(20,24,31,0.12), 0 4px 10px -4px rgba(20,24,31,0.12);
 }
 .quiz-answer-card__main {
@@ -2121,13 +2121,13 @@ function labelFor(type: TemplateInteractionType) {
 }
 .quiz-correct-button--selected {
   background: #232323;
-  color: #1cb0f6;
+  color: #ffffff;
 }
 .quiz-correct-button__dot {
   width: 0.55rem;
   height: 0.55rem;
   border-radius: 999px;
-  background: #1cb0f6;
+  background: #2dd4bf;
 }
 .quiz-answer-input {
   width: 100%;
@@ -2183,8 +2183,8 @@ function labelFor(type: TemplateInteractionType) {
   padding: 0.25rem 0.5rem;
 }
 .quiz-answer-card--correct .quiz-answer-state {
-  background: #e6f7d5;
-  color: #46a302;
+  background: #d9f3f2;
+  color: #0b8483;
 }
 .quiz-add-card {
   min-height: 4.5rem;
@@ -2194,7 +2194,7 @@ function labelFor(type: TemplateInteractionType) {
   font-weight: 900;
 }
 .quiz-add-card:hover:not(:disabled) {
-  background: #1cb0f6;
+  background: #e6e7fd;
 }
 .quiz-add-card:disabled {
   cursor: not-allowed;
@@ -2350,7 +2350,7 @@ function labelFor(type: TemplateInteractionType) {
   gap: 0.4rem;
 }
 .mini-button.active {
-  background: #1cb0f6;
+  background: #e6e7fd;
 }
 .layer-group {
   display: grid;
@@ -2374,7 +2374,7 @@ function labelFor(type: TemplateInteractionType) {
 .layer-item.active,
 .layer-item:hover {
   border-color: #dfe1e5;
-  background: #1cb0f6;
+  background: #e6e7fd;
 }
 .visual-admin-stage-wrap {
   max-width: 100%;
@@ -2449,7 +2449,7 @@ function labelFor(type: TemplateInteractionType) {
 }
 .admin-trigger {
   z-index: 3;
-  background: #1cb0f6;
+  background: rgba(99, 102, 241, 0.4);
   cursor: move;
 }
 .admin-trigger--hotspot {
@@ -2483,7 +2483,7 @@ function labelFor(type: TemplateInteractionType) {
 }
 .admin-overlap-label.active rect,
 .admin-overlap-label:hover rect {
-  fill: #1cb0f6;
+  fill: #e6e7fd;
 }
 .admin-overlap-label.invalid rect {
   fill: #fff0d9;
@@ -2559,7 +2559,8 @@ function labelFor(type: TemplateInteractionType) {
   color: #dc2626;
 }
 .admin-edit-toolbar__button--confirm {
-  background: #1cb0f6;
+  background: #0ea5a4;
+  color: #ffffff;
 }
 .admin-resize-handle {
   position: absolute;
@@ -2572,7 +2573,7 @@ function labelFor(type: TemplateInteractionType) {
   transform: translate(-50%, -50%);
 }
 .admin-resize-handle:hover {
-  background: #1cb0f6;
+  background: #6366f1;
 }
 .admin-resize-handle--nw,
 .admin-resize-handle--se {
@@ -2619,7 +2620,7 @@ function labelFor(type: TemplateInteractionType) {
 .section-list-item:hover,
 .section-list-item.active {
   border-color: #dfe1e5;
-  background: #1cb0f6;
+  background: #e6e7fd;
 }
 .subsection {
   border-top: 2px solid #ebedf0;
@@ -2640,7 +2641,7 @@ function labelFor(type: TemplateInteractionType) {
   font-weight: 800;
 }
 .mini-button:hover {
-  background: #1cb0f6;
+  background: #e6e7fd;
 }
 .mini-button--dark {
   background: #232323;
@@ -2726,12 +2727,12 @@ function labelFor(type: TemplateInteractionType) {
   font-weight: 800;
 }
 .mode-row button.active {
-  background: #1cb0f6;
+  background: #e6e7fd;
 }
 .mode-row--fixed {
   grid-template-columns: 1fr;
   width: max-content;
-  background: #1cb0f6;
+  background: #e6e7fd;
   padding: 0.45rem 0.8rem;
   color: #232323;
   font-size: 11px;
