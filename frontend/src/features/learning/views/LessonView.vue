@@ -18,7 +18,6 @@ import {
   type PublishedSubTopicDto,
 } from '@/features/learning/services/learnerCourses'
 import { useGamificationStore } from '@/features/gamified/stores/gamification'
-import ToraMascot from '@/components/tora/ToraMascot.vue'
 
 const gamificationStore = useGamificationStore()
 
@@ -63,10 +62,6 @@ const allSubTopics = computed(() => course.value?.modules.flatMap((module) => mo
 const selectedSubTopic = computed(() => {
   return allSubTopics.value.find((subTopic) => subTopic.id === selectedSubTopicId.value) ?? allSubTopics.value[0] ?? null
 })
-const selectedModule = computed(() => {
-  const current = selectedSubTopic.value
-  return course.value?.modules.find((module) => module.subTopics.some((subTopic) => subTopic.id === current?.id)) ?? null
-})
 const selectedIndex = computed(() => {
   const current = selectedSubTopic.value
   if (!current) return 0
@@ -85,16 +80,14 @@ const currentInteractiveMode = computed(() => {
 })
 const selectedLessonHtml = computed(() => {
   let html = selectedSubTopic.value?.contentHtml || selectedSubTopic.value?.content || ''
+  // The page header already shows the title; drop a leading <h2> that only repeats it
+  const title = selectedSubTopic.value?.title.trim().toLowerCase()
+  html = html.replace(/^\s*<h2>([\s\S]*?)<\/h2>/i, (heading, text: string) =>
+    text.replace(/<[^>]*>/g, '').trim().toLowerCase() === title ? '' : heading)
   // Safe replacement of discrete/continuous words outside HTML tags
   html = html.replace(/(?<!<[^>]*)\bdiscrete\b(?![^<>]*>)/gi, '<span class="math-word-discrete">discrete</span>')
   html = html.replace(/(?<!<[^>]*)\bcontinuous\b(?![^<>]*>)/gi, '<span class="math-word-continuous">continuous</span>')
   return html
-})
-const mascotPrompt = computed(() => {
-  const current = selectedSubTopic.value
-  const prompt = current?.mascotPrompt?.trim()
-  if (prompt) return prompt
-  return current ? `Think about how "${current.title}" connects to this lesson.` : ''
 })
 
 const isSidebarOpen = ref(false)
@@ -441,16 +434,9 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
         <article v-if="selectedSubTopic" :key="selectedSubTopic.id" class="lesson-content">
           <header class="lesson-content__header">
             <div class="lesson-hero-copy">
-              <span>{{ selectedModule?.title }} • LESSON {{ selectedIndex + 1 }}</span>
               <div class="lesson-hero-title-wrap">
-                <h1>{{ selectedSubTopic.title }}</h1>
+                <h1><span class="lesson-hero-number">{{ selectedIndex + 1 }}.</span> {{ selectedSubTopic.title }}</h1>
               </div>
-            </div>
-            <div class="lesson-mascot">
-              <div class="tora-copy"><strong>A little help from Tora</strong><p>{{ mascotPrompt }}</p><button type="button" class="tora-ask" @click="assistantOpen = true">Ask about this lesson ↗</button></div>
-              <button class="lesson-mascot__avatar" type="button" aria-label="Ask Tora about this lesson" @click="assistantOpen = true">
-                <ToraMascot crop="head" :size="38" :track="false" aria-hidden="true" />
-              </button>
             </div>
           </header>
 
@@ -844,72 +830,9 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   gap: 2rem;
   margin-bottom: 0.5rem;
 }
-.lesson-hero-copy span {
-  display: block;
-  color: #68675d;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  margin-bottom: 0.5rem;
-}
 .lesson-hero-title-wrap { margin: 0; }
-.lesson-hero-copy h1 { margin: 14px 0 0; color: #25291f; font-family: var(--font-display); font-size: clamp(30px, 4vw, 46px); font-weight: 700; letter-spacing: -.035em; line-height: 1.12; }
-.lesson-mascot {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  justify-self: end;
-  align-self: flex-end;
-}
-.lesson-mascot p {
-  position: relative;
-  min-width: 0;
-  margin: 0;
-  border: 2px solid #1d1b17;
-  border-radius: 16px;
-  background: #ffffff;
-  padding: 1rem;
-  color: #1d1b17;
-  font-size: 0.75rem;
-  font-style: italic;
-  font-weight: 650;
-  line-height: 1.45;
-  box-shadow: 2px 2px 0px 0px #1d1b17;
-  max-width: 240px;
-}
-.lesson-mascot p::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  right: -8px;
-  width: 12px;
-  height: 12px;
-  border-top: 2px solid #1d1b17;
-  border-right: 2px solid #1d1b17;
-  background: #ffffff;
-  transform: translateY(-50%) rotate(45deg);
-}
-.lesson-mascot__avatar {
-  display: grid;
-  width: 64px;
-  height: 64px;
-  flex-shrink: 0;
-  place-items: center;
-  overflow: hidden;
-  border: 2px solid #1d1b17;
-  border-radius: 50%;
-  background: #ffd333;
-  padding: 4px;
-  box-shadow: 2px 2px 0px 0px #1d1b17;
-  cursor: pointer;
-}
-.lesson-mascot__avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
+.lesson-hero-number { color: #8a8a7c; }
+.lesson-hero-copy h1 { margin: 0; color: #25291f; font-family: var(--font-display); font-size: clamp(30px, 4vw, 46px); font-weight: 700; letter-spacing: -.035em; line-height: 1.12; }
 
 .lesson-body {
   border: none;
@@ -1056,24 +979,6 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
     grid-template-columns: 1fr;
     gap: 1.25rem;
   }
-  .lesson-mascot {
-    justify-self: stretch;
-    width: 100%;
-    display: flex;
-    gap: 1rem;
-  }
-  .lesson-mascot p {
-    flex: 1;
-    max-width: none;
-  }
-  .lesson-mascot__avatar {
-    width: 64px;
-    height: 64px;
-  }
-  .lesson-mascot__avatar img {
-    width: 100%;
-    height: 100%;
-  }
 
 }
 
@@ -1154,12 +1059,6 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
 .outline-label { font-size: 13px; font-weight: 650; }
 .sidebar-toggle-btn, .lesson-exit-button { border: 1px solid #d8d6ca; box-shadow: none; border-radius: 9px; }
 .lesson-exit-button { text-transform: none; }
-.lesson-mascot { justify-self: stretch; align-items: center; justify-content: space-between; background: #f1f3e9; border: 1px solid #e0e5d6; border-radius: 12px; padding: 18px 20px; }
-.tora-copy strong { font-size: 12px; color: #475b38; }
-.lesson-mascot p { border: 0; background: none; padding: 6px 0; box-shadow: none; max-width: none; font-size: 13px; font-style: normal; font-weight: 400; line-height: 1.6; }
-.lesson-mascot p::after { display: none; }
-.lesson-mascot__avatar { width: 52px; height: 52px; border: 1px solid #cbd6ba; background: #e5ebd9; box-shadow: none; }
-.tora-ask { font-size: 12px; font-weight: 650; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .lesson-body { min-width: 0; overflow-wrap: anywhere; }
 .lesson-body :deep(table) { display: block; max-width: 100%; overflow-x: auto; }
 .lesson-footer { display: flex; justify-content: space-between; align-items: center; gap: 16px; border-top: 1px solid #e4e2d8; padding-top: 24px; margin-top: 12px; }
@@ -1188,7 +1087,6 @@ button:focus-visible { outline: 3px solid #668255; outline-offset: 3px; }
   .lesson-top-bar { padding: 12px 16px; }.outline-label { display: none; }
   .lesson-content { width: calc(100% - 24px); padding: 24px 20px; border-radius: 14px; }
   .lesson-footer { flex-wrap: wrap; gap: 10px; }.lesson-footer>span { order: -1; width: 100%; text-align: center; }
-  .lesson-mascot { padding: 14px; }.lesson-mascot__avatar { width: 44px; height: 44px; }
 }
 @media(prefers-reduced-motion:reduce) { *, *::before, *::after { animation: none!important; transition: none!important; } }
 </style>

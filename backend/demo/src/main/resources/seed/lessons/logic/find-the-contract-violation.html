@@ -1,0 +1,13 @@
+<p>Testers spend their days hunting for the one input that breaks a rule. Logic tells you exactly what that input looks like, so you can build it on purpose instead of hoping to stumble on it.</p>
+<h2>Anatomy of a violation</h2>
+<p>A contract “if P then Q” is violated by any case where:</p>
+<ul>
+<li>the <strong>premise P is true</strong> (the rule applies), and</li>
+<li>the <strong>conclusion Q is false</strong> (the rule was not honoured).</li>
+</ul>
+<p>Cases where P is false do not violate anything, no matter what Q is.</p>
+<h2>An example from a code review</h2>
+<p>Requirement: “if the order total is over 1,000 baht, shipping is free.” Suppose the test data shows an order of 1,500 baht that was charged shipping. The premise (over 1,000) is true and the conclusion (free shipping) is false, so this is the counterexample that proves the code wrong. An order of 500 baht charged shipping is <em>not</em> a violation, because the rule never applied.</p>
+<h2>Your task</h2>
+<p>Set the inputs P and Q so that <code>P → Q</code> is <strong>false</strong>. There is exactly one correct combination. Before you toggle anything, decide what P and Q must each be, and then confirm it on the circuit.</p>
+<blockquote>Key idea: a counterexample to an implication is a true premise paired with a false conclusion.</blockquote>

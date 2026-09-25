@@ -1,0 +1,14 @@
+<p>Negating a condition is one of the easiest places to introduce a bug. Before learning the rule that governs it, let us look at the truth pattern of <code>¬(P ∧ Q)</code> directly.</p>
+<h2>Build the pattern</h2>
+<p>First, remember that P ∧ Q is true in only one row (both true). Negation flips every row, so ¬(P ∧ Q) is false in that single row and true in the other three.</p>
+<pre>P  Q | P ∧ Q | ¬(P ∧ Q)
+T  T |   T   |    F
+T  F |   F   |    T
+F  T |   F   |    T
+F  F |   F   |    T</pre>
+<p>Notice that the output is false in exactly one row: the one where P and Q are both true.</p>
+<h2>A plain-language reading</h2>
+<p>“It is <em>not</em> the case that both hold” means at least one of them fails. In software: “not (isAdult and hasConsent)” is true for a minor with consent, an adult without consent, and a minor without consent.</p>
+<h2>Explore</h2>
+<p>Toggle P and Q on the circuit and record when the output turns on. As you do, ask yourself: is there a simpler expression using only NOT on the individual variables that lights up in the same rows? You will name it in the next lesson.</p>
+<blockquote>Key idea: ¬(P ∧ Q) is false only when P and Q are both true.</blockquote>

@@ -99,21 +99,18 @@ onMounted(() => {
 
       <!-- Header -->
       <div class="mb-6">
-        <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3">FLASHCARDS</span>
         <h1 class="font-display text-[42px] font-bold tracking-tight text-lm-ink leading-tight mt-1 mb-1.5 m-0">
           Lock formulas
           <span class="inline-block bg-lm-yellow px-2 rounded-[6px] border-2 border-lm-line shadow-stamp-sm -rotate-1 whitespace-nowrap">
             into memory
           </span>
         </h1>
-        <p class="text-[15px] text-lm-ink-2 mt-2">Review your queue · practice pre-made math decks</p>
       </div>
 
       <!-- Queue section -->
       <section class="mb-9">
         <div class="flex items-baseline gap-3 mb-3.5">
           <h2 class="font-display text-[22px] font-bold text-lm-ink m-0">Today's review queue</h2>
-          <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3">SPACED REPETITION</span>
           <span class="px-2.5 py-1 text-[11px] font-semibold border border-lm-line rounded-full bg-lm-rust-soft text-lm-ink">{{ totalDueNow }} due now</span>
         </div>
 
@@ -148,7 +145,6 @@ onMounted(() => {
               <p class="text-[14px] text-lm-ink mt-1.5 mb-0">
                 <strong>{{ totalDueNow }} due right now</strong> · {{ totalDueLaterToday }} coming later today
               </p>
-              <p class="font-mono text-[11px] text-lm-ink-2 mt-1 mb-0">AGAIN / HARD / GOOD / EASY</p>
               <button
                 @click="router.push('/learn/flashcards/srs')"
                 :disabled="totalDueNow === 0"

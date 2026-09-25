@@ -88,6 +88,16 @@ const trophyProgressPercent = computed(() =>
   achievements.value.length === 0 ? 0 : (unlockedCount.value / achievements.value.length) * 100,
 )
 
+// Shield capacity grows with rank; keep the slots in rows of at most 4 and shrink them past that
+const SHIELD_GRID_COLS = ['grid-cols-1', 'grid-cols-2', 'grid-cols-3', 'grid-cols-4'] as const
+const shieldsHeld = computed(() =>
+  profile.value ? Math.min(profile.value.currentShield, profile.value.shieldMax) : 0,
+)
+const shieldGridCols = computed(() =>
+  SHIELD_GRID_COLS[Math.min(Math.max(profile.value?.shieldMax ?? 1, 1), 4) - 1],
+)
+const compactShields = computed(() => (profile.value?.shieldMax ?? 0) > 4)
+
 const showLevelUp     = ref(false)
 const showStreakBroken = ref(false)
 const showShieldUsed   = ref(false)
@@ -177,21 +187,31 @@ const showShieldUsed   = ref(false)
 
         <div class="flex-1" />
 
-        <!-- Shields -->
-        <div class="text-center">
-          <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3 block mb-1.5">SHIELDS · {{ profile.currentShield }} / {{ profile.shieldMax }}</span>
-          <div class="flex gap-1.5">
+        <!-- Shields: right-aligned, wraps into rows of up to 4 so any capacity stays tidy -->
+        <div class="shrink-0 flex flex-col items-end gap-2">
+          <div class="flex items-baseline gap-2">
+            <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3">SHIELDS</span>
+            <span class="font-display text-[18px] font-bold leading-none text-lm-ink">
+              {{ shieldsHeld }}<span class="text-[14px] font-medium text-lm-ink-3"> / {{ profile.shieldMax }}</span>
+            </span>
+          </div>
+          <div v-if="profile.shieldMax > 0" :class="['grid gap-1.5', shieldGridCols]">
             <div
               v-for="i in profile.shieldMax"
               :key="i"
+              :title="i <= shieldsHeld ? 'Shield ready' : 'Shield used'"
               :class="[
-                'w-11 h-[50px] rounded-[8px] border-2 flex items-center justify-center',
-                i <= profile.currentShield ? 'bg-lm-blue-soft border-lm-line border-solid text-lm-blue shadow-stamp-sm' : 'bg-lm-bg-soft border-dashed border-lm-line text-lm-ink-3'
+                'rounded-[8px] border-2 flex items-center justify-center transition-all duration-200 ease-in-out',
+                compactShields ? 'w-9 h-10' : 'w-11 h-[50px]',
+                i <= shieldsHeld
+                  ? 'bg-lm-blue-soft border-lm-line border-solid text-lm-blue shadow-stamp-sm hover:-translate-y-px'
+                  : 'bg-lm-bg-soft border-dashed border-lm-line text-lm-ink-3'
               ]"
             >
-              <LmIcon name="shield" :size="26" :filled="i <= profile.currentShield" />
+              <LmIcon name="shield" :size="compactShields ? 20 : 26" :filled="i <= shieldsHeld" />
             </div>
           </div>
+          <p v-else class="text-[12px] text-lm-ink-3 m-0">Rank up to earn your first shield</p>
         </div>
       </div>
 

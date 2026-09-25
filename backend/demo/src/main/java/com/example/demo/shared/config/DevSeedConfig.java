@@ -5,24 +5,51 @@ import com.example.demo.course.entity.Course;
 import com.example.demo.course.entity.CourseModule;
 import com.example.demo.course.entity.InteractionType;
 import com.example.demo.course.entity.SubTopic;
+import com.example.demo.course.entity.SubTopicAsset;
 import com.example.demo.course.entity.SubTopicSourceType;
 import com.example.demo.course.repository.CourseRepository;
 import com.example.demo.course.repository.LearnerInteractiveProgressRepository;
+import com.example.demo.course.repository.SubTopicAssetRepository;
+import com.example.demo.course.service.interactive.SeedImageStorage;
 import com.example.demo.user.entity.User;
 import com.example.demo.user.entity.UserRole;
 import com.example.demo.user.entity.UserStatus;
 import com.example.demo.user.repository.UserRepository;
 import com.example.demo.course.service.interactive.InteractiveConfigService;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Configuration
 @Profile("dev")
 public class DevSeedConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(DevSeedConfig.class);
+
+    // Seed course title -> folder under resources/seed/lessons
+    private static final Map<String, String> SEED_LESSON_DIRS = Map.of(
+            "Matrix", "matrix",
+            "Probability", "probability",
+            "Set", "set",
+            "Vector", "vector",
+            "Logic", "logic"
+    );
 
     @Bean
     CommandLineRunner seedDevData(
@@ -30,7 +57,9 @@ public class DevSeedConfig {
             PasswordEncoder passwordEncoder,
             CourseRepository courseRepository,
             LearnerInteractiveProgressRepository progressRepository,
-            InteractiveConfigService interactiveConfigService
+            InteractiveConfigService interactiveConfigService,
+            SubTopicAssetRepository subTopicAssetRepository,
+            TransactionTemplate transactionTemplate
     ) {
         return args -> {
 
@@ -74,6 +103,8 @@ public class DevSeedConfig {
             }
 
             seedInteractiveReferenceCourse(courseRepository, progressRepository, interactiveConfigService, admin);
+            transactionTemplate.executeWithoutResult(status ->
+                    syncSeedLessonContent(courseRepository, subTopicAssetRepository));
         };
     }
 
@@ -104,12 +135,7 @@ public class DevSeedConfig {
         );
         matrixModule.addSubTopic(subTopic(
                 "Matrices",
-                """
-                        <h2>Matrices</h2>
-                        <p>A matrix is a rectangular arrangement of numbers. Each number is called an entry, horizontal lines are rows, and vertical lines are columns.</p>
-                        <p>The size of a matrix is written as rows by columns, such as <code>3 x 2</code>. An entry is often written as <code>a_ij</code>, where <code>i</code> is the row and <code>j</code> is the column.</p>
-                        <p>Two matrices are equal when they have the same size and every matching entry is equal. Addition, subtraction, and scalar multiplication are performed entry by entry.</p>
-                        """,
+                lesson("matrix", "Matrices"),
                 0,
                 1,
                 4,
@@ -119,11 +145,7 @@ public class DevSeedConfig {
         ));
         matrixModule.addSubTopic(subTopic(
                 "Matrix Multiplication",
-                """
-                        <h2>Matrix Multiplication</h2>
-                        <p>Matrix multiplication is defined when the number of columns in the first matrix equals the number of rows in the second matrix. Each output entry is found by pairing a row from the first matrix with a column from the second matrix and adding the products.</p>
-                        <p>If <code>A</code> has size <code>m x n</code> and <code>B</code> has size <code>n x p</code>, then <code>AB</code> has size <code>m x p</code>.</p>
-                        """,
+                lesson("matrix", "Matrix Multiplication"),
                 1,
                 5,
                 9,
@@ -133,11 +155,7 @@ public class DevSeedConfig {
         ));
         matrixModule.addSubTopic(subTopic(
                 "Determinants",
-                """
-                        <h2>Determinants</h2>
-                        <p>A determinant is a value computed from a square matrix. It is used to test important properties, such as whether a matrix has an inverse, and to solve some systems of equations.</p>
-                        <p>For a <code>2 x 2</code> matrix <code>[[a,b],[c,d]]</code>, the determinant is <code>ad - bc</code>.</p>
-                        """,
+                lesson("matrix", "Determinants"),
                 2,
                 10,
                 15,
@@ -167,11 +185,7 @@ public class DevSeedConfig {
         ));
         matrixModule.addSubTopic(subTopic(
                 "Multiplicative Inverses",
-                """
-                        <h2>Multiplicative Inverses</h2>
-                        <p>The multiplicative inverse of a matrix <code>A</code> is a matrix <code>A^-1</code> such that <code>AA^-1 = I</code> and <code>A^-1A = I</code>.</p>
-                        <p>A square matrix has an inverse when its determinant is nonzero. This idea connects directly to matrix equations and systems of linear equations.</p>
-                        """,
+                lesson("matrix", "Multiplicative Inverses"),
                 3,
                 16,
                 21,
@@ -181,10 +195,7 @@ public class DevSeedConfig {
         ));
         matrixModule.addSubTopic(subTopic(
                 "Matrix Equations",
-                """
-                        <h2>Matrix Equations</h2>
-                        <p>Matrix equations use the rules of matrix addition, subtraction, multiplication, and inverses to rearrange and solve equations. The order of multiplication matters because, in general, <code>AB</code> does not have to equal <code>BA</code>.</p>
-                        """,
+                lesson("matrix", "Matrix Equations"),
                 4,
                 22,
                 25,
@@ -194,11 +205,7 @@ public class DevSeedConfig {
         ));
         matrixModule.addSubTopic(subTopic(
                 "Augmented Matrices and Linear Systems",
-                """
-                        <h2>Augmented Matrices and Linear Systems</h2>
-                        <p>An augmented matrix places the coefficients and constants of a linear system into one matrix so row operations can be used systematically.</p>
-                        <p>Row operations simplify the system and make it easier to see whether it has one solution, no solution, or infinitely many solutions.</p>
-                        """,
+                lesson("matrix", "Augmented Matrices and Linear Systems"),
                 5,
                 26,
                 35,
@@ -220,11 +227,7 @@ public class DevSeedConfig {
         ));
         matrixModule.addSubTopic(subTopic(
                 "Graph Point Match Practice",
-                """
-                        <h2>Graph Point Match Practice</h2>
-                        <p>After inspecting the reference line, adjust the slope of <code>y = mx + 1</code> so the graph passes through the target point.</p>
-                        <p>Use substitution to reason about the target: when <code>x = 2</code>, the graph should produce <code>y = 5</code>.</p>
-                        """,
+                lesson("matrix", "Graph Point Match Practice"),
                 6,
                 26,
                 35,
@@ -271,11 +274,7 @@ public class DevSeedConfig {
         );
         probabilityModule.addSubTopic(subTopic(
                 "Discrete Probability Distributions",
-                """
-                        <h2>Discrete Probability Distributions</h2>
-                        <p>A probability distribution assigns probabilities to every possible value of a random variable and can be shown in a table or graph.</p>
-                        <p>For a discrete random variable, all probabilities must be non-negative and their total must equal 1.</p>
-                        """,
+                lesson("probability", "Discrete Probability Distributions"),
                 1,
                 2,
                 3,
@@ -304,11 +303,7 @@ public class DevSeedConfig {
         ));
         probabilityModule.addSubTopic(subTopic(
                 "Expected Value of a Discrete Random Variable",
-                """
-                        <h2>Expected Value</h2>
-                        <p>Expected value is a weighted average of a random variable. It is computed by multiplying each value by its probability and adding the results.</p>
-                        <p>This idea summarizes the long-run average behavior of a random experiment repeated many times.</p>
-                        """,
+                lesson("probability", "Expected Value of a Discrete Random Variable"),
                 2,
                 4,
                 6,
@@ -318,11 +313,7 @@ public class DevSeedConfig {
         ));
         probabilityModule.addSubTopic(subTopic(
                 "Standard Deviation and Uniform Distributions",
-                """
-                        <h2>Standard Deviation and Uniform Distributions</h2>
-                        <p>Standard deviation measures how spread out the values of a random variable are around the expected value. A larger value means the outcomes tend to be more widely spread.</p>
-                        <p>A discrete uniform distribution is a case where every possible value has the same probability.</p>
-                        """,
+                lesson("probability", "Standard Deviation and Uniform Distributions"),
                 3,
                 7,
                 8,
@@ -332,11 +323,7 @@ public class DevSeedConfig {
         ));
         probabilityModule.addSubTopic(subTopic(
                 "Binomial Distribution",
-                """
-                        <h2>Binomial Distribution</h2>
-                        <p>The binomial distribution applies to repeated trials where each trial has two outcomes, such as success/failure, and the probability of success stays constant.</p>
-                        <p>The random variable usually represents the number of successes out of the total number of trials.</p>
-                        """,
+                lesson("probability", "Binomial Distribution"),
                 4,
                 9,
                 11,
@@ -346,11 +333,7 @@ public class DevSeedConfig {
         ));
         probabilityModule.addSubTopic(subTopic(
                 "Continuous and Normal Distributions",
-                """
-                        <h2>Continuous and Normal Distributions</h2>
-                        <p>A continuous random variable is described by a probability density. The area under the curve over an interval represents probability.</p>
-                        <p>The standard normal distribution and the normal distribution are important models for many data sets, with mean and standard deviation controlling the shape of the curve.</p>
-                        """,
+                lesson("probability", "Continuous and Normal Distributions"),
                 5,
                 12,
                 26,
@@ -372,11 +355,7 @@ public class DevSeedConfig {
         ));
         probabilityModule.addSubTopic(subTopic(
                 "Normal Curve Peak Practice",
-                """
-                        <h2>Normal Curve Peak Practice</h2>
-                        <p>The reference normal curve reaches its maximum at the center. In this challenge, adjust the scale of the curve so the peak reaches the target point.</p>
-                        <p>At <code>x = 0</code>, the expression <code>exp(-x^2 / 2)</code> equals 1, so the scale directly controls the peak height.</p>
-                        """,
+                lesson("probability", "Normal Curve Peak Practice"),
                 6,
                 12,
                 26,
@@ -423,12 +402,7 @@ public class DevSeedConfig {
         );
         setFoundationsModule.addSubTopic(subTopic(
                 "What Is a Set?",
-                """
-                        <h2>What Is a Set?</h2>
-                        <p>A set is a well-defined collection of objects treated as one mathematical object. The objects inside the set are called elements or members.</p>
-                        <p>Sets are usually written with braces, such as <code>A = {1, 2, 3}</code>. Order does not matter, and repeated entries do not create new members.</p>
-                        <p>Two sets are equal when they contain exactly the same elements. This makes set notation useful when software needs to reason about permissions, tags, search filters, or groups of records.</p>
-                        """,
+                lesson("set", "What Is a Set?"),
                 0,
                 1,
                 3,
@@ -465,11 +439,7 @@ public class DevSeedConfig {
         ));
         setFoundationsModule.addSubTopic(subTopic(
                 "Membership, Subsets, and Proper Subsets",
-                """
-                        <h2>Membership, Subsets, and Proper Subsets</h2>
-                        <p>Use <code>in</code> language for elements and <code>subset</code> language for sets. If <code>A = {1, 2, 3}</code>, then <code>2</code> is an element of <code>A</code>, while <code>{2}</code> is a subset of <code>A</code>.</p>
-                        <p>A set <code>B</code> is a subset of <code>A</code> when every element of <code>B</code> is also in <code>A</code>. It is a proper subset when <code>B</code> is smaller than <code>A</code>.</p>
-                        """,
+                lesson("set", "Membership, Subsets, and Proper Subsets"),
                 1,
                 1,
                 3,
@@ -498,12 +468,7 @@ public class DevSeedConfig {
         ));
         setFoundationsModule.addSubTopic(subTopic(
                 "Union, Intersection, Difference, and Complement",
-                """
-                        <h2>Union, Intersection, Difference, and Complement</h2>
-                        <p>A union keeps elements that are in either set. An intersection keeps only elements that are in both sets.</p>
-                        <p>A difference such as <code>A - B</code> keeps elements in <code>A</code> after removing elements that are also in <code>B</code>. A complement keeps elements from the universal set that are not in the selected set.</p>
-                        <p>In a Venn diagram, these operations become regions. The same region can be described with notation, a formula, or a count.</p>
-                        """,
+                lesson("set", "Union, Intersection, Difference, and Complement"),
                 2,
                 4,
                 8,
@@ -550,10 +515,7 @@ public class DevSeedConfig {
         ));
         setFoundationsModule.addSubTopic(subTopic(
                 "Operations Checkpoint",
-                """
-                        <h2>Operations Checkpoint</h2>
-                        <p>Translate the operation before counting. Union means at least one set; intersection means both sets; difference means one set after removing another.</p>
-                        """,
+                lesson("set", "Operations Checkpoint"),
                 3,
                 4,
                 8,
@@ -589,12 +551,7 @@ public class DevSeedConfig {
         );
         setPowerModule.addSubTopic(subTopic(
                 "Power Sets",
-                """
-                        <h2>Power Sets</h2>
-                        <p>The power set of a set <code>A</code>, written <code>P(A)</code>, is the set of all subsets of <code>A</code>.</p>
-                        <p>For example, if <code>A = {1, 2}</code>, then <code>P(A) = { empty, {1}, {2}, {1,2} }</code>. A power set always contains the empty set and the original set.</p>
-                        <p>This is a change in level: elements of <code>P(A)</code> are themselves sets.</p>
-                        """,
+                lesson("set", "Power Sets"),
                 0,
                 4,
                 8,
@@ -623,11 +580,7 @@ public class DevSeedConfig {
         ));
         setPowerModule.addSubTopic(subTopic(
                 "Subset Count Formula",
-                """
-                        <h2>Subset Count Formula</h2>
-                        <p>If a set has <code>n</code> elements, the total number of subsets is <code>2^n</code>. Each element has two independent choices: included or not included.</p>
-                        <p>The same idea can be refined. Non-empty subsets are <code>2^n - 1</code>, because we remove the empty set. Two-element subsets can be counted with <code>n(n-1)/2</code>.</p>
-                        """,
+                lesson("set", "Subset Count Formula"),
                 1,
                 9,
                 13,
@@ -690,11 +643,7 @@ public class DevSeedConfig {
         ));
         setPowerModule.addSubTopic(subTopic(
                 "Subset Count Target Practice",
-                """
-                        <h2>Subset Count Target Practice</h2>
-                        <p>Use the formula <code>2^n</code> in reverse. If the power set has 32 subsets, find how many elements are in the original set.</p>
-                        <p>Adjust <code>n</code> until the formula reaches the target.</p>
-                        """,
+                lesson("set", "Subset Count Target Practice"),
                 2,
                 9,
                 13,
@@ -721,10 +670,7 @@ public class DevSeedConfig {
         ));
         setPowerModule.addSubTopic(subTopic(
                 "Power Set Size Checkpoint",
-                """
-                        <h2>Power Set Size Checkpoint</h2>
-                        <p>A quick way to check your understanding is to move from a set size to its power set size without listing every subset.</p>
-                        """,
+                lesson("set", "Power Set Size Checkpoint"),
                 3,
                 9,
                 13,
@@ -760,11 +706,7 @@ public class DevSeedConfig {
         );
         setCountingModule.addSubTopic(subTopic(
                 "Two-Set Venn Counting",
-                """
-                        <h2>Two-Set Venn Counting</h2>
-                        <p>When two sets overlap, adding <code>n(A)</code> and <code>n(B)</code> counts the shared members twice. Inclusion-exclusion fixes that by subtracting the overlap once.</p>
-                        <p>For two sets, <code>n(A union B) = n(A) + n(B) - n(A intersect B)</code>. Exact regions come from subtracting the overlap from each set total.</p>
-                        """,
+                lesson("set", "Two-Set Venn Counting"),
                 0,
                 14,
                 18,
@@ -830,12 +772,7 @@ public class DevSeedConfig {
         ));
         setCountingModule.addSubTopic(subTopic(
                 "Build a 2-Set Venn Practice",
-                """
-                        <h2>Build a 2-Set Venn Practice</h2>
-                        <p>Build a two-set Venn diagram for sets A and B.</p>
-                        <p><strong>Given:</strong> n(A)=14, n(B)=12, and n(A intersect B)=5. Add both circles, arrange an overlap, then fill the exact region values.</p>
-                        <p><strong>Target regions:</strong> A only=9, B only=7, and A intersect B=5.</p>
-                        """,
+                lesson("set", "Build a 2-Set Venn Practice"),
                 1,
                 14,
                 18,
@@ -873,11 +810,7 @@ public class DevSeedConfig {
         ));
         setCountingModule.addSubTopic(subTopic(
                 "Three-Set Inclusion-Exclusion",
-                """
-                        <h2>Three-Set Inclusion-Exclusion</h2>
-                        <p>With three sets, pairwise intersections are subtracted after the three set totals are added. The middle region is then added back because it was subtracted one time too many.</p>
-                        <p>The core formula is <code>n(A union B union C) = n(A) + n(B) + n(C) - n(A intersect B) - n(A intersect C) - n(B intersect C) + n(A intersect B intersect C)</code>.</p>
-                        """,
+                lesson("set", "Three-Set Inclusion-Exclusion"),
                 2,
                 14,
                 22,
@@ -1005,11 +938,7 @@ public class DevSeedConfig {
         ));
         setCountingModule.addSubTopic(subTopic(
                 "Three-Set Venn Visual Map",
-                """
-                        <h2>Three-Set Venn Visual Map</h2>
-                        <p>A Venn diagram separates the regions of sets A, B, and C visually before member counts are computed with inclusion-exclusion.</p>
-                        <p>Click the circles or exact region values, then connect what you see to the formula steps from the previous lesson.</p>
-                        """,
+                lesson("set", "Three-Set Venn Visual Map"),
                 3,
                 14,
                 22,
@@ -1067,12 +996,7 @@ public class DevSeedConfig {
         ));
         setCountingModule.addSubTopic(subTopic(
                 "Build the Final Venn Diagram",
-                """
-                        <h2>Build the Final Venn Diagram</h2>
-                        <p>Build a three-set Venn diagram for clubs A, B, and C. You must add all three circles yourself, arrange them so the required overlaps exist, then enter the exact number of members in each visible region.</p>
-                        <p><strong>Given:</strong> n(A)=33, n(B)=26, n(C)=22, n(A intersect B)=10, n(A intersect C)=8, n(B intersect C)=7, and n(A intersect B intersect C)=3.</p>
-                        <p><strong>Success criteria:</strong> create circles A, B, and C; make all pairwise overlaps and the three-way overlap visible; enter A only=18, B only=12, C only=10, A intersect B only=7, A intersect C only=5, B intersect C only=4, and A intersect B intersect C=3.</p>
-                        """,
+                lesson("set", "Build the Final Venn Diagram"),
                 4,
                 14,
                 22,
@@ -1119,11 +1043,7 @@ public class DevSeedConfig {
         ));
         setCountingModule.addSubTopic(subTopic(
                 "Final Set Counting Checkpoint",
-                """
-                        <h2>Final Set Counting Checkpoint</h2>
-                        <p>Use the same final Venn data to verify the outside region. First compute the union, then subtract it from the universal set.</p>
-                        <p><strong>Given:</strong> n(U)=60 and the exact inside regions from the final diagram sum to 56.</p>
-                        """,
+                lesson("set", "Final Set Counting Checkpoint"),
                 5,
                 14,
                 22,
@@ -1168,11 +1088,7 @@ public class DevSeedConfig {
         );
         vectorModule.addSubTopic(subTopic(
                 "Vector Quantities",
-                """
-                        <h2>Vector Quantities</h2>
-                        <p>A vector is a quantity with both magnitude and direction, unlike a scalar, which has magnitude only. Vectors are often represented by arrows or variables marked with an arrow.</p>
-                        <p>Vectors with the same magnitude and direction are considered equal even if they are drawn in different positions.</p>
-                        """,
+                lesson("vector", "Vector Quantities"),
                 0,
                 1,
                 7,
@@ -1182,11 +1098,7 @@ public class DevSeedConfig {
         ));
         vectorModule.addSubTopic(subTopic(
                 "Vectors in Rectangular Coordinates",
-                """
-                        <h2>Vectors in Rectangular Coordinates</h2>
-                        <p>A vector in rectangular coordinates is written by its components along each axis, such as <code>(x, y)</code>. The magnitude of a two-dimensional vector is <code>sqrt(x^2 + y^2)</code>.</p>
-                        <p>Addition, subtraction, and scalar multiplication are performed component by component.</p>
-                        """,
+                lesson("vector", "Vectors in Rectangular Coordinates"),
                 1,
                 8,
                 12,
@@ -1214,10 +1126,7 @@ public class DevSeedConfig {
         ));
         vectorModule.addSubTopic(subTopic(
                 "Unit Vectors",
-                """
-                        <h2>Unit Vectors</h2>
-                        <p>A unit vector is a vector with magnitude 1. To turn a vector into a unit vector, divide the vector by its magnitude.</p>
-                        """,
+                lesson("vector", "Unit Vectors"),
                 2,
                 13,
                 16,
@@ -1227,10 +1136,7 @@ public class DevSeedConfig {
         ));
         vectorModule.addSubTopic(subTopic(
                 "Dot Product",
-                """
-                        <h2>Dot Product</h2>
-                        <p>The dot product returns a scalar. It is used to study the angle between vectors and to test perpendicularity. In rectangular coordinates, multiply matching components and add the products.</p>
-                        """,
+                lesson("vector", "Dot Product"),
                 3,
                 17,
                 28,
@@ -1240,10 +1146,7 @@ public class DevSeedConfig {
         ));
         vectorModule.addSubTopic(subTopic(
                 "Cross Product",
-                """
-                        <h2>Cross Product</h2>
-                        <p>The cross product returns a vector perpendicular to the two original vectors. It is used with three-dimensional vectors and connects to the area of a parallelogram.</p>
-                        """,
+                lesson("vector", "Cross Product"),
                 4,
                 29,
                 31,
@@ -1276,10 +1179,7 @@ public class DevSeedConfig {
         ));
         vectorModule.addSubTopic(subTopic(
                 "Area and Volume",
-                """
-                        <h2>Area and Volume</h2>
-                        <p>Cross products and scalar triple products help compute the area and volume of geometric shapes built from vectors, such as parallelograms and parallelepipeds.</p>
-                        """,
+                lesson("vector", "Area and Volume"),
                 5,
                 32,
                 40,
@@ -1305,11 +1205,7 @@ public class DevSeedConfig {
         );
         logicFoundationsModule.addSubTopic(subTopic(
                 "Propositions and Truth Values",
-                """
-                        <h2>Propositions and Truth Values</h2>
-                        <p>A <strong>proposition</strong> is a declarative statement that has exactly one truth value: true or false. “The service is running” is a proposition; “Restart the service” is a command and is not a proposition.</p>
-                        <p>We use symbols such as <code>P</code>, <code>Q</code>, and <code>R</code> to represent propositions. Before combining them, write down what each symbol means so the final expression can still be interpreted in the original problem.</p>
-                        """,
+                lesson("logic", "Propositions and Truth Values"),
                 0,
                 null,
                 null,
@@ -1319,11 +1215,7 @@ public class DevSeedConfig {
         ));
         logicFoundationsModule.addSubTopic(subTopic(
                 "Boolean Connectives",
-                """
-                        <h2>Boolean Connectives</h2>
-                        <p>Negation <code>¬P</code> reverses a truth value. Conjunction <code>P ∧ Q</code> requires both parts to be true, while disjunction <code>P ∨ Q</code> requires at least one true part.</p>
-                        <p>Operator precedence matters just as it does in code. Read <code>(P ∧ Q) ∨ ¬R</code> as: first evaluate <code>P ∧ Q</code> and <code>¬R</code>, then combine those results with OR.</p>
-                        """,
+                lesson("logic", "Boolean Connectives"),
                 1,
                 null,
                 null,
@@ -1333,11 +1225,7 @@ public class DevSeedConfig {
         ));
         logicFoundationsModule.addSubTopic(subTopic(
                 "Explore a Compound Circuit",
-                """
-                        <h2>Explore a Compound Circuit</h2>
-                        <p>A valve circuit makes evaluation order visible. Open means true, closed means false, and the output shows the truth value of the whole expression.</p>
-                        <p>Toggle <code>P</code>, <code>Q</code>, and <code>R</code> for <code>(P ∧ Q) ∨ ¬R</code>. Predict the output before each change, then use the circuit to check your reasoning.</p>
-                        """,
+                lesson("logic", "Explore a Compound Circuit"),
                 2,
                 null,
                 null,
@@ -1357,11 +1245,7 @@ public class DevSeedConfig {
         ));
         logicFoundationsModule.addSubTopic(subTopic(
                 "Make the Compound Circuit True",
-                """
-                        <h2>Make the Compound Circuit True</h2>
-                        <p>Now apply the same idea without relying on trial and error. The expression <code>(P ∧ Q) ∨ ¬R</code> is true when either the left branch is true or the right branch is true.</p>
-                        <p>Choose an input assignment, state which branch should carry the result, and then check the circuit.</p>
-                        """,
+                lesson("logic", "Make the Compound Circuit True"),
                 3,
                 null,
                 null,
@@ -1386,11 +1270,7 @@ public class DevSeedConfig {
         ));
         logicFoundationsModule.addSubTopic(subTopic(
                 "Truth Table Checkpoint",
-                """
-                        <h2>Truth Table Checkpoint</h2>
-                        <p>A truth table evaluates every possible assignment. With two variables there are four rows; with three variables there are eight.</p>
-                        <p>Evaluate inner operations first and keep one column for each intermediate result. This makes mistakes easier to locate.</p>
-                        """,
+                lesson("logic", "Truth Table Checkpoint"),
                 4,
                 null,
                 null,
@@ -1426,11 +1306,7 @@ public class DevSeedConfig {
         );
         conditionalLogicModule.addSubTopic(subTopic(
                 "Implication and Program Contracts",
-                """
-                        <h2>Implication and Program Contracts</h2>
-                        <p>The implication <code>P → Q</code> says: whenever the precondition <code>P</code> holds, the required result <code>Q</code> must also hold. It does not claim that <code>Q</code> can happen only because of <code>P</code>.</p>
-                        <p>An implication fails in exactly one case: <code>P</code> is true but <code>Q</code> is false. In testing, that row is the counterexample that violates the contract.</p>
-                        """,
+                lesson("logic", "Implication and Program Contracts"),
                 0,
                 null,
                 null,
@@ -1440,11 +1316,7 @@ public class DevSeedConfig {
         ));
         conditionalLogicModule.addSubTopic(subTopic(
                 "Explore an Implication",
-                """
-                        <h2>Explore an Implication</h2>
-                        <p>Let <code>P</code> mean “the request is authenticated” and <code>Q</code> mean “the protected action is allowed.” Toggle both inputs and identify the one assignment that violates <code>P → Q</code>.</p>
-                        <p>Notice that when <code>P</code> is false, the implication is true regardless of <code>Q</code>. The contract makes a promise only for cases where its precondition holds.</p>
-                        """,
+                lesson("logic", "Explore an Implication"),
                 1,
                 null,
                 null,
@@ -1464,11 +1336,7 @@ public class DevSeedConfig {
         ));
         conditionalLogicModule.addSubTopic(subTopic(
                 "Find the Contract Violation",
-                """
-                        <h2>Find the Contract Violation</h2>
-                        <p>A useful counterexample makes the precondition true and the promised result false. Configure the same implication circuit so it exposes that failure.</p>
-                        <p>Do not guess: translate “the request is authenticated, but the action is not allowed” into truth values for <code>P</code> and <code>Q</code>.</p>
-                        """,
+                lesson("logic", "Find the Contract Violation"),
                 2,
                 null,
                 null,
@@ -1493,11 +1361,7 @@ public class DevSeedConfig {
         ));
         conditionalLogicModule.addSubTopic(subTopic(
                 "Guard-Clause Checkpoint",
-                """
-                        <h2>Guard-Clause Checkpoint</h2>
-                        <p>A guard clause often rejects an operation when a required condition is missing. Translating the requirement into logic helps reveal whether the implementation accepts an invalid state.</p>
-                        <p>Use the implication rule to identify the test case that must fail.</p>
-                        """,
+                lesson("logic", "Guard-Clause Checkpoint"),
                 3,
                 null,
                 null,
@@ -1533,11 +1397,7 @@ public class DevSeedConfig {
         );
         equivalenceModule.addSubTopic(subTopic(
                 "Why Equivalent Expressions Matter",
-                """
-                        <h2>Why Equivalent Expressions Matter</h2>
-                        <p>Two expressions are logically equivalent when they have the same output for every possible input assignment. Refactoring a condition is safe only when this property is preserved.</p>
-                        <p>Important laws include De Morgan’s laws, implication, distributive, complement, identity, and absorption. Apply one law at a time and keep each intermediate expression visible.</p>
-                        """,
+                lesson("logic", "Why Equivalent Expressions Matter"),
                 0,
                 null,
                 null,
@@ -1547,11 +1407,7 @@ public class DevSeedConfig {
         ));
         equivalenceModule.addSubTopic(subTopic(
                 "Explore a Negated Conjunction",
-                """
-                        <h2>Explore a Negated Conjunction</h2>
-                        <p>De Morgan’s law states <code>¬(P ∧ Q) ≡ ¬P ∨ ¬Q</code>. Before rewriting it, explore the left-hand expression and observe when it becomes true.</p>
-                        <p>The output is false only when both <code>P</code> and <code>Q</code> are true. That output pattern motivates the equivalent OR expression.</p>
-                        """,
+                lesson("logic", "Explore a Negated Conjunction"),
                 1,
                 null,
                 null,
@@ -1571,11 +1427,7 @@ public class DevSeedConfig {
         ));
         equivalenceModule.addSubTopic(subTopic(
                 "Apply De Morgan's Law",
-                """
-                        <h2>Apply De Morgan's Law</h2>
-                        <p>Move the negation through the conjunction: change AND to OR and negate both variables. Enter a complete expression that is equivalent to <code>¬(P ∧ Q)</code>.</p>
-                        <p>The checker compares truth tables, so equivalent syntax and harmless parenthesis differences are accepted.</p>
-                        """,
+                lesson("logic", "Apply De Morgan's Law"),
                 2,
                 null,
                 null,
@@ -1603,11 +1455,7 @@ public class DevSeedConfig {
         ));
         equivalenceModule.addSubTopic(subTopic(
                 "Rewrite an Implication",
-                """
-                        <h2>Rewrite an Implication</h2>
-                        <p>The implication law <code>P → Q ≡ ¬P ∨ Q</code> removes the arrow and is useful when a programming language provides only NOT, AND, and OR.</p>
-                        <p>Rewrite the implication, then compare the one false row in both forms.</p>
-                        """,
+                lesson("logic", "Rewrite an Implication"),
                 3,
                 null,
                 null,
@@ -1635,11 +1483,7 @@ public class DevSeedConfig {
         ));
         equivalenceModule.addSubTopic(subTopic(
                 "Multi-Law Simplification",
-                """
-                        <h2>Multi-Law Simplification</h2>
-                        <p>Simplify <code>(P ∧ ¬Q) ∨ (P ∧ Q)</code>. First factor out <code>P</code>, then reduce the complementary pair, and finally remove the identity constant.</p>
-                        <p>This mirrors refactoring duplicated conditions in code while preserving behavior for every input.</p>
-                        """,
+                lesson("logic", "Multi-Law Simplification"),
                 4,
                 null,
                 null,
@@ -1674,6 +1518,95 @@ public class DevSeedConfig {
                 conditionalLogicModule,
                 equivalenceModule
         );
+    }
+
+    /**
+     * Refreshes seed course lessons from resources/seed/lessons in place, so existing sub-topic ids
+     * (learner progress, assistant conversations) survive content updates. Images referenced with
+     * data-seed-image are registered as sub-topic assets and rewritten to data-asset-id.
+     */
+    private void syncSeedLessonContent(
+            CourseRepository courseRepository,
+            SubTopicAssetRepository subTopicAssetRepository
+    ) {
+        SEED_LESSON_DIRS.forEach((courseTitle, lessonDir) ->
+                courseRepository.findByTitleOrderByCreatedAtAsc(courseTitle).stream()
+                        .findFirst()
+                        .ifPresent(course -> course.getModules().forEach(module ->
+                                module.getSubTopics().forEach(subTopic ->
+                                        syncSubTopicLesson(subTopic, lessonDir, subTopicAssetRepository)))));
+    }
+
+    private void syncSubTopicLesson(
+            SubTopic subTopic,
+            String lessonDir,
+            SubTopicAssetRepository subTopicAssetRepository
+    ) {
+        String resourcePath = lessonResourcePath(lessonDir, subTopic.getTitle());
+        if (!new ClassPathResource(resourcePath).exists()) {
+            log.warn("No seed lesson file for sub-topic '{}' at {}", subTopic.getTitle(), resourcePath);
+            return;
+        }
+        Document document = Jsoup.parseBodyFragment(readResource(resourcePath));
+        document.outputSettings().prettyPrint(false);
+        for (Element image : document.select("img[data-seed-image]")) {
+            String fileName = image.attr("data-seed-image");
+            SubTopicAsset asset = findOrCreateSeedAsset(subTopic, fileName, image.attr("alt"), subTopicAssetRepository);
+            image.removeAttr("data-seed-image");
+            image.attr("data-asset-id", String.valueOf(asset.getId()));
+        }
+        String content = document.body().html();
+        if (!content.equals(subTopic.getContent())) {
+            subTopic.updateDetails(
+                    subTopic.getTitle(),
+                    content,
+                    subTopic.getSortOrder(),
+                    subTopic.getPageStart(),
+                    subTopic.getPageEnd()
+            );
+        }
+    }
+
+    private SubTopicAsset findOrCreateSeedAsset(
+            SubTopic subTopic,
+            String fileName,
+            String altText,
+            SubTopicAssetRepository subTopicAssetRepository
+    ) {
+        String storagePath = SeedImageStorage.storagePath(fileName);
+        return subTopic.getAssets().stream()
+                .filter(asset -> storagePath.equals(asset.getStoragePath()))
+                .findFirst()
+                .orElseGet(() -> {
+                    SubTopicAsset asset = new SubTopicAsset(
+                            storagePath,
+                            fileName,
+                            SeedImageStorage.contentType(fileName),
+                            SeedImageStorage.sizeBytes(fileName),
+                            altText.isBlank() ? null : altText
+                    );
+                    subTopic.addAsset(asset);
+                    return subTopicAssetRepository.save(asset);
+                });
+    }
+
+    private String lesson(String lessonDir, String subTopicTitle) {
+        return readResource(lessonResourcePath(lessonDir, subTopicTitle));
+    }
+
+    private String lessonResourcePath(String lessonDir, String subTopicTitle) {
+        String slug = subTopicTitle.toLowerCase(Locale.ROOT)
+                .replaceAll("[^a-z0-9]+", "-")
+                .replaceAll("^-|-$", "");
+        return "seed/lessons/" + lessonDir + "/" + slug + ".html";
+    }
+
+    private String readResource(String resourcePath) {
+        try (InputStream input = new ClassPathResource(resourcePath).getInputStream()) {
+            return new String(input.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (IOException ex) {
+            throw new UncheckedIOException("Could not read seed resource " + resourcePath, ex);
+        }
     }
 
     private boolean referenceCoursesAlreadySeeded(CourseRepository courseRepository) {

@@ -1,0 +1,21 @@
+<p>The dot product tells you how aligned two vectors are. The <strong>cross product</strong> answers a different question: given two vectors in space, what is a direction perpendicular to both, and how big is the parallelogram they span?</p>
+<figure><img data-seed-image="vector-cross.png" alt="A parallelogram formed by vectors a and b with the cross product pointing up out of it."><figcaption>The cross product is perpendicular to both vectors</figcaption></figure>
+<h2>Definition</h2>
+<p>The cross product <strong>a</strong> × <strong>b</strong> is defined for vectors in three dimensions. The result is a <em>vector</em> (unlike the dot product). It has two important properties:</p>
+<ul>
+<li><strong>Direction:</strong> perpendicular to both <strong>a</strong> and <strong>b</strong>, chosen with the right-hand rule. Curl the fingers of your right hand from <strong>a</strong> towards <strong>b</strong>, and your thumb points along <strong>a</strong> × <strong>b</strong>.</li>
+<li><strong>Magnitude:</strong> |<strong>a</strong> × <strong>b</strong>| = |<strong>a</strong>| |<strong>b</strong>| sin θ.</li>
+</ul>
+<h2>Components</h2>
+<pre>a × b = ⟨ a₂b₃ − a₃b₂,  a₃b₁ − a₁b₃,  a₁b₂ − a₂b₁ ⟩</pre>
+<h2>Geometric meaning</h2>
+<p>The magnitude |<strong>a</strong>| |<strong>b</strong>| sin θ equals the <strong>area of the parallelogram</strong> with sides <strong>a</strong> and <strong>b</strong>. The height of that parallelogram is |<strong>b</strong>| sin θ, and the base is |<strong>a</strong>|.</p>
+<h2>Important properties</h2>
+<ul>
+<li>Order matters: <strong>b</strong> × <strong>a</strong> = −(<strong>a</strong> × <strong>b</strong>).</li>
+<li>Parallel vectors give the zero vector, because sin 0 = 0.</li>
+<li>The size is largest when the vectors are perpendicular (sin 90° = 1).</li>
+</ul>
+<blockquote>Key idea: the length of a cross product is the area of the parallelogram formed by the two vectors.</blockquote>
+<h2>Try it</h2>
+<p>Adjust the two lengths and the angle until the area reaches 24. One solution is lengths 4 and 6 at a right angle (about 1.57 radians). Can you find a different one? Lengths 6 and 6 need an angle of roughly 0.73 radians, because sin(0.73) ≈ 0.67 and 36 × 0.67 ≈ 24.</p>

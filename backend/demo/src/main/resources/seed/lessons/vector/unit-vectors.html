@@ -1,0 +1,22 @@
+<p>Often you care only about a direction, not a length: which way is the wind blowing, which way is the light shining? A vector of length exactly 1 captures pure direction, and it is called a <strong>unit vector</strong>.</p>
+<figure><img data-seed-image="vector-unit.png" alt="A vector a and its unit vector on a unit circle, with the normalising calculation."><figcaption>Normalising ⟨3, 4⟩ gives a vector of length 1</figcaption></figure>
+<h2>Standard unit vectors</h2>
+<p>The unit vectors along the coordinate axes are so useful that they get their own names:</p>
+<ul>
+<li><strong>i</strong> = ⟨1, 0, 0⟩ points along the x-axis.</li>
+<li><strong>j</strong> = ⟨0, 1, 0⟩ points along the y-axis.</li>
+<li><strong>k</strong> = ⟨0, 0, 1⟩ points along the z-axis.</li>
+</ul>
+<p>Any vector can be written using them: ⟨3, 4, 2⟩ = 3<strong>i</strong> + 4<strong>j</strong> + 2<strong>k</strong>.</p>
+<h2>Normalising a vector</h2>
+<p>To get the unit vector in the direction of <strong>a</strong>, divide each component by the magnitude:</p>
+<pre>û = a / |a|</pre>
+<p>Example: <strong>a</strong> = ⟨3, 4⟩ has |<strong>a</strong>| = 5, so û = ⟨3/5, 4/5⟩ = ⟨0.6, 0.8⟩. Check: 0.6² + 0.8² = 0.36 + 0.64 = 1.</p>
+<h2>Why it matters</h2>
+<ul>
+<li>Game characters move at a fixed speed in any direction: multiply a unit direction vector by the speed.</li>
+<li>Lighting calculations use unit normal vectors so that lengths do not distort the result.</li>
+<li>Splitting a vector into <em>direction × size</em> makes formulas easier to reason about.</li>
+</ul>
+<blockquote>Key idea: dividing a vector by its own length keeps its direction and sets its length to 1.</blockquote>
+<p>The zero vector has no direction, so it cannot be normalised. In code, check for a length of zero before dividing.</p>

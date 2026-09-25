@@ -2,6 +2,7 @@ package com.example.demo.course.mapper;
 
 import com.example.demo.course.service.document.PdfStorageService;
 import com.example.demo.course.service.interactive.LessonHtmlService;
+import com.example.demo.course.service.interactive.SeedImageStorage;
 
 import com.example.demo.course.dto.generation.response.AiGenerationLogDto;
 import com.example.demo.course.dto.management.response.CourseDetailDto;
@@ -32,6 +33,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.time.Duration;
+import java.time.Instant;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -120,7 +122,7 @@ public class CourseDtoMapper {
                 lessonHtmlService.contentHtmlWithAssetUrls(
                         subTopic.getContent(),
                         subTopic.getAssets(),
-                        asset -> storageService.presignRead(asset.getStoragePath(), ASSET_READ_URL_TTL)
+                        this::assetRead
                 ),
                 subTopic.getMascotPrompt(),
                 subTopic.getAssets().stream()
@@ -138,8 +140,18 @@ public class CourseDtoMapper {
         );
     }
 
+    private PdfStorageService.PresignedRead assetRead(SubTopicAsset asset) {
+        if (SeedImageStorage.isSeedStoragePath(asset.getStoragePath())) {
+            return new PdfStorageService.PresignedRead(
+                    SeedImageStorage.publicUrl(asset.getStoragePath()),
+                    Instant.now().plus(ASSET_READ_URL_TTL)
+            );
+        }
+        return storageService.presignRead(asset.getStoragePath(), ASSET_READ_URL_TTL);
+    }
+
     public SubTopicAssetDto toSubTopicAssetDto(SubTopicAsset asset) {
-        PdfStorageService.PresignedRead read = storageService.presignRead(asset.getStoragePath(), ASSET_READ_URL_TTL);
+        PdfStorageService.PresignedRead read = assetRead(asset);
         return new SubTopicAssetDto(
                 asset.getId(),
                 asset.getSubTopic().getId(),
@@ -290,7 +302,7 @@ public class CourseDtoMapper {
                 lessonHtmlService.contentHtmlWithAssetUrls(
                         subTopic.getContent(),
                         subTopic.getAssets(),
-                        asset -> storageService.presignRead(asset.getStoragePath(), ASSET_READ_URL_TTL)
+                        this::assetRead
                 ),
                 subTopic.getMascotPrompt(),
                 subTopic.getSortOrder(),

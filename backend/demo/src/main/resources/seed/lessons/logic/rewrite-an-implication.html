@@ -1,0 +1,16 @@
+<p>Some languages and tools have no arrow operator. They offer only NOT, AND, and OR. The good news is that every implication can be rewritten with just those, and the law behind it is short enough to memorise.</p>
+<h2>The implication law</h2>
+<pre>P → Q ≡ ¬P ∨ Q</pre>
+<p>Read it as: “either P does not happen, or Q does”. Both sentences promise exactly the same thing.</p>
+<h2>Checking with the table</h2>
+<p>P → Q is false in one row only, P = T and Q = F. In that row ¬P is F and Q is F, so ¬P ∨ Q is false too. In every other row at least one of ¬P and Q is true, so the OR is true. The two columns match, which proves the equivalence.</p>
+<h2>In code</h2>
+<pre>// requirement: if the user is a guest, they cannot edit
+// as an implication:  isGuest → !canEdit
+// with only NOT and OR:
+valid = !isGuest || !canEdit;</pre>
+<p>Writing requirements this way lets you assert them directly as one boolean expression.</p>
+<h2>A useful bonus: the contrapositive</h2>
+<p>Applying the law twice shows that P → Q is also equivalent to ¬Q → ¬P. Testing “if Q is missing then P did not happen” is sometimes easier than testing the original direction.</p>
+<blockquote>Key idea: an implication is an OR in disguise: not P, or Q.</blockquote>
+<p>Now rewrite <code>P → Q</code> using only NOT and OR in the activity.</p>

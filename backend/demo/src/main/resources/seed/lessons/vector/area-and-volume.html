@@ -1,0 +1,19 @@
+<p>Vectors are not only about arrows. Their products measure real geometric quantities: the area of shapes and the volume of solids. Engineers use these calculations for surfaces, forces, and 3D graphics.</p>
+<figure><img data-seed-image="vector-area-volume.png" alt="A parallelogram for area and a slanted box built from three vectors for volume."><figcaption>Cross product gives area; triple product gives volume</figcaption></figure>
+<h2>Areas from the cross product</h2>
+<ul>
+<li>Parallelogram with sides <strong>a</strong> and <strong>b</strong>: area = |<strong>a</strong> × <strong>b</strong>|.</li>
+<li>Triangle with sides <strong>a</strong> and <strong>b</strong>: area = ½ |<strong>a</strong> × <strong>b</strong>|, exactly half the parallelogram.</li>
+</ul>
+<h3>Example</h3>
+<p>Let <strong>a</strong> = ⟨3, 0, 0⟩ and <strong>b</strong> = ⟨0, 4, 0⟩. Then <strong>a</strong> × <strong>b</strong> = ⟨0, 0, 12⟩ and its magnitude is 12. The parallelogram has area 12, and the triangle they form has area 6. That matches the rectangle area 3 × 4 = 12 that you can see by eye.</p>
+<h2>Volume from the triple product</h2>
+<p>Three vectors <strong>a</strong>, <strong>b</strong>, <strong>c</strong> that do not lie in one plane span a slanted box called a <strong>parallelepiped</strong>. Its volume is the absolute value of the <strong>scalar triple product</strong>:</p>
+<pre>V = | a · (b × c) |</pre>
+<p>The cross product b × c gives the area of the base. Dotting with a then multiplies by the height measured along the perpendicular direction.</p>
+<ul>
+<li>If the triple product is zero, the three vectors lie in a single plane and the box is flat.</li>
+<li>A tetrahedron built from the same three vectors has volume ⅙ |<strong>a</strong> · (<strong>b</strong> × <strong>c</strong>)|.</li>
+</ul>
+<blockquote>Key idea: cross product for area, triple product for volume. Both give sizes, so take the absolute value.</blockquote>
+<p>This closes the vector course: magnitude, direction, alignment (dot product), and spanned area and volume (cross and triple products).</p>

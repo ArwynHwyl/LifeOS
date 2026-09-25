@@ -1,0 +1,22 @@
+<p>Insurance companies, game designers, and weather services all do the same thing: they take an uncertain outcome and describe exactly how likely each possibility is. The tool for this is the <strong>probability distribution</strong>.</p>
+<figure><img data-seed-image="prob-discrete.png" alt="Bar chart of a fair die with each probability 1/6 and the rules for a valid distribution."><figcaption>A fair die as a probability distribution</figcaption></figure>
+<h2>Random variables</h2>
+<p>A <strong>random variable</strong> X assigns a number to each outcome of a random experiment. Roll a die and let X be the number showing. Flip three coins and let X be the number of heads. The word “discrete” means the possible values can be listed, such as 0, 1, 2, 3.</p>
+<h2>The distribution</h2>
+<p>A probability distribution lists every possible value x together with its probability P(X = x). For a fair six-sided die:</p>
+<pre>x       1    2    3    4    5    6
+P(x)   1/6  1/6  1/6  1/6  1/6  1/6</pre>
+<h2>Two rules every distribution must satisfy</h2>
+<ol>
+<li><strong>Each probability is between 0 and 1</strong> (inclusive). A negative probability or one greater than 1 is impossible.</li>
+<li><strong>The probabilities add up to exactly 1</strong>, because something must happen.</li>
+</ol>
+<h3>Testing a list</h3>
+<ul>
+<li>0.2, 0.3, 0.5 → all between 0 and 1, and 0.2 + 0.3 + 0.5 = 1.0. Valid.</li>
+<li>0.5, 0.7, 0.2 → sum is 1.4. Too large. Invalid.</li>
+<li>−0.1, 0.6, 0.5 → contains a negative value. Invalid.</li>
+<li>0.1, 0.2, 0.4 → sum is 0.7. Too small. Invalid.</li>
+</ul>
+<blockquote>Key idea: a valid distribution has no negative probabilities and totals exactly 1.</blockquote>
+<p>Use both rules in the check, one list at a time, and look for the only list that passes them.</p>

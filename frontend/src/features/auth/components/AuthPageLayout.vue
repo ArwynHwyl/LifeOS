@@ -31,8 +31,8 @@ withDefaults(defineProps<{
     </div>
 
     <!-- Brand — top left -->
-    <div class="absolute left-8 top-6 z-10 flex items-center -gap-1">
-      <img src="@/assets/Logo.png" alt="LifeOS" class="h-25" />
+    <div class="absolute left-8 top-6 z-10 flex items-center gap-2.5">
+      <img src="/brand/lifeos-logo.svg" alt="LifeOS" class="h-10 w-10" />
       <span class="font-display text-[20px] font-bold text-lm-ink">LifeOS</span>
     </div>
 

@@ -1,0 +1,26 @@
+<p>Venn diagrams are not only pictures. Attached to numbers they become a counting tool: how many students take maths or physics, how many users opened the app on web but not mobile, and so on.</p>
+<figure><img data-seed-image="set-two-venn.png" alt="Venn diagram with 9 football only, 5 both, 7 basketball only, and 9 neither out of 30 students."><figcaption>A worked two-set count: football and basketball</figcaption></figure>
+<h2>Notation</h2>
+<ul>
+<li><code>n(A)</code> is the number of members in set A.</li>
+<li><code>n(U)</code> is the size of the universal set: everything under discussion.</li>
+</ul>
+<h2>The overlap is counted twice</h2>
+<p>If you simply add n(A) and n(B), every member of the overlap is counted twice, once in each set. Subtract the overlap once to fix it:</p>
+<pre>n(A ∪ B) = n(A) + n(B) − n(A ∩ B)</pre>
+<h2>The four regions</h2>
+<pre>A only  = n(A) − n(A ∩ B)
+B only  = n(B) − n(A ∩ B)
+both    = n(A ∩ B)
+outside = n(U) − n(A ∪ B)</pre>
+<h2>Worked example</h2>
+<p>In a group of 30 students, 14 play football, 12 play basketball, and 5 play both. Then:</p>
+<ul>
+<li>Football only: 14 − 5 = 9</li>
+<li>Basketball only: 12 − 5 = 7</li>
+<li>At least one sport: 14 + 12 − 5 = 21</li>
+<li>Neither sport: 30 − 21 = 9</li>
+</ul>
+<p>Check: 9 + 7 + 5 + 9 = 30, the whole group.</p>
+<blockquote>Key idea: the four regions always add up to the universal set. Use that as a sanity check.</blockquote>
+<p>In the explorer, change the four values and choose a formula to see each region and its calculation step by step.</p>

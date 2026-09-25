@@ -1,0 +1,22 @@
+<p>Augustus De Morgan noticed that negation “pushes through” AND and OR, swapping one for the other. It is the most used law in everyday programming logic.</p>
+<figure><img data-seed-image="logic-de-morgan.png" alt="Two Venn diagrams showing that not (P or Q) equals not P and not Q, and not (P and Q) equals not P or not Q."><figcaption>De Morgan’s laws shown as shaded Venn diagrams</figcaption></figure>
+<h2>The two laws</h2>
+<pre>¬(P ∧ Q) ≡ ¬P ∨ ¬Q
+¬(P ∨ Q) ≡ ¬P ∧ ¬Q</pre>
+<p>To apply either law: <strong>negate each part, then swap AND with OR</strong> (or OR with AND). The parentheses go away.</p>
+<h2>Why it is true</h2>
+<p>Look at the table from the previous lesson. ¬(P ∧ Q) was false only when both P and Q were true. ¬P ∨ ¬Q is false only when both ¬P and ¬Q are false, which again happens only when P and Q are both true. Same rows, so equivalent.</p>
+<h2>In code</h2>
+<pre>// before
+if (!(user.isActive &amp;&amp; user.hasLicense)) { deny(); }
+
+// after (De Morgan)
+if (!user.isActive || !user.hasLicense) { deny(); }</pre>
+<p>Both mean “deny unless the user is active and licensed”. The second form reads as a list of reasons to deny, which is often clearer.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li>Negating the variables but forgetting to swap AND and OR.</li>
+<li>Swapping the connective but forgetting to negate the variables.</li>
+</ul>
+<blockquote>Key idea: negate everything inside, flip AND to OR (or OR to AND).</blockquote>
+<p>Your task: rewrite <code>¬(P ∧ Q)</code> in the form that uses negated variables and a single OR.</p>

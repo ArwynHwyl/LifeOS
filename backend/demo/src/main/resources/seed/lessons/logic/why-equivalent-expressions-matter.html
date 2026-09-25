@@ -1,0 +1,20 @@
+<p>Two different-looking conditions can behave identically. Recognising this lets you simplify code, prove that a refactor is safe, and choose the form that a person can read most easily.</p>
+<h2>Logical equivalence</h2>
+<p>Two expressions are <strong>logically equivalent</strong>, written with the symbol ≡, when they have the same truth value for every possible assignment of their variables. A truth table proves it: if the output columns match in every row, the expressions are equivalent.</p>
+<h2>Why care?</h2>
+<ul>
+<li><strong>Refactoring:</strong> <code>!(isEmpty || isHidden)</code> may be clearer written another way, but only equivalent rewrites keep behaviour unchanged.</li>
+<li><strong>Performance and safety:</strong> a simpler condition means fewer checks and fewer places for bugs.</li>
+<li><strong>Tools:</strong> compilers and query planners apply these laws automatically.</li>
+</ul>
+<h2>The laws you will use</h2>
+<ul>
+<li><strong>De Morgan:</strong> ¬(P ∧ Q) ≡ ¬P ∨ ¬Q and ¬(P ∨ Q) ≡ ¬P ∧ ¬Q</li>
+<li><strong>Double negation:</strong> ¬¬P ≡ P</li>
+<li><strong>Implication:</strong> P → Q ≡ ¬P ∨ Q</li>
+<li><strong>Distributive:</strong> P ∧ (Q ∨ R) ≡ (P ∧ Q) ∨ (P ∧ R)</li>
+<li><strong>Complement:</strong> P ∨ ¬P ≡ T and P ∧ ¬P ≡ F</li>
+<li><strong>Identity:</strong> P ∧ T ≡ P and P ∨ F ≡ P</li>
+</ul>
+<blockquote>Key idea: equivalent means the same output on every row. That is what makes a rewrite safe.</blockquote>
+<p>The rest of this module practices these laws one at a time. Start by looking closely at the truth pattern of a negated AND.</p>

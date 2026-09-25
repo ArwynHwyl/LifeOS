@@ -1,0 +1,15 @@
+<p>Two exam classes can both have an average of 70, yet in one class everyone scored close to 70 and in the other the marks ranged from 30 to 100. The mean alone cannot tell them apart. We need a measure of <strong>spread</strong>.</p>
+<figure><img data-seed-image="prob-spread.png" alt="Two bell curves with the same mean where one has a small standard deviation and the other a large one."><figcaption>Same mean, different spread</figcaption></figure>
+<h2>Variance and standard deviation</h2>
+<p>The <strong>variance</strong> is the expected squared distance from the mean, and the <strong>standard deviation</strong> is its square root, which brings the units back to normal:</p>
+<pre>Var(X) = Σ (x − μ)² · P(x)  =  E(X²) − μ²
+σ = √Var(X)</pre>
+<p>Small σ means values cluster near the mean. Large σ means they are spread out.</p>
+<h2>Worked example: a fair die</h2>
+<p>We found μ = 3.5. Then E(X²) = (1 + 4 + 9 + 16 + 25 + 36)/6 = 91/6 ≈ 15.17, so:</p>
+<pre>Var(X) = 91/6 − 3.5² = 15.17 − 12.25 ≈ 2.92
+σ = √2.92 ≈ 1.71</pre>
+<h2>Uniform distributions</h2>
+<p>In a <strong>discrete uniform distribution</strong> all n outcomes are equally likely, so each has probability 1/n. The die is an example with n = 6. For a random whole number from 1 to n, the mean is (n + 1)/2 and the variance is (n² − 1)/12.</p>
+<p>There is also a <strong>continuous uniform distribution</strong> in which every value between a and b is equally likely, such as the arrival time of a bus that comes at a random moment within an interval. Its mean is (a + b)/2.</p>
+<blockquote>Key idea: the mean tells you where the data is centred, and the standard deviation tells you how far it typically strays.</blockquote>

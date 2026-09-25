@@ -260,8 +260,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
               </div>
               <div>
                 <p class="font-display font-bold text-[24px] leading-none text-lm-ink m-0">Not pass</p>
-                <p class="text-[12px] text-lm-ink-2 mt-1 m-0">will show again at end ·
-                  <span class="font-mono">[1] or ←</span>
+                <p class="text-[12px] text-lm-ink-2 mt-1 m-0">will show again at the end of the round
                 </p>
               </div>
             </button>
@@ -277,8 +276,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
               </div>
               <div>
                 <p class="font-display font-bold text-[24px] leading-none text-lm-ink m-0">Pass</p>
-                <p class="text-[12px] text-lm-ink-2 mt-1 m-0">continue to next card ·
-                  <span class="font-mono">[2] or →</span>
+                <p class="text-[12px] text-lm-ink-2 mt-1 m-0">continue to next card
                 </p>
               </div>
             </button>

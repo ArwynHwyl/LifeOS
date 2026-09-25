@@ -45,6 +45,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/reset-password",
                                 "/api/v1/health"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/seed-images/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

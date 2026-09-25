@@ -24,7 +24,7 @@ const progressPercent = computed(() => (totalCards.value === 0 ? 0 : (cardIndex.
 const streak = computed(() => gamificationStore.profile?.currentStreak ?? 0)
 
 const recallButtons: { label: string; sub: string; next: string; key: string; bgClass: string; outcome: SrsOutcome }[] = [
-  { label: 'Again', sub: 'forgot', next: '< 1 min', key: '1', bgClass: 'bg-lm-red-soft', outcome: 'AGAIN' },
+  { label: 'Again', sub: 'forgot', next: '1 min', key: '1', bgClass: 'bg-lm-red-soft', outcome: 'AGAIN' },
   { label: 'Hard', sub: 'barely', next: '10 min', key: '2', bgClass: 'bg-lm-yellow-soft', outcome: 'HARD' },
   { label: 'Good', sub: 'solid', next: '1 day', key: '3', bgClass: 'bg-lm-green-soft', outcome: 'GOOD' },
   { label: 'Easy', sub: 'instant', next: '4 days', key: '4', bgClass: 'bg-lm-blue-soft', outcome: 'EASY' },
@@ -164,8 +164,8 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
           >
             <span class="font-display font-bold text-[22px] tracking-tight text-lm-ink">{{ b.label }}</span>
             <span class="text-[13px] text-lm-ink-2 mt-0.5">{{ b.sub }}</span>
-            <span class="font-mono text-[10px] text-lm-ink-3 mt-1.5">NEXT: {{ b.next }}</span>
-            <span class="font-mono text-[9px] text-lm-ink-3 mt-0.5">PRESS [{{ b.key }}]</span>
+            <span class="font-mono text-[10px] text-lm-ink-3 mt-1.5">NEXT RECALL: {{ b.next }}</span>
+            <span class="font-mono text-[9px] text-lm-ink-3 mt-0.5">Click or Press [{{ b.key }}]</span>
           </button>
         </div>
       </div>

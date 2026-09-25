@@ -1,0 +1,21 @@
+<p>How much do two vectors point the same way? A single number can answer that: the <strong>dot product</strong> (also called the scalar product). It is the basis of everything from checking perpendicular lines to ranking search results by similarity.</p>
+<figure><img data-seed-image="vector-dot.png" alt="Three pairs of vectors with angles 50, 90 and 130 degrees showing positive, zero and negative dot products."><figcaption>The sign of the dot product tells you how the vectors align</figcaption></figure>
+<h2>Two equivalent formulas</h2>
+<p>With components, multiply matching components and add:</p>
+<pre>a · b = a₁b₁ + a₂b₂ + a₃b₃</pre>
+<p>With geometry, use the angle θ between the vectors:</p>
+<pre>a · b = |a| |b| cos θ</pre>
+<p>Both give the same number. The first is easier to compute, the second explains what the number means.</p>
+<h2>Worked example</h2>
+<p>For <strong>a</strong> = ⟨2, 3⟩ and <strong>b</strong> = ⟨4, −1⟩:</p>
+<pre>a · b = 2×4 + 3×(−1) = 8 − 3 = 5</pre>
+<h2>What the sign tells you</h2>
+<ul>
+<li><strong>Positive:</strong> the vectors point in broadly the same direction (angle below 90°).</li>
+<li><strong>Zero:</strong> the vectors are <strong>perpendicular</strong> (angle exactly 90°).</li>
+<li><strong>Negative:</strong> the vectors point in broadly opposite directions (angle above 90°).</li>
+</ul>
+<h2>Finding an angle</h2>
+<p>Rearranging the geometric formula gives <code>cos θ = (a · b) / (|a| |b|)</code>. That is how software measures the angle between two directions.</p>
+<blockquote>Key idea: a dot product of zero is the test for perpendicular vectors.</blockquote>
+<p>Note that the answer is a plain number, not a vector, and that a · b = b · a.</p>

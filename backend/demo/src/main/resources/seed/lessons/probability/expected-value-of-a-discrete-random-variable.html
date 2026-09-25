@@ -1,0 +1,20 @@
+<p>If you played a game a thousand times, how much would you win on average per game? The answer is called the <strong>expected value</strong>. It is the long-run average, and it is how casinos, insurers, and product teams decide whether something is worth doing.</p>
+<figure><img data-seed-image="prob-expected.png" alt="Bar chart of a fair die balanced at 3.5, with the expected value calculation and a ticket game example."><figcaption>The mean is the balance point of the distribution</figcaption></figure>
+<h2>The formula</h2>
+<p>Multiply each value by its probability, then add:</p>
+<pre>E(X) = Σ x · P(x) = x₁P(x₁) + x₂P(x₂) + …</pre>
+<p>The result is often written μ (the Greek letter mu), the <strong>mean</strong> of the distribution.</p>
+<h2>Example 1: a fair die</h2>
+<pre>E(X) = 1(1/6) + 2(1/6) + 3(1/6) + 4(1/6) + 5(1/6) + 6(1/6)
+     = 21/6 = 3.5</pre>
+<p>You can never roll 3.5, but over many rolls the average approaches 3.5. The expected value need not be a possible outcome.</p>
+<h2>Example 2: a game</h2>
+<p>A ticket costs 20 baht. You win 100 baht with probability 0.1 and nothing otherwise. The net result X is +80 with probability 0.1 and −20 with probability 0.9.</p>
+<pre>E(X) = 80(0.1) + (−20)(0.9) = 8 − 18 = −10</pre>
+<p>On average you lose 10 baht per play. A game is <strong>fair</strong> when E(X) = 0.</p>
+<h2>Handy rules</h2>
+<ul>
+<li>E(aX + b) = a·E(X) + b. Scaling and shifting the values scales and shifts the mean the same way.</li>
+<li>E(X + Y) = E(X) + E(Y), even if X and Y are dependent.</li>
+</ul>
+<blockquote>Key idea: the expected value is a probability-weighted average, the balance point of the distribution.</blockquote>

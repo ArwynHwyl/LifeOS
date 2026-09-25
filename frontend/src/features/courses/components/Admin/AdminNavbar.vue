@@ -61,12 +61,12 @@ function logout() {
 
     <div
       class="relative z-10 flex h-[72px] shrink-0 items-center overflow-hidden"
-      :class="expanded ? '-gap-1 px-5' : 'justify-center px-0'"
+      :class="expanded ? 'gap-2.5 px-5' : 'justify-center px-0'"
     >
       <img
-        src="@/assets/Logo.png"
+        src="/brand/lifeos-logo.svg"
         alt="LifeOS"
-        :class="expanded ? 'h-24 w-auto' : 'h-24 w-24 object-contain'"
+        class="h-9 w-9 shrink-0"
       />
       <span
         v-if="expanded"

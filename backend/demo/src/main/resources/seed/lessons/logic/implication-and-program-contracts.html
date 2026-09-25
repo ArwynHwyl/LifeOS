@@ -1,0 +1,20 @@
+<p>Many requirements are written as promises: “<em>if</em> the user is an admin, <em>then</em> they may delete the record.” Logic captures this pattern with the <strong>implication</strong> P → Q, read “P implies Q” or “if P then Q”.</p>
+<figure><img data-seed-image="logic-implication.png" alt="Truth table for P implies Q next to a shipping promise example, with the broken-promise row highlighted."><figcaption>An implication is a promise: only a broken promise makes it false</figcaption></figure>
+<h2>The truth table of P → Q</h2>
+<pre>P  Q | P → Q
+T  T |   T
+T  F |   F
+F  T |   T
+F  F |   T</pre>
+<p>The implication is false in exactly <strong>one</strong> row: the premise P is true but the conclusion Q is false. That is a broken promise. In every other row the promise was either kept, or it was never triggered.</p>
+<h2>Why “false premise” gives true</h2>
+<p>If P is false the promise says nothing about Q, so it cannot be broken. Logicians call this <strong>vacuous truth</strong>. A contract “if it rains, the picnic is cancelled” is not violated on a sunny day, whatever happens to the picnic.</p>
+<h2>Contracts in software</h2>
+<ul>
+<li>A <strong>precondition</strong> is the premise a function assumes.</li>
+<li>A <strong>postcondition</strong> is the conclusion the function guarantees.</li>
+<li>A <strong>guard clause</strong> checks the premise early and exits, so the rest of the function can rely on it.</li>
+</ul>
+<h3>Related statements</h3>
+<p>From P → Q we can form the <em>converse</em> Q → P and the <em>contrapositive</em> ¬Q → ¬P. The converse is a different claim. The contrapositive says the same thing as the original and is often easier to test.</p>
+<blockquote>Key idea: an implication fails only when the premise is true and the conclusion is false.</blockquote>

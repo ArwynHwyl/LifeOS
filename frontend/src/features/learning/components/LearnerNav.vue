@@ -78,8 +78,8 @@ function logout() {
   <header class="learner-nav h-[72px] shrink-0 flex items-center gap-3.5 px-6 bg-lm-surface border-b-2 border-lm-line relative z-10">
 
     <!-- Logo -->
-    <div class="learner-brand flex items-center -gap-1">
-      <img src="@/assets/Logo.png" alt="LifeOS" class="h-24" />
+    <div class="learner-brand flex items-center gap-2.5">
+      <img src="/brand/lifeos-logo.svg" alt="LifeOS" class="h-9 w-9 shrink-0" />
       <span class="font-display text-[20px] font-bold tracking-tight text-lm-ink">LifeOS</span>
     </div>
 
@@ -183,7 +183,7 @@ function logout() {
 <style scoped>
 @media(max-width:1100px) {
   .learner-nav { height: auto; min-height: 112px; flex-wrap: wrap; gap: 8px; padding: 8px 16px; }
-  .learner-brand img { height: 48px; }
+  .learner-brand img { height: 32px; width: 32px; }
   .learner-tabs { order: 10; width: 100%; margin: 0; justify-content: space-between; border: 1px solid #dedbd0; border-radius: 10px; }
   .learner-tabs button { flex: 1; justify-content: center; padding: 8px 6px; font-size: 12px; border-radius: 7px; }
 }

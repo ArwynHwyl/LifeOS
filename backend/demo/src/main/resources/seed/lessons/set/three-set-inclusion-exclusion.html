@@ -1,0 +1,17 @@
+<p>With three sets, the same idea applies but the overlaps get richer: three pairwise overlaps and one region in the very middle where all three circles meet. Counting carefully requires the <strong>inclusion-exclusion principle</strong>.</p>
+<h2>Why simple addition fails</h2>
+<p>Add n(A) + n(B) + n(C). Members in exactly two sets are counted twice, and members in all three are counted three times. We fix this in two moves:</p>
+<ol>
+<li><strong>Exclude</strong> the pairwise overlaps: subtract n(A ∩ B), n(A ∩ C), n(B ∩ C). But now the three-way middle was subtracted three times, which removes it entirely.</li>
+<li><strong>Include</strong> the three-way region again by adding n(A ∩ B ∩ C) back once.</li>
+</ol>
+<h2>The formula</h2>
+<p>The core formula is <code>n(A ∪ B ∪ C) = n(A) + n(B) + n(C) − n(A ∩ B) − n(A ∩ C) − n(B ∩ C) + n(A ∩ B ∩ C)</code>.</p>
+<h2>Example with the default values</h2>
+<p>Let n(U) = 60, n(A) = 24, n(B) = 22, n(C) = 18, n(A ∩ B) = 8, n(A ∩ C) = 6, n(B ∩ C) = 5, and n(A ∩ B ∩ C) = 2.</p>
+<pre>union   = 24 + 22 + 18 − 8 − 6 − 5 + 2 = 47
+outside = 60 − 47 = 13
+A only  = 24 − 8 − 6 + 2 = 12</pre>
+<p>The pattern for “only” regions: subtract both pairwise overlaps that touch the set, then add the middle back.</p>
+<blockquote>Key idea: add, subtract pairs, add the triple. Signs alternate.</blockquote>
+<p>Use the explorer to choose a region and read its calculation, then try changing the numbers.</p>

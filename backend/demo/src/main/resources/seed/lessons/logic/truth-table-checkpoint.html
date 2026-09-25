@@ -1,0 +1,22 @@
+<p>A truth table lists every possible input combination and the output for each. With three inputs there are 2 × 2 × 2 = 8 rows, and a table is the most reliable way to be sure a condition behaves as intended.</p>
+<h2>The full table</h2>
+<p>Here is the table for <code>(P ∧ Q) ∨ ¬R</code>, with the two branches shown in their own columns.</p>
+<pre>P  Q  R | P ∧ Q | ¬R | (P ∧ Q) ∨ ¬R
+T  T  T |   T   | F  |      T
+T  T  F |   T   | T  |      T
+T  F  T |   F   | F  |      F
+T  F  F |   F   | T  |      T
+F  T  T |   F   | F  |      F
+F  T  F |   F   | T  |      T
+F  F  T |   F   | F  |      F
+F  F  F |   F   | T  |      T</pre>
+<h2>How to read it</h2>
+<p>The output is false in exactly three rows: the ones where R is true and P ∧ Q is false. In every one of those rows both branches of the OR are false, which is the only way an OR can fail.</p>
+<h2>Building tables yourself</h2>
+<ul>
+<li>List rows in a fixed order (all T first, then count down) so you never skip or repeat one.</li>
+<li>Add a column for each sub-expression rather than jumping to the answer.</li>
+<li>Check the row count: n inputs always give 2ⁿ rows.</li>
+</ul>
+<blockquote>Key idea: a compound expression is false only for the rows where every branch that could make it true is false.</blockquote>
+<p>In the checkpoint, test each candidate assignment against the table. Three of the four candidates make the expression true, so look for the row with a false output.</p>

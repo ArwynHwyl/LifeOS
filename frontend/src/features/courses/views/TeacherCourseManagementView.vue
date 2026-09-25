@@ -67,18 +67,6 @@ function getErrorMessage(error: unknown, fallback: string) {
           <span class="inline-flex items-center gap-1.5 rounded-full border-2 border-lm-line bg-lm-surface px-2.5 py-1 font-mono text-[11px] font-medium text-lm-ink shadow-stamp-sm">
             <span class="font-bold">{{ stats.total }}</span> total
           </span>
-          <span class="inline-flex items-center gap-1.5 rounded-full border-2 border-lm-line bg-lm-green-soft px-2.5 py-1 font-mono text-[11px] font-semibold text-lm-green shadow-stamp-sm">
-            <span class="h-1.5 w-1.5 rounded-full bg-lm-green" />
-            {{ stats.published }} published
-          </span>
-          <span class="inline-flex items-center gap-1.5 rounded-full border-2 border-lm-line bg-lm-yellow px-2.5 py-1 font-mono text-[11px] font-semibold text-lm-ink shadow-stamp-sm">
-            <span class="h-1.5 w-1.5 rounded-full bg-lm-ink" />
-            {{ stats.pending }} pending
-          </span>
-          <span class="inline-flex items-center gap-1.5 rounded-full border-2 border-lm-line bg-lm-red-soft px-2.5 py-1 font-mono text-[11px] font-semibold text-lm-red shadow-stamp-sm">
-            <span class="h-1.5 w-1.5 rounded-full bg-lm-red" />
-            {{ stats.revision }} revision
-          </span>
         </div>
 
         <!-- Controls -->

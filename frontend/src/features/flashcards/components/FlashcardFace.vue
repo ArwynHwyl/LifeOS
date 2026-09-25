@@ -41,7 +41,7 @@ function toggleFlip() {
           style="backface-visibility: hidden"
         >
           <div class="absolute inset-0 bg-dot-grid opacity-35 pointer-events-none" />
-          <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3 relative">FRONT · CLICK TO FLIP</span>
+          <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3 relative">FRONT SIDE</span>
 
           <div class="flex-1 flex flex-col items-center justify-center gap-4 text-center relative">
             <h2 class="font-display text-[40px] font-bold tracking-tight text-lm-ink leading-tight m-0">{{ front }}</h2>
@@ -65,7 +65,7 @@ function toggleFlip() {
           style="backface-visibility: hidden; transform: rotateY(180deg)"
         >
           <div class="flex items-center justify-between shrink-0">
-            <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3">BACK · ANSWER</span>
+            <span class="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-lm-ink-3">BACK SIDE</span>
             <span v-if="label" class="text-[13px] text-lm-ink-2">{{ label }}</span>
           </div>
 
