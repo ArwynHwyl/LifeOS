@@ -17,15 +17,15 @@ function select(optionId: number) {
 </script>
 
 <template>
-  <div class="bg-lm-surface border-2 border-lm-line rounded-[18px] shadow-stamp-md p-6">
+  <fieldset class="question-card" :aria-labelledby="`question-label-${question.id}`">
     <div class="flex items-start gap-3 mb-4">
       <span class="shrink-0 flex items-center justify-center w-7 h-7 rounded-full bg-lm-bg-soft border-2 border-lm-line font-mono text-[12px] font-semibold text-lm-ink">
         {{ index }}
       </span>
-      <p class="font-display text-[19px] font-bold text-lm-ink leading-snug m-0">{{ question.questionText }}</p>
+      <h2 :id="`question-label-${question.id}`" class="font-display text-[19px] font-bold text-lm-ink leading-snug m-0">{{ question.questionText }}</h2>
     </div>
 
-    <div class="flex flex-col gap-2.5 pl-10">
+    <div class="flex flex-col gap-2.5 sm:pl-10">
       <label
         v-for="option in question.options"
         :key="option.id"
@@ -55,5 +55,13 @@ function select(optionId: number) {
         <span class="text-[14px] text-lm-ink">{{ option.optionText }}</span>
       </label>
     </div>
-  </div>
+  </fieldset>
 </template>
+
+<style scoped>
+.question-card { min-width: 0; padding: 26px; background: #fffefa; border: 1px solid #dedbd0; border-radius: 16px; scroll-margin-top: 24px; }
+.question-card label { border-width: 1px; border-radius: 10px; min-height: 48px; }
+.question-card label:has(input:focus-visible) { outline: 3px solid #668255; outline-offset: 3px; }
+.question-card label:has(input:checked) { background: #edf2e4; border-color: #667d4e; }
+@media(max-width:640px) { .question-card { padding: 20px 16px; } }
+</style>

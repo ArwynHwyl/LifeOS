@@ -3,6 +3,8 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import InteractiveChallengeShell from '@/features/courses/components/interactive/InteractiveChallengeShell.vue'
 import InteractivePreview from '@/features/courses/components/interactive/InteractivePreview.vue'
+import SubtopicReward from '@/features/learning/components/SubtopicReward.vue'
+import type { GamificationRewardDto } from '@/features/gamified/services/gamification'
 import LearningAssistantPanel from '@/features/learning/components/LearningAssistantPanel.vue'
 import { parseInteractiveConfig } from '@/features/courses/types/interactive'
 import {
@@ -16,7 +18,7 @@ import {
   type PublishedSubTopicDto,
 } from '@/features/learning/services/learnerCourses'
 import { useGamificationStore } from '@/features/gamified/stores/gamification'
-import toraMascotUrl from '@/assets/tora-mascot.svg'
+import ToraMascot from '@/components/tora/ToraMascot.vue'
 
 const gamificationStore = useGamificationStore()
 
@@ -29,10 +31,28 @@ const loading = ref(true)
 const error = ref('')
 const interactiveServerFeedback = ref('')
 const canvasEl = ref<HTMLElement | null>(null)
-const showMasteryFlash = ref(false)
-const masteryExpAwarded = ref(0)
-const masteryLeveledUp = ref(false)
-const masteryNewLevel = ref(0)
+const completionQueue = ref<Array<{
+  id: number
+  title: string
+  completed: number
+  total: number
+  nextId?: number
+  nextTitle?: string
+  reward?: GamificationRewardDto
+}>>([])
+const completion = computed(() => completionQueue.value[0])
+const pendingCompletions = ref(new Set<number>())
+let disposed = false
+
+function dismissCompletion(advance = false) {
+  const finished = completionQueue.value.shift()
+  if (!finished) return
+  gamificationStore.handleReward(finished.reward)
+  if (advance && finished.nextId != null) {
+    const next = allSubTopics.value.find(topic => topic.id === finished.nextId)
+    if (next) selectSubTopic(next)
+  }
+}
 const contentTransitionDir = ref<'next' | 'prev'>('next')
 const assistantOpen = ref(false)
 const assistantSelectedText = ref('')
@@ -52,10 +72,8 @@ const selectedIndex = computed(() => {
   if (!current) return 0
   return Math.max(0, allSubTopics.value.findIndex((subTopic) => subTopic.id === current.id))
 })
-const progressPercent = computed(() => {
-  if (!allSubTopics.value.length) return 0
-  return ((selectedIndex.value + 1) / allSubTopics.value.length) * 100
-})
+const completedCount = computed(() => allSubTopics.value.filter(topic => topic.interactiveProgress?.status === 'MASTERED').length)
+const progressPercent = computed(() => allSubTopics.value.length ? completedCount.value / allSubTopics.value.length * 100 : 0)
 const interactiveConfig = computed(() => {
   const current = selectedSubTopic.value
   if (!current) return null
@@ -84,14 +102,6 @@ function toggleSidebar() {
   isSidebarOpen.value = !isSidebarOpen.value
 }
 
-const currentModuleSubTopics = computed(() => {
-  return selectedModule.value?.subTopics ?? []
-})
-const currentSubTopicIndexInModule = computed(() => {
-  const current = selectedSubTopic.value
-  if (!current) return 0
-  return Math.max(0, currentModuleSubTopics.value.findIndex((subTopic) => subTopic.id === current.id))
-})
 const currentProgressStatus = computed<InteractiveProgressStatus>(() => selectedSubTopic.value?.interactiveProgress?.status ?? 'NOT_STARTED')
 const currentChallengeObjective = computed(() => {
   const current = selectedSubTopic.value
@@ -129,15 +139,18 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown)
+  disposed = true
+  completionQueue.value.forEach(item => gamificationStore.handleReward(item.reward))
+  completionQueue.value = []
 })
 
 /* ── Clever #2: Keyboard navigation ── */
 function handleKeydown(e: KeyboardEvent) {
-  if ((e.target as HTMLElement)?.closest('input, textarea, [contenteditable]')) return
-  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+  if (completion.value || assistantOpen.value || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || (e.target as HTMLElement)?.closest('input, textarea, select, button, a, [contenteditable], [role=slider]')) return
+  if (e.key === 'ArrowRight') {
     e.preventDefault()
     goToOffset(1)
-  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+  } else if (e.key === 'ArrowLeft') {
     e.preventDefault()
     goToOffset(-1)
   }
@@ -224,66 +237,56 @@ function progressMarkerClass(subTopic: PublishedSubTopicDto) {
   return 'progress-marker progress-marker--not-started'
 }
 
-function setSubTopicProgress(
-  subTopicId: number,
-  progress: InteractiveProgressDto,
-  options: { skipCelebration?: boolean; justMastered?: boolean } = {},
-) {
+function setSubTopicProgress(subTopicId: number, progress: InteractiveProgressDto) {
+  if (disposed) {
+    gamificationStore.handleReward(progress.reward)
+    return
+  }
   if (!course.value) return
-  /* ── Clever #4: Mastery celebration flash ── */
-  if (!options.skipCelebration && progress.status === 'MASTERED') {
-    const prevStatus = course.value.modules
-      .flatMap((m) => m.subTopics)
-      .find((s) => s.id === subTopicId)
-      ?.interactiveProgress?.status
-    const justMastered = options.justMastered ?? prevStatus !== 'MASTERED'
-    if (justMastered) {
-      masteryExpAwarded.value = progress.reward?.expAwarded ?? 0
-      masteryLeveledUp.value = progress.reward?.leveledUp ?? false
-      masteryNewLevel.value = progress.reward?.newLevel ?? 0
-      showMasteryFlash.value = true
-      setTimeout(() => { showMasteryFlash.value = false }, 1600)
+  const topic = allSubTopics.value.find(item => item.id === subTopicId)
+  const justMastered = progress.status === 'MASTERED' && topic?.interactiveProgress?.status !== 'MASTERED'
+  // An earlier in-flight "started" response must not undo a completed lesson.
+  if (topic?.interactiveProgress?.status !== 'MASTERED' || progress.status === 'MASTERED') {
+    course.value = {
+      ...course.value,
+      modules: course.value.modules.map(module => ({
+        ...module,
+        subTopics: module.subTopics.map(item => item.id === subTopicId ? { ...item, interactiveProgress: progress } : item),
+      })),
     }
   }
-  gamificationStore.handleReward(progress.reward)
-  course.value = {
-    ...course.value,
-    modules: course.value.modules.map((module) => ({
-      ...module,
-      subTopics: module.subTopics.map((subTopic) => (
-        subTopic.id === subTopicId ? { ...subTopic, interactiveProgress: progress } : subTopic
-      )),
-    })),
+  if (justMastered && topic) {
+    const next = allSubTopics.value[allSubTopics.value.findIndex(item => item.id === subTopicId) + 1]
+    completionQueue.value.push({
+      id: subTopicId,
+      title: topic.title,
+      completed: completedCount.value,
+      total: allSubTopics.value.length,
+      nextId: next?.id,
+      nextTitle: next?.title,
+      reward: progress.reward,
+    })
+    // Keep the header current; show level-up and achievements after this reward.
+    if (!progress.reward?.leveledUp) void gamificationStore.fetchProfile()
+  } else {
+    gamificationStore.handleReward(progress.reward)
   }
-}
-
-function optimisticProgress(status: Exclude<InteractiveProgressStatus, 'NOT_STARTED'>) {
-  const current = selectedSubTopic.value
-  if (!current) return null
-  const existing = current.interactiveProgress
-  if (existing?.status === 'MASTERED' && status === 'TRIED') return existing
-  const next: InteractiveProgressDto = {
-    subTopicId: current.id,
-    status,
-    attemptCount: (existing?.attemptCount ?? 0) + 1,
-    masteredAt: status === 'MASTERED' ? (existing?.masteredAt ?? new Date().toISOString()) : (existing?.masteredAt ?? null),
-    updatedAt: new Date().toISOString(),
-  }
-  setSubTopicProgress(current.id, next, { skipCelebration: true })
-  return next
 }
 
 async function persistInteractiveProgress(status: Exclude<InteractiveProgressStatus, 'NOT_STARTED'>) {
   const current = selectedSubTopic.value
   if (!current) return
-  if (current.interactiveProgress?.status === 'MASTERED' && status === 'TRIED') return
-  const wasAlreadyMastered = current.interactiveProgress?.status === 'MASTERED'
-  optimisticProgress(status)
+  if (current.interactiveProgress?.status === 'MASTERED') return
+  if (status === 'MASTERED' && pendingCompletions.value.has(current.id)) return
+  if (status === 'MASTERED') pendingCompletions.value.add(current.id)
+  error.value = ''
   try {
     const saved = await updateInteractiveProgress(String(route.params.courseId), current.id, status)
-    setSubTopicProgress(current.id, saved, { justMastered: !wasAlreadyMastered })
+    setSubTopicProgress(current.id, saved)
   } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Unable to save challenge progress.'
+    error.value = err instanceof Error ? err.message : 'Unable to save challenge progress. Please try again.'
+  } finally {
+    if (status === 'MASTERED') pendingCompletions.value.delete(current.id)
   }
 }
 
@@ -357,13 +360,13 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
 <template>
   <main class="lesson-player">
     <!-- Collapsible Sidebar -->
-    <aside class="lesson-sidebar" :class="{ 'lesson-sidebar--open': isSidebarOpen }">
+    <aside id="course-outline" class="lesson-sidebar" :class="{ 'lesson-sidebar--open': isSidebarOpen }">
       <div class="lesson-sidebar__header">
-        <span>Course Outline</span>
+        <div class="outline-heading"><span>Course Outline</span><button type="button" class="outline-close" aria-label="Close course outline" @click="isSidebarOpen = false">×</button></div>
         <h1>{{ course?.title ?? 'Lesson' }}</h1>
         <div class="lesson-progress">
           <div><span :style="{ width: `${progressPercent}%` }" /></div>
-          <strong>{{ selectedIndex + 1 }}/{{ Math.max(allSubTopics.length, 1) }}</strong>
+          <strong>{{ completedCount }}/{{ allSubTopics.length }} completed</strong>
         </div>
       </div>
 
@@ -381,6 +384,7 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
             type="button"
             class="lesson-topic"
             :class="{ 'lesson-topic--active': selectedSubTopic?.id === subTopic.id }"
+            :aria-current="selectedSubTopic?.id === subTopic.id ? 'step' : undefined"
             @click="selectSubTopic(subTopic); isSidebarOpen = false"
           >
             <span :class="progressMarkerClass(subTopic)">
@@ -399,11 +403,11 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
       <!-- Top level headers outside the card -->
       <div class="lesson-top-bar" @click.stop>
         <div class="lesson-top-left">
-          <button type="button" class="sidebar-toggle-btn" @click="toggleSidebar" aria-label="Toggle Outline">
+          <button type="button" class="sidebar-toggle-btn" @click="toggleSidebar" aria-label="Toggle course outline" :aria-expanded="isSidebarOpen" aria-controls="course-outline">
             <svg v-if="isSidebarOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="toggle-icon"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="toggle-icon"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
           </button>
-          <span class="reading-time">
+          <span class="outline-label">Course outline</span><span class="reading-time">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" class="clock-icon"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.5V8l2.5 1.5"/></svg>
             {{ estimatedReadTime }} MIN READ
           </span>
@@ -415,40 +419,19 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
         </button>
       </div>
 
-      <!-- Floating Prev/Next Buttons outside the card -->
-      <button
-        type="button"
-        class="floating-nav-btn floating-nav-btn--prev"
-        :disabled="selectedIndex <= 0"
-        @click.stop="goToOffset(-1)"
-        aria-label="Previous Page"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="nav-arrow-icon"><polyline points="15 18 9 12 15 6"/></svg>
-      </button>
-      <button
-        type="button"
-        class="floating-nav-btn floating-nav-btn--next"
-        :disabled="selectedIndex >= allSubTopics.length - 1"
-        @click.stop="goToOffset(1)"
-        aria-label="Next Page"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="nav-arrow-icon"><polyline points="9 18 15 12 9 6"/></svg>
-      </button>
-
-      <!-- Mastery celebration overlay -->
-      <Transition name="mastery-flash">
-        <div v-if="showMasteryFlash" class="mastery-overlay">
-          <div class="mastery-burst" />
-          <svg class="mastery-check" viewBox="0 0 64 64" fill="none">
-            <circle cx="32" cy="32" r="28" stroke="#245e3e" stroke-width="3" fill="#dff4df" />
-            <polyline points="20 33 28 41 44 25" stroke="#245e3e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-          <div v-if="masteryExpAwarded > 0" class="mastery-exp">
-            <span class="mastery-exp__amount">+{{ masteryExpAwarded }} XP</span>
-            <span v-if="masteryLeveledUp" class="mastery-exp__levelup">LEVEL UP! → {{ masteryNewLevel }}</span>
-          </div>
-        </div>
-      </Transition>
+      <SubtopicReward
+        v-if="completion"
+        :key="completion.id"
+        :title="completion.title"
+        :exp="completion.reward?.expAwarded ?? 0"
+        :completed="completion.completed"
+        :total="completion.total"
+        :next-title="completion.nextTitle"
+        :leveled-up="completion.reward?.leveledUp ?? false"
+        :new-level="completion.reward?.newLevel ?? 0"
+        @close="dismissCompletion()"
+        @next="dismissCompletion(true)"
+      />
 
       <div v-if="loading" class="lesson-state">Loading lesson...</div>
       <div v-else-if="error" class="lesson-state lesson-state--error">{{ error }}</div>
@@ -464,9 +447,9 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
               </div>
             </div>
             <div class="lesson-mascot">
-              <p>{{ mascotPrompt }}</p>
+              <div class="tora-copy"><strong>A little help from Tora</strong><p>{{ mascotPrompt }}</p><button type="button" class="tora-ask" @click="assistantOpen = true">Ask about this lesson ↗</button></div>
               <button class="lesson-mascot__avatar" type="button" aria-label="Ask Tora about this lesson" @click="assistantOpen = true">
-                <img :src="toraMascotUrl" alt="" />
+                <ToraMascot crop="head" :size="38" :track="false" aria-hidden="true" />
               </button>
             </div>
           </header>
@@ -498,12 +481,14 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
               v-if="currentProgressStatus !== 'MASTERED'"
               type="button"
               class="complete-btn complete-btn--uncompleted"
+              :disabled="pendingCompletions.has(selectedSubTopic.id)"
+              :aria-busy="pendingCompletions.has(selectedSubTopic.id)"
               @click="persistInteractiveProgress('MASTERED')"
             >
               <svg class="complete-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
-              Mark as Completed
+              {{ pendingCompletions.has(selectedSubTopic.id) ? 'Saving progress…' : 'Complete & collect reward' }}
             </button>
             <div
               v-else
@@ -516,18 +501,12 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
             </div>
           </div>
 
-          <!-- Pagination Dots inside the card -->
-          <div class="lesson-pagination">
-            <button
-              v-for="(subTopic, idx) in currentModuleSubTopics"
-              :key="subTopic.id"
-              type="button"
-              class="pagination-dot"
-              :class="{ 'pagination-dot--active': currentSubTopicIndexInModule === idx }"
-              @click.stop="selectSubTopic(subTopic)"
-              :aria-label="`Go to step ${idx + 1}`"
-            />
-          </div>
+          <nav class="lesson-footer" aria-label="Lesson navigation">
+            <button type="button" :disabled="selectedIndex <= 0" @click="goToOffset(-1)">← Previous lesson</button>
+            <span>{{ selectedIndex + 1 }} of {{ allSubTopics.length }}</span>
+            <button v-if="selectedIndex < allSubTopics.length - 1" type="button" class="lesson-next" @click="goToOffset(1)">Next lesson →</button>
+            <button v-else type="button" class="lesson-next" @click="router.push('/learn/courses')">Back to courses ↗</button>
+          </nav>
         </article>
       </Transition>
 
@@ -574,7 +553,7 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   min-height: 0;
   overflow: hidden;
   border-top: 2px solid #1a1814;
-  background: #eae5da;
+  background: #f7f5ee;
   color: #1a1814;
 }
 .lesson-sidebar {
@@ -603,7 +582,7 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   padding: 2rem 1.15rem 1.5rem;
 }
 .lesson-sidebar__header span {
-  color: #8f887e;
+  color: #68675d;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 10px;
   font-weight: 900;
@@ -636,7 +615,7 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   transition: width 400ms cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 .lesson-progress strong {
-  color: #8f887e;
+  color: #68675d;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 10px;
   font-weight: 900;
@@ -666,7 +645,7 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   line-height: 1.25;
 }
 .lesson-module__header strong {
-  color: #8f887e;
+  color: #68675d;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 10px;
   font-weight: 900;
@@ -682,7 +661,7 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   border-left: 4px solid transparent;
   background: transparent;
   padding: 0.45rem 1rem 0.45rem 2.4rem;
-  color: #8f887e;
+  color: #68675d;
   text-align: left;
   font-size: 0.8rem;
   font-weight: 850;
@@ -757,7 +736,7 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   position: relative;
   min-height: 0;
   overflow: auto;
-  background: #eae5da;
+  background: #f7f5ee;
 }
 .lesson-canvas__bg {
   position: absolute;
@@ -844,69 +823,30 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   width: 12px;
   height: 12px;
 }
-.floating-nav-btn {
-  position: fixed;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 40;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 3.5rem;
-  height: 3.5rem;
-  border: 2px solid #1d1b17;
-  border-radius: 50%;
-  background: #fffdf8;
-  color: #1d1b17;
-  cursor: pointer;
-  box-shadow: 3px 3px 0 #1d1b17;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
-  opacity: 0.7;
-}
-.floating-nav-btn:hover:not(:disabled) {
-  transform: translateY(-50%) translateY(-2px);
-  box-shadow: 4px 4px 0 #1d1b17;
-  opacity: 1;
-}
-.floating-nav-btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.15;
-  box-shadow: none;
-}
-.floating-nav-btn--prev {
-  left: 2rem;
-}
-.floating-nav-btn--next {
-  right: 2rem;
-}
-.nav-arrow-icon {
-  width: 1.4rem;
-  height: 1.4rem;
-}
 .lesson-content {
   position: relative;
   z-index: 1;
   display: grid;
   gap: 1.5rem;
-  width: min(calc(100% - 12rem), 1200px);
-  margin: 6.5rem auto 4rem;
-  border: 2.5px solid #1d1b17;
-  border-radius: 32px;
+  width: min(calc(100% - 4rem), 920px);
+  margin: 2rem auto 3rem;
+  border: 1px solid #e1ded3;
+  border-radius: 20px;
   background: #fffdf8;
-  padding: 3.5rem;
-  box-shadow: 4px 4px 0px 0px #1d1b17;
+  padding: 3rem;
+  box-shadow: 0 8px 32px #302a1706;
 }
 
 .lesson-content__header {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(270px, 420px);
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
   gap: 2rem;
-  margin-bottom: 2rem;
+  margin-bottom: 0.5rem;
 }
 .lesson-hero-copy span {
   display: block;
-  color: #8f887e;
+  color: #68675d;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 11px;
   font-weight: 900;
@@ -914,22 +854,8 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   text-transform: uppercase;
   margin-bottom: 0.5rem;
 }
-.lesson-hero-title-wrap {
-  display: inline-block;
-  background: #ffd333;
-  border: 2px solid #1d1b17;
-  padding: 0.6rem 1.25rem;
-  border-radius: 12px;
-  margin-bottom: 0.75rem;
-  box-shadow: 2px 2px 0px 0px #1d1b17;
-}
-.lesson-hero-copy h1 {
-  margin: 0;
-  color: #1d1b17;
-  font-size: clamp(2.35rem, 5vw, 4rem);
-  font-weight: 950;
-  line-height: 0.96;
-}
+.lesson-hero-title-wrap { margin: 0; }
+.lesson-hero-copy h1 { margin: 14px 0 0; color: #25291f; font-family: var(--font-display); font-size: clamp(30px, 4vw, 46px); font-weight: 700; letter-spacing: -.035em; line-height: 1.12; }
 .lesson-mascot {
   display: flex;
   align-items: center;
@@ -1005,7 +931,7 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   line-height: 1;
 }
 .progress-marker--not-started {
-  color: #8f887e;
+  color: #68675d;
   background: transparent;
 }
 .progress-marker--tried {
@@ -1019,101 +945,6 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   color: #245e3e;
   font-weight: 900;
 }
-
-/* ── Pagination Dots ── */
-.lesson-pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.6rem;
-  margin-top: 2.5rem;
-  padding-top: 1rem;
-}
-.pagination-dot {
-  display: block;
-  padding: 0;
-  border: 0;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #d4cec6;
-  cursor: pointer;
-  transition: width 0.2s ease, border-radius 0.2s ease, background-color 0.2s ease;
-}
-.pagination-dot:hover {
-  background: #9e9892;
-}
-.pagination-dot--active {
-  width: 24px;
-  border-radius: 4px;
-  background: #1d1b17;
-}
-
-/* ── Mastery celebration overlay ── */
-.mastery-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  display: grid;
-  place-items: center;
-  pointer-events: none;
-}
-.mastery-burst {
-  position: absolute;
-  width: 200px;
-  height: 200px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(223, 244, 223, 0.7) 0%, transparent 70%);
-  animation: burst-expand 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-.mastery-check {
-  width: 64px;
-  height: 64px;
-  animation: check-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-  filter: drop-shadow(0 4px 12px rgba(36, 94, 62, 0.25));
-}
-@keyframes burst-expand {
-  0% { transform: scale(0.3); opacity: 1; }
-  60% { transform: scale(3); opacity: 0.6; }
-  100% { transform: scale(4.5); opacity: 0; }
-}
-@keyframes check-pop {
-  0% { transform: scale(0); opacity: 0; }
-  50% { transform: scale(1.15); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
-}
-.mastery-exp {
-  position: absolute;
-  margin-top: 92px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  animation: exp-rise 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-.mastery-exp__amount {
-  font-weight: 700;
-  font-size: 20px;
-  color: #245e3e;
-  text-shadow: 0 2px 8px rgba(36, 94, 62, 0.2);
-}
-.mastery-exp__levelup {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #b45309;
-}
-@keyframes exp-rise {
-  0% { transform: translateY(8px); opacity: 0; }
-  25% { transform: translateY(0); opacity: 1; }
-  80% { transform: translateY(-4px); opacity: 1; }
-  100% { transform: translateY(-14px); opacity: 0; }
-}
-.mastery-flash-enter-active { transition: opacity 200ms ease; }
-.mastery-flash-leave-active { transition: opacity 600ms ease; }
-.mastery-flash-enter-from { opacity: 0; }
-.mastery-flash-leave-to { opacity: 0; }
 
 /* ── Content transition: slide + fade ── */
 .slide-next-enter-active,
@@ -1164,9 +995,9 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
 :deep(.lesson-body figure) {
   margin: 1.25rem 0;
   color: rgba(29, 27, 23, 0.9);
-  font-family: 'Bricolage Grotesque', sans-serif;
-  font-size: 1.125rem;
-  line-height: 1.6;
+  font-family: var(--font-display);
+  font-size: 1.0625rem;
+  line-height: 1.85;
 }
 :deep(.lesson-body ul),
 :deep(.lesson-body ol) {
@@ -1217,9 +1048,9 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
 @media (max-width: 900px) {
   .lesson-content {
     width: min(calc(100% - 2rem), 640px);
-    margin: 5.2rem auto 6rem;
+    margin: 1rem auto 2rem;
     padding: 2rem;
-    border-radius: 32px;
+    border-radius: 20px;
   }
   .lesson-content__header {
     grid-template-columns: 1fr;
@@ -1243,16 +1074,7 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
     width: 100%;
     height: 100%;
   }
-  .floating-nav-btn {
-    width: 3rem;
-    height: 3rem;
-  }
-  .floating-nav-btn--prev {
-    left: 0.5rem;
-  }
-  .floating-nav-btn--next {
-    right: 0.5rem;
-  }
+
 }
 
 :deep(.material-symbols-outlined) {
@@ -1304,7 +1126,8 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   background: #ffd333;
   color: #1d1b17;
 }
-.complete-btn--uncompleted:hover {
+.complete-btn:disabled { opacity: .6; cursor: wait; }
+.complete-btn--uncompleted:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 4px 4px 0 #1d1b17;
   background: #ffdb58;
@@ -1320,4 +1143,52 @@ function handleInteractiveChecked(payload: { passed: boolean; attempt?: Interact
   width: 1rem;
   height: 1rem;
 }
+
+.outline-heading { display: flex; justify-content: space-between; align-items: center; }
+.outline-close { width: 36px; height: 36px; font-size: 24px; cursor: pointer; }
+@media(min-width:1200px) { .outline-close { display: none; } }
+/* Quiet reading surface, with the outline available alongside the lesson. */
+.lesson-player { border-top: 1px solid #e1ded3; }
+.lesson-canvas__bg { display: none; }
+.lesson-top-bar { position: sticky; top: 0; left: auto; right: auto; z-index: 30; padding: 16px 28px; background: #f7f5eef5; border-bottom: 1px solid #e1ded3; }
+.outline-label { font-size: 13px; font-weight: 650; }
+.sidebar-toggle-btn, .lesson-exit-button { border: 1px solid #d8d6ca; box-shadow: none; border-radius: 9px; }
+.lesson-exit-button { text-transform: none; }
+.lesson-mascot { justify-self: stretch; align-items: center; justify-content: space-between; background: #f1f3e9; border: 1px solid #e0e5d6; border-radius: 12px; padding: 18px 20px; }
+.tora-copy strong { font-size: 12px; color: #475b38; }
+.lesson-mascot p { border: 0; background: none; padding: 6px 0; box-shadow: none; max-width: none; font-size: 13px; font-style: normal; font-weight: 400; line-height: 1.6; }
+.lesson-mascot p::after { display: none; }
+.lesson-mascot__avatar { width: 52px; height: 52px; border: 1px solid #cbd6ba; background: #e5ebd9; box-shadow: none; }
+.tora-ask { font-size: 12px; font-weight: 650; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.lesson-body { min-width: 0; overflow-wrap: anywhere; }
+.lesson-body :deep(table) { display: block; max-width: 100%; overflow-x: auto; }
+.lesson-footer { display: flex; justify-content: space-between; align-items: center; gap: 16px; border-top: 1px solid #e4e2d8; padding-top: 24px; margin-top: 12px; }
+.lesson-footer button { min-height: 44px; padding: 10px 14px; border: 1px solid #dedbd0; border-radius: 9px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.lesson-footer button:disabled { opacity: .4; cursor: default; }
+.lesson-footer .lesson-next { background: #293626; color: #fff; border-color: #293626; }
+.lesson-footer>span { font-size: 11px; white-space: nowrap; color: #68675d; }
+.lesson-topic span:last-child { white-space: normal; line-height: 1.5; }
+.lesson-topic { min-height: 44px; }
+.lesson-topic--active { background: #e9eddc; border-left-color: #536c3e; }
+.lesson-sidebar { visibility: hidden; background: #fbfaf5; border-right: 1px solid #dedbd1; }
+.lesson-sidebar--open { visibility: visible; }
+.lesson-progress { grid-template-columns: 1fr; }
+.lesson-progress strong { font-size: 10px; }
+.lesson-sidebar__header { padding-top: 24px; }
+.lesson-state { padding-top: 40px; }
+.complete-btn { box-shadow: none; border-width: 1px; border-radius: 10px; font-size: 14px; }
+.reading-complete-section { border-top: 1px solid #e4e2d8; margin-top: 16px; }
+button:focus-visible { outline: 3px solid #668255; outline-offset: 3px; }
+@media(min-width:1200px) {
+  .lesson-player { grid-template-columns: 264px minmax(0,1fr); }
+  .lesson-sidebar { position: relative; width: auto; transform: none; visibility: visible; z-index: 20; box-shadow: none; }
+  .sidebar-toggle-btn, .outline-label { display: none; }
+}
+@media(max-width:640px) {
+  .lesson-top-bar { padding: 12px 16px; }.outline-label { display: none; }
+  .lesson-content { width: calc(100% - 24px); padding: 24px 20px; border-radius: 14px; }
+  .lesson-footer { flex-wrap: wrap; gap: 10px; }.lesson-footer>span { order: -1; width: 100%; text-align: center; }
+  .lesson-mascot { padding: 14px; }.lesson-mascot__avatar { width: 44px; height: 44px; }
+}
+@media(prefers-reduced-motion:reduce) { *, *::before, *::after { animation: none!important; transition: none!important; } }
 </style>

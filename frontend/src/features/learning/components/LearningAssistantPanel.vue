@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
-import toraMascotUrl from '@/assets/tora-mascot.svg'
+import ToraMascot from '@/components/tora/ToraMascot.vue'
 import {
   getAssistantConversation,
   getAssistantWeaknesses,
@@ -214,12 +214,12 @@ async function scrollToBottom() {
 
 <template>
   <button v-if="!open" class="tora-launcher" type="button" aria-label="Ask Tora" @click="emit('update:open', true)">
-    <span>Ask Tora</span><img :src="toraMascotUrl" alt="" />
+    <span>Ask Tora</span><ToraMascot crop="head" :size="42" :track="false" aria-hidden="true" />
   </button>
   <Transition name="assistant-panel">
     <aside v-if="open" class="assistant-panel" aria-label="AI learning assistant">
       <header class="assistant-header">
-        <div class="assistant-avatar"><img :src="toraMascotUrl" alt="" /></div>
+        <div class="assistant-avatar"><ToraMascot crop="head" :size="32" :track="false" aria-hidden="true" /></div>
         <div><strong>Tora</strong><span>AI LEARNING COMPANION</span></div>
         <button type="button" aria-label="Close assistant" @click="close">×</button>
       </header>

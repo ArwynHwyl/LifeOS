@@ -9,7 +9,7 @@ defineProps<{
 </script>
 
 <template>
-  <div class="bg-lm-surface border-2 border-lm-line rounded-[18px] shadow-stamp-md p-6">
+  <div class="bg-lm-surface border border-lm-line-soft rounded-[16px] p-4 sm:p-6">
     <div class="flex items-start gap-3 mb-4">
       <span
         :class="[
@@ -19,15 +19,15 @@ defineProps<{
       >
         <LmIcon :name="question.correct ? 'check' : 'close'" :size="14" />
       </span>
-      <p class="font-display text-[19px] font-bold text-lm-ink leading-snug m-0">{{ question.questionText }}</p>
+      <h2 class="font-display text-[19px] font-bold text-lm-ink leading-snug m-0">{{ index }}. {{ question.questionText }}</h2>
     </div>
 
-    <div class="flex flex-col gap-2.5 pl-10">
+    <div class="flex flex-col gap-2.5 sm:pl-10">
       <div
         v-for="option in question.options"
         :key="option.id"
         :class="[
-          'flex items-center gap-3 px-4 py-3 border-2 rounded-[14px]',
+          'flex items-center gap-3 px-4 py-3 border rounded-[10px] flex-wrap',
           option.correct
             ? 'border-lm-green bg-lm-green-soft'
             : option.selected

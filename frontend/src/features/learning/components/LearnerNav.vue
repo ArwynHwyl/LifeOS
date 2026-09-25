@@ -75,19 +75,20 @@ function logout() {
 </script>
 
 <template>
-  <header class="h-[72px] shrink-0 flex items-center gap-3.5 px-6 bg-lm-surface border-b-2 border-lm-line relative z-10">
+  <header class="learner-nav h-[72px] shrink-0 flex items-center gap-3.5 px-6 bg-lm-surface border-b-2 border-lm-line relative z-10">
 
     <!-- Logo -->
-    <div class="flex items-center -gap-1">
+    <div class="learner-brand flex items-center -gap-1">
       <img src="@/assets/Logo.png" alt="LifeOS" class="h-24" />
       <span class="font-display text-[20px] font-bold tracking-tight text-lm-ink">LifeOS</span>
     </div>
 
     <!-- Tabs -->
-    <nav class="flex gap-1 ml-[18px] p-1 bg-lm-bg-soft border-2 border-lm-line rounded-full">
+    <nav aria-label="Main navigation" class="learner-tabs flex gap-1 ml-[18px] p-1 bg-lm-bg-soft border-2 border-lm-line rounded-full">
       <button
         v-for="tab in tabs"
         :key="tab.id"
+        :aria-current="active === tab.id ? 'page' : undefined"
         @click="navigate(tab.id)"
         :class="[
           'flex items-center gap-1.5 px-3.5 py-1.5 text-sm font-semibold rounded-full transition-all duration-200',
@@ -104,7 +105,7 @@ function logout() {
     <div class="flex-1" />
 
     <!-- Level chip -->
-    <div class="flex items-center gap-2 pl-1.5 pr-3 py-[5px] border-2 border-lm-line rounded-full bg-lm-surface shadow-stamp-sm">
+    <div class="learner-level flex items-center gap-2 pl-1.5 pr-3 py-[5px] border-2 border-lm-line rounded-full bg-lm-surface shadow-stamp-sm">
       <div class="w-7 h-7 rounded-full bg-lm-yellow border-2 border-lm-line flex items-center justify-center font-display font-bold text-xs text-lm-ink shrink-0">
         {{ level }}
       </div>
@@ -117,7 +118,7 @@ function logout() {
     </div>
 
     <!-- Streak chip -->
-    <div class="flex items-center gap-2 px-3.5 py-[5px] border-2 border-lm-line rounded-full bg-lm-rust-soft shadow-stamp-sm">
+    <div class="learner-streak flex items-center gap-2 px-3.5 py-[5px] border-2 border-lm-line rounded-full bg-lm-rust-soft shadow-stamp-sm">
       <span class="text-lm-rust"><LmIcon name="flame" :size="20" :filled="true" /></span>
       <div class="flex flex-col leading-none">
         <span class="font-display font-bold text-[16px] text-lm-ink">{{ streak }}</span>
@@ -126,7 +127,7 @@ function logout() {
     </div>
 
     <!-- Shield chip -->
-    <div class="flex items-center gap-1.5 px-3.5 py-[5px] border-2 border-lm-line rounded-full bg-lm-blue-soft shadow-stamp-sm">
+    <div class="learner-shield flex items-center gap-1.5 px-3.5 py-[5px] border-2 border-lm-line rounded-full bg-lm-blue-soft shadow-stamp-sm">
       <span class="text-lm-blue"><LmIcon name="shield" :size="20" :filled="true" /></span>
       <span class="font-display font-bold text-[16px] text-lm-ink">×{{ shields }}</span>
     </div>
@@ -178,3 +179,17 @@ function logout() {
     </div>
   </header>
 </template>
+
+<style scoped>
+@media(max-width:1100px) {
+  .learner-nav { height: auto; min-height: 112px; flex-wrap: wrap; gap: 8px; padding: 8px 16px; }
+  .learner-brand img { height: 48px; }
+  .learner-tabs { order: 10; width: 100%; margin: 0; justify-content: space-between; border: 1px solid #dedbd0; border-radius: 10px; }
+  .learner-tabs button { flex: 1; justify-content: center; padding: 8px 6px; font-size: 12px; border-radius: 7px; }
+}
+@media(max-width:480px) {
+  .learner-streak, .learner-shield { display: none; }
+  .learner-tabs button { gap: 4px; font-size: 11px; }
+  .learner-tabs :deep(svg) { display: none; }
+}
+</style>
